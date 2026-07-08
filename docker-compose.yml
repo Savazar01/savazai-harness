@@ -38,7 +38,7 @@ services:
     ports:
       - "3056:3056"
     environment:
-      NEXT_PUBLIC_HARNESS_API_URL: ${NEXT_PUBLIC_HARNESS_API_URL:-http://localhost:3055}
+      NEXT_PUBLIC_HARNESS_API_URL: ${NEXT_PUBLIC_HARNESS_API_URL:-http://savazai-backend:3055}
       DATABASE_URL: postgresql://${DB_USER:-sz_harness_admin}:${DB_PASSWORD:-sz_secure_vault_pass_99}@savazai-db:5432/${DB_NAME:-savazai_harness}
       BETTER_AUTH_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3056}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-placeholder_secret_replace_in_prod}
