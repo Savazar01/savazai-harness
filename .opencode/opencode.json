@@ -1,0 +1,17 @@
+{
+  "plugin": [
+    ".opencode/plugins/graphify.js"
+  ],
+  "agent": {
+    "rules": [
+      "github:shadcn/ui",
+      "github:vercel/next.js",
+      "github:BetterAuth/better-auth",
+      "github:microsoft/playwright",
+      ".agents/skills/shadcn",
+      ".agents/skills/vercel-react-best-practices",
+      ".agents/skills/playwright-cli",
+      ".agents/skills/better-auth-best-practices"
+    ]
+  }
+}

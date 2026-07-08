@@ -1,0 +1,1 @@
+ALTER TABLE "connected_apps" ADD COLUMN "model_config" jsonb DEFAULT 'null'::jsonb;

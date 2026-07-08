@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* Custom tokens for database-driven branding & style overrides */
+  --primary: 79 70 229; /* #4f46e5 */
+  --secondary: 6 182 212; /* #06b6d4 */
+  --brand-logo-url: url("https://savazar.com/wp-content/uploads/2023/10/cropped-Transparent_Image_2-300x100.png");
+}
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: rgb(var(--primary));
+  --color-secondary: rgb(var(--secondary));
+  --font-sans: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code", Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}

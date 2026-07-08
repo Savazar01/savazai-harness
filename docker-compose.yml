@@ -1,0 +1,53 @@
+services:
+  savazai-db:
+    image: pgvector/pgvector:pg17
+    container_name: savazai-db
+    ports:
+      - "5622:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER:-sz_harness_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-sz_secure_vault_pass_99}
+      POSTGRES_DB: ${DB_NAME:-savazai_harness}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${DB_USER:-sz_harness_admin}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  savazai-backend:
+    build: .
+    container_name: savazai-backend
+    ports:
+      - "3055:3055"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-sz_harness_admin}:${DB_PASSWORD:-sz_secure_vault_pass_99}@savazai-db:5432/${DB_NAME:-savazai_harness}
+    depends_on:
+      savazai-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  savazai-console:
+    build:
+      context: ./savazai-console
+      dockerfile: Dockerfile
+    container_name: savazai-console
+    ports:
+      - "3056:3056"
+    environment:
+      NEXT_PUBLIC_HARNESS_API_URL: ${NEXT_PUBLIC_HARNESS_API_URL:-http://localhost:3055}
+      DATABASE_URL: postgresql://${DB_USER:-sz_harness_admin}:${DB_PASSWORD:-sz_secure_vault_pass_99}@savazai-db:5432/${DB_NAME:-savazai_harness}
+      BETTER_AUTH_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3056}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-placeholder_secret_replace_in_prod}
+    depends_on:
+      savazai-db:
+        condition: service_healthy
+      savazai-backend:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  pgdata:
