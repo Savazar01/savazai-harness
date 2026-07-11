@@ -37,4 +37,4 @@ USER nextjs
 
 EXPOSE 3056
 
-CMD ["sh", "-c", "npx better-auth migrate --yes && node server.js"]
+CMD ["sh", "-c", "node ./node_modules/better-auth/dist/cli.js migrate --yes && node server.js"]
