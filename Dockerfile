@@ -21,4 +21,4 @@ COPY drizzle.config.ts ./
 COPY drizzle ./drizzle
 COPY src/skills ./src/skills
 EXPOSE 3055
-CMD ["sh", "-c", "npx drizzle-kit migrate && node dist/db/seed.js && node dist/index.js"]
+CMD ["sh", "-c", "node dist/db/wait-for-db.js && npx drizzle-kit migrate && node dist/db/seed.js && node dist/index.js"]
