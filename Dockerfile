@@ -17,6 +17,8 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
+COPY drizzle.config.ts ./
+COPY drizzle ./drizzle
 COPY src/skills ./src/skills
 EXPOSE 3055
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "npx drizzle-kit migrate && node dist/db/seed.js && node dist/index.js"]
