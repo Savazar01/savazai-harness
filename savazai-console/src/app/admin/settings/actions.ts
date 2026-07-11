@@ -45,12 +45,29 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
       'SELECT id, design_tokens as "designTokens" FROM system_configurations LIMIT 1'
     ).catch(() => null);
 
-    if (!selectRes || selectRes.rows.length === 0) {
-      throw new Error("No system configuration found to update.");
-    }
+    let configId: string;
+    let currentTokens: Record<string, unknown> = {};
 
-    const configId = selectRes.rows[0].id;
-    const currentTokens: Record<string, unknown> = selectRes.rows[0].designTokens || {};
+    if (!selectRes || selectRes.rows.length === 0) {
+      const insertRes = await pool.query(
+        `INSERT INTO system_configurations (app_title, brand_logo_url, design_tokens)
+         VALUES ($1, $2, $3)
+         RETURNING id, design_tokens as "designTokens"`,
+        [
+          "SavazAI Console",
+          "https://savazar.com/wp-content/uploads/2023/10/cropped-Transparent_Image_2-300x100.png",
+          JSON.stringify({
+            primaryColor: "#4f46e5",
+            secondaryColor: "#06b6d4",
+          }),
+        ]
+      );
+      configId = insertRes.rows[0].id;
+      currentTokens = insertRes.rows[0].designTokens || {};
+    } else {
+      configId = selectRes.rows[0].id;
+      currentTokens = selectRes.rows[0].designTokens || {};
+    }
 
     const mergedTokens: Record<string, unknown> = {
       ...currentTokens,
