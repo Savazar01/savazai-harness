@@ -28,8 +28,13 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy package files and source for better-auth CLI migration support
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/src ./src
+
 USER nextjs
 
 EXPOSE 3056
 
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "npx better-auth migrate --yes && node server.js"]
