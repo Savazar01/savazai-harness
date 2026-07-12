@@ -1,7 +1,13 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
-import { updateSystemConfig, testProviderConnection, fetchProviderModels } from "@/app/admin/settings/actions";
+import React, { useState, useCallback, useEffect } from "react";
+import {
+  updateSystemConfig,
+  testProviderConnection,
+  fetchProviderModels,
+  readAgentsMd,
+  saveAgentsMd,
+} from "@/app/admin/settings/actions";
 import { SystemConfig, LLMProviderConfig } from "@/components/theme-provider";
 import {
   Palette,
@@ -21,13 +27,25 @@ import {
   Mail,
   Send,
   MessageSquare,
+  BrainCircuit,
+  FileText,
+  Plus,
+  Trash2,
+  HelpCircle,
 } from "lucide-react";
+
+interface CustomSkill {
+  name: string;
+  description: string;
+  inputSchema: string;
+  executableScriptCode: string;
+}
 
 interface SettingsDashboardProps {
   initialConfig: SystemConfig;
 }
 
-type TabType = "appearance" | "branding" | "llm" | "mcp" | "api";
+type TabType = "appearance" | "branding" | "llm" | "mcp" | "api" | "capability";
 
 const DEFAULT_LLM_PROVIDERS: Record<string, LLMProviderConfig> = {
   openai: { apiKey: "", endpoint: "https://api.openai.com/v1", defaultModel: "gpt-4o", active: false },
@@ -135,6 +153,39 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
   const [wabaPhoneNumberId, setWabaPhoneNumberId] = useState(tokens.wabaPhoneNumberId || "");
   const [wabaAccessToken, setWabaAccessToken] = useState(tokens.wabaAccessToken || "");
 
+  const [globalSystemPrompt, setGlobalSystemPrompt] = useState(tokens.globalSystemPrompt || "");
+  const [orchestrationRules, setOrchestrationRules] = useState(tokens.orchestrationRules || "");
+  const [defaultAmbientParameters, setDefaultAmbientParameters] = useState(tokens.defaultAmbientParameters || "");
+
+  const [customSkills, setCustomSkills] = useState<CustomSkill[]>(() => {
+    if (tokens.customSkills) {
+      if (typeof tokens.customSkills === "string") {
+        try {
+          return JSON.parse(tokens.customSkills) as CustomSkill[];
+        } catch {
+          return [];
+        }
+      }
+      return tokens.customSkills as CustomSkill[];
+    }
+    return [];
+  });
+
+  const [agentsMd, setAgentsMd] = useState(tokens.agentsMd || "");
+  const [loadingAgentsMd, setLoadingAgentsMd] = useState(false);
+
+  useEffect(() => {
+    const fetchAgentsMd = async () => {
+      setLoadingAgentsMd(true);
+      const res = await readAgentsMd();
+      if (res.success && res.content !== undefined) {
+        setAgentsMd(res.content);
+      }
+      setLoadingAgentsMd(false);
+    };
+    fetchAgentsMd();
+  }, []);
+
   const restoreLogoDefault = () => {
     setBrandLogoUrl("https://savazar.com/wp-content/uploads/2023/10/cropped-Transparent_Image_2-300x100.png");
   };
@@ -143,6 +194,11 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
     e.preventDefault();
     setSaving(true);
     setStatus(null);
+
+    const agentsRes = await saveAgentsMd(agentsMd);
+    if (!agentsRes.success) {
+      console.warn("Failed to mirror AGENTS.md to filesystem:", agentsRes.error);
+    }
 
     const result = await updateSystemConfig({
       appTitle,
@@ -168,6 +224,11 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
       wabaId,
       wabaPhoneNumberId,
       wabaAccessToken,
+      globalSystemPrompt,
+      orchestrationRules,
+      defaultAmbientParameters,
+      customSkills: JSON.stringify(customSkills),
+      agentsMd,
     });
 
     setSaving(false);
@@ -260,6 +321,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
           <TabButton tab="llm" icon={Cpu} activeTab={activeTab} setActiveTab={setActiveTab} label="LLM Providers" />
           <TabButton tab="mcp" icon={Wrench} activeTab={activeTab} setActiveTab={setActiveTab} label="MCP Integration" />
           <TabButton tab="api" icon={Globe} activeTab={activeTab} setActiveTab={setActiveTab} label="API Services" />
+          <TabButton tab="capability" icon={BrainCircuit} activeTab={activeTab} setActiveTab={setActiveTab} label="Capability Studio" />
         </div>
 
         <form onSubmit={handleSave} className="lg:col-span-3 rounded-3xl border border-slate-900 bg-slate-950/40 p-6 relative flex flex-col min-h-0">
@@ -605,6 +667,135 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   <p className="mt-1 text-[10px] text-slate-600">
                     Applied by the Privacy Gateway before any data reaches external LLMs
                   </p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "capability" && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">Capability Studio</h3>
+                  <p className="text-slate-400 text-xs">Expose dynamic skills registry, Plan-Act loop parameters, and system capability boundaries.</p>
+                </div>
+
+                <div className="border-t border-slate-900 pt-5 space-y-4">
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <BrainCircuit className="h-4 w-4 text-indigo-400" />
+                    System Prompt &amp; OKF Matrix Configuration
+                  </h4>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Global System Instructions</label>
+                    <textarea rows={4} value={globalSystemPrompt} onChange={(e) => setGlobalSystemPrompt(e.target.value)}
+                      placeholder="Enter global supervisor system prompts here..."
+                      className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Orchestration Rules (Plan-Act Loop)</label>
+                    <textarea rows={4} value={orchestrationRules} onChange={(e) => setOrchestrationRules(e.target.value)}
+                      placeholder="Configure thought-plan-execute loop parameters..."
+                      className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Default Ambient Parameters</label>
+                    <textarea rows={3} value={defaultAmbientParameters} onChange={(e) => setDefaultAmbientParameters(e.target.value)}
+                      placeholder="e.g. weddingId: be5badd9-0cb2-4d5d-9acf-2412406b9cae (one parameter per line or JSON format)"
+                      className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-900 pt-5 space-y-4">
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-cyan-400" />
+                    AGENTS.md Blueprint Workspace
+                  </h4>
+                  <p className="text-slate-400 text-xs">Edit your holistic agent capability boundaries and system rule sets below:</p>
+                  {loadingAgentsMd ? (
+                    <div className="flex items-center gap-2 text-slate-500 text-xs py-2">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Loading AGENTS.md content...
+                    </div>
+                  ) : (
+                    <textarea rows={10} value={agentsMd} onChange={(e) => setAgentsMd(e.target.value)}
+                      placeholder="# CRITICAL RULES..."
+                      className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white font-mono placeholder-slate-600 outline-none focus:border-primary/50" />
+                  )}
+                </div>
+
+                <div className="border-t border-slate-900 pt-5 space-y-4">
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Wrench className="h-4 w-4 text-emerald-400" />
+                    Custom Skills Registry
+                  </h4>
+                  <p className="text-slate-400 text-xs">Register custom Javascript snippets to run executable task logic locally inside the harness.</p>
+
+                  <div className="space-y-4">
+                    {customSkills.map((skill, idx) => (
+                      <div key={idx} className="border border-slate-900 bg-slate-900/20 rounded-2xl p-4 space-y-3 relative">
+                        <button type="button" onClick={() => {
+                          const updated = [...customSkills];
+                          updated.splice(idx, 1);
+                          setCustomSkills(updated);
+                        }} className="absolute top-4 right-4 text-red-400 hover:text-red-300 transition-colors p-1" title="Delete custom skill">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Skill Name</label>
+                            <input type="text" value={skill.name} onChange={(e) => {
+                              const updated = [...customSkills];
+                              updated[idx].name = e.target.value;
+                              setCustomSkills(updated);
+                            }} placeholder="my_custom_skill" className="w-full rounded-xl border border-slate-800 bg-slate-900/40 py-2 px-3 text-xs text-white" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Description</label>
+                            <input type="text" value={skill.description} onChange={(e) => {
+                              const updated = [...customSkills];
+                              updated[idx].description = e.target.value;
+                              setCustomSkills(updated);
+                            }} placeholder="Performs a custom action..." className="w-full rounded-xl border border-slate-800 bg-slate-900/40 py-2 px-3 text-xs text-white" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Input Schema (JSON)</label>
+                          <textarea rows={3} value={skill.inputSchema} onChange={(e) => {
+                            const updated = [...customSkills];
+                            updated[idx].inputSchema = e.target.value;
+                            setCustomSkills(updated);
+                          }} placeholder='{ "type": "object", "properties": { "arg1": { "type": "string" } } }'
+                            className="w-full rounded-xl border border-slate-800 bg-slate-900/40 py-2 px-3 text-xs text-white font-mono" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Executable Script Code (Javascript)</label>
+                          <textarea rows={5} value={skill.executableScriptCode} onChange={(e) => {
+                            const updated = [...customSkills];
+                            updated[idx].executableScriptCode = e.target.value;
+                            setCustomSkills(updated);
+                          }} placeholder='// Access tool arguments via "args" parameter\nconsole.log(args.arg1);\nreturn { success: true, message: `Hello ${args.arg1}` };'
+                            className="w-full rounded-xl border border-slate-800 bg-slate-900/40 py-2 px-3 text-xs text-white font-mono" />
+                        </div>
+                      </div>
+                    ))}
+
+                    <button type="button" onClick={() => {
+                      setCustomSkills([...customSkills, { name: "", description: "", inputSchema: '{\n  "type": "object",\n  "properties": {}\n}', executableScriptCode: "return { success: true };" }]);
+                    }} className="flex items-center gap-1.5 px-4 py-2 border border-dashed border-slate-800 hover:border-slate-700 rounded-xl text-xs text-slate-400 hover:text-slate-200 transition-all bg-slate-950/20">
+                      <Plus className="h-3.5 w-3.5" /> Add Custom Skill
+                    </button>
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-900 pt-5">
+                  <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-4 space-y-3">
+                    <h4 className="text-xs font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
+                      <HelpCircle className="h-4 w-4 text-indigo-400" />
+                      Capability Studio Documentation
+                    </h4>
+                    <ul className="list-disc list-inside text-xs text-slate-500 space-y-1.5 leading-relaxed pl-1">
+                      <li><strong>Plan-Act Loop Optimization:</strong> Define rules inside Orchestration Rules to constrain the thought cycles and prevent agent wandering or infinite recursion loops.</li>
+                      <li><strong>Declaring Tools:</strong> Document any registered custom skills directly inside the `AGENTS.md` blueprint so that planning sub-agents can reason about and invoke them.</li>
+                      <li><strong>Parameter Auto-injection:</strong> Key-value fallback settings defined in Default Ambient Parameters (e.g. `weddingId: your-id`) will be resolved and merged dynamically before any tool executes.</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             )}

@@ -1,7 +1,8 @@
 "use server";
-
 import { Pool } from "pg";
 import { revalidatePath } from "next/cache";
+import fs from "fs";
+import path from "path";
 import type { LLMProviderConfig } from "@/components/theme-provider";
 
 const pool = new Pool({
@@ -37,6 +38,12 @@ export interface UpdateSettingsInput {
   wabaId?: string;
   wabaPhoneNumberId?: string;
   wabaAccessToken?: string;
+
+  globalSystemPrompt?: string;
+  orchestrationRules?: string;
+  defaultAmbientParameters?: string;
+  customSkills?: string;
+  agentsMd?: string;
 }
 
 export async function updateSystemConfig(input: UpdateSettingsInput) {
@@ -97,6 +104,12 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
       ...(input.wabaId !== undefined && { wabaId: input.wabaId }),
       ...(input.wabaPhoneNumberId !== undefined && { wabaPhoneNumberId: input.wabaPhoneNumberId }),
       ...(input.wabaAccessToken !== undefined && { wabaAccessToken: input.wabaAccessToken }),
+
+      ...(input.globalSystemPrompt !== undefined && { globalSystemPrompt: input.globalSystemPrompt }),
+      ...(input.orchestrationRules !== undefined && { orchestrationRules: input.orchestrationRules }),
+      ...(input.defaultAmbientParameters !== undefined && { defaultAmbientParameters: input.defaultAmbientParameters }),
+      ...(input.customSkills !== undefined && { customSkills: input.customSkills }),
+      ...(input.agentsMd !== undefined && { agentsMd: input.agentsMd }),
     };
 
     await pool.query(
@@ -261,6 +274,53 @@ export async function fetchProviderModels(
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Fetch connection failed";
     return { success: false, error: msg };
+  }
+}
+
+export async function readAgentsMd() {
+  try {
+    const selectRes = await pool.query(
+      'SELECT design_tokens as "designTokens" FROM system_configurations LIMIT 1'
+    ).catch(() => null);
+    
+    if (selectRes && selectRes.rows.length > 0 && selectRes.rows[0].designTokens?.agentsMd) {
+      return { success: true, content: selectRes.rows[0].designTokens.agentsMd };
+    }
+
+    const filePath = path.join(process.cwd(), "..", "AGENTS.md");
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, "utf-8");
+      return { success: true, content };
+    }
+    return { success: true, content: "" };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function saveAgentsMd(content: string) {
+  try {
+    const selectRes = await pool.query(
+      'SELECT id, design_tokens as "designTokens" FROM system_configurations LIMIT 1'
+    ).catch(() => null);
+
+    if (selectRes && selectRes.rows.length > 0) {
+      const configId = selectRes.rows[0].id;
+      const currentTokens = selectRes.rows[0].designTokens || {};
+      const mergedTokens = { ...currentTokens, agentsMd: content };
+      await pool.query(
+        `UPDATE system_configurations SET design_tokens = $1 WHERE id = $2`,
+        [JSON.stringify(mergedTokens), configId]
+      );
+    }
+
+    const filePath = path.join(process.cwd(), "..", "AGENTS.md");
+    fs.writeFileSync(filePath, content, "utf-8");
+    
+    revalidatePath("/admin/settings");
+    return { success: true };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
 

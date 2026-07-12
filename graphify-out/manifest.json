@@ -1105,8 +1105,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\admin\\settings\\actions.ts": {
-    "mtime": 1783741656.8571057,
-    "ast_hash": "ca04f63086f248eaadb3e932f5887fd8",
+    "mtime": 1783834281.0253837,
+    "ast_hash": "612146838339b7f8feecd91811d0c93b",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\admin\\settings\\page.tsx": {
@@ -1155,8 +1155,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\settings-dashboard.tsx": {
-    "mtime": 1783519662.077606,
-    "ast_hash": "fd51922730a47d7a47ee7d57100c69eb",
+    "mtime": 1783834306.300809,
+    "ast_hash": "14f04abe928ebe6de395171993339ec0",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\sidebar.tsx": {
@@ -1225,8 +1225,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\orchestrator\\graph.ts": {
-    "mtime": 1783830615.7389126,
-    "ast_hash": "72aef266f937d5fd67d6bc18b3fa2539",
+    "mtime": 1783834239.7573333,
+    "ast_hash": "533def2b420ca5af841d6118947a5add",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\orchestrator\\okf-verifier.ts": {

@@ -100,21 +100,40 @@ const mcpToolCache = new Map<string, CachedTools>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
 
 async function resolveAmbientParameter(paramName: string): Promise<string | undefined> {
-  // Try designTokens match
   try {
     const configs = await db.select().from(systemConfigurations).limit(1);
     if (configs.length > 0 && configs[0].designTokens) {
       const dt = configs[0].designTokens as any;
       if (dt[paramName]) return String(dt[paramName]);
-      // try camelCase/snake_case variations
       const snake = paramName.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
       if (dt[snake]) return String(dt[snake]);
+
+      // Check defaultAmbientParameters from Capability Studio
+      const defaultParams = dt.defaultAmbientParameters;
+      if (defaultParams) {
+        let paramsObj: any = {};
+        if (typeof defaultParams === "string") {
+          try {
+            paramsObj = JSON.parse(defaultParams);
+          } catch {
+            defaultParams.split("\n").forEach((line: string) => {
+              const parts = line.split(":");
+              if (parts.length >= 2) {
+                paramsObj[parts[0].trim()] = parts.slice(1).join(":").trim();
+              }
+            });
+          }
+        } else {
+          paramsObj = defaultParams;
+        }
+        if (paramsObj[paramName]) return String(paramsObj[paramName]);
+        if (paramsObj[snake]) return String(paramsObj[snake]);
+      }
     }
   } catch (err) {
     console.error(`[resolveAmbientParameter] designTokens search failed for ${paramName}:`, err);
   }
 
-  // Try process.env
   const envKey = paramName.toUpperCase();
   const envVal = process.env[envKey] || process.env[paramName.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`).toUpperCase()];
   if (envVal) return envVal;
@@ -223,11 +242,31 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
   const span = telemetry.startSpan(requestId, "supervisorNode");
 
   try {
-    const lastMessage = state.messages[state.messages.length - 1];
+    const userMessage = [...state.messages].reverse().find((m) => m.role === "user");
     const gateway = new PrivacyGateway();
-    const { maskedText, tokenMap } = gateway.maskPayload(lastMessage?.content ?? "");
+    const { maskedText, tokenMap } = gateway.maskPayload(userMessage?.content ?? "");
 
     span.attributes.maskedText = maskedText;
+
+    let customGlobalPrompt = "";
+    let customOrchestrationRules = "";
+    let customSkills: any[] = [];
+
+    try {
+      const configs = await db.select().from(systemConfigurations).limit(1);
+      if (configs.length > 0 && configs[0].designTokens) {
+        const tokens = configs[0].designTokens as any;
+        customGlobalPrompt = tokens.globalSystemPrompt || "";
+        customOrchestrationRules = tokens.orchestrationRules || "";
+        if (tokens.customSkills) {
+          customSkills = typeof tokens.customSkills === "string"
+            ? JSON.parse(tokens.customSkills)
+            : tokens.customSkills;
+        }
+      }
+    } catch (e) {
+      console.error("[supervisorNode] Failed to load custom configurations:", e);
+    }
 
     const openAiTools: any[] = [];
     let mcpServersObj: any = {};
@@ -272,15 +311,27 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
           }
         }
 
+        for (const c of customSkills) {
+          if (!c.name) continue;
+          const schema = typeof c.inputSchema === "string" ? JSON.parse(c.inputSchema) : c.inputSchema;
+          openAiTools.push({
+            type: "function",
+            function: {
+              name: c.name,
+              description: c.description || "",
+              parameters: schema || { type: "object", properties: {} },
+            },
+          });
+        }
+
         if (openAiTools.length > 0) {
           llmSwitchboard.bindToolsToProvider(state.currentApp, openAiTools);
         }
       } catch (err) {
-        console.error("[supervisorNode] Failed to load/bind MCP tools:", err);
+        console.error("[supervisorNode] Failed to load/bind MCP/custom tools:", err);
       }
     }
 
-    // Load available database agents
     let agents: any[] = [];
     try {
       agents = await db.select().from(autonomousAgents);
@@ -307,7 +358,13 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
     ];
 
     const plannerSystemPrompt = `You are the Autonomous Planner & Supervisor for SavazAI.
-Analyze the user request and determine the optimal target_action and metadata parameter payload.
+${customGlobalPrompt ? `Global System Instructions:\n${customGlobalPrompt}\n` : ""}
+${customOrchestrationRules ? `Orchestration Rules (Plan-Act Loop):\n${customOrchestrationRules}\n` : `Strict Plan-Act Loop Instructions:
+1. Track execution progress against a compound user checklist.
+2. If multiple actions/tools are needed to fulfill the request, execute them sequentially.
+3. Evaluate the output history of the executed tools against the remaining unfulfilled goals.
+4. If more steps are needed, output "target_action": "mcp_action" or "target_action": "sub_agent" to continue.
+5. If all goals are fulfilled, output "target_action": "respond" and formulate the final synthesized reply in the "response" field.`}
 
 Available Sub-Agents:
 ${JSON.stringify(activeAgentsList, null, 2)}
@@ -336,10 +393,20 @@ Do not include any other text or formatting. Return only the raw JSON.`;
 
     if (state.currentApp) {
       try {
+        const formattedHistory = state.messages.map((m) => {
+          const role = m.role === "user" ? "user" as const : "assistant" as const;
+          let content = m.content;
+          if (m.role === "user") {
+            const { maskedText } = gateway.maskPayload(content);
+            content = maskedText;
+          }
+          return { role, content };
+        });
+
         const completion = await llmSwitchboard.executeUniversalCompletion({
           messages: [
             { role: "system", content: plannerSystemPrompt },
-            { role: "user", content: maskedText },
+            ...formattedHistory,
           ],
           providerId: state.currentApp,
           options: { requestId },
@@ -576,9 +643,50 @@ async function mcpActionNode(state: typeof StateAnnotation.State, config?: any) 
     span.attributes.decidedToolArgs = JSON.stringify(toolArgs);
 
     let resultText = "";
+    
+    let customSkills: any[] = [];
+    try {
+      const configs = await db.select().from(systemConfigurations).limit(1);
+      if (configs.length > 0 && configs[0].designTokens?.customSkills) {
+        customSkills = typeof configs[0].designTokens.customSkills === "string"
+          ? JSON.parse(configs[0].designTokens.customSkills)
+          : configs[0].designTokens.customSkills;
+      }
+    } catch (e) {
+      console.error("[mcpActionNode] Failed to load custom skills:", e);
+    }
+
+    const customSkill = customSkills.find((c) => c.name === toolName);
     const localSkill = skillTools.find((s) => s.name === toolName);
 
-    if (localSkill) {
+    if (customSkill) {
+      let schema: any = {};
+      try {
+        schema = typeof customSkill.inputSchema === "string" ? JSON.parse(customSkill.inputSchema) : customSkill.inputSchema;
+      } catch (err) {
+        console.error("Failed to parse custom skill schema:", err);
+      }
+      const props = schema?.properties || {};
+      for (const propName of Object.keys(props)) {
+        if (toolArgs[propName] === undefined) {
+          const ambientValue = await resolveAmbientParameter(propName);
+          if (ambientValue !== undefined) {
+            toolArgs[propName] = ambientValue;
+            console.log(`[mcpActionNode] Auto-injected ambient parameter ${propName}=${ambientValue} for custom skill ${toolName}`);
+          }
+        }
+      }
+
+      console.log(`[mcpActionNode] Executing custom skill: ${toolName}`);
+      try {
+        const runner = new Function("args", customSkill.executableScriptCode);
+        const executionResult = await runner(toolArgs);
+        resultText = typeof executionResult === "object" ? JSON.stringify(executionResult) : String(executionResult);
+      } catch (err: any) {
+        console.error(`Custom skill execution failed for ${toolName}:`, err);
+        resultText = JSON.stringify({ error: `Custom skill execution failed: ${err.message}` });
+      }
+    } else if (localSkill) {
       // Auto-inject missing properties for local skills
       const params = localSkill.parameters || [];
       for (const p of params) {
@@ -891,9 +999,9 @@ const graph = new StateGraph(StateAnnotation)
   .addEdge("mcpAction", "verifier")
   .addConditionalEdges("verifier", verifierRoutingLogic, {
     correct: "corrector",
-    respond: "respond",
+    respond: "supervisor",
   })
-  .addEdge("corrector", "respond")
+  .addEdge("corrector", "supervisor")
   .addEdge("respond", END);
 
 export const compiledGraph = graph.compile({ checkpointer: new MemorySaver() });
