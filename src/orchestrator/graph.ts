@@ -412,8 +412,15 @@ Do not include any other text or formatting. Return only the raw JSON.`;
           options: { requestId },
         });
 
-        let cleanText = completion.text.trim();
-        if (cleanText.startsWith("```")) {
+        const rawResponse = completion.text;
+        console.log("Raw Supervisor Output:", rawResponse);
+
+        let cleanText = rawResponse.trim();
+        const startBrace = cleanText.indexOf("{");
+        const endBrace = cleanText.lastIndexOf("}");
+        if (startBrace !== -1 && endBrace !== -1 && endBrace > startBrace) {
+          cleanText = cleanText.substring(startBrace, endBrace + 1);
+        } else if (cleanText.startsWith("```")) {
           cleanText = cleanText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
         }
 
@@ -427,6 +434,13 @@ Do not include any other text or formatting. Return only the raw JSON.`;
           decidedToolArgs = decision.meta?.arguments || undefined;
         }
         responseText = decision.response || "";
+
+        // Force proper routing decision based on meta presence
+        if (decidedToolName) {
+          routingDecision = "mcp_action";
+        } else if (routingDecision === "respond" && selectedAgent) {
+          routingDecision = "sub_agent";
+        }
       } catch (err) {
         console.error("[supervisorNode] planner LLM parsing failed:", err);
       }

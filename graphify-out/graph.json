@@ -2565,7 +2565,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L48",
       "id": "meta_0001_snapshot_columns_created_at",
-      "community": 201,
+      "community": 154,
       "norm_label": "created_at"
     },
     {
@@ -2583,7 +2583,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L50",
       "id": "meta_0001_snapshot_created_at_type",
-      "community": 201,
+      "community": 154,
       "norm_label": "type"
     },
     {
@@ -2592,7 +2592,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L51",
       "id": "meta_0001_snapshot_created_at_primarykey",
-      "community": 201,
+      "community": 154,
       "norm_label": "primarykey"
     },
     {
@@ -2610,7 +2610,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L53",
       "id": "meta_0001_snapshot_created_at_default",
-      "community": 201,
+      "community": 154,
       "norm_label": "default"
     },
     {
@@ -3501,7 +3501,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L215",
       "id": "meta_0001_snapshot_skill_name_primarykey",
-      "community": 154,
+      "community": 237,
       "norm_label": "primarykey"
     },
     {
@@ -3519,7 +3519,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L218",
       "id": "meta_0001_snapshot_columns_description",
-      "community": 154,
+      "community": 237,
       "norm_label": "description"
     },
     {
@@ -3528,7 +3528,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L219",
       "id": "meta_0001_snapshot_description_name",
-      "community": 154,
+      "community": 237,
       "norm_label": "name"
     },
     {
@@ -3537,7 +3537,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L220",
       "id": "meta_0001_snapshot_description_type",
-      "community": 154,
+      "community": 237,
       "norm_label": "type"
     },
     {
@@ -3546,7 +3546,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L221",
       "id": "meta_0001_snapshot_description_primarykey",
-      "community": 154,
+      "community": 237,
       "norm_label": "primarykey"
     },
     {
@@ -3555,7 +3555,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L222",
       "id": "meta_0001_snapshot_description_notnull",
-      "community": 154,
+      "community": 237,
       "norm_label": "notnull"
     },
     {
@@ -4806,7 +4806,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L166",
       "id": "meta_0002_snapshot_columns_mcp_endpoint_url",
-      "community": 225,
+      "community": 222,
       "norm_label": "mcp_endpoint_url"
     },
     {
@@ -4815,7 +4815,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L167",
       "id": "meta_0002_snapshot_mcp_endpoint_url_name",
-      "community": 225,
+      "community": 222,
       "norm_label": "name"
     },
     {
@@ -4824,7 +4824,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L168",
       "id": "meta_0002_snapshot_mcp_endpoint_url_type",
-      "community": 225,
+      "community": 222,
       "norm_label": "type"
     },
     {
@@ -4833,7 +4833,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L169",
       "id": "meta_0002_snapshot_mcp_endpoint_url_primarykey",
-      "community": 240,
+      "community": 222,
       "norm_label": "primarykey"
     },
     {
@@ -4842,7 +4842,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L170",
       "id": "meta_0002_snapshot_mcp_endpoint_url_notnull",
-      "community": 225,
+      "community": 222,
       "norm_label": "notnull"
     },
     {
@@ -4851,7 +4851,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L172",
       "id": "meta_0002_snapshot_columns_bearer_token_hash",
-      "community": 222,
+      "community": 225,
       "norm_label": "bearer_token_hash"
     },
     {
@@ -4860,7 +4860,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L173",
       "id": "meta_0002_snapshot_bearer_token_hash_name",
-      "community": 222,
+      "community": 225,
       "norm_label": "name"
     },
     {
@@ -4869,7 +4869,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L174",
       "id": "meta_0002_snapshot_bearer_token_hash_type",
-      "community": 222,
+      "community": 225,
       "norm_label": "type"
     },
     {
@@ -4878,7 +4878,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L175",
       "id": "meta_0002_snapshot_bearer_token_hash_primarykey",
-      "community": 222,
+      "community": 225,
       "norm_label": "primarykey"
     },
     {
@@ -4887,7 +4887,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L176",
       "id": "meta_0002_snapshot_bearer_token_hash_notnull",
-      "community": 222,
+      "community": 225,
       "norm_label": "notnull"
     },
     {
@@ -5085,7 +5085,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L219",
       "id": "meta_0002_snapshot_columns_skill_name",
-      "community": 240,
+      "community": 222,
       "norm_label": "skill_name"
     },
     {
@@ -5094,7 +5094,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L220",
       "id": "meta_0002_snapshot_skill_name_name",
-      "community": 240,
+      "community": 222,
       "norm_label": "name"
     },
     {
@@ -5103,7 +5103,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L221",
       "id": "meta_0002_snapshot_skill_name_type",
-      "community": 240,
+      "community": 222,
       "norm_label": "type"
     },
     {
@@ -5112,7 +5112,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L222",
       "id": "meta_0002_snapshot_skill_name_primarykey",
-      "community": 240,
+      "community": 222,
       "norm_label": "primarykey"
     },
     {
@@ -5121,7 +5121,7 @@
       "source_file": "drizzle/migrations/meta/0002_snapshot.json",
       "source_location": "L223",
       "id": "meta_0002_snapshot_skill_name_notnull",
-      "community": 240,
+      "community": 222,
       "norm_label": "notnull"
     },
     {
@@ -9079,7 +9079,7 @@
       "label": "subAgentNode()",
       "file_type": "code",
       "source_file": "src/orchestrator/graph.ts",
-      "source_location": "L488",
+      "source_location": "L502",
       "id": "orchestrator_graph_subagentnode",
       "community": 173,
       "norm_label": "subagentnode()"
@@ -9088,7 +9088,7 @@
       "label": "extractAndFormatImages()",
       "file_type": "code",
       "source_file": "src/orchestrator/graph.ts",
-      "source_location": "L601",
+      "source_location": "L615",
       "id": "orchestrator_graph_extractandformatimages",
       "community": 173,
       "norm_label": "extractandformatimages()"
@@ -9097,7 +9097,7 @@
       "label": "mcpActionNode()",
       "file_type": "code",
       "source_file": "src/orchestrator/graph.ts",
-      "source_location": "L622",
+      "source_location": "L636",
       "id": "orchestrator_graph_mcpactionnode",
       "community": 173,
       "norm_label": "mcpactionnode()"
@@ -9106,7 +9106,7 @@
       "label": "verifierNode()",
       "file_type": "code",
       "source_file": "src/orchestrator/graph.ts",
-      "source_location": "L852",
+      "source_location": "L866",
       "id": "orchestrator_graph_verifiernode",
       "community": 173,
       "norm_label": "verifiernode()"
@@ -9115,7 +9115,7 @@
       "label": "correctorNode()",
       "file_type": "code",
       "source_file": "src/orchestrator/graph.ts",
-      "source_location": "L908",
+      "source_location": "L922",
       "id": "orchestrator_graph_correctornode",
       "community": 173,
       "norm_label": "correctornode()"
@@ -9124,7 +9124,7 @@
       "label": "respondNode()",
       "file_type": "code",
       "source_file": "src/orchestrator/graph.ts",
-      "source_location": "L938",
+      "source_location": "L952",
       "id": "orchestrator_graph_respondnode",
       "community": 173,
       "norm_label": "respondnode()"
@@ -9133,7 +9133,7 @@
       "label": "verifierRoutingLogic()",
       "file_type": "code",
       "source_file": "src/orchestrator/graph.ts",
-      "source_location": "L974",
+      "source_location": "L988",
       "id": "orchestrator_graph_verifierroutinglogic",
       "community": 173,
       "norm_label": "verifierroutinglogic()"
@@ -9142,7 +9142,7 @@
       "label": "agentRoutingLogic()",
       "file_type": "code",
       "source_file": "src/orchestrator/graph.ts",
-      "source_location": "L979",
+      "source_location": "L993",
       "id": "orchestrator_graph_agentroutinglogic",
       "community": 173,
       "norm_label": "agentroutinglogic()"
@@ -9151,7 +9151,7 @@
       "label": "graph",
       "file_type": "code",
       "source_file": "src/orchestrator/graph.ts",
-      "source_location": "L983",
+      "source_location": "L997",
       "id": "orchestrator_graph_graph",
       "community": 173,
       "norm_label": "graph"
@@ -9160,7 +9160,7 @@
       "label": "compiledGraph",
       "file_type": "code",
       "source_file": "src/orchestrator/graph.ts",
-      "source_location": "L1007",
+      "source_location": "L1021",
       "id": "orchestrator_graph_compiledgraph",
       "community": 199,
       "norm_label": "compiledgraph"
@@ -9169,7 +9169,7 @@
       "label": "GraphAnnotationType",
       "file_type": "code",
       "source_file": "src/orchestrator/graph.ts",
-      "source_location": "L1008",
+      "source_location": "L1022",
       "id": "orchestrator_graph_graphannotationtype",
       "community": 173,
       "norm_label": "graphannotationtype"
@@ -16659,7 +16659,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2337",
       "id": "vercel_react_best_practices_agents_6_1_animate_svg_wrapper_instead_of_svg_element",
-      "community": 9,
+      "community": 240,
       "norm_label": "6.1 animate svg wrapper instead of svg element"
     },
     {
@@ -16668,7 +16668,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2345",
       "id": "vercel_react_best_practices_agents_codeblock_101",
-      "community": 9,
+      "community": 240,
       "norm_label": "code:tsx (function loadingspinner() {)"
     },
     {
@@ -16677,7 +16677,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2362",
       "id": "vercel_react_best_practices_agents_codeblock_102",
-      "community": 9,
+      "community": 240,
       "norm_label": "code:tsx (function loadingspinner() {)"
     },
     {
@@ -16686,7 +16686,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2380",
       "id": "vercel_react_best_practices_agents_6_2_css_content_visibility_for_long_lists",
-      "community": 272,
+      "community": 9,
       "norm_label": "6.2 css content-visibility for long lists"
     },
     {
@@ -16695,7 +16695,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2388",
       "id": "vercel_react_best_practices_agents_codeblock_103",
-      "community": 272,
+      "community": 9,
       "norm_label": "code:css (.message-item {)"
     },
     {
@@ -16704,7 +16704,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2397",
       "id": "vercel_react_best_practices_agents_codeblock_104",
-      "community": 272,
+      "community": 9,
       "norm_label": "code:tsx (function messagelist({ messages }: { messages: message[] }) )"
     },
     {
@@ -16812,7 +16812,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2558",
       "id": "vercel_react_best_practices_agents_6_6_suppress_expected_hydration_mismatches",
-      "community": 267,
+      "community": 9,
       "norm_label": "6.6 suppress expected hydration mismatches"
     },
     {
@@ -16821,7 +16821,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2566",
       "id": "vercel_react_best_practices_agents_codeblock_113",
-      "community": 267,
+      "community": 9,
       "norm_label": "code:tsx (function timestamp() {)"
     },
     {
@@ -16830,7 +16830,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2574",
       "id": "vercel_react_best_practices_agents_codeblock_114",
-      "community": 267,
+      "community": 9,
       "norm_label": "code:tsx (function timestamp() {)"
     },
     {
@@ -16857,7 +16857,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2606",
       "id": "vercel_react_best_practices_agents_6_8_use_defer_or_async_on_script_tags",
-      "community": 9,
+      "community": 267,
       "norm_label": "6.8 use defer or async on script tags"
     },
     {
@@ -16866,7 +16866,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2620",
       "id": "vercel_react_best_practices_agents_codeblock_116",
-      "community": 9,
+      "community": 267,
       "norm_label": "code:tsx (export default function document() {)"
     },
     {
@@ -16875,7 +16875,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2636",
       "id": "vercel_react_best_practices_agents_codeblock_117",
-      "community": 9,
+      "community": 267,
       "norm_label": "code:tsx (import script from 'next/script')"
     },
     {
@@ -17037,7 +17037,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2950",
       "id": "vercel_react_best_practices_agents_7_2_build_index_maps_for_repeated_lookups",
-      "community": 237,
+      "community": 70,
       "norm_label": "7.2 build index maps for repeated lookups"
     },
     {
@@ -17046,7 +17046,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2958",
       "id": "vercel_react_best_practices_agents_codeblock_130",
-      "community": 237,
+      "community": 70,
       "norm_label": "code:typescript (function processorders(orders: order[], users: user[]) {)"
     },
     {
@@ -17055,7 +17055,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2969",
       "id": "vercel_react_best_practices_agents_codeblock_131",
-      "community": 237,
+      "community": 70,
       "norm_label": "code:typescript (function processorders(orders: order[], users: user[]) {)"
     },
     {
@@ -17172,7 +17172,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3150",
       "id": "vercel_react_best_practices_agents_7_6_combine_multiple_array_iterations",
-      "community": 70,
+      "community": 272,
       "norm_label": "7.6 combine multiple array iterations"
     },
     {
@@ -17181,7 +17181,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3158",
       "id": "vercel_react_best_practices_agents_codeblock_141",
-      "community": 70,
+      "community": 272,
       "norm_label": "code:typescript (const admins = users.filter(u => u.isadmin))"
     },
     {
@@ -17190,7 +17190,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3166",
       "id": "vercel_react_best_practices_agents_codeblock_142",
-      "community": 70,
+      "community": 272,
       "norm_label": "code:typescript (const admins: user[] = [])"
     },
     {
@@ -33698,9 +33698,9 @@
       "source_file": "savazai-console/src/app/admin/settings/actions.ts",
       "source_location": "L280",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "savazai_console_src_app_admin_settings_actions_ts",
-      "target": "settings_actions_readagentsmd",
-      "confidence_score": 1.0
+      "target": "settings_actions_readagentsmd"
     },
     {
       "relation": "contains",
@@ -33708,9 +33708,9 @@
       "source_file": "savazai-console/src/app/admin/settings/actions.ts",
       "source_location": "L301",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "savazai_console_src_app_admin_settings_actions_ts",
-      "target": "settings_actions_saveagentsmd",
-      "confidence_score": 1.0
+      "target": "settings_actions_saveagentsmd"
     },
     {
       "relation": "imports_from",
@@ -33796,9 +33796,9 @@
       "source_file": "savazai-console/src/components/settings-dashboard.tsx",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "savazai_console_src_components_settings_dashboard_tsx",
-      "target": "settings_actions_readagentsmd",
-      "confidence_score": 1.0
+      "target": "settings_actions_readagentsmd"
     },
     {
       "relation": "imports",
@@ -33807,9 +33807,9 @@
       "source_file": "savazai-console/src/components/settings-dashboard.tsx",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "savazai_console_src_components_settings_dashboard_tsx",
-      "target": "settings_actions_saveagentsmd",
-      "confidence_score": 1.0
+      "target": "settings_actions_saveagentsmd"
     },
     {
       "relation": "imports_from",
@@ -34574,9 +34574,9 @@
       "source_file": "savazai-console/src/components/settings-dashboard.tsx",
       "source_location": "L37",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "savazai_console_src_components_settings_dashboard_tsx",
-      "target": "components_settings_dashboard_customskill",
-      "confidence_score": 1.0
+      "target": "components_settings_dashboard_customskill"
     },
     {
       "relation": "contains",
@@ -52006,5 +52006,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "2366252a742e4356bb2ecd5d22b741782c5e80eb"
+  "built_at_commit": "29b2f7f079deee4befacba8facbee840c61c42e7"
 }

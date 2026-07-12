@@ -1,7 +1,7 @@
 # Graph Report - savazai-harness  (2026-07-12)
 
 ## Corpus Check
-- 183 files · ~82,162 words
+- 183 files · ~82,227 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2366252a`
+- Built from commit: `29b2f7f0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -341,7 +341,7 @@ Nodes (35): 1. Name Browser Sessions Semantically, 2. Always Clean Up, 3. Delete
 
 ### Community 9 - "Community 9"
 Cohesion: 0.17
-Nodes (12): 6.11 Use useTransition Over Manual Loading States, 6.1 Animate SVG Wrapper Instead of SVG Element, 6.7 Use Activity Component for Show/Hide, 6.8 Use defer or async on Script Tags, 6. Rendering Performance, code:tsx (function LoadingSpinner() {), code:tsx (function LoadingSpinner() {), code:tsx (import { Activity } from 'react') (+4 more)
+Nodes (12): 6.11 Use useTransition Over Manual Loading States, 6.2 CSS content-visibility for Long Lists, 6.6 Suppress Expected Hydration Mismatches, 6.7 Use Activity Component for Show/Hide, 6. Rendering Performance, code:css (.message-item {), code:tsx (function MessageList({ messages }: { messages: Message[] }) ), code:tsx (function Timestamp() {) (+4 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.29
@@ -541,7 +541,7 @@ Nodes (7): code:bash (# Save to auto-generated filename (storage-state-{timestam
 
 ### Community 70 - "Community 70"
 Cohesion: 0.29
-Nodes (7): 7.6 Combine Multiple Array Iterations, 7.9 Early Return from Functions, 7. JavaScript Performance, code:typescript (const admins = users.filter(u => u.isAdmin)), code:typescript (const admins: User[] = []), code:typescript (function validateUsers(users: User[]) {), code:typescript (function validateUsers(users: User[]) {)
+Nodes (7): 7.2 Build Index Maps for Repeated Lookups, 7.9 Early Return from Functions, 7. JavaScript Performance, code:typescript (function processOrders(orders: Order[], users: User[]) {), code:typescript (function processOrders(orders: Order[], users: User[]) {), code:typescript (function validateUsers(users: User[]) {), code:typescript (function validateUsers(users: User[]) {)
 
 ### Community 71 - "Community 71"
 Cohesion: 0.33
@@ -868,8 +868,8 @@ Cohesion: 0.50
 Nodes (3): agent, rules, plugin
 
 ### Community 154 - "Community 154"
-Cohesion: 0.12
-Nodes (17): description, embedding, skill_name, name, name, notNull, primaryKey, type (+9 more)
+Cohesion: 0.14
+Nodes (15): created_at, embedding, skill_name, default, name, primaryKey, type, name (+7 more)
 
 ### Community 156 - "Community 156"
 Cohesion: 0.18
@@ -1020,8 +1020,8 @@ Cohesion: 0.15
 Nodes (14): uniqueConstraints, checkConstraints, compositePrimaryKeys, foreignKeys, isRLSEnabled, name, policies, schema (+6 more)
 
 ### Community 201 - "Community 201"
-Cohesion: 0.20
-Nodes (10): default, name, notNull, primaryKey, type, allowed_mcp_tools, created_at, default (+2 more)
+Cohesion: 0.33
+Nodes (6): default, name, notNull, primaryKey, type, allowed_mcp_tools
 
 ### Community 202 - "Community 202"
 Cohesion: 0.40
@@ -1100,8 +1100,8 @@ Cohesion: 0.18
 Nodes (11): name, notNull, primaryKey, type, agent_name, system_prompt, columns, name (+3 more)
 
 ### Community 222 - "Community 222"
-Cohesion: 0.18
-Nodes (11): name, notNull, primaryKey, type, bearer_token_hash, description, name, notNull (+3 more)
+Cohesion: 0.13
+Nodes (16): description, mcp_endpoint_url, skill_name, name, notNull, primaryKey, type, name (+8 more)
 
 ### Community 223 - "Community 223"
 Cohesion: 0.18
@@ -1112,8 +1112,8 @@ Cohesion: 0.18
 Nodes (11): masked_content, role, name, notNull, primaryKey, type, columns, name (+3 more)
 
 ### Community 225 - "Community 225"
-Cohesion: 0.20
-Nodes (10): name, notNull, primaryKey, type, app_name, mcp_endpoint_url, name, notNull (+2 more)
+Cohesion: 0.18
+Nodes (11): name, notNull, primaryKey, type, name, notNull, primaryKey, type (+3 more)
 
 ### Community 226 - "Community 226"
 Cohesion: 0.22
@@ -1156,8 +1156,8 @@ Cohesion: 0.33
 Nodes (6): session_id, default, name, notNull, primaryKey, type
 
 ### Community 237 - "Community 237"
-Cohesion: 0.67
-Nodes (3): 7.2 Build Index Maps for Repeated Lookups, code:typescript (function processOrders(orders: Order[], users: User[]) {), code:typescript (function processOrders(orders: Order[], users: User[]) {)
+Cohesion: 0.33
+Nodes (6): description, name, notNull, primaryKey, type, primaryKey
 
 ### Community 238 - "Community 238"
 Cohesion: 0.29
@@ -1168,8 +1168,8 @@ Cohesion: 0.40
 Nodes (5): role, name, notNull, primaryKey, type
 
 ### Community 240 - "Community 240"
-Cohesion: 0.33
-Nodes (6): skill_name, primaryKey, name, notNull, primaryKey, type
+Cohesion: 0.67
+Nodes (3): 6.1 Animate SVG Wrapper Instead of SVG Element, code:tsx (function LoadingSpinner() {), code:tsx (function LoadingSpinner() {)
 
 ### Community 241 - "Community 241"
 Cohesion: 0.40
@@ -1245,7 +1245,7 @@ Nodes (10): columns, name, nullsNotDistinct, uniqueConstraints, uniqueConstraint
 
 ### Community 267 - "Community 267"
 Cohesion: 0.67
-Nodes (3): 6.6 Suppress Expected Hydration Mismatches, code:tsx (function Timestamp() {), code:tsx (function Timestamp() {)
+Nodes (3): 6.8 Use defer or async on Script Tags, code:tsx (export default function Document() {), code:tsx (import Script from 'next/script')
 
 ### Community 268 - "Community 268"
 Cohesion: 0.40
@@ -1265,7 +1265,7 @@ Nodes (3): 7.8 Early Length Check for Array Comparisons, code:typescript (functi
 
 ### Community 272 - "Community 272"
 Cohesion: 0.67
-Nodes (3): 6.2 CSS content-visibility for Long Lists, code:css (.message-item {), code:tsx (function MessageList({ messages }: { messages: Message[] }) )
+Nodes (3): 7.6 Combine Multiple Array Iterations, code:typescript (const admins = users.filter(u => u.isAdmin)), code:typescript (const admins: User[] = [])
 
 ### Community 273 - "Community 273"
 Cohesion: 0.67
@@ -1281,7 +1281,7 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `React Best Practices` connect `Community 86` to `Community 2`, `Community 70`, `Community 39`, `Community 233`, `Community 9`, `Community 53`, `Community 59`, `Community 61`?**
   _High betweenness centrality (0.007) - this node is a cross-community bridge._
-- **Why does `6. Rendering Performance` connect `Community 9` to `Community 263`, `Community 267`, `Community 272`, `Community 273`, `Community 243`, `Community 86`, `Community 249`, `Community 250`?**
+- **Why does `6. Rendering Performance` connect `Community 9` to `Community 263`, `Community 267`, `Community 240`, `Community 273`, `Community 243`, `Community 86`, `Community 249`, `Community 250`?**
   _High betweenness centrality (0.004) - this node is a cross-community bridge._
 - **Why does `columns` connect `Community 30` to `Community 239`, `Community 209`, `Community 81`, `Community 184`, `Community 252`, `Community 63`?**
   _High betweenness centrality (0.003) - this node is a cross-community bridge._
