@@ -32,6 +32,7 @@ export const GraphStateSchema = z.object({
   activeTools: z.array(z.string()).optional(),
   decidedToolName: z.string().optional(),
   decidedToolArgs: z.record(z.string(), z.any()).optional(),
+  executedTools: z.array(z.string()).optional(),
 });
 
 export type GraphState = z.infer<typeof GraphStateSchema>;
@@ -88,6 +89,14 @@ const StateAnnotation = Annotation.Root({
   decidedToolArgs: Annotation<Record<string, any> | undefined>({
     reducer: (x, y) => y ?? x,
     default: () => undefined,
+  }),
+  executedTools: Annotation<string[] | undefined>({
+    reducer: (x, y) => [...new Set([...(x ?? []), ...(y ?? [])])],
+    default: () => undefined,
+  }),
+  toolExecutedInCurrentNode: Annotation<boolean>({
+    reducer: (x, y) => y ?? false,
+    default: () => false,
   }),
 });
 
@@ -344,6 +353,34 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
       prompt: a.systemPrompt ?? "",
     }));
 
+    // Load ambient context parameters (e.g. weddingId) from system configurations
+    let ambientContextParams: Record<string, string> = {};
+    try {
+      const configs = await db.select().from(systemConfigurations).limit(1);
+      if (configs.length > 0 && configs[0].designTokens) {
+        const dt = configs[0].designTokens as any;
+        const defaultParams = dt.defaultAmbientParameters;
+        if (defaultParams) {
+          if (typeof defaultParams === "string") {
+            try {
+              ambientContextParams = JSON.parse(defaultParams);
+            } catch {
+              defaultParams.split("\n").forEach((line: string) => {
+                const parts = line.split(":");
+                if (parts.length >= 2) {
+                  ambientContextParams[parts[0].trim()] = parts.slice(1).join(":").trim();
+                }
+              });
+            }
+          } else {
+            ambientContextParams = defaultParams;
+          }
+        }
+      }
+    } catch (e) {
+      console.error("[supervisorNode] Failed to load ambient context params:", e);
+    }
+
     const activeToolsList = [
       ...skillTools.map((s) => ({
         name: s.name,
@@ -366,6 +403,20 @@ ${customOrchestrationRules ? `Orchestration Rules (Plan-Act Loop):\n${customOrch
 4. If more steps are needed, output "target_action": "mcp_action" or "target_action": "sub_agent" to continue.
 5. If all goals are fulfilled, output "target_action": "respond" and formulate the final synthesized reply in the "response" field.`}
 
+## IRONCLAD TOOL GATING — NEVER HALLUCINATE DATA
+- You are an orchestration layer. You do NOT generate or fabricate data.
+- If a user asks about "guests", "attendance", "invites", "RSVPs", you MUST call the tool "list_guests". Never assume data exists.
+- If a user asks about "tasks", "checklist", "to-do", "timeline", you MUST call "list_tasks".
+- If a user asks about "ceremonies", "events", "schedules", "program", you MUST call "list_ceremonies".
+- If a user asks about "vendors", "suppliers", "caterers", you MUST call "list_vendors".
+- The Available Tools & Skills section below contains the ONLY tools you may use. Never call a tool not listed there.
+- Never substitute mock data, placeholder markdown rows, or conversational templates for an actual tool execution block. If a tool execution returns an error or empty result, relay that fact to the user — do not invent data.
+
+## Context Parameters (available for use in tool arguments):
+${JSON.stringify(ambientContextParams, null, 2)}
+
+You MUST use these values when calling tools that require them. For example, if "weddingId" is present, pass it as a required argument to "list_guests", "list_vendors", "list_tasks", and other scoped tools.
+
 Available Sub-Agents:
 ${JSON.stringify(activeAgentsList, null, 2)}
 
@@ -376,11 +427,11 @@ You MUST respond with a JSON object strictly matching this schema:
 {
   "target_action": "sub_agent" | "mcp_action" | "respond" | "end",
   "meta": {
-    "agentName": string | null, // Selected agent name if target_action is "sub_agent"
-    "toolName": string | null,  // Selected tool name if target_action is "mcp_action"
-    "arguments": object | null  // Tool arguments if target_action is "mcp_action"
+    "agentName": string | null,
+    "toolName": string | null,
+    "arguments": object | null
   },
-  "response": string | null // Response text if target_action is "respond"
+  "response": string | null
 }
 
 Do not include any other text or formatting. Return only the raw JSON.`;
@@ -393,14 +444,16 @@ Do not include any other text or formatting. Return only the raw JSON.`;
 
     if (state.currentApp) {
       try {
+        console.log("Supervisor Thread History Count:", state.messages.length);
+
         const formattedHistory = state.messages.map((m) => {
-          const role = m.role === "user" ? "user" as const : "assistant" as const;
           let content = m.content;
           if (m.role === "user") {
             const { maskedText } = gateway.maskPayload(content);
             content = maskedText;
           }
-          return { role, content };
+          content = scrubImageContent(content);
+          return { role: m.role, content };
         });
 
         const completion = await llmSwitchboard.executeUniversalCompletion({
@@ -441,6 +494,16 @@ Do not include any other text or formatting. Return only the raw JSON.`;
         } else if (routingDecision === "respond" && selectedAgent) {
           routingDecision = "sub_agent";
         }
+
+        // Intercept multi_tool_use.parallel — extract first nested tool
+        if (decidedToolName === "multi_tool_use.parallel" && Array.isArray(decidedToolArgs)) {
+          const firstTool = decidedToolArgs[0];
+          if (firstTool && firstTool.name) {
+            console.log("[supervisorNode] Intercepted multi_tool_use.parallel, extracting first tool:", firstTool.name);
+            decidedToolName = firstTool.name;
+            decidedToolArgs = firstTool.arguments || {};
+          }
+        }
       } catch (err) {
         console.error("[supervisorNode] planner LLM parsing failed:", err);
       }
@@ -472,19 +535,26 @@ Do not include any other text or formatting. Return only the raw JSON.`;
       decidedToolName: decidedToolName ?? "none",
     });
 
+    console.log("Supervisor Routing Decision:", routingDecision, decidedToolName, decidedToolArgs);
+
     return {
       maskedInput: maskedText,
       tokenMap: Object.fromEntries(tokenMap),
       relevantSkills: decidedToolName ? [decidedToolName] : [],
-      messages: routingDecision === "respond" ? [{
-        role: "assistant" as const,
-        content: responseText || "I'm ready to help.",
-        timestamp: buildTimestamp(),
-      }] : [{
-        role: "system" as const,
-        content: `[supervisor] planner routing to route=${routingDecision} target=${decidedToolName || selectedAgent || "none"}`,
-        timestamp: buildTimestamp(),
-      }],
+      toolExecutedInCurrentNode: false,
+      messages: routingDecision === "respond"
+        ? (state.toolExecutedInCurrentNode
+            ? []
+            : [{
+                role: "assistant" as const,
+                content: responseText || [...state.messages].reverse().find(m => m.role === "assistant")?.content || "I'm ready to help.",
+                timestamp: buildTimestamp(),
+              }])
+        : [{
+            role: "system" as const,
+            content: `[supervisor] planner routing to route=${routingDecision} target=${decidedToolName || selectedAgent || "none"}`,
+            timestamp: buildTimestamp(),
+          }],
       routingDecision,
       activeSubAgent: selectedAgent ?? state.activeSubAgent,
       decidedToolName,
@@ -613,15 +683,13 @@ Return ONLY the raw prompt text, without any markdown formatting or meta comment
 }
 
 function extractAndFormatImages(rawText: string): { cleanText: string; markdownImages: string[] } {
-  // Matches base64 data URLs: e.g. data:image/jpeg;base64,...
-  const base64Regex = /data:image\/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+/g;
-  const matches = rawText.match(base64Regex) || [];
-
   let cleanText = rawText;
   const markdownImages: string[] = [];
 
+  // Strip base64 image data URLs
+  const base64Regex = /data:image\/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+/g;
   let count = 1;
-  for (const match of matches) {
+  for (const match of rawText.match(base64Regex) || []) {
     if (match.length > 100) {
       const placeholder = `[Image Asset #${count}]`;
       cleanText = cleanText.replace(match, placeholder);
@@ -630,7 +698,27 @@ function extractAndFormatImages(rawText: string): { cleanText: string; markdownI
     }
   }
 
+  // Strip image file URL references (e.g. image.png, photo.jpg)
+  const imageFileRegex = /[\w\-./]+\.(png|jpg|jpeg|gif|webp|svg|bmp)/gi;
+  for (const match of rawText.match(imageFileRegex) || []) {
+    if (cleanText.includes(match)) {
+      const placeholder = `[Image Asset #${count}]`;
+      cleanText = cleanText.replace(new RegExp(match.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), placeholder);
+      markdownImages.push(`![Image File ${count}](${match})`);
+      count++;
+    }
+  }
+
   return { cleanText, markdownImages };
+}
+
+function scrubImageContent(text: string): string {
+  return text
+    .replace(/data:[^;]+;base64,[A-Za-z0-9+/=]+/g, '[Binary Data]')
+    .replace(/[\w\-./\\]+\.(png|jpg|jpeg|gif|webp|svg|bmp|ico|tiff?)/gi, '[Image Reference]')
+    .replace(/<img[^>]*>/gi, '[Image]')
+    .replace(/!\[.*?\]\(.*?\)/g, '[Image]')
+    .replace(/https?:\/\/[^\s]+\.(png|jpg|jpeg|gif|webp|svg)/gi, '[Image URL]');
 }
 
 async function mcpActionNode(state: typeof StateAnnotation.State, config?: any) {
@@ -639,13 +727,6 @@ async function mcpActionNode(state: typeof StateAnnotation.State, config?: any) 
   const span = telemetry.startSpan(requestId, "mcpActionNode");
 
   try {
-    const gateway = new PrivacyGateway();
-    const latestMessage = state.messages[state.messages.length - 1];
-    const unmasked = gateway.unmaskPayload(
-      latestMessage?.content ?? "",
-      new Map(Object.entries(state.tokenMap)),
-    );
-
     const toolName = state.decidedToolName;
     const toolArgs = state.decidedToolArgs || {};
 
@@ -800,46 +881,42 @@ async function mcpActionNode(state: typeof StateAnnotation.State, config?: any) 
       }
     }
 
-    const { cleanText: cleanResultText, markdownImages } = extractAndFormatImages(resultText);
+    const { cleanText: cleanResultText } = extractAndFormatImages(resultText);
 
-    let finalFormattedResponse = "";
-    if (markdownImages.length > 0) {
-      let fallbackText = cleanResultText;
-      for (let i = 0; i < markdownImages.length; i++) {
-        const placeholder = `[Image Asset #${i + 1}]`;
-        fallbackText = fallbackText.replace(placeholder, `\n\n${markdownImages[i]}\n\n`);
-      }
-      finalFormattedResponse = `Tool Execution Result:\n${fallbackText}`;
-    } else {
-      finalFormattedResponse = `Tool Execution Result:\n${resultText}`;
-    }
+    // ALWAYS store clean text in state — never include image data or raw tool output.
+    // Restoring image placeholders here would poison subsequent LLM calls (supervisor re-evaluation).
+    let finalFormattedResponse = `Tool Execution Result:\n${cleanResultText}`;
 
     if (state.currentApp) {
       await registerAppProvider(state.currentApp, state.modelConfig);
       try {
+        const scrubbedResult = scrubImageContent(cleanResultText);
         const prompt = `You are a helpful assistant. The tool "${toolName}" was executed to fulfill the user's request.
-Here is the tool output (sensitive PII has been masked, and any large base64 image data has been replaced with placeholders like [Image Asset #1]):
-${cleanResultText}
+Here is the tool output (any image data has been replaced with placeholders):
+${scrubbedResult}
 
-Transform raw technical JSON metrics into a clean, human-readable narrative. Never print massive inline code dumps or raw JSON blocks unless explicitly requested.
-Refer to [Image Asset #1], [Image Asset #2], etc., inline in your narrative where appropriate so they render properly.`;
+Transform raw technical JSON metrics into a clean, human-readable narrative. Never print massive inline code dumps or raw JSON blocks unless explicitly requested.`;
 
+        const userQuery = [...state.messages].reverse().find((m) => m.role === "user");
+        const rawQuery = userQuery?.content || "";
+        const scrubbedQuery = scrubImageContent(rawQuery);
+        const { cleanText: cleanUserQuery } = extractAndFormatImages(scrubbedQuery);
         const summary = await llmSwitchboard.executeUniversalCompletion({
           messages: [
             { role: "system", content: prompt },
-            { role: "user", content: unmasked },
+            { role: "user", content: cleanUserQuery },
           ],
           providerId: state.currentApp,
           options: { requestId },
         });
 
-        let formattedText = summary.text;
-        for (let i = 0; i < markdownImages.length; i++) {
-          formattedText = formattedText.replace(new RegExp(`\\[?Image Asset #${i + 1}\\]?`, 'g'), markdownImages[i]);
-        }
-        finalFormattedResponse = formattedText;
+        finalFormattedResponse = summary.text;
       } catch (err) {
-        console.error("Failed to generate tool output summary:", err);
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error("Failed to generate tool output summary:", errMsg);
+        if (errMsg.toLowerCase().includes("image")) {
+          console.warn("[mcpActionNode] Image-related error suppressed — using clean tool output as fallback.");
+        }
       }
     }
 
@@ -854,6 +931,8 @@ Refer to [Image Asset #1], [Image Asset #2], etc., inline in your narrative wher
         timestamp: buildTimestamp(),
       }],
       routingDecision: "respond" as const,
+      executedTools: toolName ? [toolName] : [],
+      toolExecutedInCurrentNode: true,
     };
   } catch (err) {
     telemetry.endSpan(requestId, span, {
@@ -949,6 +1028,23 @@ async function correctorNode(state: typeof StateAnnotation.State, config?: any) 
   }
 }
 
+function sanitizeOutput(text: string): string {
+  // Strip supervisor routing tags like [supervisor] planner routing...
+  let clean = text.replace(/\[supervisor\]\s*planner routing.*$/gm, '').trim();
+  // Strip PENDING_APPROVAL freeze markers
+  clean = clean.replace(/PENDING_APPROVAL:\s*delete action detected.*$/gm, '').trim();
+  // Strip any leftover JSON object literals that start with {"supervisor"
+  clean = clean.replace(/\{"supervisor":.*?"\}/gms, '').trim();
+  // Strip stray { "target_action": ... } or { "meta": ... } patterns (non-narrative JSON)
+  clean = clean.replace(/\{\s*"target_action"\s*:.*?\}/gms, '').trim();
+  clean = clean.replace(/\{\s*"meta"\s*:.*?\}/gms, '').trim();
+  // Strip MASK tokens that may have leaked through
+  clean = clean.replace(/\[MASK_\w+_\d+\]/g, '[REDACTED]').trim();
+  // Collapse multiple newlines
+  clean = clean.replace(/\n{3,}/g, '\n\n').trim();
+  return clean;
+}
+
 async function respondNode(state: typeof StateAnnotation.State, config?: any) {
   const requestId = config?.configurable?.requestId ?? "global";
   const telemetry = TelemetryGateway.getInstance();
@@ -958,22 +1054,23 @@ async function respondNode(state: typeof StateAnnotation.State, config?: any) {
     const lastMessage = state.messages[state.messages.length - 1];
     const gateway = new PrivacyGateway();
 
+    let finalContent = lastMessage?.content ?? "";
+
     if (lastMessage && Object.keys(state.tokenMap).length > 0) {
-      const unmasked = gateway.unmaskPayload(
+      finalContent = gateway.unmaskPayload(
         lastMessage.content,
         new Map(Object.entries(state.tokenMap)),
       );
-      telemetry.endSpan(requestId, span);
-      await telemetry.endTrace(requestId);
-      return {
-        messages: [{ ...lastMessage, content: unmasked }],
-        routingDecision: "end",
-      };
     }
+
+    finalContent = sanitizeOutput(finalContent);
 
     telemetry.endSpan(requestId, span);
     await telemetry.endTrace(requestId);
-    return { messages: [], routingDecision: "end" };
+    return {
+      messages: [{ ...lastMessage, content: finalContent }],
+      routingDecision: "end",
+    };
   } catch (err) {
     telemetry.endSpan(requestId, span, {
       error: err instanceof Error ? err.message : String(err),
@@ -991,7 +1088,40 @@ function verifierRoutingLogic(state: typeof StateAnnotation.State): string {
 }
 
 function agentRoutingLogic(state: typeof StateAnnotation.State): string {
-  return state.routingDecision ?? "respond";
+  const decision = state.routingDecision ?? "respond";
+
+  // Guardrail: only block if the EXACT same tool is being re-executed.
+  // Different tools (e.g. get_wedding → list_guests) are always allowed through.
+  if (decision === "mcp_action" && state.decidedToolName && state.executedTools) {
+    if (state.executedTools.includes(state.decidedToolName)) {
+      console.log("[agentRoutingLogic] Dedup guardrail fired — tool already executed, forcing respond. Tool:", state.decidedToolName, "Executed:", state.executedTools);
+      return "respond";
+    }
+    console.log("[agentRoutingLogic] Routing to mcpAction — new tool not yet executed. Tool:", state.decidedToolName, "Already executed:", state.executedTools);
+  }
+
+  // Safety net: if responding but user intent seems unfulfilled, log warning
+  if (decision === "respond" && state.executedTools && state.executedTools.length > 0) {
+    const userMsg = [...state.messages].reverse().find(m => m.role === "user");
+    const userText = userMsg?.content?.toLowerCase() ?? "";
+    const keywordToolMap: Record<string, string[]> = {
+      guest: ["list_guests"], attendance: ["list_guests"], invite: ["list_guests"], rsvp: ["list_guests"],
+      task: ["list_tasks"], todo: ["list_tasks"], checklist: ["list_tasks"], timeline: ["list_tasks"],
+      ceremony: ["list_ceremonies"], event: ["list_ceremonies"], schedule: ["list_ceremonies"], program: ["list_ceremonies"],
+      vendor: ["list_vendors"], supplier: ["list_vendors"], caterer: ["list_vendors"],
+    };
+    for (const [keyword, requiredTools] of Object.entries(keywordToolMap)) {
+      if (userText.includes(keyword)) {
+        for (const requiredTool of requiredTools) {
+          if (!state.executedTools.includes(requiredTool)) {
+            console.warn(`[agentRoutingLogic] WARNING: user mentioned "${keyword}" but "${requiredTool}" has NOT been executed yet! routingDecision is "${decision}". Executed:`, state.executedTools);
+          }
+        }
+      }
+    }
+  }
+
+  return decision;
 }
 
 const graph = new StateGraph(StateAnnotation)
@@ -1010,7 +1140,7 @@ const graph = new StateGraph(StateAnnotation)
     end: END,
   })
   .addEdge("subAgent", "verifier")
-  .addEdge("mcpAction", "verifier")
+  .addEdge("mcpAction", "supervisor")
   .addConditionalEdges("verifier", verifierRoutingLogic, {
     correct: "corrector",
     respond: "supervisor",
@@ -1022,7 +1152,7 @@ export const compiledGraph = graph.compile({ checkpointer: new MemorySaver() });
 export type GraphAnnotationType = typeof StateAnnotation;
 
 export async function* streamGraphEvents(
-  input: GraphState,
+  input: Partial<GraphState>,
   options?: { requestId?: string; threadId?: string },
 ): AsyncGenerator<unknown> {
   const stream = await compiledGraph.stream(input, {

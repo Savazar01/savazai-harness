@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Activity,
   ShieldCheck,
@@ -9,6 +9,9 @@ import {
   ChevronRight,
   ChevronLeft,
   Terminal,
+  ChevronDown,
+  ChevronUp,
+  Code,
 } from "lucide-react";
 
 export interface TraceEvent {
@@ -17,6 +20,11 @@ export interface TraceEvent {
   label: string;
   detail?: string;
   timestamp: string;
+  payload?: {
+    input?: string;
+    llmDecision?: string;
+    response?: string;
+  };
 }
 
 interface SystemTraceProps {
@@ -53,6 +61,28 @@ function TraceBadge({ type }: { type: TraceEvent["type"] }) {
       <TraceIcon type={type} />
       {type}
     </span>
+  );
+}
+
+function CodeBlock({ label, content }: { label: string; content: string }) {
+  const [open, setOpen] = useState(false);
+  if (!content) return null;
+  return (
+    <div className="border-t border-slate-800/60 pt-1.5 mt-1.5">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 text-[10px] font-medium text-slate-500 hover:text-slate-300 transition-colors w-full text-left"
+      >
+        <Code className="h-3 w-3 shrink-0" />
+        {label}
+        {open ? <ChevronUp className="h-3 w-3 ml-auto" /> : <ChevronDown className="h-3 w-3 ml-auto" />}
+      </button>
+      {open && (
+        <pre className="mt-1 p-2 rounded-lg bg-slate-950 border border-slate-800 text-[10px] text-slate-400 font-mono whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
+          {content}
+        </pre>
+      )}
+    </div>
   );
 }
 
@@ -95,29 +125,48 @@ export function SystemTrace({ events, isOpen, onToggle }: SystemTraceProps) {
             </p>
           ) : (
             events.map((event) => (
-              <div
-                key={event.id}
-                className="rounded-xl border border-slate-900 bg-slate-900/20 p-3 space-y-1.5"
-              >
-                <div className="flex items-center justify-between">
-                  <TraceBadge type={event.type} />
-                  <span className="text-[10px] text-slate-600">
-                    {new Date(event.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-                <p className="text-xs font-medium text-slate-300">
-                  {event.label}
-                </p>
-                {event.detail && (
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
-                    {event.detail}
-                  </p>
-                )}
-              </div>
+              <TraceEventCard key={event.id} event={event} />
             ))
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function TraceEventCard({ event }: { event: TraceEvent }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const hasPayload = event.payload?.input || event.payload?.llmDecision || event.payload?.response;
+
+  return (
+    <div
+      className={`rounded-xl border border-slate-900 bg-slate-900/20 p-3 space-y-1.5 transition-all ${
+        hasPayload ? "cursor-pointer hover:bg-slate-900/30" : ""
+      }`}
+      onClick={() => hasPayload && setExpanded(!expanded)}
+    >
+      <div className="flex items-center justify-between">
+        <TraceBadge type={event.type} />
+        <span className="text-[10px] text-slate-600">
+          {new Date(event.timestamp).toLocaleTimeString()}
+        </span>
+      </div>
+      <p className="text-xs font-medium text-slate-300">
+        {event.label}
+      </p>
+      {event.detail && (
+        <p className="text-[11px] text-slate-500 leading-relaxed">
+          {event.detail}
+        </p>
+      )}
+      {expanded && event.payload && (
+        <div className="mt-2 space-y-1">
+          <CodeBlock label="Input Object Payload" content={event.payload.input || ""} />
+          <CodeBlock label="Raw LLM JSON Decision" content={event.payload.llmDecision || ""} />
+          <CodeBlock label="Returned Response" content={event.payload.response || ""} />
+        </div>
+      )}
     </div>
   );
 }

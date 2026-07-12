@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import crypto from "node:crypto";
 import { PrivacyGateway } from "./utils/privacy-gateway.js";
-import { compiledGraph, streamGraphEvents } from "./orchestrator/graph.js";
+import { compiledGraph, streamGraphEvents, type GraphState } from "./orchestrator/graph.js";
 import { eventOrchestrator, OrchestratedEventSchema } from "./orchestrator/event-orchestrator.js";
 import { StreamBroadcaster } from "./utils/stream-broadcaster.js";
 
@@ -38,17 +38,13 @@ app.post("/api/graph/invoke", async (req, res) => {
     return;
   }
   const requestId = crypto.randomUUID();
-  const result = await compiledGraph.invoke({
+  const invokeInput: Partial<GraphState> = {
     messages: [{ role: "user", content: message, timestamp: new Date().toISOString() }],
-    currentApp: currentApp ?? "",
-    activeSubAgent: "",
-    tokenMap: {},
-    relevantSkills: [],
-    verificationFailures: [],
-    correctAttempts: 0,
-    modelConfig: modelConfig ?? undefined,
-    activeTools: activeTools ?? undefined,
-  }, {
+  };
+  if (currentApp) invokeInput.currentApp = currentApp;
+  if (modelConfig) invokeInput.modelConfig = modelConfig;
+  if (activeTools) invokeInput.activeTools = activeTools;
+  const result = await compiledGraph.invoke(invokeInput as GraphState, {
     configurable: { requestId, thread_id: threadId || "default-thread" }
   });
   res.json(result);
@@ -71,17 +67,12 @@ app.post("/api/graph/invoke/stream", async (req, res) => {
   const requestId = crypto.randomUUID();
 
   try {
-    const input = {
+    const input: Partial<GraphState> = {
       messages: [{ role: "user" as const, content: message, timestamp: new Date().toISOString() }],
-      currentApp: currentApp ?? "",
-      activeSubAgent: "",
-      tokenMap: {},
-      relevantSkills: [],
-      verificationFailures: [],
-      correctAttempts: 0,
-      modelConfig: modelConfig ?? undefined,
-      activeTools: activeTools ?? undefined,
     };
+    if (currentApp) input.currentApp = currentApp;
+    if (modelConfig) input.modelConfig = modelConfig;
+    if (activeTools) input.activeTools = activeTools;
 
     for await (const chunk of streamGraphEvents(input, { requestId, threadId })) {
       if (broadcaster.isClosed) break;

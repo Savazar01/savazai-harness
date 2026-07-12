@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Send, Loader2, PanelRightOpen, PanelRightClose, Paperclip, X, ChevronDown } from "lucide-react";
+import { Send, PanelRightOpen, PanelRightClose, Paperclip, X, ChevronDown, Square } from "lucide-react";
 import { ChatMessage, type ChatMessageData } from "./chat-message";
 import { SystemTrace, type TraceEvent } from "./system-trace";
 import { streamFromBackend } from "@/lib/stream-client";
@@ -63,7 +63,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
   const defaultModel = storedProviders[defaultProvider]?.defaultModel || MODEL_PRESETS[defaultProvider]?.[0] || "";
 
   const [messages, setMessages] = useState<ChatMessageData[]>([]);
-  const [threadId] = useState(() => `thread_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+  const [threadId, setThreadId] = useState(() => `thread_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [traceEvents, setTraceEvents] = useState<TraceEvent[]>([]);
@@ -76,6 +76,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const threadRegisteredRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -115,11 +116,29 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.threadId) {
+        setMessages([]);
+        setTraceEvents([]);
+        setError(null);
+        setInput("");
+        setAttachedFiles([]);
+        setActiveTools(new Set());
+        setThreadId(detail.threadId);
+        threadRegisteredRef.current = false;
+      }
+    };
+    window.addEventListener("savazai-new-chat", handler);
+    return () => window.removeEventListener("savazai-new-chat", handler);
+  }, []);
+
   const addTrace = useCallback(
-    (type: TraceEvent["type"], label: string, detail?: string) => {
+    (type: TraceEvent["type"], label: string, detail?: string, payload?: { input?: string; llmDecision?: string; response?: string }) => {
       setTraceEvents((prev) => [
         ...prev,
-        { id: traceId(), type, label, detail, timestamp: new Date().toISOString() },
+        { id: traceId(), type, label, detail, timestamp: new Date().toISOString(), payload },
       ]);
     },
     [],
@@ -189,6 +208,12 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
     setMessages((prev) => [...prev, assistantMsg]);
     setStreaming(true);
 
+    if (!threadRegisteredRef.current) {
+      const threadTitle = text.length > 60 ? text.slice(0, 57) + "..." : text;
+      window.dispatchEvent(new CustomEvent("savazai-thread-created", { detail: { threadId, title: threadTitle, createdAt: new Date().toISOString() } }));
+      threadRegisteredRef.current = true;
+    }
+
     addTrace("node", "Supervisor Node", "Routing message through agent graph");
     addTrace("masking", "PII Gateway Active", "Scanning input for sensitive data");
 
@@ -202,19 +227,26 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
         "WedPlanAI-Local",
         (event) => {
           if (event.node) {
-            addTrace("node", `${event.node} Node`, "Node execution started");
+            addTrace("node", `${event.node} Node`, "Node execution started", {
+              input: event.state ? JSON.stringify(event.state, null, 2).slice(0, 800) : undefined,
+              llmDecision: event.state?.routingDecision ? JSON.stringify(event.state.routingDecision) : undefined,
+              response: event.state?.messages ? JSON.stringify(event.state.messages.slice(-1)[0], null, 2).slice(0, 600) : undefined,
+            });
           }
           if (event.type === "tool" || event.metadata?.tool) {
             const toolName = event.metadata?.toolName ?? event.metadata?.tool ?? "unknown";
             const toolArgs = event.metadata?.args ? JSON.stringify(event.metadata.args) : undefined;
-            addTrace("tool", `MCP Tool: ${toolName}`, toolArgs ?? "Tool dispatched");
+            addTrace("tool", `MCP Tool: ${toolName}`, toolArgs ?? "Tool dispatched", {
+              input: event.metadata?.args ? JSON.stringify(event.metadata.args, null, 2).slice(0, 600) : undefined,
+              response: event.metadata?.result ? JSON.stringify(event.metadata.result, null, 2).slice(0, 600) : undefined,
+            });
           }
           if (event.metadata?.masked) {
             addTrace("masking", "PII Masked", "Sensitive data tokenized");
           }
           if (event.state?.messages) {
             const msgs = event.state.messages as Array<{ role: string; content: string }>;
-            const lastAssistant = msgs.filter((m) => m.role !== "user").pop();
+            const lastAssistant = msgs.filter((m) => m.role === "assistant").pop();
             if (lastAssistant?.content) {
               setMessages((prev) => {
                 const updated = [...prev];
@@ -505,9 +537,19 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                   onClick={handleSend}
                   disabled={!input.trim() || streaming}
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 hover:bg-indigo-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Send"
                 >
-                  {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  <Send className="h-4 w-4" />
                 </button>
+                {streaming && (
+                  <button
+                    onClick={() => abortRef.current?.abort()}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-600 text-white shadow-lg shadow-red-600/25 hover:bg-red-500 transition-all"
+                    title="Stop Execution"
+                  >
+                    <Square className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
