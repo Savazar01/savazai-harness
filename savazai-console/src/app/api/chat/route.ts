@@ -5,7 +5,7 @@ const BACKEND_URL =
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { message, currentApp, provider, model, files, activeTools } = body;
+  const { message, currentApp, provider, model, files, activeTools, threadId } = body;
 
   const backendUrl = `${BACKEND_URL}/api/graph/invoke/stream?stream-mode=http`;
 
@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
   const payload: Record<string, unknown> = {
     message,
     currentApp: currentApp ?? "WedPlanAI-Local",
+    threadId,
   };
   if (modelConfig) payload.modelConfig = modelConfig;
   if (files && Array.isArray(files) && files.length > 0) payload.files = files;

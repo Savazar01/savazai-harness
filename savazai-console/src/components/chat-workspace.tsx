@@ -63,6 +63,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
   const defaultModel = storedProviders[defaultProvider]?.defaultModel || MODEL_PRESETS[defaultProvider]?.[0] || "";
 
   const [messages, setMessages] = useState<ChatMessageData[]>([]);
+  const [threadId] = useState(() => `thread_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [traceEvents, setTraceEvents] = useState<TraceEvent[]>([]);
@@ -242,6 +243,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
         activeModel,
         filesToSend,
         activeTools.size > 0 ? Array.from(activeTools) : undefined,
+        threadId,
       );
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === "AbortError") return;
@@ -263,7 +265,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
       abortRef.current = null;
       setAttachedFiles([]);
     }
-  }, [input, streaming, addTrace, activeProvider, activeModel, attachedFiles, activeTools]);
+  }, [input, streaming, addTrace, activeProvider, activeModel, attachedFiles, activeTools, threadId]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {

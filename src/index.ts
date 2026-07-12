@@ -32,7 +32,7 @@ app.post("/api/test-mask", (req, res) => {
 });
 
 app.post("/api/graph/invoke", async (req, res) => {
-  const { message, currentApp, modelConfig } = req.body;
+  const { message, currentApp, modelConfig, activeTools, threadId } = req.body;
   if (!message || typeof message !== "string") {
     res.status(400).json({ error: "message field required" });
     return;
@@ -47,8 +47,9 @@ app.post("/api/graph/invoke", async (req, res) => {
     verificationFailures: [],
     correctAttempts: 0,
     modelConfig: modelConfig ?? undefined,
+    activeTools: activeTools ?? undefined,
   }, {
-    configurable: { requestId }
+    configurable: { requestId, thread_id: threadId || "default-thread" }
   });
   res.json(result);
 });
@@ -60,7 +61,7 @@ app.post("/api/graph/invoke/stream", async (req, res) => {
     return;
   }
 
-  const { message, currentApp, modelConfig } = req.body;
+  const { message, currentApp, modelConfig, activeTools, threadId } = req.body;
   if (!message || typeof message !== "string") {
     res.status(400).json({ error: "message field required" });
     return;
@@ -79,9 +80,10 @@ app.post("/api/graph/invoke/stream", async (req, res) => {
       verificationFailures: [],
       correctAttempts: 0,
       modelConfig: modelConfig ?? undefined,
+      activeTools: activeTools ?? undefined,
     };
 
-    for await (const chunk of streamGraphEvents(input, requestId)) {
+    for await (const chunk of streamGraphEvents(input, { requestId, threadId })) {
       if (broadcaster.isClosed) break;
       broadcaster.send(chunk);
     }

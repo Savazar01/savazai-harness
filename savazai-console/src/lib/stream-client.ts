@@ -17,11 +17,12 @@ export async function streamFromBackend(
   model?: string,
   files?: Array<{ name: string; size: number; data: string; mime: string }>,
   activeTools?: string[],
+  threadId?: string,
 ): Promise<void> {
   const response = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, currentApp, provider, model, files, activeTools }),
+    body: JSON.stringify({ message, currentApp, provider, model, files, activeTools, threadId }),
     signal,
   });
 

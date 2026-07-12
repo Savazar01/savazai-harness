@@ -34,17 +34,23 @@ function isRetryable(err: unknown): boolean {
 
 interface LLMDriver {
   execute(messages: { role: string; content: string }[], options?: Record<string, unknown>): Promise<UniversalResult>;
+  bind_tools?(tools: any[]): void;
 }
 
 class OpenAICompatibleDriver implements LLMDriver {
   private baseUrl: string;
   private modelName: string;
   private apiKey: string;
+  private boundTools?: any[];
 
   constructor(config: ProviderConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, "");
     this.modelName = config.modelName;
     this.apiKey = config.apiKey;
+  }
+
+  bind_tools(tools: any[]): void {
+    this.boundTools = tools;
   }
 
   async execute(
@@ -58,11 +64,21 @@ class OpenAICompatibleDriver implements LLMDriver {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { requestId, ...restOptions } = options || {};
 
+    const bodyPayload: Record<string, any> = {
+      model: this.modelName,
+      messages,
+      ...restOptions,
+    };
+
+    if (this.boundTools && this.boundTools.length > 0) {
+      bodyPayload.tools = this.boundTools;
+    }
+
     const res = await fetch(url, {
       method: "POST",
       headers,
       signal: AbortSignal.timeout(30_000),
-      body: JSON.stringify({ model: this.modelName, messages, ...restOptions }),
+      body: JSON.stringify(bodyPayload),
     });
 
     if (!res.ok) {
@@ -95,6 +111,8 @@ class OllamaDriver implements LLMDriver {
     this.baseUrl = config.baseUrl.replace(/\/+$/, "");
     this.modelName = config.modelName;
   }
+
+  bind_tools(_tools: any[]): void {} // eslint-disable-line @typescript-eslint/no-unused-vars
 
   async execute(
     messages: { role: string; content: string }[],
@@ -129,6 +147,8 @@ class AnthropicDriver implements LLMDriver {
     this.apiKey = config.apiKey;
     this.modelName = config.modelName;
   }
+
+  bind_tools(_tools: any[]): void {} // eslint-disable-line @typescript-eslint/no-unused-vars
 
   async execute(
     messages: { role: string; content: string }[],
@@ -183,6 +203,8 @@ class GoogleVertexDriver implements LLMDriver {
     this.modelName = config.modelName;
     this.apiKey = config.apiKey;
   }
+
+  bind_tools(_tools: any[]): void {} // eslint-disable-line @typescript-eslint/no-unused-vars
 
   async execute(
     messages: { role: string; content: string }[],
@@ -322,6 +344,15 @@ export class LLMSwitchboard {
         error: err instanceof Error ? err.message : String(err),
       });
       throw err;
+    }
+  }
+
+  bindToolsToProvider(providerId: string, tools: any[]): void {
+    const config = this.configs.get(providerId) || this.configs.get("primary");
+    if (!config) return;
+    const driver = this.getDriver(config);
+    if (driver && typeof driver.bind_tools === "function") {
+      driver.bind_tools(tools);
     }
   }
 }

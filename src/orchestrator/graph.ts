@@ -1,14 +1,12 @@
-import { StateGraph, Annotation, START, END } from "@langchain/langgraph";
+import { StateGraph, Annotation, START, END, MemorySaver } from "@langchain/langgraph";
 import { z } from "zod";
 import { PrivacyGateway } from "../utils/privacy-gateway.js";
 import { skillTools } from "../utils/skills-loader.js";
-import { findRelevantSkills } from "../utils/vector-matcher.js";
-import { CryptoVault } from "../utils/crypto-vault.js";
 import { llmSwitchboard } from "../services/llm-switchboard.js";
 import { okfVerifier } from "./okf-verifier.js";
 import { db } from "../db/index.js";
 import { autonomousAgents, connectedApps, systemConfigurations, type ModelConfig } from "../db/schema.js";
-import { like, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { TelemetryGateway } from "../utils/telemetry.js";
 
 export const MessageSchema = z.object({
@@ -31,6 +29,9 @@ export const GraphStateSchema = z.object({
     providerType: z.string(),
     modelName: z.string().optional(),
   }).optional(),
+  activeTools: z.array(z.string()).optional(),
+  decidedToolName: z.string().optional(),
+  decidedToolArgs: z.record(z.string(), z.any()).optional(),
 });
 
 export type GraphState = z.infer<typeof GraphStateSchema>;
@@ -76,84 +77,49 @@ const StateAnnotation = Annotation.Root({
     reducer: (x, y) => y ?? x,
     default: () => undefined,
   }),
+  activeTools: Annotation<string[] | undefined>({
+    reducer: (x, y) => y ?? x,
+    default: () => undefined,
+  }),
+  decidedToolName: Annotation<string | undefined>({
+    reducer: (x, y) => y ?? x,
+    default: () => undefined,
+  }),
+  decidedToolArgs: Annotation<Record<string, any> | undefined>({
+    reducer: (x, y) => y ?? x,
+    default: () => undefined,
+  }),
 });
 
-interface AgentProfile {
-  name: string;
-  systemPrompt: string;
-  isEphemeral: boolean;
+interface CachedTools {
+  tools: any[];
+  timestamp: number;
 }
 
-const EPHEMERAL_AGENTS = new Map<string, AgentProfile>();
+const mcpToolCache = new Map<string, CachedTools>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
 
-function detectIntent(text: string): string[] {
-  const lower = text.toLowerCase();
-  const intents: string[] = [];
-  if (/\b(generate|create|make|build)\b.*\b(pdf|document|report)\b/.test(lower)) intents.push("generate-pdf");
-  if (/\b(send|email|mail)\b/.test(lower)) intents.push("send-email");
-  if (/\b(search|find|lookup|query)\b/.test(lower)) intents.push("brave-search");
-  return intents;
-}
-
-function extractDomainContext(text: string): string | null {
-  const patterns = [
-    /\b(wedding|ceremony|marriage|bridal)\b.*\b(plan|manage|organize)\b/i,
-    /\b(corporate|business|enterprise)\b.*\b(event|meeting)\b/i,
-    /\b(conference|seminar|workshop)\b/i,
-    /\b(party|celebration|gathering)\b/i,
-  ];
-  for (const p of patterns) {
-    const m = text.match(p);
-    if (m) return m[0];
-  }
-  return null;
-}
-
-function isCasualOrNoTool(text: string, intents: string[]): boolean {
-  const lower = text.toLowerCase().trim();
-  const greetings = [
-    "hello", "hi", "hey", "hola", "greetings", "good morning", "good afternoon", "good evening",
-    "how are you", "what's up", "yo", "sup", "thanks", "thank you", "bye", "goodbye"
-  ];
-  if (greetings.some(g => lower.startsWith(g) || lower === g)) {
-    return true;
-  }
-  const cleanIntents = intents.filter(i => i !== "none" && i !== "");
-  if (cleanIntents.length === 0) {
-    return true;
-  }
-  return false;
-}
-
-async function lookupMatchingAgent(domainContext: string): Promise<AgentProfile | null> {
+async function resolveAmbientParameter(paramName: string): Promise<string | undefined> {
+  // Try designTokens match
   try {
-    const rows = await db
-      .select()
-      .from(autonomousAgents)
-      .where(like(autonomousAgents.systemPrompt, `%${domainContext}%`))
-      .limit(1);
-    if (rows.length > 0) {
-      return {
-        name: rows[0].agentName,
-        systemPrompt: rows[0].systemPrompt ?? "",
-        isEphemeral: false,
-      };
+    const configs = await db.select().from(systemConfigurations).limit(1);
+    if (configs.length > 0 && configs[0].designTokens) {
+      const dt = configs[0].designTokens as any;
+      if (dt[paramName]) return String(dt[paramName]);
+      // try camelCase/snake_case variations
+      const snake = paramName.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+      if (dt[snake]) return String(dt[snake]);
     }
-  } catch {
-    return null;
+  } catch (err) {
+    console.error(`[resolveAmbientParameter] designTokens search failed for ${paramName}:`, err);
   }
-  return null;
-}
 
-function generateEphemeralAgent(domain: string): AgentProfile {
-  const name = `ephemeral_${domain.replace(/\W+/g, "_").toLowerCase()}_${Date.now()}`;
-  const systemPrompt = `You are a specialized assistant for "${domain}" tasks. ` +
-    `Your role is to handle requests related to ${domain} with precision. ` +
-    `Use the available tools and skills to fulfill the user's request. ` +
-    `Always respect the privacy gateway context when processing sensitive data.`;
-  const profile: AgentProfile = { name, systemPrompt, isEphemeral: true };
-  EPHEMERAL_AGENTS.set(name, profile);
-  return profile;
+  // Try process.env
+  const envKey = paramName.toUpperCase();
+  const envVal = process.env[envKey] || process.env[paramName.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`).toUpperCase()];
+  if (envVal) return envVal;
+
+  return undefined;
 }
 
 async function registerAppProvider(appName: string, modelOverride?: { providerType: string; modelName?: string }): Promise<void> {
@@ -200,6 +166,51 @@ async function registerAppProvider(appName: string, modelOverride?: { providerTy
   }
 }
 
+async function fetchMcpTools(serverUrl: string, headers: Record<string, string>): Promise<any[]> {
+  const cacheKey = `${serverUrl}:${JSON.stringify(headers)}`;
+  const cached = mcpToolCache.get(cacheKey);
+  if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
+    return cached.tools;
+  }
+
+  try {
+    const res = await fetch(serverUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...headers,
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/list",
+        params: {},
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!res.ok) {
+      console.error(`[fetchMcpTools] Failed to fetch tools from ${serverUrl}: HTTP ${res.status}`);
+      return [];
+    }
+
+    const data = (await res.json()) as any;
+    let tools: any[] = [];
+    if (data.result && Array.isArray(data.result.tools)) {
+      tools = data.result.tools;
+    } else if (Array.isArray(data.tools)) {
+      tools = data.tools;
+    } else if (Array.isArray(data)) {
+      tools = data;
+    }
+    mcpToolCache.set(cacheKey, { tools, timestamp: Date.now() });
+    return tools;
+  } catch (err) {
+    console.error(`[fetchMcpTools] Error fetching tools from ${serverUrl}:`, err);
+    return [];
+  }
+}
+
 function buildTimestamp(): string {
   return new Date().toISOString();
 }
@@ -218,107 +229,185 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
 
     span.attributes.maskedText = maskedText;
 
-    let intents = detectIntent(maskedText);
-    let domain = extractDomainContext(maskedText);
-
+    const openAiTools: any[] = [];
+    let mcpServersObj: any = {};
     if (state.currentApp) {
       await registerAppProvider(state.currentApp, state.modelConfig);
+
+      try {
+        const configs = await db.select().from(systemConfigurations).limit(1);
+        const mcpServersValue = configs[0]?.designTokens?.mcpServers;
+        if (mcpServersValue) {
+          if (typeof mcpServersValue === "string") {
+            try {
+              const parsed = JSON.parse(mcpServersValue);
+              mcpServersObj = parsed.mcpServers || parsed;
+            } catch (e) {
+              console.error("Failed to parse mcpServers string:", e);
+            }
+          } else {
+            mcpServersObj = mcpServersValue.mcpServers || mcpServersValue;
+          }
+        }
+
+        let serversToFetch = Object.keys(mcpServersObj);
+        if (state.activeTools) {
+          serversToFetch = serversToFetch.filter((s) => state.activeTools!.includes(s));
+        }
+
+        for (const serverKey of serversToFetch) {
+          const serverConfig = mcpServersObj[serverKey];
+          if (!serverConfig || !serverConfig.serverUrl) continue;
+          const tools = await fetchMcpTools(serverConfig.serverUrl, serverConfig.headers || {});
+          for (const t of tools) {
+            if (!t.name) continue;
+            openAiTools.push({
+              type: "function",
+              function: {
+                name: t.name,
+                description: t.description || "",
+                parameters: t.inputSchema || t.parameters || { type: "object", properties: {} },
+              },
+            });
+          }
+        }
+
+        if (openAiTools.length > 0) {
+          llmSwitchboard.bindToolsToProvider(state.currentApp, openAiTools);
+        }
+      } catch (err) {
+        console.error("[supervisorNode] Failed to load/bind MCP tools:", err);
+      }
+    }
+
+    // Load available database agents
+    let agents: any[] = [];
+    try {
+      agents = await db.select().from(autonomousAgents);
+    } catch (err) {
+      console.error("[supervisorNode] Failed to load database agents:", err);
+    }
+
+    const activeAgentsList = agents.map((a) => ({
+      name: a.agentName,
+      prompt: a.systemPrompt ?? "",
+    }));
+
+    const activeToolsList = [
+      ...skillTools.map((s) => ({
+        name: s.name,
+        description: s.description,
+        parameters: s.parameters,
+      })),
+      ...openAiTools.map((t) => ({
+        name: t.function.name,
+        description: t.function.description,
+        parameters: t.function.parameters,
+      })),
+    ];
+
+    const plannerSystemPrompt = `You are the Autonomous Planner & Supervisor for SavazAI.
+Analyze the user request and determine the optimal target_action and metadata parameter payload.
+
+Available Sub-Agents:
+${JSON.stringify(activeAgentsList, null, 2)}
+
+Available Tools & Skills:
+${JSON.stringify(activeToolsList, null, 2)}
+
+You MUST respond with a JSON object strictly matching this schema:
+{
+  "target_action": "sub_agent" | "mcp_action" | "respond" | "end",
+  "meta": {
+    "agentName": string | null, // Selected agent name if target_action is "sub_agent"
+    "toolName": string | null,  // Selected tool name if target_action is "mcp_action"
+    "arguments": object | null  // Tool arguments if target_action is "mcp_action"
+  },
+  "response": string | null // Response text if target_action is "respond"
+}
+
+Do not include any other text or formatting. Return only the raw JSON.`;
+
+    let routingDecision: "sub_agent" | "mcp_action" | "respond" | "end" = "respond";
+    let selectedAgent = state.activeSubAgent;
+    let decidedToolName: string | undefined;
+    let decidedToolArgs: Record<string, any> | undefined;
+    let responseText = "";
+
+    if (state.currentApp) {
       try {
         const completion = await llmSwitchboard.executeUniversalCompletion({
           messages: [
-            {
-              role: "system",
-              content:
-                "Analyze the user request and respond with one line: intent=<comma-separated list of needed skills> domain=<domain context or 'none'>",
-            },
+            { role: "system", content: plannerSystemPrompt },
             { role: "user", content: maskedText },
           ],
           providerId: state.currentApp,
-          options: { max_tokens: 100, requestId },
+          options: { requestId },
         });
-        const aiLine = completion.text.toLowerCase();
-        const aiMatch = aiLine.match(/intent=(.+?)(?:\s+domain=|$)/);
-        const domainMatch = aiLine.match(/domain=(.+)/);
-        if (aiMatch) {
-          const aiIntents = aiMatch[1].split(",").map((s) => s.trim()).filter(Boolean);
-          if (aiIntents.length > 0) intents = [...new Set([...intents, ...aiIntents])];
+
+        let cleanText = completion.text.trim();
+        if (cleanText.startsWith("```")) {
+          cleanText = cleanText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
         }
-        if (domainMatch && domainMatch[1] !== "none") domain = domainMatch[1];
-      } catch {
-        /* fall back to regex results */
+
+        const decision = JSON.parse(cleanText);
+        routingDecision = decision.target_action || "respond";
+
+        if (routingDecision === "sub_agent") {
+          selectedAgent = decision.meta?.agentName || selectedAgent;
+        } else if (routingDecision === "mcp_action") {
+          decidedToolName = decision.meta?.toolName || undefined;
+          decidedToolArgs = decision.meta?.arguments || undefined;
+        }
+        responseText = decision.response || "";
+      } catch (err) {
+        console.error("[supervisorNode] planner LLM parsing failed:", err);
       }
     }
 
-    const cleanIntents = intents.filter((i) => i !== "none" && i !== "");
-    const isCasual = isCasualOrNoTool(maskedText, cleanIntents);
-
-    let selectedSkills: string[] = [];
-    let routingDecision: "sub_agent" | "mcp_action" | "respond" | "end" = "respond";
-    let selectedAgent = state.activeSubAgent;
-
-    if (isCasual) {
-      selectedSkills = [];
-      routingDecision = "sub_agent";
-    } else {
-      const matchedSkills = await findRelevantSkills(maskedText, 3);
-      selectedSkills = matchedSkills.length > 0 ? matchedSkills : skillTools.map((t) => t.name);
-      if (selectedSkills.length > 0 && skillTools.some((t) => selectedSkills.includes(t.name))) {
-        routingDecision = "mcp_action";
-      }
-    }
-
-    if (domain && !selectedAgent) {
-      let agent = await lookupMatchingAgent(domain);
-      if (!agent) {
-        agent = generateEphemeralAgent(domain);
-      }
-      selectedAgent = agent.name;
-      if (routingDecision === "respond") {
-        routingDecision = "sub_agent";
-      }
-    }
-
-    if (routingDecision === "respond") {
-      const isDeleteAction = /delete_/.test(maskedText);
-      if (isDeleteAction) {
-        telemetry.endSpan(requestId, span, {
-          isDeleteAction: true,
-          routingDecision: "end",
-        });
-        await telemetry.endTrace(requestId);
-        return {
-          maskedInput: maskedText,
-          tokenMap: Object.fromEntries(tokenMap),
-          relevantSkills: selectedSkills,
-          messages: [{
-            role: "system",
-            content: "PENDING_APPROVAL: delete action detected - thread frozen",
-            timestamp: buildTimestamp(),
-          }],
-          routingDecision: "end",
-          activeSubAgent: selectedAgent,
-        };
-      }
+    const isDeleteAction = decidedToolName?.startsWith("delete_") || /delete_/.test(maskedText);
+    if (isDeleteAction) {
+      telemetry.endSpan(requestId, span, {
+        isDeleteAction: true,
+        routingDecision: "end",
+      });
+      await telemetry.endTrace(requestId);
+      return {
+        maskedInput: maskedText,
+        tokenMap: Object.fromEntries(tokenMap),
+        messages: [{
+          role: "system",
+          content: "PENDING_APPROVAL: delete action detected - thread frozen",
+          timestamp: buildTimestamp(),
+        }],
+        routingDecision: "end" as const,
+        activeSubAgent: selectedAgent,
+      };
     }
 
     telemetry.endSpan(requestId, span, {
-      intents: intents.join(","),
-      domain: domain ?? "none",
       routingDecision,
-      skills: selectedSkills.join(","),
+      selectedAgent: selectedAgent ?? "none",
+      decidedToolName: decidedToolName ?? "none",
     });
 
     return {
       maskedInput: maskedText,
       tokenMap: Object.fromEntries(tokenMap),
-      relevantSkills: selectedSkills,
-      messages: [{
-        role: "system",
-        content: `[supervisor] intent=${intents.join(",")} domain=${domain ?? "none"} route=${routingDecision} skills=${selectedSkills.join(",")}`,
+      relevantSkills: decidedToolName ? [decidedToolName] : [],
+      messages: routingDecision === "respond" ? [{
+        role: "assistant" as const,
+        content: responseText || "I'm ready to help.",
+        timestamp: buildTimestamp(),
+      }] : [{
+        role: "system" as const,
+        content: `[supervisor] planner routing to route=${routingDecision} target=${decidedToolName || selectedAgent || "none"}`,
         timestamp: buildTimestamp(),
       }],
       routingDecision,
       activeSubAgent: selectedAgent ?? state.activeSubAgent,
+      decidedToolName,
+      decidedToolArgs,
     };
   } catch (err) {
     telemetry.endSpan(requestId, span, {
@@ -336,19 +425,75 @@ async function subAgentNode(state: typeof StateAnnotation.State, config?: any) {
 
   try {
     const agentName = state.activeSubAgent;
-    const profile =
-      EPHEMERAL_AGENTS.get(agentName) ??
-      { name: agentName, systemPrompt: "You are a general-purpose sub-agent.", isEphemeral: false };
+    let systemPrompt = "";
+
+    if (agentName) {
+      const rows = await db
+        .select()
+        .from(autonomousAgents)
+        .where(eq(autonomousAgents.agentName, agentName))
+        .limit(1);
+
+      if (rows.length > 0) {
+        systemPrompt = rows[0].systemPrompt ?? "";
+      } else {
+        console.log(`[subAgentNode] Agent "${agentName}" not found. Dynamically composing instructions...`);
+        
+        const dynamicPrompt = `You are a meta-agent designer. Create a highly professional, optimized, and detailed system prompt for a specialized AI agent named "${agentName}".
+This agent is being deployed to handle tasks within the SavazAI harness.
+Write a clear, concise system prompt specifying the role, instructions, and behavior of the "${agentName}" agent.
+Return ONLY the raw prompt text, without any markdown formatting or meta comments.`;
+
+        let composedPrompt = `You are a specialized assistant named "${agentName}".`;
+        if (state.currentApp) {
+          await registerAppProvider(state.currentApp, state.modelConfig);
+          try {
+            const completion = await llmSwitchboard.executeUniversalCompletion({
+              messages: [{ role: "user", content: dynamicPrompt }],
+              providerId: state.currentApp,
+              options: { requestId },
+            });
+            composedPrompt = completion.text.trim();
+          } catch (e) {
+            console.error("Failed to dynamically compose agent prompt:", e);
+          }
+        }
+        systemPrompt = composedPrompt;
+
+        try {
+          const apps = await db
+            .select()
+            .from(connectedApps)
+            .where(eq(connectedApps.appName, state.currentApp || "WedPlanAI-Local"))
+            .limit(1);
+          
+          const appId = apps.length > 0 ? apps[0].id : 1;
+
+          await db.insert(autonomousAgents).values({
+            appId,
+            agentName,
+            systemPrompt,
+            allowedMcpTools: [],
+            isCoreAgent: false,
+          });
+          console.log(`[subAgentNode] Dynamic agent "${agentName}" successfully composed and saved to database.`);
+        } catch (dbErr) {
+          console.error("Failed to save dynamic agent to database:", dbErr);
+        }
+      }
+    } else {
+      systemPrompt = "You are a general-purpose sub-agent.";
+    }
 
     span.attributes.agentName = agentName;
-    span.attributes.systemPrompt = profile.systemPrompt;
+    span.attributes.systemPrompt = systemPrompt;
 
     const allMessages = [
-      { role: "system", content: profile.systemPrompt },
+      { role: "system", content: systemPrompt },
       ...state.messages.map((m) => ({ role: m.role, content: m.content })),
     ];
 
-    let responseContent = `[${profile.name}] (no LLM route available)`;
+    let responseContent = `[${agentName}] (no LLM route available)`;
 
     if (state.currentApp) {
       await registerAppProvider(state.currentApp, state.modelConfig);
@@ -358,10 +503,10 @@ async function subAgentNode(state: typeof StateAnnotation.State, config?: any) {
           providerId: state.currentApp,
           options: { requestId },
         });
-        responseContent = `[${profile.name}] ${completion.text}`;
+        responseContent = `[${agentName}] ${completion.text}`;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        responseContent = `[${profile.name}] LLM unavailable (${msg}). Using system prompt: ${profile.systemPrompt.slice(0, 80)}...`;
+        responseContent = `[${agentName}] LLM unavailable (${msg}). Using system prompt: ${systemPrompt.slice(0, 80)}...`;
         span.attributes.llmError = msg;
       }
     }
@@ -372,11 +517,11 @@ async function subAgentNode(state: typeof StateAnnotation.State, config?: any) {
 
     return {
       messages: [{
-        role: "assistant",
+        role: "assistant" as const,
         content: responseContent,
         timestamp: buildTimestamp(),
       }],
-      routingDecision: "respond",
+      routingDecision: "respond" as const,
     };
   } catch (err) {
     telemetry.endSpan(requestId, span, {
@@ -384,6 +529,27 @@ async function subAgentNode(state: typeof StateAnnotation.State, config?: any) {
     });
     throw err;
   }
+}
+
+function extractAndFormatImages(rawText: string): { cleanText: string; markdownImages: string[] } {
+  // Matches base64 data URLs: e.g. data:image/jpeg;base64,...
+  const base64Regex = /data:image\/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+/g;
+  const matches = rawText.match(base64Regex) || [];
+
+  let cleanText = rawText;
+  const markdownImages: string[] = [];
+
+  let count = 1;
+  for (const match of matches) {
+    if (match.length > 100) {
+      const placeholder = `[Image Asset #${count}]`;
+      cleanText = cleanText.replace(match, placeholder);
+      markdownImages.push(`![Showcase Image ${count}](${match})`);
+      count++;
+    }
+  }
+
+  return { cleanText, markdownImages };
 }
 
 async function mcpActionNode(state: typeof StateAnnotation.State, config?: any) {
@@ -399,47 +565,173 @@ async function mcpActionNode(state: typeof StateAnnotation.State, config?: any) 
       new Map(Object.entries(state.tokenMap)),
     );
 
-    const skillList = state.relevantSkills.length > 0 ? state.relevantSkills.join(",") : "all";
-    span.attributes.relevantSkills = skillList;
+    const toolName = state.decidedToolName;
+    const toolArgs = state.decidedToolArgs || {};
 
-    let credentialInfo = "none";
+    if (!toolName) {
+      throw new Error("No tool was decided by the supervisor node.");
+    }
 
-    if (state.currentApp) {
-      try {
-        const vault = new CryptoVault();
-        const apps = await db
-          .select()
-          .from(connectedApps)
-          .where(eq(connectedApps.appName, state.currentApp))
-          .limit(1);
+    span.attributes.decidedToolName = toolName;
+    span.attributes.decidedToolArgs = JSON.stringify(toolArgs);
 
-        if (apps.length > 0 && apps[0].bearerTokenHash) {
-          const decrypted = vault.decryptAppCredential(
-            state.currentApp,
-            apps[0].bearerTokenHash,
-          );
-          credentialInfo = `decrypted ${decrypted.length}-char credential for app="${state.currentApp}"`;
-        } else {
-          credentialInfo = `no stored credential for app="${state.currentApp}"`;
+    let resultText = "";
+    const localSkill = skillTools.find((s) => s.name === toolName);
+
+    if (localSkill) {
+      // Auto-inject missing properties for local skills
+      const params = localSkill.parameters || [];
+      for (const p of params) {
+        const propName = p.name;
+        if (toolArgs[propName] === undefined) {
+          const ambientValue = await resolveAmbientParameter(propName);
+          if (ambientValue !== undefined) {
+            toolArgs[propName] = ambientValue;
+            console.log(`[mcpActionNode] Auto-injected ambient parameter ${propName}=${ambientValue} for local skill ${toolName}`);
+          }
         }
-      } catch {
-        credentialInfo = "unavailable (MASTER_VAULT_SECRET not configured)";
+      }
+
+      console.log(`[mcpActionNode] Executing local skill: ${toolName}`);
+      const executionResult = await localSkill.execute(toolArgs);
+      resultText = JSON.stringify(executionResult);
+    } else {
+      // Remote MCP tool execution
+      console.log(`[mcpActionNode] Executing remote MCP tool: ${toolName}`);
+      const configs = await db.select().from(systemConfigurations).limit(1);
+      const mcpServersValue = configs[0]?.designTokens?.mcpServers;
+      let mcpServersObj: any = {};
+      if (mcpServersValue) {
+        if (typeof mcpServersValue === "string") {
+          try {
+            const parsed = JSON.parse(mcpServersValue);
+            mcpServersObj = parsed.mcpServers || parsed;
+          } catch (e) {
+            console.error("Failed to parse mcpServers:", e);
+          }
+        } else {
+          mcpServersObj = mcpServersValue.mcpServers || mcpServersValue;
+        }
+      }
+
+      let activeServerConfig: any = null;
+      let serversToScan = Object.keys(mcpServersObj);
+      if (state.activeTools) {
+        serversToScan = serversToScan.filter((s) => state.activeTools!.includes(s));
+      }
+
+      // Scan cached tools to find which server exposes this toolName
+      for (const serverKey of serversToScan) {
+        const config = mcpServersObj[serverKey];
+        if (!config || !config.serverUrl) continue;
+        const tools = await fetchMcpTools(config.serverUrl, config.headers || {});
+        const toolObj = tools.find((t: any) => t.name === toolName);
+        if (toolObj) {
+          activeServerConfig = config;
+
+          // Auto-inject missing properties for remote tool
+          const props = toolObj.inputSchema?.properties || toolObj.parameters?.properties || {};
+          for (const propName of Object.keys(props)) {
+            if (toolArgs[propName] === undefined) {
+              const ambientValue = await resolveAmbientParameter(propName);
+              if (ambientValue !== undefined) {
+                toolArgs[propName] = ambientValue;
+                console.log(`[mcpActionNode] Auto-injected ambient parameter ${propName}=${ambientValue} for remote tool ${toolName}`);
+              }
+            }
+          }
+          break;
+        }
+      }
+
+      if (!activeServerConfig) {
+        throw new Error(`MCP tool "${toolName}" could not be resolved on any active server.`);
+      }
+
+      const res = await fetch(activeServerConfig.serverUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(activeServerConfig.headers || {}),
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 2,
+          method: "tools/call",
+          params: {
+            name: toolName,
+            arguments: toolArgs,
+          },
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Remote MCP invocation failed: HTTP ${res.status}`);
+      }
+
+      const data = (await res.json()) as any;
+      if (data.result && Array.isArray(data.result.content)) {
+        resultText = data.result.content.map((c: any) => c.text || "").join("\n");
+      } else {
+        resultText = JSON.stringify(data.result || data);
       }
     }
 
-    span.attributes.credentialInfo = credentialInfo;
+    const { cleanText: cleanResultText, markdownImages } = extractAndFormatImages(resultText);
+
+    let finalFormattedResponse = "";
+    if (markdownImages.length > 0) {
+      let fallbackText = cleanResultText;
+      for (let i = 0; i < markdownImages.length; i++) {
+        const placeholder = `[Image Asset #${i + 1}]`;
+        fallbackText = fallbackText.replace(placeholder, `\n\n${markdownImages[i]}\n\n`);
+      }
+      finalFormattedResponse = `Tool Execution Result:\n${fallbackText}`;
+    } else {
+      finalFormattedResponse = `Tool Execution Result:\n${resultText}`;
+    }
+
+    if (state.currentApp) {
+      await registerAppProvider(state.currentApp, state.modelConfig);
+      try {
+        const prompt = `You are a helpful assistant. The tool "${toolName}" was executed to fulfill the user's request.
+Here is the tool output (sensitive PII has been masked, and any large base64 image data has been replaced with placeholders like [Image Asset #1]):
+${cleanResultText}
+
+Transform raw technical JSON metrics into a clean, human-readable narrative. Never print massive inline code dumps or raw JSON blocks unless explicitly requested.
+Refer to [Image Asset #1], [Image Asset #2], etc., inline in your narrative where appropriate so they render properly.`;
+
+        const summary = await llmSwitchboard.executeUniversalCompletion({
+          messages: [
+            { role: "system", content: prompt },
+            { role: "user", content: unmasked },
+          ],
+          providerId: state.currentApp,
+          options: { requestId },
+        });
+
+        let formattedText = summary.text;
+        for (let i = 0; i < markdownImages.length; i++) {
+          formattedText = formattedText.replace(new RegExp(`\\[?Image Asset #${i + 1}\\]?`, 'g'), markdownImages[i]);
+        }
+        finalFormattedResponse = formattedText;
+      } catch (err) {
+        console.error("Failed to generate tool output summary:", err);
+      }
+    }
 
     telemetry.endSpan(requestId, span, {
-      status: "dispatched",
+      status: "executed",
     });
 
     return {
       messages: [{
-        role: "assistant",
-        content: `[mcp] skills=[${skillList}] credential=${credentialInfo} Action dispatched. Payload: ${unmasked.slice(0, 120)}...`,
+        role: "assistant" as const,
+        content: finalFormattedResponse,
         timestamp: buildTimestamp(),
       }],
-      routingDecision: "respond",
+      routingDecision: "respond" as const,
     };
   } catch (err) {
     telemetry.endSpan(requestId, span, {
@@ -604,13 +896,19 @@ const graph = new StateGraph(StateAnnotation)
   .addEdge("corrector", "respond")
   .addEdge("respond", END);
 
-export const compiledGraph = graph.compile();
+export const compiledGraph = graph.compile({ checkpointer: new MemorySaver() });
 export type GraphAnnotationType = typeof StateAnnotation;
 
-export async function* streamGraphEvents(input: GraphState, requestId?: string): AsyncGenerator<unknown> {
+export async function* streamGraphEvents(
+  input: GraphState,
+  options?: { requestId?: string; threadId?: string },
+): AsyncGenerator<unknown> {
   const stream = await compiledGraph.stream(input, {
     streamMode: "updates",
-    configurable: { requestId },
+    configurable: {
+      requestId: options?.requestId,
+      thread_id: options?.threadId || "default-thread",
+    },
   });
   for await (const chunk of stream) {
     yield chunk;
