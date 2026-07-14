@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldCheck, Workflow, Activity, ChevronRight } from "lucide-react";
+import { ShieldCheck, Workflow, Activity, Terminal, ArrowRight, ExternalLink, Mail } from "lucide-react";
 import { getSystemConfig } from "@/components/theme-provider";
 
 export default async function Home() {
@@ -26,15 +26,9 @@ export default async function Home() {
           <nav className="flex items-center gap-4">
             <Link
               href="/signin"
-              className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+              className="rounded-full bg-slate-900 border border-slate-800 px-5 py-2 text-sm font-semibold text-slate-200 shadow-md hover:bg-slate-800/80 hover:text-white transition-all hover:scale-[1.02]"
             >
               Sign In
-            </Link>
-            <Link
-              href="/signup"
-              className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary/95 transition-all hover:scale-[1.02]"
-            >
-              Get Started
             </Link>
           </nav>
         </div>
@@ -63,22 +57,16 @@ export default async function Home() {
             </h1>
 
             <p className="mt-6 text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-              Empower your enterprise with structured LangGraph loops, deterministic data privacy gateways, and real-time streaming infrastructure.
+              Empower your enterprise with structured LangGraph loops, deterministic data privacy gateways, and proactive schema discovery. Stream states in real-time with zero latency.
             </p>
 
-            <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
-              <Link
-                href="/signup"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-base font-semibold text-white shadow-xl shadow-primary/20 hover:bg-primary/95 transition-all hover:scale-[1.02]"
-              >
-                Launch Console
-                <ChevronRight className="h-5 w-5" />
-              </Link>
+            <div className="mt-10 flex justify-center items-center">
               <Link
                 href="/signin"
-                className="w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-900/80 px-8 py-4 text-base font-semibold text-slate-300 hover:text-white transition-all backdrop-blur-sm"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-base font-semibold text-white shadow-xl shadow-primary/20 hover:bg-primary/95 transition-all hover:scale-[1.02]"
               >
                 Sign In Portal
+                <ArrowRight className="h-5 w-5" />
               </Link>
             </div>
           </div>
@@ -92,7 +80,7 @@ export default async function Home() {
                 Engineered for High-Security Environments
               </h2>
               <p className="mt-4 text-slate-400">
-                All agent execution traces, PII sanitization, and streaming data layers are fully controlled and audited.
+                All agent execution traces, PII sanitization, and streaming data layers are fully controlled, audited, and deterministic.
               </p>
             </div>
 
@@ -104,10 +92,10 @@ export default async function Home() {
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">
-                  Deterministic Data Privacy Gate
+                  Data Privacy Gateway
                 </h3>
                 <p className="text-slate-400 text-sm leading-relaxed">
-                  Sanitize and mask PII/SPI fields automatically before hitting external LLM gateways. Rehydrate strings within internal DB boundaries.
+                  Sanitize and mask sensitive PII/SPI fields automatically before queries hit non-local external LLM providers. Original data is rehydrated only within protected database boundaries.
                 </p>
               </div>
 
@@ -118,10 +106,10 @@ export default async function Home() {
                   <Workflow className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">
-                  Stateful LangGraph Loops
+                  LangGraph Supervisor Node
                 </h3>
                 <p className="text-slate-400 text-sm leading-relaxed">
-                  Run structured multi-agent loops with supervisor delegation, verifiers, human-in-the-loop triggers, and complete execution rollback capability.
+                  Manage agent-to-tool routing loops deterministically. Proactive schema discovery injects available MCP endpoints automatically on session start to prevent first-turn blindness.
                 </p>
               </div>
 
@@ -132,11 +120,77 @@ export default async function Home() {
                   <Activity className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">
-                  StreamableHTTP NDJSON
+                  Streamable NDJSON Engine
                 </h3>
                 <p className="text-slate-400 text-sm leading-relaxed">
-                  Real-time node-by-node execution state telemetry streamed straight to your UI client with sub-millisecond response latency.
+                  Real-time node execution telemetry streamed straight to the console client. Standalone brackets and routing decision tokens are scrubbed automatically to ensure clean text output.
                 </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Self-Deploy Section */}
+        <section className="py-20 border-t border-slate-900/60 bg-slate-950/10">
+          <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="rounded-3xl border border-slate-900 bg-slate-900/5 p-8 md:p-12 backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400 mb-6">
+                    <Terminal className="h-6 w-6" />
+                  </div>
+                  <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                    Deploy SavazAI Instantly
+                  </h2>
+                  <p className="mt-4 text-slate-400 leading-relaxed">
+                    Own your agent stack completely. Deploy the SavazAI harness local-first in your private cloud or virtual private server (VPS) environment.
+                  </p>
+
+                  <div className="mt-8 space-y-4">
+                    <div className="flex gap-4">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-semibold">
+                        1
+                      </div>
+                      <p className="text-sm text-slate-300 leading-relaxed">
+                        Clone the repository and configure your credentials inside the <code className="text-cyan-400 font-mono">.env</code> keys file.
+                      </p>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-semibold">
+                        2
+                      </div>
+                      <p className="text-sm text-slate-300 leading-relaxed">
+                        Boot up the database, harness engine, and Next.js console via Docker Compose (<code className="text-cyan-400 font-mono">docker compose up -d</code>).
+                      </p>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-semibold">
+                        3
+                      </div>
+                      <p className="text-sm text-slate-300 leading-relaxed">
+                        Access your local console interface on port <code className="text-cyan-400 font-mono">3056</code> and manage your agents, tools, and rules dynamically.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-8 shadow-2xl relative">
+                  <div className="absolute top-3 right-3 flex gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+                  </div>
+                  <pre className="font-mono text-xs text-slate-400 space-y-2 overflow-x-auto select-none">
+                    <div><span className="text-slate-600"># Clone the repository</span></div>
+                    <div><span className="text-cyan-400">git clone</span> https://github.com/Savazar01/savazai-harness.git</div>
+                    <div><span className="text-slate-600"># Launch the infrastructure stack</span></div>
+                    <div><span className="text-cyan-400">docker compose up</span> --build -d</div>
+                    <div><span className="text-slate-600"># Verify active processes</span></div>
+                    <div><span className="text-cyan-400">docker compose ps</span></div>
+                  </pre>
+                </div>
               </div>
             </div>
           </div>
@@ -151,18 +205,33 @@ export default async function Home() {
           <div className="container mx-auto max-w-4xl px-4 text-center relative z-10">
             <div className="rounded-3xl border border-slate-900 bg-slate-950/80 p-12 md:p-16 backdrop-blur-sm">
               <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
-                Ready to manage your workspace?
+                Ready to Manage Your Workspace?
               </h2>
               <p className="mt-4 text-slate-400 text-md max-w-xl mx-auto">
-                Sign in to the SavazAI management console to create connections, audit traces, and control agent roles.
+                Sign in to the SavazAI management console to configure connections, inspect telemetry traces, and orchestrate agent actions.
               </p>
-              <div className="mt-8 flex justify-center">
+              
+              <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
                 <Link
-                  href="/signup"
+                  href="/signin"
                   className="rounded-full bg-primary px-8 py-4 text-base font-semibold text-white shadow-xl shadow-primary/25 hover:bg-primary/95 transition-all hover:scale-[1.02]"
                 >
-                  Create Admin Account
+                  Sign In Portal
                 </Link>
+                <a
+                  href="https://savazar.com/contact"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-900/80 px-8 py-4 text-base font-semibold text-slate-300 hover:text-white transition-all backdrop-blur-sm"
+                >
+                  Contact Savazar
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
+
+              <div className="mt-6 flex justify-center items-center gap-2 text-xs text-slate-500">
+                <Mail className="h-3.5 w-3.5" />
+                <span>Contact Email: <a href="mailto:info@savazar.com" className="text-slate-400 hover:text-white transition-colors">info@savazar.com</a></span>
               </div>
             </div>
           </div>
