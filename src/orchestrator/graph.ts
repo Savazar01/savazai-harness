@@ -44,6 +44,11 @@ export const GraphStateSchema = z.object({
     name: z.string(),
     args: z.record(z.string(), z.any()),
   })).optional(),
+  pendingToolCalls: z.array(z.object({
+    name: z.string(),
+    args: z.record(z.string(), z.any()),
+  })).optional(),
+  target_action: z.enum(["sub_agent", "mcp_action", "respond", "correct", "end"]).optional(),
 });
 
 export type GraphState = z.infer<typeof GraphStateSchema>;
@@ -124,6 +129,14 @@ const StateAnnotation = Annotation.Root({
   parallelToolQueue: Annotation<Array<{ name: string; args: Record<string, any> }> | undefined>({
     reducer: (x, y) => y !== undefined ? y : (x ?? []),
     default: () => [],
+  }),
+  pendingToolCalls: Annotation<Array<{ name: string; args: Record<string, any> }> | undefined>({
+    reducer: (x, y) => y !== undefined ? y : (x ?? []),
+    default: () => [],
+  }),
+  target_action: Annotation<"sub_agent" | "mcp_action" | "respond" | "correct" | "end" | undefined>({
+    reducer: (x, y) => y ?? x,
+    default: () => undefined,
   }),
 });
 
@@ -413,12 +426,57 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
       }
     }
 
-    // 0. PRIORITY CHECK: If parallelToolQueue contains items, shift the next tool dynamically and bypass LLM/Keyword override.
-    if (!isNewTurn && state.parallelToolQueue && state.parallelToolQueue.length > 0) {
-      const queue = [...state.parallelToolQueue];
-      const nextCall = queue.shift()!;
-      console.log(`[supervisorNode] Dequeuing next tool from parallelToolQueue: ${nextCall.name}`);
-      
+    // 0. PRIORITY CHECK: If pendingToolCalls or parallelToolQueue contains items, shift the next tool dynamically and bypass LLM/Keyword override.
+    const hasPending = !isNewTurn && state.pendingToolCalls && state.pendingToolCalls.length > 0;
+    const hasParallel = !isNewTurn && state.parallelToolQueue && state.parallelToolQueue.length > 0;
+
+    if (hasPending || hasParallel) {
+      let nextCall: { name: string; args: Record<string, any> };
+      const newPending = state.pendingToolCalls ? [...state.pendingToolCalls] : [];
+      const newParallel = state.parallelToolQueue ? [...state.parallelToolQueue] : [];
+
+      if (hasPending) {
+        nextCall = newPending.shift()!;
+        console.log(`[supervisorNode] Dequeuing next tool from pendingToolCalls: ${nextCall.name}`);
+      } else {
+        nextCall = newParallel.shift()!;
+        console.log(`[supervisorNode] Dequeuing next tool from parallelToolQueue: ${nextCall.name}`);
+      }
+
+      // Force parameter and date bindings on priority tool execution
+      const weddingIdVal = await resolveAmbientParameter("weddingId");
+      if (weddingIdVal) {
+        const isMutation = nextCall.name.startsWith("update_") || 
+                           nextCall.name.startsWith("create_") || 
+                           nextCall.name.startsWith("delete_") ||
+                           nextCall.name.startsWith("list_") ||
+                           nextCall.name.startsWith("get_");
+        if (isMutation) {
+          nextCall.args = nextCall.args || {};
+          if (!nextCall.args.weddingId) {
+            nextCall.args.weddingId = weddingIdVal;
+            console.log(`[supervisorNode] Dequeuing: Force-bound weddingId "${weddingIdVal}" into tool ${nextCall.name}`);
+          }
+        }
+      }
+
+      // Map "date" to "weddingDate"
+      if (nextCall.name === "update_wedding" || nextCall.name === "create_wedding") {
+        if (nextCall.args && nextCall.args.date !== undefined && nextCall.args.weddingDate === undefined) {
+          nextCall.args.weddingDate = nextCall.args.date;
+          delete nextCall.args.date;
+        }
+      }
+
+      // Standardize dates
+      if (nextCall.args) {
+        for (const key of Object.keys(nextCall.args)) {
+          if (key.toLowerCase().includes("date") && typeof nextCall.args[key] === "string") {
+            nextCall.args[key] = standardizeDateToISO(nextCall.args[key]);
+          }
+        }
+      }
+
       telemetry.endSpan(requestId, span, {
         routingDecision: "mcp_action",
         decidedToolName: nextCall.name,
@@ -435,10 +493,12 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
         executedToolSignatures: state.executedToolSignatures,
         messages: [],
         routingDecision: "mcp_action" as const,
+        target_action: "mcp_action" as const,
         activeSubAgent: state.activeSubAgent,
         decidedToolName: nextCall.name,
         decidedToolArgs: nextCall.args,
-        parallelToolQueue: queue,
+        pendingToolCalls: newPending,
+        parallelToolQueue: newParallel,
         currentApp,
       };
     }
@@ -592,15 +652,15 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
     const plannerSystemPrompt = `You are the Autonomous Planner & Supervisor for SavazAI.
 ${customGlobalPrompt ? `Global System Instructions:\n${customGlobalPrompt}\n` : ""}
 ${customOrchestrationRules ? `Orchestration Rules (Plan-Act Loop):\n${customOrchestrationRules}\n` : `Strict Plan-Act Loop Instructions:
-1. Determine the next mechanical step to fulfill the user's request.
-2. If tool results are needed, route to "mcp_action" and specify the tool name.
-3. If all data is collected and you are ready to generate a response, route to "respond".`}
+1. Determine the plan and identify all necessary tool calls to fulfill the user's request.
+2. If tool results are needed, you can plan one or multiple sequential tool calls in the 'toolCalls' array.
+3. Provide any conversational text, explanations, or intermediate updates to the user in the 'conversationalText' field.
+4. Set 'target_action' to 'mcp_action' if tool calls are planned. Set it to 'respond' when you have all the required information to formulate the final answer or if no tools are needed.`}
 ${customAgentRules ? `Agent Rules:\n${customAgentRules}\n` : ""}
 
 ## IRONCLAD TOOL GATING — NEVER HALLUCINATE DATA
 - You are an orchestration layer. You do NOT generate or fabricate data.
 - The Available Tools & Skills section below contains the ONLY tools you may use. Never call a tool not listed there.
-- You are explicitly FORBIDDEN from generating narrative chat text inside this routing block.
 
 ## Context Parameters (available for use in tool arguments):
 ${JSON.stringify(ambientContextParams, null, 2)}
@@ -613,19 +673,26 @@ ${JSON.stringify(activeToolsList, null, 2)}
 
 You MUST respond with a JSON object strictly matching this schema:
 {
-  "routingDecision": "sub_agent" | "mcp_action" | "respond",
-  "targetName": string | null,
-  "targetArgs": object
+  "target_action": "sub_agent" | "mcp_action" | "respond",
+  "toolCalls": [
+    { "name": "tool_name", "args": { "arg_name": "arg_value" } }
+  ],
+  "conversationalText": "conversational text, narration, or check-in here",
+  "targetName": "agent_name_if_sub_agent_or_null",
+  "targetArgs": {}
 }
 
 Do not include any other text or formatting. Return only the raw JSON.`;
 
     let routingDecision: "sub_agent" | "mcp_action" | "respond" | "end" = "respond";
+    let target_action: "sub_agent" | "mcp_action" | "respond" | "end" = "respond";
     let selectedAgent = state.activeSubAgent;
     let decidedToolName: string | undefined;
     let decidedToolArgs: Record<string, any> | undefined;
     let rawResponse = "";
     let newlyQueuedTools: { name: string; args: any }[] = [];
+    const pending: Array<{ name: string; args: Record<string, any> }> = [];
+    const messagesToReturn: Array<{ role: "user" | "assistant" | "system"; content: string; timestamp?: string }> = [];
 
     // 1. Programmatic Keyword Override Check with Multi-Turn Guardrail
     const latestUserMsgLower = latestUserMsgContent.toLowerCase();
@@ -664,12 +731,10 @@ Do not include any other text or formatting. Return only the raw JSON.`;
 
     if (forceTool) {
       routingDecision = "mcp_action";
-      decidedToolName = forceTool;
-      decidedToolArgs = forceArgs;
-      rawResponse = JSON.stringify({
-        routingDecision: "mcp_action",
-        targetName: forceTool,
-        targetArgs: decidedToolArgs,
+      target_action = "mcp_action";
+      pending.push({
+        name: forceTool,
+        args: forceArgs,
       });
       console.log(`[supervisorNode] Programmatically force-routed to: ${forceTool}`);
     } else if (currentApp) {
@@ -692,9 +757,16 @@ Do not include any other text or formatting. Return only the raw JSON.`;
         const model = new StructuredModelWrapper(currentApp, state.modelConfig);
         const structuralPlanner = model.withStructuredOutput(
           z.object({
-            routingDecision: z.enum(["mcp_action", "sub_agent", "respond"]),
-            targetName: z.string().nullable(),
-            targetArgs: z.record(z.any()),
+            target_action: z.enum(["mcp_action", "sub_agent", "respond"]),
+            toolCalls: z.array(
+              z.object({
+                name: z.string(),
+                args: z.record(z.any()),
+              })
+            ).optional(),
+            conversationalText: z.string().optional(),
+            targetName: z.string().nullable().optional(),
+            targetArgs: z.record(z.any()).optional(),
           })
         );
 
@@ -702,20 +774,39 @@ Do not include any other text or formatting. Return only the raw JSON.`;
         rawResponse = JSON.stringify(decision);
         console.log("Structured Supervisor Output:", rawResponse);
 
-        routingDecision = decision.routingDecision || "respond";
+        target_action = decision.target_action || "respond";
+        routingDecision = target_action;
 
-        if (routingDecision === "sub_agent") {
-          selectedAgent = decision.targetName || selectedAgent;
-        } else if (routingDecision === "mcp_action") {
-          decidedToolName = decision.targetName || undefined;
-          decidedToolArgs = decision.targetArgs || undefined;
+        // Accumulate conversational narration chunk if present
+        if (decision.conversationalText) {
+          console.log(`[supervisorNode] Accumulating conversational narration chunk: ${decision.conversationalText}`);
+          messagesToReturn.push({
+            role: "assistant" as const,
+            content: decision.conversationalText,
+            timestamp: buildTimestamp(),
+          });
         }
 
-        // Force proper routing decision based on targetName presence
-        if (decidedToolName) {
+        if (decision.toolCalls && decision.toolCalls.length > 0) {
+          pending.push(...decision.toolCalls);
+        } else if (target_action === "mcp_action" && decision.targetName) {
+          pending.push({
+            name: decision.targetName,
+            args: decision.targetArgs || {},
+          });
+        }
+
+        if (target_action === "sub_agent") {
+          selectedAgent = decision.targetName || selectedAgent;
+        }
+
+        // Force proper routing decision based on targetName/pending tool calls
+        if (pending.length > 0) {
           routingDecision = "mcp_action";
+          target_action = "mcp_action";
         } else if (routingDecision === "respond" && selectedAgent) {
           routingDecision = "sub_agent";
+          target_action = "sub_agent";
         }
 
         // CRUCIAL EXECUTION GUARD: Post-mutation data gathering sequence
@@ -764,25 +855,16 @@ Do not include any other text or formatting. Return only the raw JSON.`;
             if (nextDataTool) {
               console.log(`[supervisorNode] Guard forcing sequential data gathering tool: ${nextDataTool}`);
               routingDecision = "mcp_action";
-              decidedToolName = nextDataTool;
+              target_action = "mcp_action";
               
               // Resolve weddingId for parameters
               const weddingIdVal = await resolveAmbientParameter("weddingId");
-              decidedToolArgs = weddingIdVal ? { weddingId: weddingIdVal } : {};
+              const nextDataArgs = weddingIdVal ? { weddingId: weddingIdVal } : {};
+              pending.push({
+                name: nextDataTool,
+                args: nextDataArgs,
+              });
             }
-          }
-        }
-
-        // Intercept multi_tool_use.parallel — queue remaining tools dynamically
-        if (decidedToolName === "multi_tool_use.parallel" || decidedToolName === "parallel") {
-          const unwrapped = unwrapAllParallelTools(decidedToolName, decidedToolArgs);
-          if (unwrapped.length > 0) {
-            const first = unwrapped[0];
-            newlyQueuedTools = unwrapped.slice(1);
-            console.log(`[supervisorNode] Intercepted parallel tool execution: ${first.name}, queueing ${newlyQueuedTools.length} remaining tool(s).`);
-            decidedToolName = first.name;
-            decidedToolArgs = first.args;
-            routingDecision = "mcp_action";
           }
         }
       } catch (err) {
@@ -790,8 +872,8 @@ Do not include any other text or formatting. Return only the raw JSON.`;
       }
     }
 
-    // 2. PREVENT CONVERSATIONAL SHORT-CIRCUIITING
-    if (routingDecision === "respond") {
+    // 2. PREVENT CONVERSATIONAL SHORT-CIRCUITING
+    if (routingDecision === "respond" && pending.length === 0) {
       const userMsgLower = latestUserMsgContent.toLowerCase();
       const hasMutationKeyword = userMsgLower.includes("update") || 
                                  userMsgLower.includes("change") || 
@@ -826,7 +908,7 @@ Do not include any other text or formatting. Return only the raw JSON.`;
           if (targetTool) {
             console.log(`[supervisorNode] Fallback intercept mapped to tool: ${targetTool}`);
             routingDecision = "mcp_action";
-            decidedToolName = targetTool;
+            target_action = "mcp_action";
             
             // Extract arguments from user message (e.g. date for update_wedding)
             const args: Record<string, any> = {};
@@ -841,10 +923,33 @@ Do not include any other text or formatting. Return only the raw JSON.`;
                 }
               }
             }
-            decidedToolArgs = args;
+            pending.push({
+              name: targetTool,
+              args,
+            });
           }
         }
       }
+    }
+
+    // Unwrap parallel tool calls if any
+    const firstCall = pending[0];
+    if (firstCall && (firstCall.name === "multi_tool_use.parallel" || firstCall.name === "parallel")) {
+      const unwrapped = unwrapAllParallelTools(firstCall.name, firstCall.args);
+      if (unwrapped.length > 0) {
+        pending.shift();
+        pending.unshift(...unwrapped);
+        console.log(`[supervisorNode] Unwrapped parallel tool container. Queue:`, pending.map(t => t.name));
+      }
+    }
+
+    if (pending.length > 0) {
+      const nextCall = pending.shift()!;
+      decidedToolName = nextCall.name;
+      decidedToolArgs = nextCall.args;
+      routingDecision = "mcp_action";
+      target_action = "mcp_action";
+      newlyQueuedTools = pending;
     }
 
     // 1. FORCE AMBIENT PARAMETER INJECTION INTO PARALLEL AND MUTATION TOOL ROUTING
@@ -901,6 +1006,7 @@ Do not include any other text or formatting. Return only the raw JSON.`;
           timestamp: buildTimestamp(),
         }],
         routingDecision: "end" as const,
+        target_action: "end" as const,
         activeSubAgent: selectedAgent,
       };
     }
@@ -968,11 +1074,13 @@ Do not include any other text or formatting. Return only the raw JSON.`;
       lastUserMessageContent: latestUserMsgContent,
       executedTools: isNewTurn ? [] : state.executedTools,
       executedToolSignatures: isNewTurn ? [] : state.executedToolSignatures,
-      messages: [],
+      messages: messagesToReturn,
       routingDecision,
+      target_action,
       activeSubAgent: selectedAgent ?? state.activeSubAgent,
       decidedToolName: decidedToolName || null,
       decidedToolArgs: decidedToolArgs || {},
+      pendingToolCalls: isNewTurn ? newlyQueuedTools : [...(state.pendingToolCalls || []), ...newlyQueuedTools],
       parallelToolQueue: isNewTurn ? [] : [...(state.parallelToolQueue || []), ...newlyQueuedTools],
       currentApp,
     };
@@ -1087,6 +1195,7 @@ Return ONLY the raw prompt text, without any markdown formatting or meta comment
         timestamp: buildTimestamp(),
       }],
       routingDecision: "respond" as const,
+      target_action: "respond" as const,
     };
   } catch (err) {
     telemetry.endSpan(requestId, span, {
@@ -1312,6 +1421,7 @@ async function mcpActionNode(state: typeof StateAnnotation.State, config?: any) 
         timestamp: buildTimestamp(),
       }],
       routingDecision: "respond" as const,
+      target_action: "respond" as const,
       executedTools: toolName ? [...(state.executedTools || []), toolName] : (state.executedTools || []),
       executedToolSignatures: [...(state.executedToolSignatures || []), toolSignature],
       toolExecutedInCurrentNode: true,
@@ -1371,6 +1481,7 @@ async function verifierNode(state: typeof StateAnnotation.State, config?: any) {
       verificationFailures: allFailures,
       correctAttempts: isValid ? 0 : attempts + 1,
       routingDecision,
+      target_action: routingDecision,
     };
   } catch (err) {
     telemetry.endSpan(requestId, span, {
@@ -1401,6 +1512,7 @@ async function correctorNode(state: typeof StateAnnotation.State, config?: any) 
       }],
       verificationFailures: [],
       routingDecision: "respond" as const,
+      target_action: "respond" as const,
     };
   } catch (err) {
     telemetry.endSpan(requestId, span, {
@@ -1565,6 +1677,7 @@ Available Tools in current session: ${JSON.stringify(openAiTools)}
       }],
       toolExecutedInCurrentNode: false,
       routingDecision: "end" as const,
+      target_action: "end" as const,
       currentApp,
     };
   } catch (err) {
@@ -1584,6 +1697,11 @@ function verifierRoutingLogic(state: typeof StateAnnotation.State): string {
 }
 
 function agentRoutingLogic(state: typeof StateAnnotation.State): string {
+  if (state.pendingToolCalls && state.pendingToolCalls.length > 0) {
+    console.log("[agentRoutingLogic] Locked on execution queue: routing to mcp_action.");
+    return "mcp_action";
+  }
+
   const decision = state.routingDecision ?? "respond";
 
   // Enhanced dedup: same tool + same args in a single turn

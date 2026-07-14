@@ -1,16 +1,16 @@
 # Graph Report - savazai-harness  (2026-07-14)
 
 ## Corpus Check
-- 199 files · ~103,829 words
+- 199 files · ~104,280 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2865 nodes · 3442 edges · 265 communities (247 shown, 18 thin omitted)
+- 2865 nodes · 3442 edges · 264 communities (246 shown, 18 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5bb5220b`
+- Built from commit: `321e76d0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -246,7 +246,6 @@
 - [[_COMMUNITY_Community 251|Community 251]]
 - [[_COMMUNITY_Community 252|Community 252]]
 - [[_COMMUNITY_Community 253|Community 253]]
-- [[_COMMUNITY_Community 254|Community 254]]
 - [[_COMMUNITY_Community 255|Community 255]]
 - [[_COMMUNITY_Community 257|Community 257]]
 - [[_COMMUNITY_Community 259|Community 259]]
@@ -281,7 +280,7 @@
 - `Home()` --calls--> `getSystemConfig()`  [EXTRACTED]
   savazai-console/src/app/page.tsx → savazai-console/src/components/theme-provider.tsx
 
-## Communities (265 total, 18 thin omitted)
+## Communities (264 total, 18 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.07
@@ -365,7 +364,7 @@ Nodes (33): Accordion, Base vs Radix, Button / trigger as non-button element (ba
 
 ### Community 30 - "Community 30"
 Cohesion: 0.10
-Nodes (21): name, notNull, primaryKey, type, app_id, embedding, raw_content, role (+13 more)
+Nodes (21): name, notNull, primaryKey, type, app_id, embedding, masked_content, role (+13 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.07
@@ -432,8 +431,8 @@ Cohesion: 0.12
 Nodes (16): name, notNull, primaryKey, type, bearer_token_hash, is_core_agent, raw_content, default (+8 more)
 
 ### Community 47 - "Community 47"
-Cohesion: 0.18
-Nodes (12): 2.2 Conditional Module Loading, 2.3 Defer Non-Critical Third-Party Libraries, 2.4 Dynamic Imports for Heavy Components, 2.6 Preload Based on User Intent, 2. Bundle Size Optimization, code:tsx (function AnimationPlayer({ enabled, setEnabled }: { enabled:), code:tsx (import { Analytics } from '@vercel/analytics/react'), code:tsx (import dynamic from 'next/dynamic') (+4 more)
+Cohesion: 0.20
+Nodes (10): 2.1 Avoid Barrel File Imports, 2.2 Conditional Module Loading, 2.6 Preload Based on User Intent, 2. Bundle Size Optimization, code:tsx (import { Check, X, Menu } from 'lucide-react'), code:tsx (// Keep the standard imports - Next.js transforms them to di), code:tsx (import Button from '@mui/material/Button'), code:tsx (function AnimationPlayer({ enabled, setEnabled }: { enabled:) (+2 more)
 
 ### Community 48 - "Community 48"
 Cohesion: 0.14
@@ -848,8 +847,8 @@ Cohesion: 0.50
 Nodes (3): dialect, entries, version
 
 ### Community 153 - "Community 153"
-Cohesion: 0.18
-Nodes (11): checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies, schema (+3 more)
+Cohesion: 0.11
+Nodes (20): checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies, schema (+12 more)
 
 ### Community 154 - "Community 154"
 Cohesion: 0.09
@@ -873,7 +872,7 @@ Nodes (4): 7.14 Use toSorted() Instead of sort() for Immutability, code:typescri
 
 ### Community 160 - "Community 160"
 Cohesion: 0.09
-Nodes (27): checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies, schema (+19 more)
+Nodes (27): columns, name, nullsNotDistinct, checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled (+19 more)
 
 ### Community 166 - "Community 166"
 Cohesion: 0.67
@@ -1036,8 +1035,8 @@ Cohesion: 0.15
 Nodes (12): Anti-Patterns to Avoid, Confirm dynamically when you can, Core Principles, Coverage and prior runs, Defense-in-depth gaps are not vulnerabilities, Determine the baseline dynamically, Only report what you can exploit, Platform terminology (+4 more)
 
 ### Community 213 - "Community 213"
-Cohesion: 0.20
-Nodes (10): checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies, schema (+2 more)
+Cohesion: 0.18
+Nodes (11): compositePrimaryKeys, checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies (+3 more)
 
 ### Community 214 - "Community 214"
 Cohesion: 0.38
@@ -1092,8 +1091,8 @@ Cohesion: 0.11
 Nodes (20): columns, nullsNotDistinct, isRLSEnabled, uniqueConstraints, compositePrimaryKeys, uniqueConstraints, checkConstraints, compositePrimaryKeys (+12 more)
 
 ### Community 231 - "Community 231"
-Cohesion: 0.22
-Nodes (10): columns, name, nullsNotDistinct, uniqueConstraints, uniqueConstraints, columns, name, nullsNotDistinct (+2 more)
+Cohesion: 0.33
+Nodes (6): 2.3 Defer Non-Critical Third-Party Libraries, 2.4 Dynamic Imports for Heavy Components, code:tsx (import { Analytics } from '@vercel/analytics/react'), code:tsx (import dynamic from 'next/dynamic'), code:tsx (import { MonacoEditor } from './monaco-editor'), code:tsx (import dynamic from 'next/dynamic')
 
 ### Community 239 - "Community 239"
 Cohesion: 0.20
@@ -1101,7 +1100,7 @@ Nodes (9): code:json ("dependencies": {), code:yaml (ports:), 🔍 Detailed Vuln
 
 ### Community 240 - "Community 240"
 Cohesion: 0.40
-Nodes (5): masked_content, name, notNull, primaryKey, type
+Nodes (5): raw_content, name, notNull, primaryKey, type
 
 ### Community 242 - "Community 242"
 Cohesion: 0.22
@@ -1150,10 +1149,6 @@ Nodes (3): 1. System Components, 2. Trust Boundaries, Architecture Review: Savaz
 ### Community 253 - "Community 253"
 Cohesion: 0.50
 Nodes (3): $comment, output_schema, oneOf
-
-### Community 254 - "Community 254"
-Cohesion: 0.50
-Nodes (4): 2.1 Avoid Barrel File Imports, code:tsx (import { Check, X, Menu } from 'lucide-react'), code:tsx (// Keep the standard imports - Next.js transforms them to di), code:tsx (import Button from '@mui/material/Button')
 
 ### Community 257 - "Community 257"
 Cohesion: 0.67
