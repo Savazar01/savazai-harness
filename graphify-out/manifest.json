@@ -980,8 +980,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\package.json": {
-    "mtime": 1783490600.7339976,
-    "ast_hash": "13721cffb91813c470035ef3715668c4",
+    "mtime": 1784004088.1817014,
+    "ast_hash": "691c4ce4f9a3651aa0c84050a11353f0",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\playwright.config.ts": {
@@ -1195,8 +1195,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\lib\\auth.ts": {
-    "mtime": 1783501540.8803434,
-    "ast_hash": "67b46f1027f70ef167f5e7b53eedf636",
+    "mtime": 1784003033.2771883,
+    "ast_hash": "4058c037681e4bb8a1539506b03de5c0",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\lib\\stream-client.ts": {
@@ -1932,6 +1932,81 @@
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\api\\chat\\threads\\[threadId]\\route.ts": {
     "mtime": 1783993445.093308,
     "ast_hash": "0ee98db59e40d71491051b458ef0843b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\security-audit-out\\findings.json": {
+    "mtime": 1784003808.5549173,
+    "ast_hash": "61f38a75cc4ca2e7fe0677ae715e362c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\skills\\security-audit\\skills\\security-audit\\report-schema.json": {
+    "mtime": 1784003619.5757391,
+    "ast_hash": "4fc827599d92b544998e7402bc3c265c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\security-audit-out\\architecture.md": {
+    "mtime": 1784003830.9270966,
+    "ast_hash": "9ff732c0f1252efefca64f3e2f24b8f0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\security-audit-out\\FINDINGS-DETAIL.md": {
+    "mtime": 1784003835.8721392,
+    "ast_hash": "1f503be8bfab06019ad054328f53849e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\security-audit-out\\REPORT.md": {
+    "mtime": 1784003826.8366811,
+    "ast_hash": "1a2df327910754910454c56711e67a52",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\skills\\security-audit\\README.md": {
+    "mtime": 1784003619.5688846,
+    "ast_hash": "9fc99f49c864fa41814b2d6b71f1ca1c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\skills\\security-audit\\skills\\security-audit\\AI-AND-LLM.md": {
+    "mtime": 1784003619.5702507,
+    "ast_hash": "7066d0c305fff6a4ec20ff10d01df5da",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\skills\\security-audit\\skills\\security-audit\\ATTACK-CLASSES.md": {
+    "mtime": 1784003619.5702507,
+    "ast_hash": "848c12452835c058499587b6d82987c7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\skills\\security-audit\\skills\\security-audit\\CLIENT-SIDE.md": {
+    "mtime": 1784003619.571679,
+    "ast_hash": "9f77a403f364a84f48cf9fc0df566ca1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\skills\\security-audit\\skills\\security-audit\\HUNTING.md": {
+    "mtime": 1784003619.571679,
+    "ast_hash": "99cd4cc9c71ea798b86c63ccacae958a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\skills\\security-audit\\skills\\security-audit\\MEMORY-SAFETY-AND-BINARY.md": {
+    "mtime": 1784003619.573156,
+    "ast_hash": "5836abe25f8139ce9f84c851f1d5bff3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\skills\\security-audit\\skills\\security-audit\\RECONNAISSANCE.md": {
+    "mtime": 1784003619.573156,
+    "ast_hash": "b317a0b7042c579cb340a049da83db6b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\skills\\security-audit\\skills\\security-audit\\SKILL.md": {
+    "mtime": 1784003619.5743704,
+    "ast_hash": "192b13f6269ae01c7427f0f73c9759ee",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\skills\\security-audit\\skills\\security-audit\\VALIDATION-AND-REPORTING.md": {
+    "mtime": 1784003619.5743704,
+    "ast_hash": "45ea6f5d6fbe568913624fddf6d0997a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\skills\\security-audit\\skills\\security-audit\\WEB-PROTOCOL-AND-AUTH.md": {
+    "mtime": 1784003619.5743704,
+    "ast_hash": "a6b71c7275ed5856d2a4f9504c541967",
     "semantic_hash": ""
   }
 }

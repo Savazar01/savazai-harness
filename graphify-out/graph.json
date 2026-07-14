@@ -5508,7 +5508,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L18",
       "id": "meta_0003_snapshot_columns_app_id",
-      "community": 227,
+      "community": 82,
       "norm_label": "app_id"
     },
     {
@@ -5517,7 +5517,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L19",
       "id": "meta_0003_snapshot_app_id_name",
-      "community": 227,
+      "community": 82,
       "norm_label": "name"
     },
     {
@@ -5526,7 +5526,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L20",
       "id": "meta_0003_snapshot_app_id_type",
-      "community": 227,
+      "community": 82,
       "norm_label": "type"
     },
     {
@@ -5535,7 +5535,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L21",
       "id": "meta_0003_snapshot_app_id_primarykey",
-      "community": 227,
+      "community": 82,
       "norm_label": "primarykey"
     },
     {
@@ -5544,7 +5544,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L22",
       "id": "meta_0003_snapshot_app_id_notnull",
-      "community": 227,
+      "community": 82,
       "norm_label": "notnull"
     },
     {
@@ -5688,7 +5688,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L42",
       "id": "meta_0003_snapshot_columns_embedding",
-      "community": 218,
+      "community": 227,
       "norm_label": "embedding"
     },
     {
@@ -5697,7 +5697,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L43",
       "id": "meta_0003_snapshot_embedding_name",
-      "community": 218,
+      "community": 227,
       "norm_label": "name"
     },
     {
@@ -5706,7 +5706,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L44",
       "id": "meta_0003_snapshot_embedding_type",
-      "community": 218,
+      "community": 227,
       "norm_label": "type"
     },
     {
@@ -5715,7 +5715,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L45",
       "id": "meta_0003_snapshot_embedding_primarykey",
-      "community": 218,
+      "community": 227,
       "norm_label": "primarykey"
     },
     {
@@ -5724,7 +5724,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L46",
       "id": "meta_0003_snapshot_embedding_notnull",
-      "community": 218,
+      "community": 227,
       "norm_label": "notnull"
     },
     {
@@ -5796,7 +5796,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L57",
       "id": "meta_0003_snapshot_public_agent_session_memory_foreignkeys",
-      "community": 64,
+      "community": 153,
       "norm_label": "foreignkeys"
     },
     {
@@ -5922,7 +5922,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L78",
       "id": "meta_0003_snapshot_tables_public_autonomous_agents",
-      "community": 160,
+      "community": 153,
       "norm_label": "public.autonomous_agents"
     },
     {
@@ -5931,7 +5931,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L79",
       "id": "meta_0003_snapshot_public_autonomous_agents_name",
-      "community": 160,
+      "community": 153,
       "norm_label": "name"
     },
     {
@@ -5940,7 +5940,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L80",
       "id": "meta_0003_snapshot_public_autonomous_agents_schema",
-      "community": 160,
+      "community": 153,
       "norm_label": "schema"
     },
     {
@@ -5958,7 +5958,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L82",
       "id": "meta_0003_snapshot_columns_id",
-      "community": 82,
+      "community": 217,
       "norm_label": "id"
     },
     {
@@ -5967,7 +5967,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L83",
       "id": "meta_0003_snapshot_id_name",
-      "community": 82,
+      "community": 217,
       "norm_label": "name"
     },
     {
@@ -5976,7 +5976,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L84",
       "id": "meta_0003_snapshot_id_type",
-      "community": 82,
+      "community": 217,
       "norm_label": "type"
     },
     {
@@ -5985,7 +5985,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L85",
       "id": "meta_0003_snapshot_id_primarykey",
-      "community": 82,
+      "community": 217,
       "norm_label": "primarykey"
     },
     {
@@ -5994,7 +5994,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L86",
       "id": "meta_0003_snapshot_id_notnull",
-      "community": 82,
+      "community": 217,
       "norm_label": "notnull"
     },
     {
@@ -6201,7 +6201,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L128",
       "id": "meta_0003_snapshot_public_autonomous_agents_indexes",
-      "community": 160,
+      "community": 153,
       "norm_label": "indexes"
     },
     {
@@ -6210,7 +6210,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L129",
       "id": "meta_0003_snapshot_public_autonomous_agents_foreignkeys",
-      "community": 64,
+      "community": 153,
       "norm_label": "foreignkeys"
     },
     {
@@ -6291,7 +6291,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L144",
       "id": "meta_0003_snapshot_public_autonomous_agents_compositeprimarykeys",
-      "community": 160,
+      "community": 153,
       "norm_label": "compositeprimarykeys"
     },
     {
@@ -6300,7 +6300,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L145",
       "id": "meta_0003_snapshot_public_autonomous_agents_uniqueconstraints",
-      "community": 160,
+      "community": 153,
       "norm_label": "uniqueconstraints"
     },
     {
@@ -6309,7 +6309,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L146",
       "id": "meta_0003_snapshot_public_autonomous_agents_policies",
-      "community": 160,
+      "community": 153,
       "norm_label": "policies"
     },
     {
@@ -6318,7 +6318,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L147",
       "id": "meta_0003_snapshot_public_autonomous_agents_checkconstraints",
-      "community": 160,
+      "community": 153,
       "norm_label": "checkconstraints"
     },
     {
@@ -6327,7 +6327,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L148",
       "id": "meta_0003_snapshot_public_autonomous_agents_isrlsenabled",
-      "community": 160,
+      "community": 153,
       "norm_label": "isrlsenabled"
     },
     {
@@ -6507,7 +6507,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L178",
       "id": "meta_0003_snapshot_columns_model_config",
-      "community": 217,
+      "community": 248,
       "norm_label": "model_config"
     },
     {
@@ -6516,7 +6516,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L179",
       "id": "meta_0003_snapshot_model_config_name",
-      "community": 217,
+      "community": 248,
       "norm_label": "name"
     },
     {
@@ -6525,7 +6525,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L180",
       "id": "meta_0003_snapshot_model_config_type",
-      "community": 217,
+      "community": 248,
       "norm_label": "type"
     },
     {
@@ -6534,7 +6534,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L181",
       "id": "meta_0003_snapshot_model_config_primarykey",
-      "community": 217,
+      "community": 248,
       "norm_label": "primarykey"
     },
     {
@@ -6543,7 +6543,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L182",
       "id": "meta_0003_snapshot_model_config_notnull",
-      "community": 217,
+      "community": 248,
       "norm_label": "notnull"
     },
     {
@@ -6552,7 +6552,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L183",
       "id": "meta_0003_snapshot_model_config_default",
-      "community": 217,
+      "community": 248,
       "norm_label": "default"
     },
     {
@@ -6561,7 +6561,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L193",
       "id": "meta_0003_snapshot_public_connected_apps_indexes",
-      "community": 213,
+      "community": 160,
       "norm_label": "indexes"
     },
     {
@@ -6633,7 +6633,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L205",
       "id": "meta_0003_snapshot_public_connected_apps_policies",
-      "community": 210,
+      "community": 160,
       "norm_label": "policies"
     },
     {
@@ -6660,7 +6660,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L209",
       "id": "meta_0003_snapshot_tables_public_skill_embeddings",
-      "community": 153,
+      "community": 160,
       "norm_label": "public.skill_embeddings"
     },
     {
@@ -6669,7 +6669,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L210",
       "id": "meta_0003_snapshot_public_skill_embeddings_name",
-      "community": 153,
+      "community": 160,
       "norm_label": "name"
     },
     {
@@ -6678,7 +6678,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L211",
       "id": "meta_0003_snapshot_public_skill_embeddings_schema",
-      "community": 153,
+      "community": 160,
       "norm_label": "schema"
     },
     {
@@ -6786,7 +6786,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L245",
       "id": "meta_0003_snapshot_public_skill_embeddings_indexes",
-      "community": 153,
+      "community": 160,
       "norm_label": "indexes"
     },
     {
@@ -6804,7 +6804,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L247",
       "id": "meta_0003_snapshot_public_skill_embeddings_compositeprimarykeys",
-      "community": 153,
+      "community": 213,
       "norm_label": "compositeprimarykeys"
     },
     {
@@ -6858,7 +6858,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L257",
       "id": "meta_0003_snapshot_public_skill_embeddings_policies",
-      "community": 153,
+      "community": 160,
       "norm_label": "policies"
     },
     {
@@ -6867,7 +6867,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L258",
       "id": "meta_0003_snapshot_public_skill_embeddings_checkconstraints",
-      "community": 153,
+      "community": 160,
       "norm_label": "checkconstraints"
     },
     {
@@ -6876,7 +6876,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L259",
       "id": "meta_0003_snapshot_public_skill_embeddings_isrlsenabled",
-      "community": 153,
+      "community": 160,
       "norm_label": "isrlsenabled"
     },
     {
@@ -6921,7 +6921,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L270",
       "id": "meta_0003_snapshot_id_default",
-      "community": 82,
+      "community": 217,
       "norm_label": "default"
     },
     {
@@ -7056,7 +7056,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L288",
       "id": "meta_0003_snapshot_design_tokens_primarykey",
-      "community": 217,
+      "community": 248,
       "norm_label": "primarykey"
     },
     {
@@ -8651,6 +8651,51 @@
       "id": "lib_stream_client_streamfrombackend",
       "community": 171,
       "norm_label": "streamfrombackend()"
+    },
+    {
+      "label": "findings.json",
+      "file_type": "code",
+      "source_file": "security-audit-out/findings.json",
+      "source_location": "L1",
+      "id": "security_audit_out_findings_json",
+      "community": 256,
+      "norm_label": "findings.json"
+    },
+    {
+      "label": "report-schema.json",
+      "file_type": "code",
+      "source_file": "skills/security-audit/skills/security-audit/report-schema.json",
+      "source_location": "L1",
+      "id": "skills_security_audit_skills_security_audit_report_schema_json",
+      "community": 253,
+      "norm_label": "report-schema.json"
+    },
+    {
+      "label": "$comment",
+      "file_type": "code",
+      "source_file": "skills/security-audit/skills/security-audit/report-schema.json",
+      "source_location": "L2",
+      "id": "security_audit_report_schema_comment",
+      "community": 253,
+      "norm_label": "$comment"
+    },
+    {
+      "label": "output_schema",
+      "file_type": "code",
+      "source_file": "skills/security-audit/skills/security-audit/report-schema.json",
+      "source_location": "L3",
+      "id": "security_audit_report_schema_output_schema",
+      "community": 253,
+      "norm_label": "output_schema"
+    },
+    {
+      "label": "oneOf",
+      "file_type": "code",
+      "source_file": "skills/security-audit/skills/security-audit/report-schema.json",
+      "source_location": "L4",
+      "id": "security_audit_report_schema_output_schema_oneof",
+      "community": 253,
+      "norm_label": "oneof"
     },
     {
       "label": "index.ts",
@@ -15849,7 +15894,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L432",
       "id": "vercel_react_best_practices_agents_2_1_avoid_barrel_file_imports",
-      "community": 47,
+      "community": 254,
       "norm_label": "2.1 avoid barrel file imports"
     },
     {
@@ -15858,7 +15903,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L444",
       "id": "vercel_react_best_practices_agents_codeblock_16",
-      "community": 47,
+      "community": 254,
       "norm_label": "code:tsx (import { check, x, menu } from 'lucide-react')"
     },
     {
@@ -15867,7 +15912,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L455",
       "id": "vercel_react_best_practices_agents_codeblock_17",
-      "community": 47,
+      "community": 254,
       "norm_label": "code:tsx (// keep the standard imports - next.js transforms them to di)"
     },
     {
@@ -15876,7 +15921,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L465",
       "id": "vercel_react_best_practices_agents_codeblock_18",
-      "community": 47,
+      "community": 254,
       "norm_label": "code:tsx (import button from '@mui/material/button')"
     },
     {
@@ -16434,7 +16479,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L1486",
       "id": "vercel_react_best_practices_agents_4_3_use_swr_for_automatic_deduplication",
-      "community": 59,
+      "community": 251,
       "norm_label": "4.3 use swr for automatic deduplication"
     },
     {
@@ -16443,7 +16488,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L1494",
       "id": "vercel_react_best_practices_agents_codeblock_61",
-      "community": 59,
+      "community": 251,
       "norm_label": "code:tsx (function userlist() {)"
     },
     {
@@ -16452,7 +16497,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L1507",
       "id": "vercel_react_best_practices_agents_codeblock_62",
-      "community": 59,
+      "community": 251,
       "norm_label": "code:tsx (import useswr from 'swr')"
     },
     {
@@ -16461,7 +16506,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L1517",
       "id": "vercel_react_best_practices_agents_codeblock_63",
-      "community": 59,
+      "community": 251,
       "norm_label": "code:tsx (import { useimmutableswr } from '@/lib/swr')"
     },
     {
@@ -16470,7 +16515,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L1527",
       "id": "vercel_react_best_practices_agents_codeblock_64",
-      "community": 59,
+      "community": 251,
       "norm_label": "code:tsx (import { useswrmutation } from 'swr/mutation')"
     },
     {
@@ -16965,7 +17010,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2337",
       "id": "vercel_react_best_practices_agents_6_1_animate_svg_wrapper_instead_of_svg_element",
-      "community": 216,
+      "community": 9,
       "norm_label": "6.1 animate svg wrapper instead of svg element"
     },
     {
@@ -16974,7 +17019,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2345",
       "id": "vercel_react_best_practices_agents_codeblock_101",
-      "community": 216,
+      "community": 9,
       "norm_label": "code:tsx (function loadingspinner() {)"
     },
     {
@@ -16983,7 +17028,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2362",
       "id": "vercel_react_best_practices_agents_codeblock_102",
-      "community": 216,
+      "community": 9,
       "norm_label": "code:tsx (function loadingspinner() {)"
     },
     {
@@ -17019,7 +17064,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2414",
       "id": "vercel_react_best_practices_agents_6_3_hoist_static_jsx_elements",
-      "community": 219,
+      "community": 9,
       "norm_label": "6.3 hoist static jsx elements"
     },
     {
@@ -17028,7 +17073,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2422",
       "id": "vercel_react_best_practices_agents_codeblock_105",
-      "community": 219,
+      "community": 9,
       "norm_label": "code:tsx (function loadingskeleton() {)"
     },
     {
@@ -17037,7 +17082,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2438",
       "id": "vercel_react_best_practices_agents_codeblock_106",
-      "community": 219,
+      "community": 9,
       "norm_label": "code:tsx (const loadingskeleton = ()"
     },
     {
@@ -17046,7 +17091,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2456",
       "id": "vercel_react_best_practices_agents_6_4_optimize_svg_precision",
-      "community": 212,
+      "community": 9,
       "norm_label": "6.4 optimize svg precision"
     },
     {
@@ -17055,7 +17100,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2464",
       "id": "vercel_react_best_practices_agents_codeblock_107",
-      "community": 212,
+      "community": 9,
       "norm_label": "code:svg (<path d=\"m 10.293847 20.847362 l 30.938472 40.192837\" />)"
     },
     {
@@ -17064,7 +17109,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2470",
       "id": "vercel_react_best_practices_agents_codeblock_108",
-      "community": 212,
+      "community": 9,
       "norm_label": "code:svg (<path d=\"m 10.3 20.8 l 30.9 40.2\" />)"
     },
     {
@@ -17073,7 +17118,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2476",
       "id": "vercel_react_best_practices_agents_codeblock_109",
-      "community": 212,
+      "community": 9,
       "norm_label": "code:bash (npx svgo --precision=1 --multipass icon.svg)"
     },
     {
@@ -17118,7 +17163,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2558",
       "id": "vercel_react_best_practices_agents_6_6_suppress_expected_hydration_mismatches",
-      "community": 239,
+      "community": 9,
       "norm_label": "6.6 suppress expected hydration mismatches"
     },
     {
@@ -17127,7 +17172,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2566",
       "id": "vercel_react_best_practices_agents_codeblock_113",
-      "community": 239,
+      "community": 9,
       "norm_label": "code:tsx (function timestamp() {)"
     },
     {
@@ -17136,7 +17181,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2574",
       "id": "vercel_react_best_practices_agents_codeblock_114",
-      "community": 239,
+      "community": 9,
       "norm_label": "code:tsx (function timestamp() {)"
     },
     {
@@ -17217,7 +17262,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2689",
       "id": "vercel_react_best_practices_agents_6_10_use_react_dom_resource_hints",
-      "community": 196,
+      "community": 9,
       "norm_label": "6.10 use react dom resource hints"
     },
     {
@@ -17226,7 +17271,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2709",
       "id": "vercel_react_best_practices_agents_codeblock_120",
-      "community": 196,
+      "community": 9,
       "norm_label": "code:tsx (import { preconnect, prefetchdns } from 'react-dom')"
     },
     {
@@ -17235,7 +17280,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2722",
       "id": "vercel_react_best_practices_agents_codeblock_121",
-      "community": 196,
+      "community": 9,
       "norm_label": "code:tsx (import { preload, preinit } from 'react-dom')"
     },
     {
@@ -17244,7 +17289,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2742",
       "id": "vercel_react_best_practices_agents_codeblock_122",
-      "community": 196,
+      "community": 9,
       "norm_label": "code:tsx (import { preloadmodule, preinitmodule } from 'react-dom')"
     },
     {
@@ -17253,7 +17298,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2780",
       "id": "vercel_react_best_practices_agents_6_11_use_usetransition_over_manual_loading_states",
-      "community": 177,
+      "community": 9,
       "norm_label": "6.11 use usetransition over manual loading states"
     },
     {
@@ -17262,7 +17307,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2788",
       "id": "vercel_react_best_practices_agents_codeblock_123",
-      "community": 177,
+      "community": 9,
       "norm_label": "code:tsx (function searchresults() {)"
     },
     {
@@ -17271,7 +17316,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2814",
       "id": "vercel_react_best_practices_agents_codeblock_124",
-      "community": 177,
+      "community": 9,
       "norm_label": "code:tsx (import { usetransition, usestate } from 'react')"
     },
     {
@@ -22304,6 +22349,1113 @@
       "id": "savazai_console_readme_deploy_on_vercel",
       "community": 55,
       "norm_label": "deploy on vercel"
+    },
+    {
+      "label": "architecture.md",
+      "file_type": "document",
+      "source_file": "security-audit-out/architecture.md",
+      "source_location": "L1",
+      "id": "security_audit_out_architecture_md",
+      "community": 252,
+      "norm_label": "architecture.md"
+    },
+    {
+      "label": "Architecture Review: SavazAI Harness",
+      "file_type": "document",
+      "source_file": "security-audit-out/architecture.md",
+      "source_location": "L1",
+      "id": "security_audit_out_architecture_architecture_review_savazai_harness",
+      "community": 252,
+      "norm_label": "architecture review: savazai harness"
+    },
+    {
+      "label": "1. System Components",
+      "file_type": "document",
+      "source_file": "security-audit-out/architecture.md",
+      "source_location": "L3",
+      "id": "security_audit_out_architecture_1_system_components",
+      "community": 252,
+      "norm_label": "1. system components"
+    },
+    {
+      "label": "2. Trust Boundaries",
+      "file_type": "document",
+      "source_file": "security-audit-out/architecture.md",
+      "source_location": "L8",
+      "id": "security_audit_out_architecture_2_trust_boundaries",
+      "community": 252,
+      "norm_label": "2. trust boundaries"
+    },
+    {
+      "label": "FINDINGS-DETAIL.md",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L1",
+      "id": "security_audit_out_findings_detail_md",
+      "community": 177,
+      "norm_label": "findings-detail.md"
+    },
+    {
+      "label": "Findings Detail: SavazAI Harness Audit",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L1",
+      "id": "security_audit_out_findings_detail_findings_detail_savazai_harness_audit",
+      "community": 177,
+      "norm_label": "findings detail: savazai harness audit"
+    },
+    {
+      "label": "SEC-001: SQL Injection Risk via Vulnerable Drizzle ORM Version",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L7",
+      "id": "security_audit_out_findings_detail_sec_001_sql_injection_risk_via_vulnerable_drizzle_orm_version",
+      "community": 177,
+      "norm_label": "sec-001: sql injection risk via vulnerable drizzle orm version"
+    },
+    {
+      "label": "Trace",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L9",
+      "id": "security_audit_out_findings_detail_trace",
+      "community": 177,
+      "norm_label": "trace"
+    },
+    {
+      "label": "Exploitation Prerequisites",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L14",
+      "id": "security_audit_out_findings_detail_exploitation_prerequisites",
+      "community": 177,
+      "norm_label": "exploitation prerequisites"
+    },
+    {
+      "label": "Remediation Code Changes",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L18",
+      "id": "security_audit_out_findings_detail_remediation_code_changes",
+      "community": 177,
+      "norm_label": "remediation code changes"
+    },
+    {
+      "label": "code:diff (-    \"drizzle-orm\": \"^0.38.0\",)",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L20",
+      "id": "security_audit_out_findings_detail_codeblock_1",
+      "community": 177,
+      "norm_label": "code:diff (-    \"drizzle-orm\": \"^0.38.0\",)"
+    },
+    {
+      "label": "SEC-002: Cleartext Default Database Credentials in Version Control",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L27",
+      "id": "security_audit_out_findings_detail_sec_002_cleartext_default_database_credentials_in_version_control",
+      "community": 177,
+      "norm_label": "sec-002: cleartext default database credentials in version control"
+    },
+    {
+      "label": "Trace",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L29",
+      "id": "security_audit_out_findings_detail_trace_29",
+      "community": 177,
+      "norm_label": "trace"
+    },
+    {
+      "label": "Exploitation Prerequisites",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L34",
+      "id": "security_audit_out_findings_detail_exploitation_prerequisites_34",
+      "community": 177,
+      "norm_label": "exploitation prerequisites"
+    },
+    {
+      "label": "Remediation Wording",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L37",
+      "id": "security_audit_out_findings_detail_remediation_wording",
+      "community": 177,
+      "norm_label": "remediation wording"
+    },
+    {
+      "label": "SEC-003: Loose Regular Expression Parsing in PII Privacy Gateway",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L42",
+      "id": "security_audit_out_findings_detail_sec_003_loose_regular_expression_parsing_in_pii_privacy_gateway",
+      "community": 177,
+      "norm_label": "sec-003: loose regular expression parsing in pii privacy gateway"
+    },
+    {
+      "label": "Trace",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L44",
+      "id": "security_audit_out_findings_detail_trace_44",
+      "community": 177,
+      "norm_label": "trace"
+    },
+    {
+      "label": "Exploitation Prerequisites",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L49",
+      "id": "security_audit_out_findings_detail_exploitation_prerequisites_49",
+      "community": 177,
+      "norm_label": "exploitation prerequisites"
+    },
+    {
+      "label": "Remediation Wording",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L52",
+      "id": "security_audit_out_findings_detail_remediation_wording_52",
+      "community": 177,
+      "norm_label": "remediation wording"
+    },
+    {
+      "label": "SEC-004: Exposed Database and Backend Container Ports",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L57",
+      "id": "security_audit_out_findings_detail_sec_004_exposed_database_and_backend_container_ports",
+      "community": 177,
+      "norm_label": "sec-004: exposed database and backend container ports"
+    },
+    {
+      "label": "Trace",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L59",
+      "id": "security_audit_out_findings_detail_trace_59",
+      "community": 177,
+      "norm_label": "trace"
+    },
+    {
+      "label": "Exploitation Prerequisites",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L64",
+      "id": "security_audit_out_findings_detail_exploitation_prerequisites_64",
+      "community": 177,
+      "norm_label": "exploitation prerequisites"
+    },
+    {
+      "label": "Remediation Code Changes",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L67",
+      "id": "security_audit_out_findings_detail_remediation_code_changes_67",
+      "community": 177,
+      "norm_label": "remediation code changes"
+    },
+    {
+      "label": "code:diff (savazai-db:)",
+      "file_type": "document",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L69",
+      "id": "security_audit_out_findings_detail_codeblock_2",
+      "community": 177,
+      "norm_label": "code:diff (savazai-db:)"
+    },
+    {
+      "label": "REPORT.md",
+      "file_type": "document",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L1",
+      "id": "security_audit_out_report_md",
+      "community": 239,
+      "norm_label": "report.md"
+    },
+    {
+      "label": "Security Audit Report: SavazAI Harness Workspace",
+      "file_type": "document",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L1",
+      "id": "security_audit_out_report_security_audit_report_savazai_harness_workspace",
+      "community": 239,
+      "norm_label": "security audit report: savazai harness workspace"
+    },
+    {
+      "label": "\ud83d\udcca Summary of Findings",
+      "file_type": "document",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L7",
+      "id": "security_audit_out_report_summary_of_findings",
+      "community": 239,
+      "norm_label": "\ud83d\udcca summary of findings"
+    },
+    {
+      "label": "\ud83d\udd0d Detailed Vulnerability Profiles",
+      "file_type": "document",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L18",
+      "id": "security_audit_out_report_detailed_vulnerability_profiles",
+      "community": 239,
+      "norm_label": "\ud83d\udd0d detailed vulnerability profiles"
+    },
+    {
+      "label": "SEC-001: SQL Injection Risk via Vulnerable Drizzle ORM Version",
+      "file_type": "document",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L20",
+      "id": "security_audit_out_report_sec_001_sql_injection_risk_via_vulnerable_drizzle_orm_version",
+      "community": 239,
+      "norm_label": "sec-001: sql injection risk via vulnerable drizzle orm version"
+    },
+    {
+      "label": "code:json (\"dependencies\": {)",
+      "file_type": "document",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L24",
+      "id": "security_audit_out_report_codeblock_1",
+      "community": 239,
+      "norm_label": "code:json (\"dependencies\": {)"
+    },
+    {
+      "label": "SEC-002: Cleartext Default Database Credentials in Version Control",
+      "file_type": "document",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L32",
+      "id": "security_audit_out_report_sec_002_cleartext_default_database_credentials_in_version_control",
+      "community": 239,
+      "norm_label": "sec-002: cleartext default database credentials in version control"
+    },
+    {
+      "label": "SEC-003: Loose Regular Expression Parsing in PII Privacy Gateway",
+      "file_type": "document",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L39",
+      "id": "security_audit_out_report_sec_003_loose_regular_expression_parsing_in_pii_privacy_gateway",
+      "community": 239,
+      "norm_label": "sec-003: loose regular expression parsing in pii privacy gateway"
+    },
+    {
+      "label": "SEC-004: Exposed Database and Backend Container Ports",
+      "file_type": "document",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L46",
+      "id": "security_audit_out_report_sec_004_exposed_database_and_backend_container_ports",
+      "community": 239,
+      "norm_label": "sec-004: exposed database and backend container ports"
+    },
+    {
+      "label": "code:yaml (ports:)",
+      "file_type": "document",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L50",
+      "id": "security_audit_out_report_codeblock_2",
+      "community": 239,
+      "norm_label": "code:yaml (ports:)"
+    },
+    {
+      "label": "README.md",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L1",
+      "id": "skills_security_audit_readme_md",
+      "community": 196,
+      "norm_label": "readme.md"
+    },
+    {
+      "label": "security-audit",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L1",
+      "id": "security_audit_readme_security_audit",
+      "community": 196,
+      "norm_label": "security-audit"
+    },
+    {
+      "label": "What it does",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L7",
+      "id": "security_audit_readme_what_it_does",
+      "community": 196,
+      "norm_label": "what it does"
+    },
+    {
+      "label": "Files",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L20",
+      "id": "security_audit_readme_files",
+      "community": 196,
+      "norm_label": "files"
+    },
+    {
+      "label": "Installation",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L36",
+      "id": "security_audit_readme_installation",
+      "community": 196,
+      "norm_label": "installation"
+    },
+    {
+      "label": "code:bash (npx skills add https://github.com/cloudflare/security-audit-)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L40",
+      "id": "security_audit_readme_codeblock_1",
+      "community": 196,
+      "norm_label": "code:bash (npx skills add https://github.com/cloudflare/security-audit-)"
+    },
+    {
+      "label": "code:bash (npx skills add https://github.com/cloudflare/security-audit-)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L47",
+      "id": "security_audit_readme_codeblock_2",
+      "community": 196,
+      "norm_label": "code:bash (npx skills add https://github.com/cloudflare/security-audit-)"
+    },
+    {
+      "label": "Usage",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L55",
+      "id": "security_audit_readme_usage",
+      "community": 196,
+      "norm_label": "usage"
+    },
+    {
+      "label": "code:block3 (security audit this codebase)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L59",
+      "id": "security_audit_readme_codeblock_3",
+      "community": 196,
+      "norm_label": "code:block3 (security audit this codebase)"
+    },
+    {
+      "label": "code:block4 (find security vulnerabilities in ./src)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L63",
+      "id": "security_audit_readme_codeblock_4",
+      "community": 196,
+      "norm_label": "code:block4 (find security vulnerabilities in ./src)"
+    },
+    {
+      "label": "code:block5 (do a security review, output to ~/audits/my-project)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L67",
+      "id": "security_audit_readme_codeblock_5",
+      "community": 196,
+      "norm_label": "code:block5 (do a security review, output to ~/audits/my-project)"
+    },
+    {
+      "label": "Requirements",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L73",
+      "id": "security_audit_readme_requirements",
+      "community": 196,
+      "norm_label": "requirements"
+    },
+    {
+      "label": "Design principles",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L78",
+      "id": "security_audit_readme_design_principles",
+      "community": 196,
+      "norm_label": "design principles"
+    },
+    {
+      "label": "Contact",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L86",
+      "id": "security_audit_readme_contact",
+      "community": 196,
+      "norm_label": "contact"
+    },
+    {
+      "label": "License",
+      "file_type": "document",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L90",
+      "id": "security_audit_readme_license",
+      "community": 196,
+      "norm_label": "license"
+    },
+    {
+      "label": "AI-AND-LLM.md",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L1",
+      "id": "skills_security_audit_skills_security_audit_ai_and_llm_md",
+      "community": 219,
+      "norm_label": "ai-and-llm.md"
+    },
+    {
+      "label": "AI, LLM, and Agent Hunting",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L1",
+      "id": "security_audit_ai_and_llm_ai_llm_and_agent_hunting",
+      "community": 219,
+      "norm_label": "ai, llm, and agent hunting"
+    },
+    {
+      "label": "When to use this file",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L3",
+      "id": "security_audit_ai_and_llm_when_to_use_this_file",
+      "community": 219,
+      "norm_label": "when to use this file"
+    },
+    {
+      "label": "Core discipline (include in every agent prompt for this domain)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L11",
+      "id": "security_audit_ai_and_llm_core_discipline_include_in_every_agent_prompt_for_this_domain",
+      "community": 219,
+      "norm_label": "core discipline (include in every agent prompt for this domain)"
+    },
+    {
+      "label": "code:block1 (- \"The model can be prompt-injected\" is NOT a finding on its)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L13",
+      "id": "security_audit_ai_and_llm_codeblock_1",
+      "community": 219,
+      "norm_label": "code:block1 (- \"the model can be prompt-injected\" is not a finding on its)"
+    },
+    {
+      "label": "Prompt-injection attack classes (subagent_type: `general`)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L20",
+      "id": "security_audit_ai_and_llm_prompt_injection_attack_classes_subagent_type_general",
+      "community": 219,
+      "norm_label": "prompt-injection attack classes (subagent_type: `general`)"
+    },
+    {
+      "label": "Agent and tool-calling attack classes (subagent_type: `general`)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L34",
+      "id": "security_audit_ai_and_llm_agent_and_tool_calling_attack_classes_subagent_type_general",
+      "community": 219,
+      "norm_label": "agent and tool-calling attack classes (subagent_type: `general`)"
+    },
+    {
+      "label": "Output-handling and disclosure attack classes (subagent_type: `general`)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L45",
+      "id": "security_audit_ai_and_llm_output_handling_and_disclosure_attack_classes_subagent_type_general",
+      "community": 219,
+      "norm_label": "output-handling and disclosure attack classes (subagent_type: `general`)"
+    },
+    {
+      "label": "Universal moves (apply across the above)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L56",
+      "id": "security_audit_ai_and_llm_universal_moves_apply_across_the_above",
+      "community": 219,
+      "norm_label": "universal moves (apply across the above)"
+    },
+    {
+      "label": "Validation rules (apply before reporting ANY finding here)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L61",
+      "id": "security_audit_ai_and_llm_validation_rules_apply_before_reporting_any_finding_here",
+      "community": 219,
+      "norm_label": "validation rules (apply before reporting any finding here)"
+    },
+    {
+      "label": "ATTACK-CLASSES.md",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/ATTACK-CLASSES.md",
+      "source_location": "L1",
+      "id": "skills_security_audit_skills_security_audit_attack_classes_md",
+      "community": 255,
+      "norm_label": "attack-classes.md"
+    },
+    {
+      "label": "Attack Classes",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/ATTACK-CLASSES.md",
+      "source_location": "L1",
+      "id": "security_audit_attack_classes_attack_classes",
+      "community": 255,
+      "norm_label": "attack classes"
+    },
+    {
+      "label": "Attack classes \u2014 choose and split based on Phase 1",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/ATTACK-CLASSES.md",
+      "source_location": "L3",
+      "id": "security_audit_attack_classes_attack_classes_choose_and_split_based_on_phase_1",
+      "community": 255,
+      "norm_label": "attack classes \u2014 choose and split based on phase 1"
+    },
+    {
+      "label": "CLIENT-SIDE.md",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L1",
+      "id": "skills_security_audit_skills_security_audit_client_side_md",
+      "community": 216,
+      "norm_label": "client-side.md"
+    },
+    {
+      "label": "Client-Side and Browser Hunting",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L1",
+      "id": "security_audit_client_side_client_side_and_browser_hunting",
+      "community": 216,
+      "norm_label": "client-side and browser hunting"
+    },
+    {
+      "label": "When to use this file",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L3",
+      "id": "security_audit_client_side_when_to_use_this_file",
+      "community": 216,
+      "norm_label": "when to use this file"
+    },
+    {
+      "label": "Core discipline (include in every agent prompt for this domain)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L11",
+      "id": "security_audit_client_side_core_discipline_include_in_every_agent_prompt_for_this_domain",
+      "community": 216,
+      "norm_label": "core discipline (include in every agent prompt for this domain)"
+    },
+    {
+      "label": "code:block1 (- Client-side taint needs a controllable SOURCE and an execu)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L13",
+      "id": "security_audit_client_side_codeblock_1",
+      "community": 216,
+      "norm_label": "code:block1 (- client-side taint needs a controllable source and an execu)"
+    },
+    {
+      "label": "DOM-based injection attack classes (subagent_type: `general`)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L20",
+      "id": "security_audit_client_side_dom_based_injection_attack_classes_subagent_type_general",
+      "community": 216,
+      "norm_label": "dom-based injection attack classes (subagent_type: `general`)"
+    },
+    {
+      "label": "Client-side trust and messaging attack classes (subagent_type: `general`)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L28",
+      "id": "security_audit_client_side_client_side_trust_and_messaging_attack_classes_subagent_type_general",
+      "community": 216,
+      "norm_label": "client-side trust and messaging attack classes (subagent_type: `general`)"
+    },
+    {
+      "label": "UI-redress and navigation attack classes (subagent_type: `general`)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L39",
+      "id": "security_audit_client_side_ui_redress_and_navigation_attack_classes_subagent_type_general",
+      "community": 216,
+      "norm_label": "ui-redress and navigation attack classes (subagent_type: `general`)"
+    },
+    {
+      "label": "Prototype pollution attack classes (subagent_type: `general`)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L50",
+      "id": "security_audit_client_side_prototype_pollution_attack_classes_subagent_type_general",
+      "community": 216,
+      "norm_label": "prototype pollution attack classes (subagent_type: `general`)"
+    },
+    {
+      "label": "Universal moves (apply across the above)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L55",
+      "id": "security_audit_client_side_universal_moves_apply_across_the_above",
+      "community": 216,
+      "norm_label": "universal moves (apply across the above)"
+    },
+    {
+      "label": "Validation rules (apply before reporting ANY finding here)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L61",
+      "id": "security_audit_client_side_validation_rules_apply_before_reporting_any_finding_here",
+      "community": 216,
+      "norm_label": "validation rules (apply before reporting any finding here)"
+    },
+    {
+      "label": "HUNTING.md",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/HUNTING.md",
+      "source_location": "L1",
+      "id": "skills_security_audit_skills_security_audit_hunting_md",
+      "community": 250,
+      "norm_label": "hunting.md"
+    },
+    {
+      "label": "Vulnerability Hunting",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/HUNTING.md",
+      "source_location": "L1",
+      "id": "security_audit_hunting_vulnerability_hunting",
+      "community": 250,
+      "norm_label": "vulnerability hunting"
+    },
+    {
+      "label": "Phase 2: Hunt for vulnerabilities",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/HUNTING.md",
+      "source_location": "L3",
+      "id": "security_audit_hunting_phase_2_hunt_for_vulnerabilities",
+      "community": 250,
+      "norm_label": "phase 2: hunt for vulnerabilities"
+    },
+    {
+      "label": "Hunting methodology \u2014 include in every Phase 2 agent prompt",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/HUNTING.md",
+      "source_location": "L18",
+      "id": "security_audit_hunting_hunting_methodology_include_in_every_phase_2_agent_prompt",
+      "community": 250,
+      "norm_label": "hunting methodology \u2014 include in every phase 2 agent prompt"
+    },
+    {
+      "label": "code:block1 (## How to hunt)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/HUNTING.md",
+      "source_location": "L22",
+      "id": "security_audit_hunting_codeblock_1",
+      "community": 250,
+      "norm_label": "code:block1 (## how to hunt)"
+    },
+    {
+      "label": "MEMORY-SAFETY-AND-BINARY.md",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L1",
+      "id": "skills_security_audit_skills_security_audit_memory_safety_and_binary_md",
+      "community": 242,
+      "norm_label": "memory-safety-and-binary.md"
+    },
+    {
+      "label": "Memory Safety, Binary, and Kernel Hunting",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L1",
+      "id": "security_audit_memory_safety_and_binary_memory_safety_binary_and_kernel_hunting",
+      "community": 242,
+      "norm_label": "memory safety, binary, and kernel hunting"
+    },
+    {
+      "label": "When to use this file",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L3",
+      "id": "security_audit_memory_safety_and_binary_when_to_use_this_file",
+      "community": 242,
+      "norm_label": "when to use this file"
+    },
+    {
+      "label": "Core discipline (include in every agent prompt for this domain)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L9",
+      "id": "security_audit_memory_safety_and_binary_core_discipline_include_in_every_agent_prompt_for_this_domain",
+      "community": 242,
+      "norm_label": "core discipline (include in every agent prompt for this domain)"
+    },
+    {
+      "label": "code:block1 (- A buffer sized for the common case can still overflow on a)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L11",
+      "id": "security_audit_memory_safety_and_binary_codeblock_1",
+      "community": 242,
+      "norm_label": "code:block1 (- a buffer sized for the common case can still overflow on a)"
+    },
+    {
+      "label": "Memory-safety attack classes (subagent_type: `general`)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L18",
+      "id": "security_audit_memory_safety_and_binary_memory_safety_attack_classes_subagent_type_general",
+      "community": 242,
+      "norm_label": "memory-safety attack classes (subagent_type: `general`)"
+    },
+    {
+      "label": "Kernel & privileged-interface attack classes (subagent_type: `general`)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L37",
+      "id": "security_audit_memory_safety_and_binary_kernel_privileged_interface_attack_classes_subagent_type_general",
+      "community": 242,
+      "norm_label": "kernel & privileged-interface attack classes (subagent_type: `general`)"
+    },
+    {
+      "label": "Universal moves (apply across the above)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L45",
+      "id": "security_audit_memory_safety_and_binary_universal_moves_apply_across_the_above",
+      "community": 242,
+      "norm_label": "universal moves (apply across the above)"
+    },
+    {
+      "label": "Validation rules (apply before reporting ANY finding here)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L52",
+      "id": "security_audit_memory_safety_and_binary_validation_rules_apply_before_reporting_any_finding_here",
+      "community": 242,
+      "norm_label": "validation rules (apply before reporting any finding here)"
+    },
+    {
+      "label": "RECONNAISSANCE.md",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/RECONNAISSANCE.md",
+      "source_location": "L1",
+      "id": "skills_security_audit_skills_security_audit_reconnaissance_md",
+      "community": 249,
+      "norm_label": "reconnaissance.md"
+    },
+    {
+      "label": "Reconnaissance",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/RECONNAISSANCE.md",
+      "source_location": "L1",
+      "id": "security_audit_reconnaissance_reconnaissance",
+      "community": 249,
+      "norm_label": "reconnaissance"
+    },
+    {
+      "label": "Phase 1: Understand the application",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/RECONNAISSANCE.md",
+      "source_location": "L3",
+      "id": "security_audit_reconnaissance_phase_1_understand_the_application",
+      "community": 249,
+      "norm_label": "phase 1: understand the application"
+    },
+    {
+      "label": "code:block1 (Explore the codebase at <path>. Answer:)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/RECONNAISSANCE.md",
+      "source_location": "L8",
+      "id": "security_audit_reconnaissance_codeblock_1",
+      "community": 249,
+      "norm_label": "code:block1 (explore the codebase at <path>. answer:)"
+    },
+    {
+      "label": "code:block2 (Explore the codebase at <path>. Find and read ALL code relat)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/RECONNAISSANCE.md",
+      "source_location": "L19",
+      "id": "security_audit_reconnaissance_codeblock_2",
+      "community": 249,
+      "norm_label": "code:block2 (explore the codebase at <path>. find and read all code relat)"
+    },
+    {
+      "label": "code:block3 (Explore the codebase at <path>. Produce a complete inventory)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/RECONNAISSANCE.md",
+      "source_location": "L30",
+      "id": "security_audit_reconnaissance_codeblock_3",
+      "community": 249,
+      "norm_label": "code:block3 (explore the codebase at <path>. produce a complete inventory)"
+    },
+    {
+      "label": "SKILL.md",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L1",
+      "id": "skills_security_audit_skills_security_audit_skill_md",
+      "community": 212,
+      "norm_label": "skill.md"
+    },
+    {
+      "label": "Security Audit",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L6",
+      "id": "security_audit_skill_security_audit",
+      "community": 212,
+      "norm_label": "security audit"
+    },
+    {
+      "label": "Platform terminology",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L10",
+      "id": "security_audit_skill_platform_terminology",
+      "community": 212,
+      "norm_label": "platform terminology"
+    },
+    {
+      "label": "Setup",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L21",
+      "id": "security_audit_skill_setup",
+      "community": 212,
+      "norm_label": "setup"
+    },
+    {
+      "label": "Coverage and prior runs",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L35",
+      "id": "security_audit_skill_coverage_and_prior_runs",
+      "community": 212,
+      "norm_label": "coverage and prior runs"
+    },
+    {
+      "label": "Core Principles",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L48",
+      "id": "security_audit_skill_core_principles",
+      "community": 212,
+      "norm_label": "core principles"
+    },
+    {
+      "label": "Only report what you can exploit",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L50",
+      "id": "security_audit_skill_only_report_what_you_can_exploit",
+      "community": 212,
+      "norm_label": "only report what you can exploit"
+    },
+    {
+      "label": "Confirm dynamically when you can",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L54",
+      "id": "security_audit_skill_confirm_dynamically_when_you_can",
+      "community": 212,
+      "norm_label": "confirm dynamically when you can"
+    },
+    {
+      "label": "Determine the baseline dynamically",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L58",
+      "id": "security_audit_skill_determine_the_baseline_dynamically",
+      "community": 212,
+      "norm_label": "determine the baseline dynamically"
+    },
+    {
+      "label": "Defense-in-depth gaps are not vulnerabilities",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L64",
+      "id": "security_audit_skill_defense_in_depth_gaps_are_not_vulnerabilities",
+      "community": 212,
+      "norm_label": "defense-in-depth gaps are not vulnerabilities"
+    },
+    {
+      "label": "Severity requires impact",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L68",
+      "id": "security_audit_skill_severity_requires_impact",
+      "community": 212,
+      "norm_label": "severity requires impact"
+    },
+    {
+      "label": "Workflow overview",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L84",
+      "id": "security_audit_skill_workflow_overview",
+      "community": 212,
+      "norm_label": "workflow overview"
+    },
+    {
+      "label": "Anti-Patterns to Avoid",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L95",
+      "id": "security_audit_skill_anti_patterns_to_avoid",
+      "community": 212,
+      "norm_label": "anti-patterns to avoid"
+    },
+    {
+      "label": "VALIDATION-AND-REPORTING.md",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L1",
+      "id": "skills_security_audit_skills_security_audit_validation_and_reporting_md",
+      "community": 247,
+      "norm_label": "validation-and-reporting.md"
+    },
+    {
+      "label": "Validation, Reporting, and Verification",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L1",
+      "id": "security_audit_validation_and_reporting_validation_reporting_and_verification",
+      "community": 247,
+      "norm_label": "validation, reporting, and verification"
+    },
+    {
+      "label": "Phase 3: Validate findings",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L3",
+      "id": "security_audit_validation_and_reporting_phase_3_validate_findings",
+      "community": 247,
+      "norm_label": "phase 3: validate findings"
+    },
+    {
+      "label": "code:block1 (Your job is to DISPROVE this finding. Read the actual source)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L23",
+      "id": "security_audit_validation_and_reporting_codeblock_1",
+      "community": 247,
+      "norm_label": "code:block1 (your job is to disprove this finding. read the actual source)"
+    },
+    {
+      "label": "Phase 4: Report",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L31",
+      "id": "security_audit_validation_and_reporting_phase_4_report",
+      "community": 247,
+      "norm_label": "phase 4: report"
+    },
+    {
+      "label": "Phase 5: Structured output and schema check",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L53",
+      "id": "security_audit_validation_and_reporting_phase_5_structured_output_and_schema_check",
+      "community": 247,
+      "norm_label": "phase 5: structured output and schema check"
+    },
+    {
+      "label": "Phase 6: Independent verification",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L67",
+      "id": "security_audit_validation_and_reporting_phase_6_independent_verification",
+      "community": 247,
+      "norm_label": "phase 6: independent verification"
+    },
+    {
+      "label": "code:block2 (You are an independent verifier. You did NOT write this find)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L73",
+      "id": "security_audit_validation_and_reporting_codeblock_2",
+      "community": 247,
+      "norm_label": "code:block2 (you are an independent verifier. you did not write this find)"
+    },
+    {
+      "label": "WEB-PROTOCOL-AND-AUTH.md",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L1",
+      "id": "skills_security_audit_skills_security_audit_web_protocol_and_auth_md",
+      "community": 243,
+      "norm_label": "web-protocol-and-auth.md"
+    },
+    {
+      "label": "HTTP-Protocol and Authentication Hunting",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L1",
+      "id": "security_audit_web_protocol_and_auth_http_protocol_and_authentication_hunting",
+      "community": 243,
+      "norm_label": "http-protocol and authentication hunting"
+    },
+    {
+      "label": "When to use this file",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L3",
+      "id": "security_audit_web_protocol_and_auth_when_to_use_this_file",
+      "community": 243,
+      "norm_label": "when to use this file"
+    },
+    {
+      "label": "Core discipline (include in every agent prompt for this domain)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L11",
+      "id": "security_audit_web_protocol_and_auth_core_discipline_include_in_every_agent_prompt_for_this_domain",
+      "community": 243,
+      "norm_label": "core discipline (include in every agent prompt for this domain)"
+    },
+    {
+      "label": "code:block1 (- Framing bugs live in DISAGREEMENT, not in one parser. Requ)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L13",
+      "id": "security_audit_web_protocol_and_auth_codeblock_1",
+      "community": 243,
+      "norm_label": "code:block1 (- framing bugs live in disagreement, not in one parser. requ)"
+    },
+    {
+      "label": "HTTP request-framing attack classes (subagent_type: `general`)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L20",
+      "id": "security_audit_web_protocol_and_auth_http_request_framing_attack_classes_subagent_type_general",
+      "community": 243,
+      "norm_label": "http request-framing attack classes (subagent_type: `general`)"
+    },
+    {
+      "label": "Authentication-protocol attack classes (subagent_type: `general`)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L37",
+      "id": "security_audit_web_protocol_and_auth_authentication_protocol_attack_classes_subagent_type_general",
+      "community": 243,
+      "norm_label": "authentication-protocol attack classes (subagent_type: `general`)"
+    },
+    {
+      "label": "Universal moves (apply across the above)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L71",
+      "id": "security_audit_web_protocol_and_auth_universal_moves_apply_across_the_above",
+      "community": 243,
+      "norm_label": "universal moves (apply across the above)"
+    },
+    {
+      "label": "Validation rules (apply before reporting ANY finding here)",
+      "file_type": "document",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L78",
+      "id": "security_audit_web_protocol_and_auth_validation_rules_apply_before_reporting_any_finding_here",
+      "community": 243,
+      "norm_label": "validation rules (apply before reporting any finding here)"
     },
     {
       "label": "brave-search-transformer.md",
@@ -38824,6 +39976,36 @@
       "confidence_score": 1.0,
       "source": "lib_stream_client",
       "target": "lib_stream_client_streamfrombackend"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/report-schema.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "skills_security_audit_skills_security_audit_report_schema_json",
+      "target": "security_audit_report_schema_comment",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/report-schema.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "skills_security_audit_skills_security_audit_report_schema_json",
+      "target": "security_audit_report_schema_output_schema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/report-schema.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "security_audit_report_schema_output_schema",
+      "target": "security_audit_report_schema_output_schema_oneof",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -56926,6 +58108,1106 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/architecture.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "security_audit_out_architecture_md",
+      "target": "security_audit_out_architecture_architecture_review_savazai_harness",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/architecture.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "security_audit_out_architecture_architecture_review_savazai_harness",
+      "target": "security_audit_out_architecture_1_system_components",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/architecture.md",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "security_audit_out_architecture_architecture_review_savazai_harness",
+      "target": "security_audit_out_architecture_2_trust_boundaries",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_md",
+      "target": "security_audit_out_findings_detail_findings_detail_savazai_harness_audit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_findings_detail_savazai_harness_audit",
+      "target": "security_audit_out_findings_detail_sec_001_sql_injection_risk_via_vulnerable_drizzle_orm_version",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_findings_detail_savazai_harness_audit",
+      "target": "security_audit_out_findings_detail_sec_002_cleartext_default_database_credentials_in_version_control",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_findings_detail_savazai_harness_audit",
+      "target": "security_audit_out_findings_detail_sec_003_loose_regular_expression_parsing_in_pii_privacy_gateway",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_findings_detail_savazai_harness_audit",
+      "target": "security_audit_out_findings_detail_sec_004_exposed_database_and_backend_container_ports",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_sec_001_sql_injection_risk_via_vulnerable_drizzle_orm_version",
+      "target": "security_audit_out_findings_detail_trace",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_sec_001_sql_injection_risk_via_vulnerable_drizzle_orm_version",
+      "target": "security_audit_out_findings_detail_exploitation_prerequisites",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_sec_001_sql_injection_risk_via_vulnerable_drizzle_orm_version",
+      "target": "security_audit_out_findings_detail_remediation_code_changes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_remediation_code_changes",
+      "target": "security_audit_out_findings_detail_codeblock_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_sec_002_cleartext_default_database_credentials_in_version_control",
+      "target": "security_audit_out_findings_detail_trace_29",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_sec_002_cleartext_default_database_credentials_in_version_control",
+      "target": "security_audit_out_findings_detail_exploitation_prerequisites_34",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_sec_002_cleartext_default_database_credentials_in_version_control",
+      "target": "security_audit_out_findings_detail_remediation_wording",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L44",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_sec_003_loose_regular_expression_parsing_in_pii_privacy_gateway",
+      "target": "security_audit_out_findings_detail_trace_44",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L49",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_sec_003_loose_regular_expression_parsing_in_pii_privacy_gateway",
+      "target": "security_audit_out_findings_detail_exploitation_prerequisites_49",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L52",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_sec_003_loose_regular_expression_parsing_in_pii_privacy_gateway",
+      "target": "security_audit_out_findings_detail_remediation_wording_52",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L59",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_sec_004_exposed_database_and_backend_container_ports",
+      "target": "security_audit_out_findings_detail_trace_59",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L64",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_sec_004_exposed_database_and_backend_container_ports",
+      "target": "security_audit_out_findings_detail_exploitation_prerequisites_64",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L67",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_sec_004_exposed_database_and_backend_container_ports",
+      "target": "security_audit_out_findings_detail_remediation_code_changes_67",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/FINDINGS-DETAIL.md",
+      "source_location": "L69",
+      "weight": 1.0,
+      "source": "security_audit_out_findings_detail_remediation_code_changes_67",
+      "target": "security_audit_out_findings_detail_codeblock_2",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "security_audit_out_report_md",
+      "target": "security_audit_out_report_security_audit_report_savazai_harness_workspace",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "security_audit_out_report_security_audit_report_savazai_harness_workspace",
+      "target": "security_audit_out_report_summary_of_findings",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "security_audit_out_report_security_audit_report_savazai_harness_workspace",
+      "target": "security_audit_out_report_detailed_vulnerability_profiles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "security_audit_out_report_detailed_vulnerability_profiles",
+      "target": "security_audit_out_report_sec_001_sql_injection_risk_via_vulnerable_drizzle_orm_version",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "security_audit_out_report_detailed_vulnerability_profiles",
+      "target": "security_audit_out_report_sec_002_cleartext_default_database_credentials_in_version_control",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L39",
+      "weight": 1.0,
+      "source": "security_audit_out_report_detailed_vulnerability_profiles",
+      "target": "security_audit_out_report_sec_003_loose_regular_expression_parsing_in_pii_privacy_gateway",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "security_audit_out_report_detailed_vulnerability_profiles",
+      "target": "security_audit_out_report_sec_004_exposed_database_and_backend_container_ports",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "security_audit_out_report_sec_001_sql_injection_risk_via_vulnerable_drizzle_orm_version",
+      "target": "security_audit_out_report_codeblock_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "security-audit-out/REPORT.md",
+      "source_location": "L50",
+      "weight": 1.0,
+      "source": "security_audit_out_report_sec_004_exposed_database_and_backend_container_ports",
+      "target": "security_audit_out_report_codeblock_2",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "skills_security_audit_readme_md",
+      "target": "security_audit_readme_security_audit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "security_audit_readme_security_audit",
+      "target": "security_audit_readme_what_it_does",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "security_audit_readme_security_audit",
+      "target": "security_audit_readme_files",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "security_audit_readme_security_audit",
+      "target": "security_audit_readme_installation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L55",
+      "weight": 1.0,
+      "source": "security_audit_readme_security_audit",
+      "target": "security_audit_readme_usage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L73",
+      "weight": 1.0,
+      "source": "security_audit_readme_security_audit",
+      "target": "security_audit_readme_requirements",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "security_audit_readme_security_audit",
+      "target": "security_audit_readme_design_principles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L86",
+      "weight": 1.0,
+      "source": "security_audit_readme_security_audit",
+      "target": "security_audit_readme_contact",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L90",
+      "weight": 1.0,
+      "source": "security_audit_readme_security_audit",
+      "target": "security_audit_readme_license",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L40",
+      "weight": 1.0,
+      "source": "security_audit_readme_installation",
+      "target": "security_audit_readme_codeblock_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L47",
+      "weight": 1.0,
+      "source": "security_audit_readme_installation",
+      "target": "security_audit_readme_codeblock_2",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L59",
+      "weight": 1.0,
+      "source": "security_audit_readme_usage",
+      "target": "security_audit_readme_codeblock_3",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L63",
+      "weight": 1.0,
+      "source": "security_audit_readme_usage",
+      "target": "security_audit_readme_codeblock_4",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/README.md",
+      "source_location": "L67",
+      "weight": 1.0,
+      "source": "security_audit_readme_usage",
+      "target": "security_audit_readme_codeblock_5",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "skills_security_audit_skills_security_audit_ai_and_llm_md",
+      "target": "security_audit_ai_and_llm_ai_llm_and_agent_hunting",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "security_audit_ai_and_llm_ai_llm_and_agent_hunting",
+      "target": "security_audit_ai_and_llm_when_to_use_this_file",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "security_audit_ai_and_llm_ai_llm_and_agent_hunting",
+      "target": "security_audit_ai_and_llm_core_discipline_include_in_every_agent_prompt_for_this_domain",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "security_audit_ai_and_llm_ai_llm_and_agent_hunting",
+      "target": "security_audit_ai_and_llm_prompt_injection_attack_classes_subagent_type_general",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "security_audit_ai_and_llm_ai_llm_and_agent_hunting",
+      "target": "security_audit_ai_and_llm_agent_and_tool_calling_attack_classes_subagent_type_general",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "security_audit_ai_and_llm_ai_llm_and_agent_hunting",
+      "target": "security_audit_ai_and_llm_output_handling_and_disclosure_attack_classes_subagent_type_general",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "security_audit_ai_and_llm_ai_llm_and_agent_hunting",
+      "target": "security_audit_ai_and_llm_universal_moves_apply_across_the_above",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L61",
+      "weight": 1.0,
+      "source": "security_audit_ai_and_llm_ai_llm_and_agent_hunting",
+      "target": "security_audit_ai_and_llm_validation_rules_apply_before_reporting_any_finding_here",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/AI-AND-LLM.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "security_audit_ai_and_llm_core_discipline_include_in_every_agent_prompt_for_this_domain",
+      "target": "security_audit_ai_and_llm_codeblock_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/ATTACK-CLASSES.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "skills_security_audit_skills_security_audit_attack_classes_md",
+      "target": "security_audit_attack_classes_attack_classes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/ATTACK-CLASSES.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "security_audit_attack_classes_attack_classes",
+      "target": "security_audit_attack_classes_attack_classes_choose_and_split_based_on_phase_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "skills_security_audit_skills_security_audit_client_side_md",
+      "target": "security_audit_client_side_client_side_and_browser_hunting",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "security_audit_client_side_client_side_and_browser_hunting",
+      "target": "security_audit_client_side_when_to_use_this_file",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "security_audit_client_side_client_side_and_browser_hunting",
+      "target": "security_audit_client_side_core_discipline_include_in_every_agent_prompt_for_this_domain",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "security_audit_client_side_client_side_and_browser_hunting",
+      "target": "security_audit_client_side_dom_based_injection_attack_classes_subagent_type_general",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "security_audit_client_side_client_side_and_browser_hunting",
+      "target": "security_audit_client_side_client_side_trust_and_messaging_attack_classes_subagent_type_general",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L39",
+      "weight": 1.0,
+      "source": "security_audit_client_side_client_side_and_browser_hunting",
+      "target": "security_audit_client_side_ui_redress_and_navigation_attack_classes_subagent_type_general",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L50",
+      "weight": 1.0,
+      "source": "security_audit_client_side_client_side_and_browser_hunting",
+      "target": "security_audit_client_side_prototype_pollution_attack_classes_subagent_type_general",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L55",
+      "weight": 1.0,
+      "source": "security_audit_client_side_client_side_and_browser_hunting",
+      "target": "security_audit_client_side_universal_moves_apply_across_the_above",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L61",
+      "weight": 1.0,
+      "source": "security_audit_client_side_client_side_and_browser_hunting",
+      "target": "security_audit_client_side_validation_rules_apply_before_reporting_any_finding_here",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/CLIENT-SIDE.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "security_audit_client_side_core_discipline_include_in_every_agent_prompt_for_this_domain",
+      "target": "security_audit_client_side_codeblock_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/HUNTING.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "skills_security_audit_skills_security_audit_hunting_md",
+      "target": "security_audit_hunting_vulnerability_hunting",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/HUNTING.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "security_audit_hunting_vulnerability_hunting",
+      "target": "security_audit_hunting_phase_2_hunt_for_vulnerabilities",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/HUNTING.md",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "security_audit_hunting_phase_2_hunt_for_vulnerabilities",
+      "target": "security_audit_hunting_hunting_methodology_include_in_every_phase_2_agent_prompt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/HUNTING.md",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "security_audit_hunting_hunting_methodology_include_in_every_phase_2_agent_prompt",
+      "target": "security_audit_hunting_codeblock_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "skills_security_audit_skills_security_audit_memory_safety_and_binary_md",
+      "target": "security_audit_memory_safety_and_binary_memory_safety_binary_and_kernel_hunting",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "security_audit_memory_safety_and_binary_memory_safety_binary_and_kernel_hunting",
+      "target": "security_audit_memory_safety_and_binary_when_to_use_this_file",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "security_audit_memory_safety_and_binary_memory_safety_binary_and_kernel_hunting",
+      "target": "security_audit_memory_safety_and_binary_core_discipline_include_in_every_agent_prompt_for_this_domain",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "security_audit_memory_safety_and_binary_memory_safety_binary_and_kernel_hunting",
+      "target": "security_audit_memory_safety_and_binary_memory_safety_attack_classes_subagent_type_general",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "security_audit_memory_safety_and_binary_memory_safety_binary_and_kernel_hunting",
+      "target": "security_audit_memory_safety_and_binary_kernel_privileged_interface_attack_classes_subagent_type_general",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "security_audit_memory_safety_and_binary_memory_safety_binary_and_kernel_hunting",
+      "target": "security_audit_memory_safety_and_binary_universal_moves_apply_across_the_above",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L52",
+      "weight": 1.0,
+      "source": "security_audit_memory_safety_and_binary_memory_safety_binary_and_kernel_hunting",
+      "target": "security_audit_memory_safety_and_binary_validation_rules_apply_before_reporting_any_finding_here",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/MEMORY-SAFETY-AND-BINARY.md",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "security_audit_memory_safety_and_binary_core_discipline_include_in_every_agent_prompt_for_this_domain",
+      "target": "security_audit_memory_safety_and_binary_codeblock_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/RECONNAISSANCE.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "skills_security_audit_skills_security_audit_reconnaissance_md",
+      "target": "security_audit_reconnaissance_reconnaissance",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/RECONNAISSANCE.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "security_audit_reconnaissance_reconnaissance",
+      "target": "security_audit_reconnaissance_phase_1_understand_the_application",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/RECONNAISSANCE.md",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "security_audit_reconnaissance_phase_1_understand_the_application",
+      "target": "security_audit_reconnaissance_codeblock_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/RECONNAISSANCE.md",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "security_audit_reconnaissance_phase_1_understand_the_application",
+      "target": "security_audit_reconnaissance_codeblock_2",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/RECONNAISSANCE.md",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "security_audit_reconnaissance_phase_1_understand_the_application",
+      "target": "security_audit_reconnaissance_codeblock_3",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "skills_security_audit_skills_security_audit_skill_md",
+      "target": "security_audit_skill_security_audit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "security_audit_skill_security_audit",
+      "target": "security_audit_skill_platform_terminology",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "security_audit_skill_security_audit",
+      "target": "security_audit_skill_setup",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "security_audit_skill_security_audit",
+      "target": "security_audit_skill_core_principles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "security_audit_skill_security_audit",
+      "target": "security_audit_skill_workflow_overview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L95",
+      "weight": 1.0,
+      "source": "security_audit_skill_security_audit",
+      "target": "security_audit_skill_anti_patterns_to_avoid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "security_audit_skill_setup",
+      "target": "security_audit_skill_coverage_and_prior_runs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L50",
+      "weight": 1.0,
+      "source": "security_audit_skill_core_principles",
+      "target": "security_audit_skill_only_report_what_you_can_exploit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L54",
+      "weight": 1.0,
+      "source": "security_audit_skill_core_principles",
+      "target": "security_audit_skill_confirm_dynamically_when_you_can",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L58",
+      "weight": 1.0,
+      "source": "security_audit_skill_core_principles",
+      "target": "security_audit_skill_determine_the_baseline_dynamically",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L64",
+      "weight": 1.0,
+      "source": "security_audit_skill_core_principles",
+      "target": "security_audit_skill_defense_in_depth_gaps_are_not_vulnerabilities",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/SKILL.md",
+      "source_location": "L68",
+      "weight": 1.0,
+      "source": "security_audit_skill_core_principles",
+      "target": "security_audit_skill_severity_requires_impact",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "skills_security_audit_skills_security_audit_validation_and_reporting_md",
+      "target": "security_audit_validation_and_reporting_validation_reporting_and_verification",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "security_audit_validation_and_reporting_validation_reporting_and_verification",
+      "target": "security_audit_validation_and_reporting_phase_3_validate_findings",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L31",
+      "weight": 1.0,
+      "source": "security_audit_validation_and_reporting_validation_reporting_and_verification",
+      "target": "security_audit_validation_and_reporting_phase_4_report",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "security_audit_validation_and_reporting_validation_reporting_and_verification",
+      "target": "security_audit_validation_and_reporting_phase_5_structured_output_and_schema_check",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L67",
+      "weight": 1.0,
+      "source": "security_audit_validation_and_reporting_validation_reporting_and_verification",
+      "target": "security_audit_validation_and_reporting_phase_6_independent_verification",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "security_audit_validation_and_reporting_phase_3_validate_findings",
+      "target": "security_audit_validation_and_reporting_codeblock_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/VALIDATION-AND-REPORTING.md",
+      "source_location": "L73",
+      "weight": 1.0,
+      "source": "security_audit_validation_and_reporting_phase_6_independent_verification",
+      "target": "security_audit_validation_and_reporting_codeblock_2",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "skills_security_audit_skills_security_audit_web_protocol_and_auth_md",
+      "target": "security_audit_web_protocol_and_auth_http_protocol_and_authentication_hunting",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "security_audit_web_protocol_and_auth_http_protocol_and_authentication_hunting",
+      "target": "security_audit_web_protocol_and_auth_when_to_use_this_file",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "security_audit_web_protocol_and_auth_http_protocol_and_authentication_hunting",
+      "target": "security_audit_web_protocol_and_auth_core_discipline_include_in_every_agent_prompt_for_this_domain",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "security_audit_web_protocol_and_auth_http_protocol_and_authentication_hunting",
+      "target": "security_audit_web_protocol_and_auth_http_request_framing_attack_classes_subagent_type_general",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "security_audit_web_protocol_and_auth_http_protocol_and_authentication_hunting",
+      "target": "security_audit_web_protocol_and_auth_authentication_protocol_attack_classes_subagent_type_general",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L71",
+      "weight": 1.0,
+      "source": "security_audit_web_protocol_and_auth_http_protocol_and_authentication_hunting",
+      "target": "security_audit_web_protocol_and_auth_universal_moves_apply_across_the_above",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "security_audit_web_protocol_and_auth_http_protocol_and_authentication_hunting",
+      "target": "security_audit_web_protocol_and_auth_validation_rules_apply_before_reporting_any_finding_here",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills/security-audit/skills/security-audit/WEB-PROTOCOL-AND-AUTH.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "security_audit_web_protocol_and_auth_core_discipline_include_in_every_agent_prompt_for_this_domain",
+      "target": "security_audit_web_protocol_and_auth_codeblock_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "savazai-console/src/components/chat-message.tsx",
       "source_location": "L18",
       "weight": 1.0,
@@ -58499,5 +60781,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "6a7592fb6ec51ed01926b3e71a436703b5d2f67f"
+  "built_at_commit": "14eb2fe14df291a6ad6313056a22526cba58f750"
 }
