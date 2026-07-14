@@ -1,16 +1,16 @@
 # Graph Report - savazai-harness  (2026-07-14)
 
 ## Corpus Check
-- 199 files · ~103,950 words
+- 199 files · ~103,829 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2865 nodes · 3442 edges · 264 communities (246 shown, 18 thin omitted)
+- 2865 nodes · 3442 edges · 265 communities (247 shown, 18 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `14eb2fe1`
+- Built from commit: `5bb5220b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -248,6 +248,7 @@
 - [[_COMMUNITY_Community 253|Community 253]]
 - [[_COMMUNITY_Community 254|Community 254]]
 - [[_COMMUNITY_Community 255|Community 255]]
+- [[_COMMUNITY_Community 257|Community 257]]
 - [[_COMMUNITY_Community 259|Community 259]]
 - [[_COMMUNITY_Community 260|Community 260]]
 - [[_COMMUNITY_Community 263|Community 263]]
@@ -280,7 +281,7 @@
 - `Home()` --calls--> `getSystemConfig()`  [EXTRACTED]
   savazai-console/src/app/page.tsx → savazai-console/src/components/theme-provider.tsx
 
-## Communities (264 total, 18 thin omitted)
+## Communities (265 total, 18 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.07
@@ -364,7 +365,7 @@ Nodes (33): Accordion, Base vs Radix, Button / trigger as non-button element (ba
 
 ### Community 30 - "Community 30"
 Cohesion: 0.10
-Nodes (21): name, notNull, primaryKey, type, app_id, embedding, masked_content, role (+13 more)
+Nodes (21): name, notNull, primaryKey, type, app_id, embedding, raw_content, role (+13 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.07
@@ -524,7 +525,7 @@ Nodes (7): code:bash (# Save to auto-generated filename (storage-state-{timestam
 
 ### Community 70 - "Community 70"
 Cohesion: 0.29
-Nodes (7): 7.6 Combine Multiple Array Iterations, 7.9 Early Return from Functions, 7. JavaScript Performance, code:typescript (const admins = users.filter(u => u.isAdmin)), code:typescript (const admins: User[] = []), code:typescript (function validateUsers(users: User[]) {), code:typescript (function validateUsers(users: User[]) {)
+Nodes (7): 7.2 Build Index Maps for Repeated Lookups, 7.9 Early Return from Functions, 7. JavaScript Performance, code:typescript (function processOrders(orders: Order[], users: User[]) {), code:typescript (function processOrders(orders: Order[], users: User[]) {), code:typescript (function validateUsers(users: User[]) {), code:typescript (function validateUsers(users: User[]) {)
 
 ### Community 71 - "Community 71"
 Cohesion: 0.33
@@ -847,8 +848,8 @@ Cohesion: 0.50
 Nodes (3): dialect, entries, version
 
 ### Community 153 - "Community 153"
-Cohesion: 0.11
-Nodes (20): checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies, schema (+12 more)
+Cohesion: 0.18
+Nodes (11): checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies, schema (+3 more)
 
 ### Community 154 - "Community 154"
 Cohesion: 0.09
@@ -872,7 +873,7 @@ Nodes (4): 7.14 Use toSorted() Instead of sort() for Immutability, code:typescri
 
 ### Community 160 - "Community 160"
 Cohesion: 0.09
-Nodes (27): columns, name, nullsNotDistinct, checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled (+19 more)
+Nodes (27): checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies, schema (+19 more)
 
 ### Community 166 - "Community 166"
 Cohesion: 0.67
@@ -1035,8 +1036,8 @@ Cohesion: 0.15
 Nodes (12): Anti-Patterns to Avoid, Confirm dynamically when you can, Core Principles, Coverage and prior runs, Defense-in-depth gaps are not vulnerabilities, Determine the baseline dynamically, Only report what you can exploit, Platform terminology (+4 more)
 
 ### Community 213 - "Community 213"
-Cohesion: 0.18
-Nodes (11): compositePrimaryKeys, checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies (+3 more)
+Cohesion: 0.20
+Nodes (10): checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies, schema (+2 more)
 
 ### Community 214 - "Community 214"
 Cohesion: 0.38
@@ -1091,16 +1092,16 @@ Cohesion: 0.11
 Nodes (20): columns, nullsNotDistinct, isRLSEnabled, uniqueConstraints, compositePrimaryKeys, uniqueConstraints, checkConstraints, compositePrimaryKeys (+12 more)
 
 ### Community 231 - "Community 231"
-Cohesion: 0.40
-Nodes (5): raw_content, name, notNull, primaryKey, type
+Cohesion: 0.22
+Nodes (10): columns, name, nullsNotDistinct, uniqueConstraints, uniqueConstraints, columns, name, nullsNotDistinct (+2 more)
 
 ### Community 239 - "Community 239"
 Cohesion: 0.20
 Nodes (9): code:json ("dependencies": {), code:yaml (ports:), 🔍 Detailed Vulnerability Profiles, SEC-001: SQL Injection Risk via Vulnerable Drizzle ORM Version, SEC-002: Cleartext Default Database Credentials in Version Control, SEC-003: Loose Regular Expression Parsing in PII Privacy Gateway, SEC-004: Exposed Database and Backend Container Ports, Security Audit Report: SavazAI Harness Workspace (+1 more)
 
 ### Community 240 - "Community 240"
-Cohesion: 0.67
-Nodes (3): 7.2 Build Index Maps for Repeated Lookups, code:typescript (function processOrders(orders: Order[], users: User[]) {), code:typescript (function processOrders(orders: Order[], users: User[]) {)
+Cohesion: 0.40
+Nodes (5): masked_content, name, notNull, primaryKey, type
 
 ### Community 242 - "Community 242"
 Cohesion: 0.22
@@ -1154,6 +1155,10 @@ Nodes (3): $comment, output_schema, oneOf
 Cohesion: 0.50
 Nodes (4): 2.1 Avoid Barrel File Imports, code:tsx (import { Check, X, Menu } from 'lucide-react'), code:tsx (// Keep the standard imports - Next.js transforms them to di), code:tsx (import Button from '@mui/material/Button')
 
+### Community 257 - "Community 257"
+Cohesion: 0.67
+Nodes (3): 7.6 Combine Multiple Array Iterations, code:typescript (const admins = users.filter(u => u.isAdmin)), code:typescript (const admins: User[] = [])
+
 ### Community 259 - "Community 259"
 Cohesion: 0.26
 Nodes (14): agentSessionMemory, autonomousAgents, connectedApps, ModelConfig, skillEmbeddings, systemConfigurations, vector, seed() (+6 more)
@@ -1180,7 +1185,7 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `React Best Practices` connect `Community 194` to `Community 2`, `Community 70`, `Community 9`, `Community 47`, `Community 178`, `Community 53`, `Community 59`, `Community 61`?**
   _High betweenness centrality (0.003) - this node is a cross-community bridge._
-- **Why does `columns` connect `Community 30` to `Community 3`, `Community 231`, `Community 81`, `Community 158`, `Community 63`?**
+- **Why does `columns` connect `Community 30` to `Community 3`, `Community 240`, `Community 81`, `Community 158`, `Community 63`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **Why does `5. Re-render Optimization` connect `Community 2` to `Community 194`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
