@@ -1233,7 +1233,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L48",
       "id": "meta_0000_snapshot_columns_created_at",
-      "community": 158,
+      "community": 81,
       "norm_label": "created_at"
     },
     {
@@ -1242,7 +1242,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L49",
       "id": "meta_0000_snapshot_created_at_name",
-      "community": 158,
+      "community": 81,
       "norm_label": "name"
     },
     {
@@ -1251,7 +1251,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L50",
       "id": "meta_0000_snapshot_created_at_type",
-      "community": 158,
+      "community": 81,
       "norm_label": "type"
     },
     {
@@ -1260,7 +1260,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L51",
       "id": "meta_0000_snapshot_created_at_primarykey",
-      "community": 158,
+      "community": 81,
       "norm_label": "primarykey"
     },
     {
@@ -1269,7 +1269,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L52",
       "id": "meta_0000_snapshot_created_at_notnull",
-      "community": 158,
+      "community": 81,
       "norm_label": "notnull"
     },
     {
@@ -1278,7 +1278,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L53",
       "id": "meta_0000_snapshot_created_at_default",
-      "community": 158,
+      "community": 81,
       "norm_label": "default"
     },
     {
@@ -1503,7 +1503,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L94",
       "id": "meta_0000_snapshot_columns_agent_name",
-      "community": 81,
+      "community": 79,
       "norm_label": "agent_name"
     },
     {
@@ -1512,7 +1512,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L95",
       "id": "meta_0000_snapshot_agent_name_name",
-      "community": 81,
+      "community": 79,
       "norm_label": "name"
     },
     {
@@ -1521,7 +1521,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L96",
       "id": "meta_0000_snapshot_agent_name_type",
-      "community": 81,
+      "community": 79,
       "norm_label": "type"
     },
     {
@@ -1530,7 +1530,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L97",
       "id": "meta_0000_snapshot_agent_name_primarykey",
-      "community": 81,
+      "community": 79,
       "norm_label": "primarykey"
     },
     {
@@ -1539,7 +1539,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L98",
       "id": "meta_0000_snapshot_agent_name_notnull",
-      "community": 81,
+      "community": 79,
       "norm_label": "notnull"
     },
     {
@@ -1548,7 +1548,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L100",
       "id": "meta_0000_snapshot_columns_system_prompt",
-      "community": 153,
+      "community": 80,
       "norm_label": "system_prompt"
     },
     {
@@ -1557,7 +1557,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L101",
       "id": "meta_0000_snapshot_system_prompt_name",
-      "community": 153,
+      "community": 80,
       "norm_label": "name"
     },
     {
@@ -1566,7 +1566,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L102",
       "id": "meta_0000_snapshot_system_prompt_type",
-      "community": 153,
+      "community": 80,
       "norm_label": "type"
     },
     {
@@ -1575,7 +1575,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L103",
       "id": "meta_0000_snapshot_system_prompt_primarykey",
-      "community": 153,
+      "community": 80,
       "norm_label": "primarykey"
     },
     {
@@ -1584,7 +1584,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L104",
       "id": "meta_0000_snapshot_system_prompt_notnull",
-      "community": 153,
+      "community": 80,
       "norm_label": "notnull"
     },
     {
@@ -1647,7 +1647,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L113",
       "id": "meta_0000_snapshot_columns_is_core_agent",
-      "community": 158,
+      "community": 80,
       "norm_label": "is_core_agent"
     },
     {
@@ -1665,7 +1665,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L115",
       "id": "meta_0000_snapshot_is_core_agent_type",
-      "community": 158,
+      "community": 80,
       "norm_label": "type"
     },
     {
@@ -1674,7 +1674,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L116",
       "id": "meta_0000_snapshot_is_core_agent_primarykey",
-      "community": 158,
+      "community": 80,
       "norm_label": "primarykey"
     },
     {
@@ -1683,7 +1683,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L117",
       "id": "meta_0000_snapshot_is_core_agent_notnull",
-      "community": 158,
+      "community": 80,
       "norm_label": "notnull"
     },
     {
@@ -1692,7 +1692,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L118",
       "id": "meta_0000_snapshot_is_core_agent_default",
-      "community": 158,
+      "community": 80,
       "norm_label": "default"
     },
     {
@@ -1863,7 +1863,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L153",
       "id": "meta_0000_snapshot_public_connected_apps_columns",
-      "community": 79,
+      "community": 81,
       "norm_label": "columns"
     },
     {
@@ -1917,7 +1917,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L166",
       "id": "meta_0000_snapshot_columns_mcp_endpoint_url",
-      "community": 79,
+      "community": 81,
       "norm_label": "mcp_endpoint_url"
     },
     {
@@ -1926,7 +1926,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L167",
       "id": "meta_0000_snapshot_mcp_endpoint_url_name",
-      "community": 79,
+      "community": 81,
       "norm_label": "name"
     },
     {
@@ -1935,7 +1935,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L168",
       "id": "meta_0000_snapshot_mcp_endpoint_url_type",
-      "community": 79,
+      "community": 81,
       "norm_label": "type"
     },
     {
@@ -1944,7 +1944,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L169",
       "id": "meta_0000_snapshot_mcp_endpoint_url_primarykey",
-      "community": 79,
+      "community": 81,
       "norm_label": "primarykey"
     },
     {
@@ -1953,7 +1953,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L170",
       "id": "meta_0000_snapshot_mcp_endpoint_url_notnull",
-      "community": 79,
+      "community": 81,
       "norm_label": "notnull"
     },
     {
@@ -1962,7 +1962,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L172",
       "id": "meta_0000_snapshot_columns_bearer_token_hash",
-      "community": 80,
+      "community": 81,
       "norm_label": "bearer_token_hash"
     },
     {
@@ -1971,7 +1971,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L173",
       "id": "meta_0000_snapshot_bearer_token_hash_name",
-      "community": 80,
+      "community": 81,
       "norm_label": "name"
     },
     {
@@ -1980,7 +1980,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L174",
       "id": "meta_0000_snapshot_bearer_token_hash_type",
-      "community": 80,
+      "community": 81,
       "norm_label": "type"
     },
     {
@@ -1989,7 +1989,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L175",
       "id": "meta_0000_snapshot_bearer_token_hash_primarykey",
-      "community": 80,
+      "community": 81,
       "norm_label": "primarykey"
     },
     {
@@ -1998,7 +1998,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L176",
       "id": "meta_0000_snapshot_bearer_token_hash_notnull",
-      "community": 80,
+      "community": 81,
       "norm_label": "notnull"
     },
     {
@@ -5409,7 +5409,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L6",
       "id": "meta_0003_snapshot_tables",
-      "community": 160,
+      "community": 210,
       "norm_label": "tables"
     },
     {
@@ -5418,7 +5418,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L7",
       "id": "meta_0003_snapshot_tables_public_agent_session_memory",
-      "community": 160,
+      "community": 153,
       "norm_label": "public.agent_session_memory"
     },
     {
@@ -5427,7 +5427,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L8",
       "id": "meta_0003_snapshot_public_agent_session_memory_name",
-      "community": 160,
+      "community": 153,
       "norm_label": "name"
     },
     {
@@ -5436,7 +5436,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L9",
       "id": "meta_0003_snapshot_public_agent_session_memory_schema",
-      "community": 160,
+      "community": 153,
       "norm_label": "schema"
     },
     {
@@ -5688,7 +5688,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L42",
       "id": "meta_0003_snapshot_columns_embedding",
-      "community": 227,
+      "community": 218,
       "norm_label": "embedding"
     },
     {
@@ -5697,7 +5697,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L43",
       "id": "meta_0003_snapshot_embedding_name",
-      "community": 227,
+      "community": 218,
       "norm_label": "name"
     },
     {
@@ -5706,7 +5706,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L44",
       "id": "meta_0003_snapshot_embedding_type",
-      "community": 227,
+      "community": 218,
       "norm_label": "type"
     },
     {
@@ -5715,7 +5715,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L45",
       "id": "meta_0003_snapshot_embedding_primarykey",
-      "community": 227,
+      "community": 218,
       "norm_label": "primarykey"
     },
     {
@@ -5724,7 +5724,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L46",
       "id": "meta_0003_snapshot_embedding_notnull",
-      "community": 227,
+      "community": 218,
       "norm_label": "notnull"
     },
     {
@@ -5787,7 +5787,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L56",
       "id": "meta_0003_snapshot_public_agent_session_memory_indexes",
-      "community": 160,
+      "community": 153,
       "norm_label": "indexes"
     },
     {
@@ -5877,7 +5877,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L72",
       "id": "meta_0003_snapshot_public_agent_session_memory_compositeprimarykeys",
-      "community": 160,
+      "community": 153,
       "norm_label": "compositeprimarykeys"
     },
     {
@@ -5886,7 +5886,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L73",
       "id": "meta_0003_snapshot_public_agent_session_memory_uniqueconstraints",
-      "community": 160,
+      "community": 153,
       "norm_label": "uniqueconstraints"
     },
     {
@@ -5895,7 +5895,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L74",
       "id": "meta_0003_snapshot_public_agent_session_memory_policies",
-      "community": 160,
+      "community": 153,
       "norm_label": "policies"
     },
     {
@@ -5904,7 +5904,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L75",
       "id": "meta_0003_snapshot_public_agent_session_memory_checkconstraints",
-      "community": 160,
+      "community": 153,
       "norm_label": "checkconstraints"
     },
     {
@@ -5913,7 +5913,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L76",
       "id": "meta_0003_snapshot_public_agent_session_memory_isrlsenabled",
-      "community": 160,
+      "community": 153,
       "norm_label": "isrlsenabled"
     },
     {
@@ -6561,7 +6561,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L193",
       "id": "meta_0003_snapshot_public_connected_apps_indexes",
-      "community": 160,
+      "community": 213,
       "norm_label": "indexes"
     },
     {
@@ -6588,7 +6588,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L196",
       "id": "meta_0003_snapshot_public_connected_apps_uniqueconstraints",
-      "community": 218,
+      "community": 160,
       "norm_label": "uniqueconstraints"
     },
     {
@@ -6597,7 +6597,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L197",
       "id": "meta_0003_snapshot_uniqueconstraints_connected_apps_app_name_unique",
-      "community": 218,
+      "community": 160,
       "norm_label": "connected_apps_app_name_unique"
     },
     {
@@ -6606,7 +6606,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L198",
       "id": "meta_0003_snapshot_connected_apps_app_name_unique_name",
-      "community": 218,
+      "community": 160,
       "norm_label": "name"
     },
     {
@@ -6615,7 +6615,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L199",
       "id": "meta_0003_snapshot_connected_apps_app_name_unique_nullsnotdistinct",
-      "community": 218,
+      "community": 160,
       "norm_label": "nullsnotdistinct"
     },
     {
@@ -6624,7 +6624,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L200",
       "id": "meta_0003_snapshot_connected_apps_app_name_unique_columns",
-      "community": 218,
+      "community": 160,
       "norm_label": "columns"
     },
     {
@@ -6660,7 +6660,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L209",
       "id": "meta_0003_snapshot_tables_public_skill_embeddings",
-      "community": 160,
+      "community": 153,
       "norm_label": "public.skill_embeddings"
     },
     {
@@ -6669,7 +6669,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L210",
       "id": "meta_0003_snapshot_public_skill_embeddings_name",
-      "community": 160,
+      "community": 153,
       "norm_label": "name"
     },
     {
@@ -6678,7 +6678,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L211",
       "id": "meta_0003_snapshot_public_skill_embeddings_schema",
-      "community": 160,
+      "community": 153,
       "norm_label": "schema"
     },
     {
@@ -6786,7 +6786,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L245",
       "id": "meta_0003_snapshot_public_skill_embeddings_indexes",
-      "community": 160,
+      "community": 153,
       "norm_label": "indexes"
     },
     {
@@ -6804,7 +6804,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L247",
       "id": "meta_0003_snapshot_public_skill_embeddings_compositeprimarykeys",
-      "community": 213,
+      "community": 153,
       "norm_label": "compositeprimarykeys"
     },
     {
@@ -6822,7 +6822,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L249",
       "id": "meta_0003_snapshot_uniqueconstraints_skill_embeddings_skill_name_unique",
-      "community": 218,
+      "community": 160,
       "norm_label": "skill_embeddings_skill_name_unique"
     },
     {
@@ -6831,7 +6831,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L250",
       "id": "meta_0003_snapshot_skill_embeddings_skill_name_unique_name",
-      "community": 218,
+      "community": 160,
       "norm_label": "name"
     },
     {
@@ -6840,7 +6840,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L251",
       "id": "meta_0003_snapshot_skill_embeddings_skill_name_unique_nullsnotdistinct",
-      "community": 218,
+      "community": 160,
       "norm_label": "nullsnotdistinct"
     },
     {
@@ -6849,7 +6849,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L252",
       "id": "meta_0003_snapshot_skill_embeddings_skill_name_unique_columns",
-      "community": 218,
+      "community": 160,
       "norm_label": "columns"
     },
     {
@@ -6858,7 +6858,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L257",
       "id": "meta_0003_snapshot_public_skill_embeddings_policies",
-      "community": 160,
+      "community": 153,
       "norm_label": "policies"
     },
     {
@@ -6867,7 +6867,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L258",
       "id": "meta_0003_snapshot_public_skill_embeddings_checkconstraints",
-      "community": 160,
+      "community": 153,
       "norm_label": "checkconstraints"
     },
     {
@@ -6876,7 +6876,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L259",
       "id": "meta_0003_snapshot_public_skill_embeddings_isrlsenabled",
-      "community": 160,
+      "community": 153,
       "norm_label": "isrlsenabled"
     },
     {
@@ -7855,7 +7855,7 @@
       "label": "Home()",
       "file_type": "code",
       "source_file": "savazai-console/src/app/page.tsx",
-      "source_location": "L5",
+      "source_location": "L20",
       "id": "app_page_home",
       "community": 245,
       "norm_label": "home()"
@@ -8386,7 +8386,7 @@
       "label": "SignInFormProps",
       "file_type": "code",
       "source_file": "savazai-console/src/components/signin-form.tsx",
-      "source_location": "L8",
+      "source_location": "L7",
       "id": "components_signin_form_signinformprops",
       "community": 260,
       "norm_label": "signinformprops"
@@ -8395,7 +8395,7 @@
       "label": "SignInForm()",
       "file_type": "code",
       "source_file": "savazai-console/src/components/signin-form.tsx",
-      "source_location": "L13",
+      "source_location": "L12",
       "id": "components_signin_form_signinform",
       "community": 260,
       "norm_label": "signinform()"
@@ -10501,55 +10501,136 @@
       "label": "\ud83d\udee0\ufe0f Project Architecture",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L4",
+      "source_location": "L5",
       "id": "savazai_harness_readme_project_architecture",
       "community": 55,
       "norm_label": "\ud83d\udee0\ufe0f project architecture"
     },
     {
+      "label": "\u26a1 Key Core Features Deployed",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L14",
+      "id": "savazai_harness_readme_key_core_features_deployed",
+      "community": 55,
+      "norm_label": "\u26a1 key core features deployed"
+    },
+    {
+      "label": "1. Proactive MCP Schema Ingestion on Session Boot",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L16",
+      "id": "savazai_harness_readme_1_proactive_mcp_schema_ingestion_on_session_boot",
+      "community": 55,
+      "norm_label": "1. proactive mcp schema ingestion on session boot"
+    },
+    {
+      "label": "2. Conversational Short-Circuit Interceptors",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L20",
+      "id": "savazai_harness_readme_2_conversational_short_circuit_interceptors",
+      "community": 55,
+      "norm_label": "2. conversational short-circuit interceptors"
+    },
+    {
+      "label": "3. Crucial Post-Mutation Sequential Loops",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L24",
+      "id": "savazai_harness_readme_3_crucial_post_mutation_sequential_loops",
+      "community": 55,
+      "norm_label": "3. crucial post-mutation sequential loops"
+    },
+    {
+      "label": "4. ISO Date Standardization",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L28",
+      "id": "savazai_harness_readme_4_iso_date_standardization",
+      "community": 55,
+      "norm_label": "4. iso date standardization"
+    },
+    {
+      "label": "5. Stream Token Bracket Purging",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L32",
+      "id": "savazai_harness_readme_5_stream_token_bracket_purging",
+      "community": 55,
+      "norm_label": "5. stream token bracket purging"
+    },
+    {
+      "label": "6. Premium Markdown Layouts (Tables, Lists, & Images)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L35",
+      "id": "savazai_harness_readme_6_premium_markdown_layouts_tables_lists_images",
+      "community": 55,
+      "norm_label": "6. premium markdown layouts (tables, lists, & images)"
+    },
+    {
       "label": "\ud83d\udd10 Production Environment Variables Guide",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L9",
+      "source_location": "L41",
       "id": "savazai_harness_readme_production_environment_variables_guide",
       "community": 55,
       "norm_label": "\ud83d\udd10 production environment variables guide"
     },
     {
-      "label": "Backend (.env)",
+      "label": "Backend (`.env` / Coolify Environment Variables)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L10",
-      "id": "savazai_harness_readme_backend_env",
+      "source_location": "L43",
+      "id": "savazai_harness_readme_backend_env_coolify_environment_variables",
       "community": 55,
-      "norm_label": "backend (.env)"
+      "norm_label": "backend (`.env` / coolify environment variables)"
     },
     {
-      "label": "Frontend (.env.local / Coolify Build Secrets)",
+      "label": "Frontend (`savazai-console/.env.local` / Coolify Build Secrets)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L15",
-      "id": "savazai_harness_readme_frontend_env_local_coolify_build_secrets",
+      "source_location": "L48",
+      "id": "savazai_harness_readme_frontend_savazai_console_env_local_coolify_build_secrets",
       "community": 55,
-      "norm_label": "frontend (.env.local / coolify build secrets)"
+      "norm_label": "frontend (`savazai-console/.env.local` / coolify build secrets)"
     },
     {
-      "label": "\ud83c\udf10 Coolify Production Environment Matrix",
+      "label": "\ud83d\ude80 VPS Docker Deployment Validation",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L19",
-      "id": "savazai_harness_readme_coolify_production_environment_matrix",
+      "source_location": "L56",
+      "id": "savazai_harness_readme_vps_docker_deployment_validation",
       "community": 55,
-      "norm_label": "\ud83c\udf10 coolify production environment matrix"
+      "norm_label": "\ud83d\ude80 vps docker deployment validation"
     },
     {
-      "label": "\ud83d\ude80 Coolify Cloud VPS Deployment Guidance",
+      "label": "code:bash (# Backend Quality Test)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L28",
-      "id": "savazai_harness_readme_coolify_cloud_vps_deployment_guidance",
+      "source_location": "L59",
+      "id": "savazai_harness_readme_codeblock_1",
       "community": 55,
-      "norm_label": "\ud83d\ude80 coolify cloud vps deployment guidance"
+      "norm_label": "code:bash (# backend quality test)"
+    },
+    {
+      "label": "Docker Run Commands",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L70",
+      "id": "savazai_harness_readme_docker_run_commands",
+      "community": 55,
+      "norm_label": "docker run commands"
+    },
+    {
+      "label": "code:bash (# Spin up stack locally/production)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L71",
+      "id": "savazai_harness_readme_codeblock_2",
+      "community": 55,
+      "norm_label": "code:bash (# spin up stack locally/production)"
     },
     {
       "label": "SKILL.md",
@@ -16884,7 +16965,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2337",
       "id": "vercel_react_best_practices_agents_6_1_animate_svg_wrapper_instead_of_svg_element",
-      "community": 9,
+      "community": 216,
       "norm_label": "6.1 animate svg wrapper instead of svg element"
     },
     {
@@ -16893,7 +16974,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2345",
       "id": "vercel_react_best_practices_agents_codeblock_101",
-      "community": 9,
+      "community": 216,
       "norm_label": "code:tsx (function loadingspinner() {)"
     },
     {
@@ -16902,7 +16983,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2362",
       "id": "vercel_react_best_practices_agents_codeblock_102",
-      "community": 9,
+      "community": 216,
       "norm_label": "code:tsx (function loadingspinner() {)"
     },
     {
@@ -16911,7 +16992,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2380",
       "id": "vercel_react_best_practices_agents_6_2_css_content_visibility_for_long_lists",
-      "community": 216,
+      "community": 9,
       "norm_label": "6.2 css content-visibility for long lists"
     },
     {
@@ -16920,7 +17001,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2388",
       "id": "vercel_react_best_practices_agents_codeblock_103",
-      "community": 216,
+      "community": 9,
       "norm_label": "code:css (.message-item {)"
     },
     {
@@ -16929,7 +17010,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2397",
       "id": "vercel_react_best_practices_agents_codeblock_104",
-      "community": 216,
+      "community": 9,
       "norm_label": "code:tsx (function messagelist({ messages }: { messages: message[] }) )"
     },
     {
@@ -16938,7 +17019,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2414",
       "id": "vercel_react_best_practices_agents_6_3_hoist_static_jsx_elements",
-      "community": 9,
+      "community": 219,
       "norm_label": "6.3 hoist static jsx elements"
     },
     {
@@ -16947,7 +17028,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2422",
       "id": "vercel_react_best_practices_agents_codeblock_105",
-      "community": 9,
+      "community": 219,
       "norm_label": "code:tsx (function loadingskeleton() {)"
     },
     {
@@ -16956,7 +17037,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2438",
       "id": "vercel_react_best_practices_agents_codeblock_106",
-      "community": 9,
+      "community": 219,
       "norm_label": "code:tsx (const loadingskeleton = ()"
     },
     {
@@ -17001,7 +17082,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2480",
       "id": "vercel_react_best_practices_agents_6_5_prevent_hydration_mismatch_without_flickering",
-      "community": 177,
+      "community": 9,
       "norm_label": "6.5 prevent hydration mismatch without flickering"
     },
     {
@@ -17010,7 +17091,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2488",
       "id": "vercel_react_best_practices_agents_codeblock_110",
-      "community": 177,
+      "community": 9,
       "norm_label": "code:tsx (function themewrapper({ children }: { children: reactnode }))"
     },
     {
@@ -17019,7 +17100,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2505",
       "id": "vercel_react_best_practices_agents_codeblock_111",
-      "community": 177,
+      "community": 9,
       "norm_label": "code:tsx (function themewrapper({ children }: { children: reactnode }))"
     },
     {
@@ -17028,7 +17109,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2529",
       "id": "vercel_react_best_practices_agents_codeblock_112",
-      "community": 177,
+      "community": 9,
       "norm_label": "code:tsx (function themewrapper({ children }: { children: reactnode }))"
     },
     {
@@ -17037,7 +17118,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2558",
       "id": "vercel_react_best_practices_agents_6_6_suppress_expected_hydration_mismatches",
-      "community": 9,
+      "community": 239,
       "norm_label": "6.6 suppress expected hydration mismatches"
     },
     {
@@ -17046,7 +17127,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2566",
       "id": "vercel_react_best_practices_agents_codeblock_113",
-      "community": 9,
+      "community": 239,
       "norm_label": "code:tsx (function timestamp() {)"
     },
     {
@@ -17055,7 +17136,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2574",
       "id": "vercel_react_best_practices_agents_codeblock_114",
-      "community": 9,
+      "community": 239,
       "norm_label": "code:tsx (function timestamp() {)"
     },
     {
@@ -17082,7 +17163,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2606",
       "id": "vercel_react_best_practices_agents_6_8_use_defer_or_async_on_script_tags",
-      "community": 219,
+      "community": 9,
       "norm_label": "6.8 use defer or async on script tags"
     },
     {
@@ -17091,7 +17172,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2620",
       "id": "vercel_react_best_practices_agents_codeblock_116",
-      "community": 219,
+      "community": 9,
       "norm_label": "code:tsx (export default function document() {)"
     },
     {
@@ -17100,7 +17181,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2636",
       "id": "vercel_react_best_practices_agents_codeblock_117",
-      "community": 219,
+      "community": 9,
       "norm_label": "code:tsx (import script from 'next/script')"
     },
     {
@@ -17172,7 +17253,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2780",
       "id": "vercel_react_best_practices_agents_6_11_use_usetransition_over_manual_loading_states",
-      "community": 9,
+      "community": 177,
       "norm_label": "6.11 use usetransition over manual loading states"
     },
     {
@@ -17181,7 +17262,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2788",
       "id": "vercel_react_best_practices_agents_codeblock_123",
-      "community": 9,
+      "community": 177,
       "norm_label": "code:tsx (function searchresults() {)"
     },
     {
@@ -17190,7 +17271,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2814",
       "id": "vercel_react_best_practices_agents_codeblock_124",
-      "community": 9,
+      "community": 177,
       "norm_label": "code:tsx (import { usetransition, usestate } from 'react')"
     },
     {
@@ -17262,7 +17343,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2950",
       "id": "vercel_react_best_practices_agents_7_2_build_index_maps_for_repeated_lookups",
-      "community": 239,
+      "community": 240,
       "norm_label": "7.2 build index maps for repeated lookups"
     },
     {
@@ -17271,7 +17352,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2958",
       "id": "vercel_react_best_practices_agents_codeblock_130",
-      "community": 239,
+      "community": 240,
       "norm_label": "code:typescript (function processorders(orders: order[], users: user[]) {)"
     },
     {
@@ -17280,7 +17361,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2969",
       "id": "vercel_react_best_practices_agents_codeblock_131",
-      "community": 239,
+      "community": 240,
       "norm_label": "code:typescript (function processorders(orders: order[], users: user[]) {)"
     },
     {
@@ -22250,6 +22331,42 @@
       "id": "src_skills_send_email_md",
       "community": 237,
       "norm_label": "send-email.md"
+    },
+    {
+      "label": "Backend (.env)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L10",
+      "community": 55,
+      "norm_label": "backend (.env)",
+      "id": "savazai_harness_readme_backend_env"
+    },
+    {
+      "label": "Frontend (.env.local / Coolify Build Secrets)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L15",
+      "community": 55,
+      "norm_label": "frontend (.env.local / coolify build secrets)",
+      "id": "savazai_harness_readme_frontend_env_local_coolify_build_secrets"
+    },
+    {
+      "label": "\ud83c\udf10 Coolify Production Environment Matrix",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L19",
+      "community": 55,
+      "norm_label": "\ud83c\udf10 coolify production environment matrix",
+      "id": "savazai_harness_readme_coolify_production_environment_matrix"
+    },
+    {
+      "label": "\ud83d\ude80 Coolify Cloud VPS Deployment Guidance",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L28",
+      "community": 55,
+      "norm_label": "\ud83d\ude80 coolify cloud vps deployment guidance",
+      "id": "savazai_harness_readme_coolify_cloud_vps_deployment_guidance"
     },
     {
       "label": "renderParsedContent()",
@@ -43220,6 +43337,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
+      "source_location": "L14",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane",
+      "target": "savazai_harness_readme_key_core_features_deployed"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
       "source_location": "L9",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -43230,11 +43357,101 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
+      "source_location": "L56",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane",
+      "target": "savazai_harness_readme_vps_docker_deployment_validation"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
       "source_location": "L28",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane",
       "target": "savazai_harness_readme_coolify_cloud_vps_deployment_guidance"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L16",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_key_core_features_deployed",
+      "target": "savazai_harness_readme_1_proactive_mcp_schema_ingestion_on_session_boot"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L20",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_key_core_features_deployed",
+      "target": "savazai_harness_readme_2_conversational_short_circuit_interceptors"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L24",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_key_core_features_deployed",
+      "target": "savazai_harness_readme_3_crucial_post_mutation_sequential_loops"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L28",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_key_core_features_deployed",
+      "target": "savazai_harness_readme_4_iso_date_standardization"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L32",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_key_core_features_deployed",
+      "target": "savazai_harness_readme_5_stream_token_bracket_purging"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L35",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_key_core_features_deployed",
+      "target": "savazai_harness_readme_6_premium_markdown_layouts_tables_lists_images"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L43",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_production_environment_variables_guide",
+      "target": "savazai_harness_readme_backend_env_coolify_environment_variables"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L48",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_production_environment_variables_guide",
+      "target": "savazai_harness_readme_frontend_savazai_console_env_local_coolify_build_secrets"
     },
     {
       "relation": "contains",
@@ -43265,6 +43482,36 @@
       "confidence_score": 1.0,
       "source": "savazai_harness_readme_production_environment_variables_guide",
       "target": "savazai_harness_readme_coolify_production_environment_matrix"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L59",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_vps_docker_deployment_validation",
+      "target": "savazai_harness_readme_codeblock_1"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L70",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_vps_docker_deployment_validation",
+      "target": "savazai_harness_readme_docker_run_commands"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L71",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_docker_run_commands",
+      "target": "savazai_harness_readme_codeblock_2"
     },
     {
       "relation": "contains",
@@ -58252,5 +58499,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "8ed1de5a27fad0493c810e1fc7779e2933d9a62e"
+  "built_at_commit": "6a7592fb6ec51ed01926b3e71a436703b5d2f67f"
 }
