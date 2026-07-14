@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { Loader2, Mail, Lock, ShieldAlert } from "lucide-react";
 
@@ -126,16 +125,6 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
           )}
         </button>
       </form>
-
-      <div className="mt-8 text-center text-xs text-slate-400">
-        Don&apos;t have an account?{" "}
-        <Link
-          href="/signup"
-          className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
-        >
-          Register here
-        </Link>
-      </div>
     </div>
   );
 }
