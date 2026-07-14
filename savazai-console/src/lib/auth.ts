@@ -10,6 +10,18 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 50,
+    storage: "memory",
+    customRules: {
+      "/sign-in/email": {
+        window: 60,
+        max: 5,
+      },
+    },
+  },
   databaseHooks: {
     user: {
       create: {
