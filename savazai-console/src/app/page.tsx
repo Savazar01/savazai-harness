@@ -136,60 +136,50 @@ export default async function Home() {
             <div className="rounded-3xl border border-slate-900 bg-slate-900/5 p-8 md:p-12 backdrop-blur-sm relative overflow-hidden">
               <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400 mb-6">
-                    <Terminal className="h-6 w-6" />
-                  </div>
-                  <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                    Deploy SavazAI Instantly
-                  </h2>
-                  <p className="mt-4 text-slate-400 leading-relaxed">
-                    Own your agent stack completely. Deploy the SavazAI harness local-first in your private cloud or virtual private server (VPS) environment.
-                  </p>
+              <div className="text-center max-w-3xl mx-auto mb-12">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400 mb-4">
+                  <Terminal className="h-6 w-6" />
+                </div>
+                <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                  Easy Deployment Workflow
+                </h2>
+                <p className="mt-4 text-slate-400 leading-relaxed">
+                  SavazAI can be easily deployed in your preferred local or private cloud environment through a streamlined process.
+                </p>
+              </div>
 
-                  <div className="mt-8 space-y-4">
-                    <div className="flex gap-4">
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-semibold">
-                        1
-                      </div>
-                      <p className="text-sm text-slate-300 leading-relaxed">
-                        Clone the repository and configure your credentials inside the <code className="text-cyan-400 font-mono">.env</code> keys file.
-                      </p>
-                    </div>
-                    <div className="flex gap-4">
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-semibold">
-                        2
-                      </div>
-                      <p className="text-sm text-slate-300 leading-relaxed">
-                        Boot up the database, harness engine, and Next.js console via Docker Compose (<code className="text-cyan-400 font-mono">docker compose up -d</code>).
-                      </p>
-                    </div>
-                    <div className="flex gap-4">
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-semibold">
-                        3
-                      </div>
-                      <p className="text-sm text-slate-300 leading-relaxed">
-                        Access your local console interface on port <code className="text-cyan-400 font-mono">3056</code> and manage your agents, tools, and rules dynamically.
-                      </p>
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+                {/* Step 1 */}
+                <div className="relative group rounded-2xl border border-slate-900 bg-slate-950/40 p-6 hover:border-slate-800/80 transition-all">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary text-sm font-semibold mb-4">
+                    1
                   </div>
+                  <h3 className="text-lg font-bold text-white mb-2">Configure Workspace</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    Set up your agent rules, system configurations, and required variables to match your business domains.
+                  </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-8 shadow-2xl relative">
-                  <div className="absolute top-3 right-3 flex gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+                {/* Step 2 */}
+                <div className="relative group rounded-2xl border border-slate-900 bg-slate-950/40 p-6 hover:border-slate-800/80 transition-all">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary text-sm font-semibold mb-4">
+                    2
                   </div>
-                  <pre className="font-mono text-xs text-slate-400 space-y-2 overflow-x-auto select-none">
-                    <div><span className="text-slate-600"># Clone the repository</span></div>
-                    <div><span className="text-cyan-400">git clone</span> https://github.com/Savazar01/savazai-harness.git</div>
-                    <div><span className="text-slate-600"># Launch the infrastructure stack</span></div>
-                    <div><span className="text-cyan-400">docker compose up</span> --build -d</div>
-                    <div><span className="text-slate-600"># Verify active processes</span></div>
-                    <div><span className="text-cyan-400">docker compose ps</span></div>
-                  </pre>
+                  <h3 className="text-lg font-bold text-white mb-2">Connect Integrations</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    Dynamically bind your database schemas, MCP servers, external API connections, and LLM providers.
+                  </p>
+                </div>
+
+                {/* Step 3 */}
+                <div className="relative group rounded-2xl border border-slate-900 bg-slate-950/40 p-6 hover:border-slate-800/80 transition-all">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary text-sm font-semibold mb-4">
+                    3
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-2">Launch Console</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    Instantly run the secure management portal to orchestrate multi-agent loops and inspect trace telemetries.
+                  </p>
                 </div>
               </div>
             </div>
@@ -205,10 +195,10 @@ export default async function Home() {
           <div className="container mx-auto max-w-4xl px-4 text-center relative z-10">
             <div className="rounded-3xl border border-slate-900 bg-slate-950/80 p-12 md:p-16 backdrop-blur-sm">
               <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
-                Ready to Manage Your Workspace?
+                Need Help with Enterprise Deployment?
               </h2>
-              <p className="mt-4 text-slate-400 text-md max-w-xl mx-auto">
-                Sign in to the SavazAI management console to configure connections, inspect telemetry traces, and orchestrate agent actions.
+              <p className="mt-4 text-slate-400 text-md max-w-2xl mx-auto leading-relaxed">
+                Savazar provides complete deployment and consulting support to tailor the SavazAI Harness to your specific business rules, compliance standards, and custom agent integrations.
               </p>
               
               <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
@@ -224,7 +214,7 @@ export default async function Home() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-900/80 px-8 py-4 text-base font-semibold text-slate-300 hover:text-white transition-all backdrop-blur-sm"
                 >
-                  Contact Savazar
+                  Contact Savazar for Support
                   <ExternalLink className="h-4 w-4" />
                 </a>
               </div>
