@@ -24,6 +24,7 @@ export interface TraceEvent {
     input?: string;
     llmDecision?: string;
     response?: string;
+    piiFields?: Array<{ type: string; count: number; label: string }>;
   };
 }
 
@@ -86,6 +87,28 @@ function CodeBlock({ label, content }: { label: string; content: string }) {
   );
 }
 
+function PiiBadgeMatrix({ fields }: { fields: Array<{ type: string; count: number; label: string }> }) {
+  if (!fields?.length) return null;
+  return (
+    <div className="mt-2 p-2 rounded-lg bg-slate-950 border border-slate-800 space-y-1.5">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Scanned PII Fields</p>
+      {fields.map((f) => (
+        <div key={f.type} className="flex items-center justify-between text-[11px]">
+          <span className="text-slate-400">{f.label}</span>
+          <div className="flex items-center gap-2">
+            <div className="flex gap-[1px]">
+              {Array.from({ length: Math.min(f.count, 8) }).map((_, i) => (
+                <span key={i} className="block h-3 w-2 rounded-sm bg-emerald-500/60" />
+              ))}
+            </div>
+            <span className="text-emerald-400 font-mono tabular-nums">{f.count} found</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function SystemTrace({ events, isOpen, onToggle }: SystemTraceProps) {
   return (
     <div
@@ -137,14 +160,10 @@ export function SystemTrace({ events, isOpen, onToggle }: SystemTraceProps) {
 function TraceEventCard({ event }: { event: TraceEvent }) {
   const [expanded, setExpanded] = useState(false);
 
-  const hasPayload = event.payload?.input || event.payload?.llmDecision || event.payload?.response;
-
   return (
     <div
-      className={`rounded-xl border border-slate-900 bg-slate-900/20 p-3 space-y-1.5 transition-all ${
-        hasPayload ? "cursor-pointer hover:bg-slate-900/30" : ""
-      }`}
-      onClick={() => hasPayload && setExpanded(!expanded)}
+      className={`rounded-xl border border-slate-900 bg-slate-900/20 p-3 space-y-1.5 transition-all cursor-pointer hover:bg-slate-900/30`}
+      onClick={() => setExpanded(!expanded)}
     >
       <div className="flex items-center justify-between">
         <TraceBadge type={event.type} />
@@ -160,11 +179,23 @@ function TraceEventCard({ event }: { event: TraceEvent }) {
           {event.detail}
         </p>
       )}
-      {expanded && event.payload && (
+      {expanded && (
         <div className="mt-2 space-y-1">
-          <CodeBlock label="Input Object Payload" content={event.payload.input || ""} />
-          <CodeBlock label="Raw LLM JSON Decision" content={event.payload.llmDecision || ""} />
-          <CodeBlock label="Returned Response" content={event.payload.response || ""} />
+          {event.type === "masking" && event.payload?.piiFields && (
+            <PiiBadgeMatrix fields={event.payload.piiFields} />
+          )}
+          {event.payload?.input && (
+            <CodeBlock label="Input Object Payload" content={event.payload.input} />
+          )}
+          {event.payload?.llmDecision && (
+            <CodeBlock label="Raw LLM JSON Decision" content={event.payload.llmDecision} />
+          )}
+          {event.payload?.response && (
+            <CodeBlock label="Returned Response" content={event.payload.response} />
+          )}
+          {!event.payload?.input && !event.payload?.llmDecision && !event.payload?.response && !event.payload?.piiFields && (
+            <p className="text-[10px] text-slate-600 italic">No additional payload data</p>
+          )}
         </div>
       )}
     </div>

@@ -82,3 +82,28 @@ export async function POST(req: NextRequest) {
   });
 }
 
+export async function GET(req: NextRequest) {
+  const url = new URL(req.url);
+  const pathParts = url.pathname.split("/");
+  const threadId = pathParts[pathParts.length - 1];
+
+  const backendUrl = `${BACKEND_URL}/api/graph/threads/${threadId}`;
+  const response = await fetch(backendUrl, {
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => `Backend error: ${response.status}`);
+    return new Response(JSON.stringify({ error: errText }), {
+      status: response.status,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const data = await response.json();
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+

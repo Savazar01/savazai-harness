@@ -77,7 +77,7 @@ class OpenAICompatibleDriver implements LLMDriver {
     const res = await fetch(url, {
       method: "POST",
       headers,
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(120_000),
       body: JSON.stringify(bodyPayload),
     });
 
@@ -121,7 +121,7 @@ class OllamaDriver implements LLMDriver {
     const res = await fetch(`${this.baseUrl}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(120_000),
       body: JSON.stringify({ model: this.modelName, messages, stream: false }),
     });
 
@@ -167,7 +167,7 @@ class AnthropicDriver implements LLMDriver {
         "x-api-key": this.apiKey,
         "anthropic-version": "2023-06-01",
       },
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(120_000),
       body: JSON.stringify(body),
     });
 
@@ -223,7 +223,7 @@ class GoogleVertexDriver implements LLMDriver {
           "Content-Type": "application/json",
           Authorization: `Bearer ${this.apiKey}`,
         },
-        signal: AbortSignal.timeout(30_000),
+        signal: AbortSignal.timeout(120_000),
         body: JSON.stringify({ contents }),
       },
     );

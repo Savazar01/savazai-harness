@@ -134,6 +134,37 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
     return () => window.removeEventListener("savazai-new-chat", handler);
   }, []);
 
+  useEffect(() => {
+    const handler = async (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail?.threadId) return;
+
+      setTraceEvents([]);
+      setError(null);
+      setInput("");
+      setStreaming(false);
+      abortRef.current?.abort();
+
+      try {
+        const res = await fetch(`/api/chat/threads/${detail.threadId}`);
+        if (!res.ok) throw new Error(`Failed to load thread: ${res.status}`);
+        const data = await res.json();
+        setMessages(data.messages || []);
+        setThreadId(detail.threadId);
+        threadRegisteredRef.current = true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load thread");
+        setMessages([]);
+      }
+
+      window.dispatchEvent(new CustomEvent("savazai-thread-activated", {
+        detail: { threadId: detail.threadId }
+      }));
+    };
+    window.addEventListener("savazai-select-thread", handler);
+    return () => window.removeEventListener("savazai-select-thread", handler);
+  }, []);
+
   const addTrace = useCallback(
     (type: TraceEvent["type"], label: string, detail?: string, payload?: { input?: string; llmDecision?: string; response?: string }) => {
       setTraceEvents((prev) => [
@@ -227,10 +258,12 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
         "WedPlanAI-Local",
         (event) => {
           if (event.node) {
+            const piiFields = (event.state?.piiCategories as Array<{ type: string; count: number; label: string }>) ?? [];
             addTrace("node", `${event.node} Node`, "Node execution started", {
               input: event.state ? JSON.stringify(event.state, null, 2).slice(0, 800) : undefined,
               llmDecision: event.state?.routingDecision ? JSON.stringify(event.state.routingDecision) : undefined,
               response: event.state?.messages ? JSON.stringify(event.state.messages.slice(-1)[0], null, 2).slice(0, 600) : undefined,
+              piiFields: piiFields.length > 0 ? piiFields : undefined,
             });
           }
           if (event.type === "tool" || event.metadata?.tool) {
@@ -241,8 +274,11 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
               response: event.metadata?.result ? JSON.stringify(event.metadata.result, null, 2).slice(0, 600) : undefined,
             });
           }
-          if (event.metadata?.masked) {
-            addTrace("masking", "PII Masked", "Sensitive data tokenized");
+          if (event.state?.piiCategories) {
+            const piiFields = event.state.piiCategories as Array<{ type: string; count: number; label: string }>;
+            addTrace("masking", "PII Gateway Active", `Scanned and masked ${piiFields.length} field type(s)`, {
+              response: JSON.stringify({ piiFields, maskedPreview: (event.state.maskedInput as string)?.slice(0, 200) }, null, 2),
+            });
           }
           if (event.state?.messages) {
             const msgs = event.state.messages as Array<{ role: string; content: string }>;

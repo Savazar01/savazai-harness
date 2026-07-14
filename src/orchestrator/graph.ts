@@ -30,9 +30,20 @@ export const GraphStateSchema = z.object({
     modelName: z.string().optional(),
   }).optional(),
   activeTools: z.array(z.string()).optional(),
-  decidedToolName: z.string().optional(),
+  decidedToolName: z.string().nullable().optional(),
   decidedToolArgs: z.record(z.string(), z.any()).optional(),
   executedTools: z.array(z.string()).optional(),
+  executedToolSignatures: z.array(z.string()),
+  lastUserMessageContent: z.string(),
+  piiCategories: z.array(z.object({
+    type: z.string(),
+    count: z.number(),
+    label: z.string(),
+  })),
+  parallelToolQueue: z.array(z.object({
+    name: z.string(),
+    args: z.record(z.string(), z.any()),
+  })).optional(),
 });
 
 export type GraphState = z.infer<typeof GraphStateSchema>;
@@ -82,7 +93,7 @@ const StateAnnotation = Annotation.Root({
     reducer: (x, y) => y ?? x,
     default: () => undefined,
   }),
-  decidedToolName: Annotation<string | undefined>({
+  decidedToolName: Annotation<string | null | undefined>({
     reducer: (x, y) => y ?? x,
     default: () => undefined,
   }),
@@ -91,12 +102,28 @@ const StateAnnotation = Annotation.Root({
     default: () => undefined,
   }),
   executedTools: Annotation<string[] | undefined>({
-    reducer: (x, y) => [...new Set([...(x ?? []), ...(y ?? [])])],
-    default: () => undefined,
+    reducer: (x, y) => y !== undefined ? y : (x ?? []),
+    default: () => [],
   }),
   toolExecutedInCurrentNode: Annotation<boolean>({
     reducer: (x, y) => y ?? false,
     default: () => false,
+  }),
+  executedToolSignatures: Annotation<string[]>({
+    reducer: (x, y) => y !== undefined ? y : (x ?? []),
+    default: () => [],
+  }),
+  lastUserMessageContent: Annotation<string>({
+    reducer: (x, y) => y ?? x,
+    default: () => "",
+  }),
+  piiCategories: Annotation<Array<{ type: string; count: number; label: string }>>({
+    reducer: (x, y) => y ?? x,
+    default: () => [],
+  }),
+  parallelToolQueue: Annotation<Array<{ name: string; args: Record<string, any> }> | undefined>({
+    reducer: (x, y) => y !== undefined ? y : (x ?? []),
+    default: () => [],
   }),
 });
 
@@ -148,6 +175,20 @@ async function resolveAmbientParameter(paramName: string): Promise<string | unde
   if (envVal) return envVal;
 
   return undefined;
+}
+
+function standardizeDateToISO(dateStr: string): string {
+  try {
+    // Remove ordinal suffixes from days (e.g. "August 25th 2026" -> "August 25 2026")
+    const cleanDateStr = dateStr.replace(/(\d+)(st|nd|rd|th)\b/i, "$1").trim();
+    const d = new Date(cleanDateStr);
+    if (!isNaN(d.getTime())) {
+      return d.toISOString();
+    }
+  } catch (e) {
+    console.error(`[standardizeDateToISO] Failed to parse date string "${dateStr}":`, e);
+  }
+  return dateStr;
 }
 
 async function registerAppProvider(appName: string, modelOverride?: { providerType: string; modelName?: string }): Promise<void> {
@@ -214,7 +255,7 @@ async function fetchMcpTools(serverUrl: string, headers: Record<string, string>)
         method: "tools/list",
         params: {},
       }),
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(30000),
     });
 
     if (!res.ok) {
@@ -243,6 +284,92 @@ function buildTimestamp(): string {
   return new Date().toISOString();
 }
 
+class StructuredModelWrapper {
+  private providerId: string;
+  private modelConfig: any;
+
+  constructor(providerId: string, modelConfig: any) {
+    this.providerId = providerId;
+    this.modelConfig = modelConfig;
+  }
+
+  withStructuredOutput(schema: any) {
+    return {
+      invoke: async (messages: any[], options?: any) => {
+        const completion = await llmSwitchboard.executeUniversalCompletion({
+          messages,
+          providerId: this.providerId,
+          options: {
+            ...options,
+            response_format: { type: "json_object" },
+          },
+        });
+
+        const rawText = completion.text;
+        console.log("[StructuredModelWrapper] Raw output:", rawText);
+
+        let cleanText = rawText.trim();
+        const startBrace = cleanText.indexOf("{");
+        const endBrace = cleanText.lastIndexOf("}");
+        if (startBrace !== -1 && endBrace !== -1 && endBrace > startBrace) {
+          cleanText = cleanText.substring(startBrace, endBrace + 1);
+        } else if (cleanText.startsWith("```")) {
+          cleanText = cleanText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
+        }
+
+        try {
+          const parsed = JSON.parse(cleanText);
+          return schema.parse(parsed);
+        } catch (e) {
+          console.error("[StructuredModelWrapper] JSON parse or Zod validation failed. Raw Text:", rawText, "Error:", e);
+          throw e;
+        }
+      }
+    };
+  }
+}
+
+function unwrapAllParallelTools(decidedName: string, decidedArgs: any): { name: string; args: any }[] {
+  if (decidedName !== "multi_tool_use.parallel" && decidedName !== "parallel") {
+    return [];
+  }
+
+  let subCalls: any[] = [];
+  if (Array.isArray(decidedArgs)) {
+    subCalls = decidedArgs;
+  } else if (decidedArgs && typeof decidedArgs === "object") {
+    const keys = ["tool_uses", "tasks", "calls", "queries", "actions", "instances", "commands"];
+    for (const key of keys) {
+      if (Array.isArray(decidedArgs[key])) {
+        subCalls = decidedArgs[key];
+        break;
+      }
+    }
+    if (subCalls.length === 0) {
+      for (const val of Object.values(decidedArgs)) {
+        if (Array.isArray(val)) {
+          subCalls = val;
+          break;
+        }
+      }
+    }
+  }
+
+  const results: { name: string; args: any }[] = [];
+  for (const first of subCalls) {
+    if (first && typeof first === "object") {
+      let name = first.name || first.tool || first.tool_name || first.recipient_name || first.action;
+      if (typeof name === "string") {
+        name = name.replace(/^(functions\.|tools\.|mcp\.)/, "");
+        const args = first.arguments || first.args || first.parameters || first.params || first;
+        results.push({ name, args: typeof args === "object" ? args : {} });
+      }
+    }
+  }
+
+  return results;
+}
+
 async function supervisorNode(state: typeof StateAnnotation.State, config?: any) {
   const requestId = config?.configurable?.requestId ?? "global";
   const telemetry = TelemetryGateway.getInstance();
@@ -252,14 +379,75 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
 
   try {
     const userMessage = [...state.messages].reverse().find((m) => m.role === "user");
+    const latestUserMsgContent = userMessage?.content ?? "";
+    const isNewTurn = latestUserMsgContent !== state.lastUserMessageContent;
+
     const gateway = new PrivacyGateway();
-    const { maskedText, tokenMap } = gateway.maskPayload(userMessage?.content ?? "");
+    const { maskedText, tokenMap } = gateway.maskPayload(latestUserMsgContent);
+
+    const piiCategories: Array<{ type: string; count: number; label: string }> = [];
+    const piiCounts: Record<string, number> = {};
+    for (const key of Object.keys(Object.fromEntries(tokenMap))) {
+      const match = key.match(/MASK_(\w+)_(\d+)/);
+      if (match) {
+        const cat = match[1].toLowerCase();
+        piiCounts[cat] = (piiCounts[cat] || 0) + 1;
+      }
+    }
+    const piiLabelMap: Record<string, string> = {
+      email: "Email", phone: "Phone", ssn: "SSN",
+      card: "Card", currency: "Currency", ip: "IP Address",
+      token: "Token", id: "Identifier",
+    };
+    for (const [type, count] of Object.entries(piiCounts)) {
+      piiCategories.push({ type, count, label: piiLabelMap[type] || type });
+    }
 
     span.attributes.maskedText = maskedText;
 
+    let currentApp = state.currentApp;
+    if (!currentApp) {
+      const apps = await db.select().from(connectedApps).limit(1);
+      if (apps.length > 0) {
+        currentApp = apps[0].appName;
+      }
+    }
+
+    // 0. PRIORITY CHECK: If parallelToolQueue contains items, shift the next tool dynamically and bypass LLM/Keyword override.
+    if (!isNewTurn && state.parallelToolQueue && state.parallelToolQueue.length > 0) {
+      const queue = [...state.parallelToolQueue];
+      const nextCall = queue.shift()!;
+      console.log(`[supervisorNode] Dequeuing next tool from parallelToolQueue: ${nextCall.name}`);
+      
+      telemetry.endSpan(requestId, span, {
+        routingDecision: "mcp_action",
+        decidedToolName: nextCall.name,
+      });
+
+      return {
+        maskedInput: maskedText,
+        tokenMap: Object.fromEntries(tokenMap),
+        piiCategories,
+        relevantSkills: [nextCall.name],
+        toolExecutedInCurrentNode: false,
+        lastUserMessageContent: latestUserMsgContent,
+        executedTools: state.executedTools,
+        executedToolSignatures: state.executedToolSignatures,
+        messages: [],
+        routingDecision: "mcp_action" as const,
+        activeSubAgent: state.activeSubAgent,
+        decidedToolName: nextCall.name,
+        decidedToolArgs: nextCall.args,
+        parallelToolQueue: queue,
+        currentApp,
+      };
+    }
+
     let customGlobalPrompt = "";
     let customOrchestrationRules = "";
+    let customAgentRules = "";
     let customSkills: any[] = [];
+    let keywordOverrides: any[] = [];
 
     try {
       const configs = await db.select().from(systemConfigurations).limit(1);
@@ -267,10 +455,16 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
         const tokens = configs[0].designTokens as any;
         customGlobalPrompt = tokens.globalSystemPrompt || "";
         customOrchestrationRules = tokens.orchestrationRules || "";
+        customAgentRules = tokens.agentRules || "";
         if (tokens.customSkills) {
           customSkills = typeof tokens.customSkills === "string"
             ? JSON.parse(tokens.customSkills)
             : tokens.customSkills;
+        }
+        if (tokens.keywordOverrides) {
+          keywordOverrides = typeof tokens.keywordOverrides === "string"
+            ? JSON.parse(tokens.keywordOverrides)
+            : tokens.keywordOverrides;
         }
       }
     } catch (e) {
@@ -279,8 +473,8 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
 
     const openAiTools: any[] = [];
     let mcpServersObj: any = {};
-    if (state.currentApp) {
-      await registerAppProvider(state.currentApp, state.modelConfig);
+    if (currentApp) {
+      await registerAppProvider(currentApp, state.modelConfig);
 
       try {
         const configs = await db.select().from(systemConfigurations).limit(1);
@@ -299,7 +493,8 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
         }
 
         let serversToFetch = Object.keys(mcpServersObj);
-        if (state.activeTools) {
+        const isFirstTurn = state.messages.filter((m) => m.role === "assistant").length === 0;
+        if (!isFirstTurn && state.activeTools && state.activeTools.length > 0) {
           serversToFetch = serversToFetch.filter((s) => state.activeTools!.includes(s));
         }
 
@@ -334,7 +529,7 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
         }
 
         if (openAiTools.length > 0) {
-          llmSwitchboard.bindToolsToProvider(state.currentApp, openAiTools);
+          llmSwitchboard.bindToolsToProvider(currentApp, openAiTools);
         }
       } catch (err) {
         console.error("[supervisorNode] Failed to load/bind MCP/custom tools:", err);
@@ -353,7 +548,7 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
       prompt: a.systemPrompt ?? "",
     }));
 
-    // Load ambient context parameters (e.g. weddingId) from system configurations
+    // Load ambient context parameters from system configurations
     let ambientContextParams: Record<string, string> = {};
     try {
       const configs = await db.select().from(systemConfigurations).limit(1);
@@ -397,25 +592,18 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
     const plannerSystemPrompt = `You are the Autonomous Planner & Supervisor for SavazAI.
 ${customGlobalPrompt ? `Global System Instructions:\n${customGlobalPrompt}\n` : ""}
 ${customOrchestrationRules ? `Orchestration Rules (Plan-Act Loop):\n${customOrchestrationRules}\n` : `Strict Plan-Act Loop Instructions:
-1. Track execution progress against a compound user checklist.
-2. If multiple actions/tools are needed to fulfill the request, execute them sequentially.
-3. Evaluate the output history of the executed tools against the remaining unfulfilled goals.
-4. If more steps are needed, output "target_action": "mcp_action" or "target_action": "sub_agent" to continue.
-5. If all goals are fulfilled, output "target_action": "respond" and formulate the final synthesized reply in the "response" field.`}
+1. Determine the next mechanical step to fulfill the user's request.
+2. If tool results are needed, route to "mcp_action" and specify the tool name.
+3. If all data is collected and you are ready to generate a response, route to "respond".`}
+${customAgentRules ? `Agent Rules:\n${customAgentRules}\n` : ""}
 
 ## IRONCLAD TOOL GATING — NEVER HALLUCINATE DATA
 - You are an orchestration layer. You do NOT generate or fabricate data.
-- If a user asks about "guests", "attendance", "invites", "RSVPs", you MUST call the tool "list_guests". Never assume data exists.
-- If a user asks about "tasks", "checklist", "to-do", "timeline", you MUST call "list_tasks".
-- If a user asks about "ceremonies", "events", "schedules", "program", you MUST call "list_ceremonies".
-- If a user asks about "vendors", "suppliers", "caterers", you MUST call "list_vendors".
 - The Available Tools & Skills section below contains the ONLY tools you may use. Never call a tool not listed there.
-- Never substitute mock data, placeholder markdown rows, or conversational templates for an actual tool execution block. If a tool execution returns an error or empty result, relay that fact to the user — do not invent data.
+- You are explicitly FORBIDDEN from generating narrative chat text inside this routing block.
 
 ## Context Parameters (available for use in tool arguments):
 ${JSON.stringify(ambientContextParams, null, 2)}
-
-You MUST use these values when calling tools that require them. For example, if "weddingId" is present, pass it as a required argument to "list_guests", "list_vendors", "list_tasks", and other scoped tools.
 
 Available Sub-Agents:
 ${JSON.stringify(activeAgentsList, null, 2)}
@@ -425,13 +613,9 @@ ${JSON.stringify(activeToolsList, null, 2)}
 
 You MUST respond with a JSON object strictly matching this schema:
 {
-  "target_action": "sub_agent" | "mcp_action" | "respond" | "end",
-  "meta": {
-    "agentName": string | null,
-    "toolName": string | null,
-    "arguments": object | null
-  },
-  "response": string | null
+  "routingDecision": "sub_agent" | "mcp_action" | "respond",
+  "targetName": string | null,
+  "targetArgs": object
 }
 
 Do not include any other text or formatting. Return only the raw JSON.`;
@@ -440,72 +624,263 @@ Do not include any other text or formatting. Return only the raw JSON.`;
     let selectedAgent = state.activeSubAgent;
     let decidedToolName: string | undefined;
     let decidedToolArgs: Record<string, any> | undefined;
-    let responseText = "";
+    let rawResponse = "";
+    let newlyQueuedTools: { name: string; args: any }[] = [];
 
-    if (state.currentApp) {
+    // 1. Programmatic Keyword Override Check with Multi-Turn Guardrail
+    const latestUserMsgLower = latestUserMsgContent.toLowerCase();
+    let forceTool: string | undefined;
+    let forceArgs: Record<string, any> = {};
+
+    const lastUserIdx = state.messages.map(m => m.role).lastIndexOf("user");
+    const currentTurnMessages = lastUserIdx !== -1 ? state.messages.slice(lastUserIdx) : state.messages;
+
+    for (const rule of keywordOverrides) {
+      if (!rule.keywords || !rule.tool) continue;
+      const match = rule.keywords.some((kw: string) => latestUserMsgLower.includes(kw.toLowerCase()));
+      if (match) {
+        const tool = rule.tool;
+        const systemOutputExists = currentTurnMessages.some(
+          (m) => m.role === "system" && m.content.includes(`Tool Execution Result for ${tool}`)
+        );
+        const alreadyExecuted = (state.executedTools && state.executedTools.includes(tool)) || systemOutputExists;
+        
+        if (!alreadyExecuted) {
+          forceTool = tool;
+          const args: Record<string, any> = {};
+          if (Array.isArray(rule.requiredArgs)) {
+            for (const argName of rule.requiredArgs) {
+              const val = await resolveAmbientParameter(argName);
+              if (val !== undefined) {
+                args[argName] = val;
+              }
+            }
+          }
+          forceArgs = args;
+          break;
+        }
+      }
+    }
+
+    if (forceTool) {
+      routingDecision = "mcp_action";
+      decidedToolName = forceTool;
+      decidedToolArgs = forceArgs;
+      rawResponse = JSON.stringify({
+        routingDecision: "mcp_action",
+        targetName: forceTool,
+        targetArgs: decidedToolArgs,
+      });
+      console.log(`[supervisorNode] Programmatically force-routed to: ${forceTool}`);
+    } else if (currentApp) {
       try {
         console.log("Supervisor Thread History Count:", state.messages.length);
 
-        const formattedHistory = state.messages.map((m) => {
-          let content = m.content;
-          if (m.role === "user") {
-            const { maskedText } = gateway.maskPayload(content);
-            content = maskedText;
-          }
-          content = scrubImageContent(content);
-          return { role: m.role, content };
-        });
+        const plannerMessages = [
+          { role: "system" as const, content: plannerSystemPrompt },
+          ...state.messages.map((m) => {
+            let content = m.content;
+            if (m.role === "user") {
+              const { maskedText: mt } = gateway.maskPayload(content);
+              content = mt;
+            }
+            content = scrubImageContent(content);
+            return { role: m.role, content };
+          }),
+        ];
 
-        const completion = await llmSwitchboard.executeUniversalCompletion({
-          messages: [
-            { role: "system", content: plannerSystemPrompt },
-            ...formattedHistory,
-          ],
-          providerId: state.currentApp,
-          options: { requestId },
-        });
+        const model = new StructuredModelWrapper(currentApp, state.modelConfig);
+        const structuralPlanner = model.withStructuredOutput(
+          z.object({
+            routingDecision: z.enum(["mcp_action", "sub_agent", "respond"]),
+            targetName: z.string().nullable(),
+            targetArgs: z.record(z.any()),
+          })
+        );
 
-        const rawResponse = completion.text;
-        console.log("Raw Supervisor Output:", rawResponse);
+        const decision = await structuralPlanner.invoke(plannerMessages, { requestId });
+        rawResponse = JSON.stringify(decision);
+        console.log("Structured Supervisor Output:", rawResponse);
 
-        let cleanText = rawResponse.trim();
-        const startBrace = cleanText.indexOf("{");
-        const endBrace = cleanText.lastIndexOf("}");
-        if (startBrace !== -1 && endBrace !== -1 && endBrace > startBrace) {
-          cleanText = cleanText.substring(startBrace, endBrace + 1);
-        } else if (cleanText.startsWith("```")) {
-          cleanText = cleanText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
-        }
-
-        const decision = JSON.parse(cleanText);
-        routingDecision = decision.target_action || "respond";
+        routingDecision = decision.routingDecision || "respond";
 
         if (routingDecision === "sub_agent") {
-          selectedAgent = decision.meta?.agentName || selectedAgent;
+          selectedAgent = decision.targetName || selectedAgent;
         } else if (routingDecision === "mcp_action") {
-          decidedToolName = decision.meta?.toolName || undefined;
-          decidedToolArgs = decision.meta?.arguments || undefined;
+          decidedToolName = decision.targetName || undefined;
+          decidedToolArgs = decision.targetArgs || undefined;
         }
-        responseText = decision.response || "";
 
-        // Force proper routing decision based on meta presence
+        // Force proper routing decision based on targetName presence
         if (decidedToolName) {
           routingDecision = "mcp_action";
         } else if (routingDecision === "respond" && selectedAgent) {
           routingDecision = "sub_agent";
         }
 
-        // Intercept multi_tool_use.parallel — extract first nested tool
-        if (decidedToolName === "multi_tool_use.parallel" && Array.isArray(decidedToolArgs)) {
-          const firstTool = decidedToolArgs[0];
-          if (firstTool && firstTool.name) {
-            console.log("[supervisorNode] Intercepted multi_tool_use.parallel, extracting first tool:", firstTool.name);
-            decidedToolName = firstTool.name;
-            decidedToolArgs = firstTool.arguments || {};
+        // CRUCIAL EXECUTION GUARD: Post-mutation data gathering sequence
+        if (routingDecision === "respond") {
+          const userMsgLower = latestUserMsgContent.toLowerCase();
+          const turnSystemMessages = currentTurnMessages.filter(m => m.role === "system");
+          
+          const lastExecutedMutation = [...turnSystemMessages].reverse().find(m => 
+            m.content.includes("Tool Execution Result for update_wedding") ||
+            m.content.includes("Tool Execution Result for create_guest") ||
+            m.content.includes("Tool Execution Result for update_guest") ||
+            m.content.includes("Tool Execution Result for delete_guest") ||
+            m.content.includes("Tool Execution Result for create_task") ||
+            m.content.includes("Tool Execution Result for update_task") ||
+            m.content.includes("Tool Execution Result for delete_task") ||
+            m.content.includes("Tool Execution Result for create_ceremony") ||
+            m.content.includes("Tool Execution Result for update_ceremony") ||
+            m.content.includes("Tool Execution Result for delete_ceremony")
+          );
+
+          if (lastExecutedMutation) {
+            console.log(`[supervisorNode] Guard triggered: mutation tool was executed in this turn.`);
+            
+            // Check what data gathering tools are requested and not yet run
+            const requestsWedding = userMsgLower.includes("wedding") || userMsgLower.includes("summary") || userMsgLower.includes("detail");
+            const requestsCeremonies = userMsgLower.includes("ceremon") || userMsgLower.includes("schedule");
+            const requestsTasks = userMsgLower.includes("task") || userMsgLower.includes("todo");
+            const requestsGuests = userMsgLower.includes("guest") || userMsgLower.includes("rsvp");
+
+            const ranGetWedding = turnSystemMessages.some(m => m.content.includes("Tool Execution Result for get_wedding"));
+            const ranListCeremonies = turnSystemMessages.some(m => m.content.includes("Tool Execution Result for list_ceremonies"));
+            const ranListTasks = turnSystemMessages.some(m => m.content.includes("Tool Execution Result for list_tasks"));
+            const ranListGuests = turnSystemMessages.some(m => m.content.includes("Tool Execution Result for list_guests"));
+
+            let nextDataTool: string | undefined;
+            if (requestsWedding && !ranGetWedding) {
+              nextDataTool = "get_wedding";
+            } else if (requestsCeremonies && !ranListCeremonies) {
+              nextDataTool = "list_ceremonies";
+            } else if (requestsTasks && !ranListTasks) {
+              nextDataTool = "list_tasks";
+            } else if (requestsGuests && !ranListGuests) {
+              nextDataTool = "list_guests";
+            }
+
+            if (nextDataTool) {
+              console.log(`[supervisorNode] Guard forcing sequential data gathering tool: ${nextDataTool}`);
+              routingDecision = "mcp_action";
+              decidedToolName = nextDataTool;
+              
+              // Resolve weddingId for parameters
+              const weddingIdVal = await resolveAmbientParameter("weddingId");
+              decidedToolArgs = weddingIdVal ? { weddingId: weddingIdVal } : {};
+            }
+          }
+        }
+
+        // Intercept multi_tool_use.parallel — queue remaining tools dynamically
+        if (decidedToolName === "multi_tool_use.parallel" || decidedToolName === "parallel") {
+          const unwrapped = unwrapAllParallelTools(decidedToolName, decidedToolArgs);
+          if (unwrapped.length > 0) {
+            const first = unwrapped[0];
+            newlyQueuedTools = unwrapped.slice(1);
+            console.log(`[supervisorNode] Intercepted parallel tool execution: ${first.name}, queueing ${newlyQueuedTools.length} remaining tool(s).`);
+            decidedToolName = first.name;
+            decidedToolArgs = first.args;
+            routingDecision = "mcp_action";
           }
         }
       } catch (err) {
         console.error("[supervisorNode] planner LLM parsing failed:", err);
+      }
+    }
+
+    // 2. PREVENT CONVERSATIONAL SHORT-CIRCUIITING
+    if (routingDecision === "respond") {
+      const userMsgLower = latestUserMsgContent.toLowerCase();
+      const hasMutationKeyword = userMsgLower.includes("update") || 
+                                 userMsgLower.includes("change") || 
+                                 userMsgLower.includes("set") || 
+                                 userMsgLower.includes("create") || 
+                                 userMsgLower.includes("delete") || 
+                                 userMsgLower.includes("add");
+      
+      if (hasMutationKeyword) {
+        const turnSystemMessages = currentTurnMessages.filter(m => m.role === "system");
+        const ranMutation = turnSystemMessages.some(m => 
+          m.content.includes("Tool Execution Result for update_") ||
+          m.content.includes("Tool Execution Result for create_") ||
+          m.content.includes("Tool Execution Result for delete_")
+        );
+
+        if (!ranMutation) {
+          console.log(`[supervisorNode] Conversational short-circuit detected! Intercepting and forcing fallback tool selection.`);
+          
+          // Match the user intent to the correct mutation tool
+          let targetTool: string | undefined;
+          if (userMsgLower.includes("date") || userMsgLower.includes("wedding")) {
+            targetTool = "update_wedding";
+          } else if (userMsgLower.includes("guest")) {
+            targetTool = userMsgLower.includes("update") || userMsgLower.includes("change") ? "update_guest" : "create_guest";
+          } else if (userMsgLower.includes("task") || userMsgLower.includes("todo")) {
+            targetTool = userMsgLower.includes("update") || userMsgLower.includes("change") ? "update_task" : "create_task";
+          } else if (userMsgLower.includes("ceremony") || userMsgLower.includes("schedule")) {
+            targetTool = userMsgLower.includes("update") || userMsgLower.includes("change") ? "update_ceremony" : "create_ceremony";
+          }
+
+          if (targetTool) {
+            console.log(`[supervisorNode] Fallback intercept mapped to tool: ${targetTool}`);
+            routingDecision = "mcp_action";
+            decidedToolName = targetTool;
+            
+            // Extract arguments from user message (e.g. date for update_wedding)
+            const args: Record<string, any> = {};
+            if (targetTool === "update_wedding") {
+              const dateMatch = latestUserMsgContent.match(/(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?\s+\d{4}/i);
+              if (dateMatch) {
+                args.weddingDate = dateMatch[0];
+              } else {
+                const simpleDateMatch = latestUserMsgContent.match(/\d{4}-\d{2}-\d{2}/);
+                if (simpleDateMatch) {
+                  args.weddingDate = simpleDateMatch[0];
+                }
+              }
+            }
+            decidedToolArgs = args;
+          }
+        }
+      }
+    }
+
+    // 1. FORCE AMBIENT PARAMETER INJECTION INTO PARALLEL AND MUTATION TOOL ROUTING
+    const weddingIdVal = await resolveAmbientParameter("weddingId");
+    if (weddingIdVal) {
+      if (routingDecision === "mcp_action" && decidedToolName) {
+        const isMutation = decidedToolName.startsWith("update_") || 
+                           decidedToolName.startsWith("create_") || 
+                           decidedToolName.startsWith("delete_") ||
+                           decidedToolName.startsWith("list_") ||
+                           decidedToolName.startsWith("get_");
+        if (isMutation) {
+          decidedToolArgs = decidedToolArgs || {};
+          if (!decidedToolArgs.weddingId) {
+            decidedToolArgs.weddingId = weddingIdVal;
+            console.log(`[supervisorNode] Force-bound weddingId "${weddingIdVal}" into tool ${decidedToolName}`);
+          }
+        }
+      }
+
+      if (newlyQueuedTools && newlyQueuedTools.length > 0) {
+        newlyQueuedTools = newlyQueuedTools.map(t => {
+          const isMutation = t.name.startsWith("update_") || 
+                             t.name.startsWith("create_") || 
+                             t.name.startsWith("delete_") ||
+                             t.name.startsWith("list_") ||
+                             t.name.startsWith("get_");
+          if (isMutation) {
+            t.args = t.args || {};
+            if (!t.args.weddingId) {
+              t.args.weddingId = weddingIdVal;
+              console.log(`[supervisorNode] Force-bound weddingId "${weddingIdVal}" into queued tool ${t.name}`);
+            }
+          }
+          return t;
+        });
       }
     }
 
@@ -516,6 +891,7 @@ Do not include any other text or formatting. Return only the raw JSON.`;
         routingDecision: "end",
       });
       await telemetry.endTrace(requestId);
+
       return {
         maskedInput: maskedText,
         tokenMap: Object.fromEntries(tokenMap),
@@ -529,6 +905,52 @@ Do not include any other text or formatting. Return only the raw JSON.`;
       };
     }
 
+    // Map "date" key to "weddingDate" key for update_wedding and create_wedding
+    if (decidedToolName === "update_wedding" || decidedToolName === "create_wedding") {
+      if (decidedToolArgs && decidedToolArgs.date !== undefined && decidedToolArgs.weddingDate === undefined) {
+        decidedToolArgs.weddingDate = decidedToolArgs.date;
+        delete decidedToolArgs.date;
+        console.log(`[supervisorNode] Mapped "date" key to "weddingDate" for tool ${decidedToolName}`);
+      }
+    }
+    if (newlyQueuedTools && newlyQueuedTools.length > 0) {
+      newlyQueuedTools = newlyQueuedTools.map(t => {
+        if (t.name === "update_wedding" || t.name === "create_wedding") {
+          if (t.args && t.args.date !== undefined && t.args.weddingDate === undefined) {
+            t.args.weddingDate = t.args.date;
+            delete t.args.date;
+            console.log(`[supervisorNode] Mapped "date" key to "weddingDate" for queued tool ${t.name}`);
+          }
+        }
+        return t;
+      });
+    }
+
+    // Standardize date fields in decidedToolArgs and newlyQueuedTools
+    if (decidedToolArgs) {
+      for (const key of Object.keys(decidedToolArgs)) {
+        if (key.toLowerCase().includes("date") && typeof decidedToolArgs[key] === "string") {
+          const originalVal = decidedToolArgs[key];
+          decidedToolArgs[key] = standardizeDateToISO(originalVal);
+          console.log(`[supervisorNode] Standardized date field "${key}": "${originalVal}" -> "${decidedToolArgs[key]}"`);
+        }
+      }
+    }
+    if (newlyQueuedTools && newlyQueuedTools.length > 0) {
+      newlyQueuedTools = newlyQueuedTools.map(t => {
+        if (t.args) {
+          for (const key of Object.keys(t.args)) {
+            if (key.toLowerCase().includes("date") && typeof t.args[key] === "string") {
+              const originalVal = t.args[key];
+              t.args[key] = standardizeDateToISO(originalVal);
+              console.log(`[supervisorNode] Standardized date field in queued tool "${t.name}" ("${key}"): "${originalVal}" -> "${t.args[key]}"`);
+            }
+          }
+        }
+        return t;
+      });
+    }
+
     telemetry.endSpan(requestId, span, {
       routingDecision,
       selectedAgent: selectedAgent ?? "none",
@@ -540,25 +962,19 @@ Do not include any other text or formatting. Return only the raw JSON.`;
     return {
       maskedInput: maskedText,
       tokenMap: Object.fromEntries(tokenMap),
+      piiCategories,
       relevantSkills: decidedToolName ? [decidedToolName] : [],
       toolExecutedInCurrentNode: false,
-      messages: routingDecision === "respond"
-        ? (state.toolExecutedInCurrentNode
-            ? []
-            : [{
-                role: "assistant" as const,
-                content: responseText || [...state.messages].reverse().find(m => m.role === "assistant")?.content || "I'm ready to help.",
-                timestamp: buildTimestamp(),
-              }])
-        : [{
-            role: "system" as const,
-            content: `[supervisor] planner routing to route=${routingDecision} target=${decidedToolName || selectedAgent || "none"}`,
-            timestamp: buildTimestamp(),
-          }],
+      lastUserMessageContent: latestUserMsgContent,
+      executedTools: isNewTurn ? [] : state.executedTools,
+      executedToolSignatures: isNewTurn ? [] : state.executedToolSignatures,
+      messages: [],
       routingDecision,
       activeSubAgent: selectedAgent ?? state.activeSubAgent,
-      decidedToolName,
-      decidedToolArgs,
+      decidedToolName: decidedToolName || null,
+      decidedToolArgs: decidedToolArgs || {},
+      parallelToolQueue: isNewTurn ? [] : [...(state.parallelToolQueue || []), ...newlyQueuedTools],
+      currentApp,
     };
   } catch (err) {
     telemetry.endSpan(requestId, span, {
@@ -612,11 +1028,9 @@ Return ONLY the raw prompt text, without any markdown formatting or meta comment
         systemPrompt = composedPrompt;
 
         try {
-          const apps = await db
-            .select()
-            .from(connectedApps)
-            .where(eq(connectedApps.appName, state.currentApp || "WedPlanAI-Local"))
-            .limit(1);
+          const apps = state.currentApp
+            ? await db.select().from(connectedApps).where(eq(connectedApps.appName, state.currentApp)).limit(1)
+            : await db.select().from(connectedApps).limit(1);
           
           const appId = apps.length > 0 ? apps[0].id : 1;
 
@@ -668,8 +1082,8 @@ Return ONLY the raw prompt text, without any markdown formatting or meta comment
 
     return {
       messages: [{
-        role: "assistant" as const,
-        content: responseContent,
+        role: "system" as const,
+        content: `Sub-Agent ${agentName} Execution Result:\n${responseContent}`,
         timestamp: buildTimestamp(),
       }],
       routingDecision: "respond" as const,
@@ -866,7 +1280,7 @@ async function mcpActionNode(state: typeof StateAnnotation.State, config?: any) 
             arguments: toolArgs,
           },
         }),
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(60000),
       });
 
       if (!res.ok) {
@@ -885,53 +1299,21 @@ async function mcpActionNode(state: typeof StateAnnotation.State, config?: any) 
 
     // ALWAYS store clean text in state — never include image data or raw tool output.
     // Restoring image placeholders here would poison subsequent LLM calls (supervisor re-evaluation).
-    let finalFormattedResponse = `Tool Execution Result:\n${cleanResultText}`;
-
-    if (state.currentApp) {
-      await registerAppProvider(state.currentApp, state.modelConfig);
-      try {
-        const scrubbedResult = scrubImageContent(cleanResultText);
-        const prompt = `You are a helpful assistant. The tool "${toolName}" was executed to fulfill the user's request.
-Here is the tool output (any image data has been replaced with placeholders):
-${scrubbedResult}
-
-Transform raw technical JSON metrics into a clean, human-readable narrative. Never print massive inline code dumps or raw JSON blocks unless explicitly requested.`;
-
-        const userQuery = [...state.messages].reverse().find((m) => m.role === "user");
-        const rawQuery = userQuery?.content || "";
-        const scrubbedQuery = scrubImageContent(rawQuery);
-        const { cleanText: cleanUserQuery } = extractAndFormatImages(scrubbedQuery);
-        const summary = await llmSwitchboard.executeUniversalCompletion({
-          messages: [
-            { role: "system", content: prompt },
-            { role: "user", content: cleanUserQuery },
-          ],
-          providerId: state.currentApp,
-          options: { requestId },
-        });
-
-        finalFormattedResponse = summary.text;
-      } catch (err) {
-        const errMsg = err instanceof Error ? err.message : String(err);
-        console.error("Failed to generate tool output summary:", errMsg);
-        if (errMsg.toLowerCase().includes("image")) {
-          console.warn("[mcpActionNode] Image-related error suppressed — using clean tool output as fallback.");
-        }
-      }
-    }
-
     telemetry.endSpan(requestId, span, {
       status: "executed",
     });
 
+    const toolSignature = `${toolName}:${JSON.stringify(toolArgs)}`;
+
     return {
       messages: [{
-        role: "assistant" as const,
-        content: finalFormattedResponse,
+        role: "system" as const,
+        content: `Tool Execution Result for ${toolName}:\n${cleanResultText}`,
         timestamp: buildTimestamp(),
       }],
       routingDecision: "respond" as const,
-      executedTools: toolName ? [toolName] : [],
+      executedTools: toolName ? [...(state.executedTools || []), toolName] : (state.executedTools || []),
+      executedToolSignatures: [...(state.executedToolSignatures || []), toolSignature],
       toolExecutedInCurrentNode: true,
     };
   } catch (err) {
@@ -1051,14 +1433,121 @@ async function respondNode(state: typeof StateAnnotation.State, config?: any) {
   const span = telemetry.startSpan(requestId, "respondNode");
 
   try {
-    const lastMessage = state.messages[state.messages.length - 1];
     const gateway = new PrivacyGateway();
 
-    let finalContent = lastMessage?.content ?? "";
+    let currentApp = state.currentApp;
+    if (!currentApp) {
+      const apps = await db.select().from(connectedApps).limit(1);
+      if (apps.length > 0) {
+        currentApp = apps[0].appName;
+      }
+    }
 
-    if (lastMessage && Object.keys(state.tokenMap).length > 0) {
+    let customGlobalPrompt = "";
+    let customOrchestrationRules = "";
+
+    try {
+      const configs = await db.select().from(systemConfigurations).limit(1);
+      if (configs.length > 0 && configs[0].designTokens) {
+        const tokens = configs[0].designTokens as any;
+        customGlobalPrompt = tokens.globalSystemPrompt || "";
+        customOrchestrationRules = tokens.orchestrationRules || "";
+      }
+    } catch (e) {
+      console.error("[respondNode] Failed to load custom configurations:", e);
+    }
+
+    // 1. Build the history of messages for presentation synthesis.
+    const formattedHistory = state.messages.map((m) => {
+      let content = m.content;
+      if (m.role === "user") {
+        const { maskedText } = gateway.maskPayload(content);
+        content = maskedText;
+      }
+      content = scrubImageContent(content);
+      const role = m.role === "system" ? "user" : m.role;
+      return { role, content };
+    });
+
+    let mcpServersObj: any = {};
+    const openAiTools: any[] = [];
+    try {
+      const configs = await db.select().from(systemConfigurations).limit(1);
+      if (configs.length > 0 && configs[0].designTokens) {
+        const tokens = configs[0].designTokens as any;
+        const mcpServersValue = tokens.mcpServers;
+        if (mcpServersValue) {
+          if (typeof mcpServersValue === "string") {
+            const parsed = JSON.parse(mcpServersValue);
+            mcpServersObj = parsed.mcpServers || parsed;
+          } else {
+            mcpServersObj = mcpServersValue.mcpServers || mcpServersValue;
+          }
+        }
+        let customSkills: any[] = [];
+        if (tokens.customSkills) {
+          customSkills = typeof tokens.customSkills === "string" ? JSON.parse(tokens.customSkills) : tokens.customSkills;
+        }
+        
+        let serversToFetch = Object.keys(mcpServersObj);
+        if (state.activeTools && state.activeTools.length > 0) {
+          serversToFetch = serversToFetch.filter((s) => state.activeTools!.includes(s));
+        }
+        
+        for (const serverKey of serversToFetch) {
+          const serverConfig = mcpServersObj[serverKey];
+          if (!serverConfig || !serverConfig.serverUrl) continue;
+          const tools = await fetchMcpTools(serverConfig.serverUrl, serverConfig.headers || {});
+          for (const t of tools) {
+            if (t.name) openAiTools.push(t.name);
+          }
+        }
+        for (const c of customSkills) {
+          if (c.name) openAiTools.push(c.name);
+        }
+      }
+    } catch (e) {
+      console.error("[respondNode] Failed to load tools list:", e);
+    }
+
+    // 2. Instruct the LLM to format the response and synthesize raw data.
+    const respondSystemPrompt = `You are the presentation layer. You must synthesize the raw data present in the 'system' role tool execution result messages within the conversation history. Do not invent, mock, or fallback to generic text templates. If tool execution results are present in the history, you must parse and render that exact data in clean Markdown formats.
+${customGlobalPrompt ? `Global System Instructions:\n${customGlobalPrompt}\n` : ""}
+${customOrchestrationRules ? `Orchestration Rules:\n${customOrchestrationRules}\n` : ""}
+
+## Active Integrations and Available Tools:
+Registered MCP Servers: ${Object.keys(mcpServersObj).join(", ")}
+Available Tools in current session: ${JSON.stringify(openAiTools)}
+
+## Presentation and Formatting Guidelines:
+1. Aggressively convert all incoming raw JSON database strings, system tool metrics, and key-value blocks into beautiful, highly readable Markdown formats (clean bullet structures, bold headers, and proper Markdown Table matrices).
+2. Markdown Table Formatting Rule: When generating Markdown pipe tables, you MUST explicitly add padding spaces and a mandatory terminating newline buffer character at the conclusion of every pipe table row context block (e.g., '| value | \n'). This ensures the markdown interpreter compiles and preserves clean visual grid components.
+3. NEVER output raw JSON blocks, lists of brackets, or developer-facing debug strings.
+4. Media and Images: If any media attachment objects, image URLs, or hero image URL strings are found within the raw tool payload data, you MUST explicitly render them as valid inline Markdown image arrays in the format '![Alt Text](url)'. Do not omit them.`;
+
+    let synthesizedResponse = "I'm ready to help.";
+
+    if (currentApp) {
+      await registerAppProvider(currentApp, state.modelConfig);
+      // Clear any bound tools to ensure a clean, tool-free presentation completion
+      llmSwitchboard.bindToolsToProvider(currentApp, []);
+
+      const completion = await llmSwitchboard.executeUniversalCompletion({
+        messages: [
+          { role: "system", content: respondSystemPrompt },
+          ...formattedHistory,
+        ],
+        providerId: currentApp,
+        options: { requestId },
+      });
+      synthesizedResponse = completion.text;
+    }
+
+    // 3. Unmask the response content if there is a token map
+    let finalContent = synthesizedResponse;
+    if (Object.keys(state.tokenMap).length > 0) {
       finalContent = gateway.unmaskPayload(
-        lastMessage.content,
+        synthesizedResponse,
         new Map(Object.entries(state.tokenMap)),
       );
     }
@@ -1067,9 +1556,16 @@ async function respondNode(state: typeof StateAnnotation.State, config?: any) {
 
     telemetry.endSpan(requestId, span);
     await telemetry.endTrace(requestId);
+
     return {
-      messages: [{ ...lastMessage, content: finalContent }],
-      routingDecision: "end",
+      messages: [{
+        role: "assistant" as const,
+        content: finalContent,
+        timestamp: buildTimestamp(),
+      }],
+      toolExecutedInCurrentNode: false,
+      routingDecision: "end" as const,
+      currentApp,
     };
   } catch (err) {
     telemetry.endSpan(requestId, span, {
@@ -1090,11 +1586,19 @@ function verifierRoutingLogic(state: typeof StateAnnotation.State): string {
 function agentRoutingLogic(state: typeof StateAnnotation.State): string {
   const decision = state.routingDecision ?? "respond";
 
-  // Guardrail: only block if the EXACT same tool is being re-executed.
-  // Different tools (e.g. get_wedding → list_guests) are always allowed through.
+  // Enhanced dedup: same tool + same args in a single turn
+  if (decision === "mcp_action" && state.decidedToolName && state.executedToolSignatures) {
+    const sig = `${state.decidedToolName}:${JSON.stringify(state.decidedToolArgs || {})}`;
+    if (state.executedToolSignatures.includes(sig)) {
+      console.log("[agentRoutingLogic] Turn-scoped dedup — exact same tool+args, forcing respond. Sig:", sig);
+      return "respond";
+    }
+  }
+
+  // Cross-turn guardrail: only block if the EXACT same tool has been executed in prior turns.
   if (decision === "mcp_action" && state.decidedToolName && state.executedTools) {
     if (state.executedTools.includes(state.decidedToolName)) {
-      console.log("[agentRoutingLogic] Dedup guardrail fired — tool already executed, forcing respond. Tool:", state.decidedToolName, "Executed:", state.executedTools);
+      console.log("[agentRoutingLogic] Cross-turn dedup — tool already executed in prior turns, forcing respond. Tool:", state.decidedToolName, "Executed:", state.executedTools);
       return "respond";
     }
     console.log("[agentRoutingLogic] Routing to mcpAction — new tool not yet executed. Tool:", state.decidedToolName, "Already executed:", state.executedTools);
@@ -1104,18 +1608,11 @@ function agentRoutingLogic(state: typeof StateAnnotation.State): string {
   if (decision === "respond" && state.executedTools && state.executedTools.length > 0) {
     const userMsg = [...state.messages].reverse().find(m => m.role === "user");
     const userText = userMsg?.content?.toLowerCase() ?? "";
-    const keywordToolMap: Record<string, string[]> = {
-      guest: ["list_guests"], attendance: ["list_guests"], invite: ["list_guests"], rsvp: ["list_guests"],
-      task: ["list_tasks"], todo: ["list_tasks"], checklist: ["list_tasks"], timeline: ["list_tasks"],
-      ceremony: ["list_ceremonies"], event: ["list_ceremonies"], schedule: ["list_ceremonies"], program: ["list_ceremonies"],
-      vendor: ["list_vendors"], supplier: ["list_vendors"], caterer: ["list_vendors"],
-    };
-    for (const [keyword, requiredTools] of Object.entries(keywordToolMap)) {
-      if (userText.includes(keyword)) {
-        for (const requiredTool of requiredTools) {
-          if (!state.executedTools.includes(requiredTool)) {
-            console.warn(`[agentRoutingLogic] WARNING: user mentioned "${keyword}" but "${requiredTool}" has NOT been executed yet! routingDecision is "${decision}". Executed:`, state.executedTools);
-          }
+    for (const tool of state.executedTools) {
+      const parts = tool.split(/[_-]/);
+      for (const p of parts) {
+        if (p.length > 3 && userText.includes(p) && !state.executedTools.includes(tool)) {
+          console.warn(`[agentRoutingLogic] WARNING: user mentioned "${p}" but tool "${tool}" was not executed.`);
         }
       }
     }

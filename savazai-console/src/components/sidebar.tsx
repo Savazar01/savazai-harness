@@ -49,6 +49,7 @@ export function Sidebar() {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [threads, setThreads] = useState<ChatThread[]>(() => loadThreads());
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const isDashboard = pathname === "/dashboard";
 
   useEffect(() => {
@@ -74,7 +75,19 @@ export function Sidebar() {
     return () => window.removeEventListener("savazai-thread-created", handler);
   }, []);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.threadId) {
+        setActiveThreadId(detail.threadId);
+      }
+    };
+    window.addEventListener("savazai-thread-activated", handler);
+    return () => window.removeEventListener("savazai-thread-activated", handler);
+  }, []);
+
   const handleNewChat = useCallback(() => {
+    setActiveThreadId(null);
     const threadId = `thread_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     window.dispatchEvent(new CustomEvent("savazai-new-chat", { detail: { threadId } }));
   }, []);
@@ -142,7 +155,12 @@ export function Sidebar() {
               threads.map((t) => (
                 <div
                   key={t.threadId}
-                  className="group flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-slate-900/40 transition-all cursor-pointer"
+                  onClick={() => window.dispatchEvent(new CustomEvent("savazai-select-thread", { detail: { threadId: t.threadId } }))}
+                  className={`group flex items-center gap-2 px-2.5 py-2 rounded-xl transition-all cursor-pointer ${
+                    activeThreadId === t.threadId
+                      ? "bg-indigo-500/10 border border-indigo-500/20"
+                      : "hover:bg-slate-900/40"
+                  }`}
                 >
                   <MessageSquare className="h-3.5 w-3.5 shrink-0 text-slate-500" />
                   <span className="flex-1 truncate text-xs text-slate-400 group-hover:text-slate-200 transition-colors">

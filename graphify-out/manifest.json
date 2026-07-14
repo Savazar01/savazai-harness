@@ -2,1921 +2,1936 @@
   ".claude/settings.json": {
     "mtime": 1783487995.9740584,
     "ast_hash": "7bf81dca0376bde3a32244b82bc7cbc0",
-    "semantic_hash": ""
+    "semantic_hash": "7bf81dca0376bde3a32244b82bc7cbc0"
   },
   ".opencode/plugins/graphify.js": {
     "mtime": 1783488001.4504254,
     "ast_hash": "32b67963417a30cb80544e0b2a56a98d",
-    "semantic_hash": ""
+    "semantic_hash": "32b67963417a30cb80544e0b2a56a98d"
   },
   "drizzle.config.ts": {
     "mtime": 1783484890.17364,
     "ast_hash": "cffa15d7bfcbe225b8badc2a74b4290f",
-    "semantic_hash": ""
+    "semantic_hash": "cffa15d7bfcbe225b8badc2a74b4290f"
   },
   "package.json": {
     "mtime": 1783490600.7339976,
     "ast_hash": "13721cffb91813c470035ef3715668c4",
-    "semantic_hash": ""
+    "semantic_hash": "13721cffb91813c470035ef3715668c4"
   },
   "src/db/index.ts": {
     "mtime": 1783739287.3193827,
     "ast_hash": "6cff9f73469b7ad6ad5bcaaed26f00f2",
-    "semantic_hash": ""
+    "semantic_hash": "6cff9f73469b7ad6ad5bcaaed26f00f2"
   },
   "src/db/schema.ts": {
     "mtime": 1783499760.7957232,
     "ast_hash": "c466ba77646850efbf5b5b7be8df8db1",
-    "semantic_hash": ""
+    "semantic_hash": "c466ba77646850efbf5b5b7be8df8db1"
   },
   "src/index.ts": {
-    "mtime": 1783518543.9702983,
-    "ast_hash": "ca1977be44f3404af6db911d0ba3fb0a",
+    "mtime": 1783937378.3864937,
+    "ast_hash": "66fa5924264a733be0fbaad7b18414d3",
     "semantic_hash": ""
   },
   "src/orchestrator/graph.ts": {
-    "mtime": 1783519641.321185,
-    "ast_hash": "be508092c98953b69eccee99e7b56c2b",
+    "mtime": 1783937367.762056,
+    "ast_hash": "248658bf4bc5f5424808cf40af27478c",
     "semantic_hash": ""
   },
   "src/utils/python-runner.ts": {
     "mtime": 1783484906.1641307,
     "ast_hash": "08f3f0bfa8cf15bb8d240116cf41bcc1",
-    "semantic_hash": ""
+    "semantic_hash": "08f3f0bfa8cf15bb8d240116cf41bcc1"
   },
   "src/utils/skills-loader.ts": {
     "mtime": 1783486912.6522405,
     "ast_hash": "fe79acdf140a9c33fa28cef296a4a542",
-    "semantic_hash": ""
+    "semantic_hash": "fe79acdf140a9c33fa28cef296a4a542"
   },
   "tsconfig.json": {
     "mtime": 1783484889.593498,
     "ast_hash": "b3d332ffae4e112899fdceaa7bf81d40",
-    "semantic_hash": ""
+    "semantic_hash": "b3d332ffae4e112899fdceaa7bf81d40"
   },
   ".claude/CLAUDE.md": {
     "mtime": 1783487995.9646397,
     "ast_hash": "817fe671013b35ae0bc9301dfe449a87",
-    "semantic_hash": ""
+    "semantic_hash": "817fe671013b35ae0bc9301dfe449a87"
   },
   ".claude/skills/graphify/SKILL.md": {
     "mtime": 1783487995.962003,
     "ast_hash": "26828fbc6cf325d3fb0ba6a3a28e03a1",
-    "semantic_hash": ""
+    "semantic_hash": "26828fbc6cf325d3fb0ba6a3a28e03a1"
   },
   ".claude/skills/graphify/references/add-watch.md": {
     "mtime": 1781325236.0019634,
     "ast_hash": "0df0589623217ca38a12bdcabfb42f4c",
-    "semantic_hash": ""
+    "semantic_hash": "0df0589623217ca38a12bdcabfb42f4c"
   },
   ".claude/skills/graphify/references/exports.md": {
     "mtime": 1781325236.0024805,
     "ast_hash": "c04ddf8f1f5ef5e262ebec491a523c74",
-    "semantic_hash": ""
+    "semantic_hash": "c04ddf8f1f5ef5e262ebec491a523c74"
   },
   ".claude/skills/graphify/references/extraction-spec.md": {
     "mtime": 1781325236.002987,
     "ast_hash": "24808b03abfeaf5f6435bb69c0125b2c",
-    "semantic_hash": ""
+    "semantic_hash": "24808b03abfeaf5f6435bb69c0125b2c"
   },
   ".claude/skills/graphify/references/github-and-merge.md": {
     "mtime": 1781325236.0042338,
     "ast_hash": "cde13df085e4c492aeb7ba298a996d0d",
-    "semantic_hash": ""
+    "semantic_hash": "cde13df085e4c492aeb7ba298a996d0d"
   },
   ".claude/skills/graphify/references/hooks.md": {
     "mtime": 1781325236.0042338,
     "ast_hash": "3f545db6ce646650bb9de588f5512a27",
-    "semantic_hash": ""
+    "semantic_hash": "3f545db6ce646650bb9de588f5512a27"
   },
   ".claude/skills/graphify/references/query.md": {
     "mtime": 1781325236.0042338,
     "ast_hash": "c2a8e798674a81b02aa9975f43023819",
-    "semantic_hash": ""
+    "semantic_hash": "c2a8e798674a81b02aa9975f43023819"
   },
   ".claude/skills/graphify/references/transcribe.md": {
     "mtime": 1781325236.0042338,
     "ast_hash": "70f6aa30d6211f3a2c7e9fc45479f50c",
-    "semantic_hash": ""
+    "semantic_hash": "70f6aa30d6211f3a2c7e9fc45479f50c"
   },
   ".claude/skills/graphify/references/update.md": {
     "mtime": 1781325236.0069196,
     "ast_hash": "0dad167a95bdb389f02fecffb60b1bc8",
-    "semantic_hash": ""
+    "semantic_hash": "0dad167a95bdb389f02fecffb60b1bc8"
   },
   "AGENTS.md": {
     "mtime": 1783504225.6083524,
     "ast_hash": "3edd502ed24a7b07cb4fd326306e25a6",
-    "semantic_hash": ""
+    "semantic_hash": "3edd502ed24a7b07cb4fd326306e25a6"
   },
   "Claude.md": {
     "mtime": 1783488561.6657028,
     "ast_hash": "5c27369b226fcf2be8a6cfe52224e767",
-    "semantic_hash": ""
+    "semantic_hash": "5c27369b226fcf2be8a6cfe52224e767"
   },
   "docker-compose.yml": {
     "mtime": 1783522036.8969882,
     "ast_hash": "3b8670470f7150beefba2df773374f22",
-    "semantic_hash": ""
+    "semantic_hash": "3b8670470f7150beefba2df773374f22"
   },
   "requirements.txt": {
     "mtime": 1783484880.4921632,
     "ast_hash": "15d3a1219375d7ebf5be2245397812ae",
-    "semantic_hash": ""
+    "semantic_hash": "15d3a1219375d7ebf5be2245397812ae"
   },
   "src/skills/brave-search-transformer.md": {
     "mtime": 1783486904.0157216,
     "ast_hash": "ed5e40887f71417e0c66535cec25c6ce",
-    "semantic_hash": ""
+    "semantic_hash": "ed5e40887f71417e0c66535cec25c6ce"
   },
   "src/skills/generate-pdf.md": {
     "mtime": 1783486902.2350428,
     "ast_hash": "41914dd4b66a5b454cb7bca74092a803",
-    "semantic_hash": ""
+    "semantic_hash": "41914dd4b66a5b454cb7bca74092a803"
   },
   "src/skills/send-email.md": {
     "mtime": 1783486903.1922352,
     "ast_hash": "0d2193075bf0c7dfbb9a47cbe1bcd36a",
-    "semantic_hash": ""
+    "semantic_hash": "0d2193075bf0c7dfbb9a47cbe1bcd36a"
   },
   "eslint.config.js": {
     "mtime": 1783488054.5316968,
     "ast_hash": "ea06c41610c9cbd6daebd7c6e9f9ab8b",
-    "semantic_hash": ""
+    "semantic_hash": "ea06c41610c9cbd6daebd7c6e9f9ab8b"
   },
   "src/utils/privacy-gateway.ts": {
     "mtime": 1783488849.9367275,
     "ast_hash": "4cbcfed78645b9c84c868014e115a420",
-    "semantic_hash": ""
+    "semantic_hash": "4cbcfed78645b9c84c868014e115a420"
   },
   "drizzle/migrations/0000_green_texas_twister.sql": {
     "mtime": 1783489796.384348,
     "ast_hash": "7f5d0fc2f0ff30b42c9245f9c663f2ee",
-    "semantic_hash": ""
+    "semantic_hash": "7f5d0fc2f0ff30b42c9245f9c663f2ee"
   },
   "drizzle/migrations/meta/0000_snapshot.json": {
     "mtime": 1783489778.799649,
     "ast_hash": "6499280300e1838b52a9bc976abbac6b",
-    "semantic_hash": ""
+    "semantic_hash": "6499280300e1838b52a9bc976abbac6b"
   },
   "drizzle/migrations/meta/_journal.json": {
     "mtime": 1783499789.156613,
     "ast_hash": "70d68678ca546784024ddb27088fdf73",
-    "semantic_hash": ""
+    "semantic_hash": "70d68678ca546784024ddb27088fdf73"
   },
   "src/db/seed.ts": {
-    "mtime": 1783499774.2982383,
-    "ast_hash": "5b76c917370e72d3fd3d71aabe1017f1",
+    "mtime": 1783848825.0151165,
+    "ast_hash": "fa17c85b8ce06223cf643cbb044cb333",
     "semantic_hash": ""
   },
   "playwright.config.ts": {
     "mtime": 1783490581.8481135,
     "ast_hash": "bc702e80f7b0d7184b32b8832553dc1d",
-    "semantic_hash": ""
+    "semantic_hash": "bc702e80f7b0d7184b32b8832553dc1d"
   },
   "skills-lock.json": {
     "mtime": 1783491078.5480464,
     "ast_hash": "8f8e439032169c3971a7cc9381282675",
-    "semantic_hash": ""
+    "semantic_hash": "8f8e439032169c3971a7cc9381282675"
   },
   ".agents/skills/shadcn/evals/evals.json": {
     "mtime": 1783491077.739065,
     "ast_hash": "9a6d011eeef9a02a52ff1b43faa80ec9",
-    "semantic_hash": ""
+    "semantic_hash": "9a6d011eeef9a02a52ff1b43faa80ec9"
   },
   ".agents/skills/vercel-react-best-practices/metadata.json": {
     "mtime": 1783491070.5499797,
     "ast_hash": "5cd9ae4fc688353236c3b92e8f06dfcc",
-    "semantic_hash": ""
+    "semantic_hash": "5cd9ae4fc688353236c3b92e8f06dfcc"
   },
   "tests/gateway.spec.ts": {
     "mtime": 1783490592.097326,
     "ast_hash": "4f2083bc40c4a7781f5e22d0f0984f45",
-    "semantic_hash": ""
+    "semantic_hash": "4f2083bc40c4a7781f5e22d0f0984f45"
   },
   ".agents/skills/better-auth-best-practices/SKILL.md": {
     "mtime": 1783491068.6452353,
     "ast_hash": "d2dfe1651f5b2a2aa343f91b07fc998f",
-    "semantic_hash": ""
+    "semantic_hash": "d2dfe1651f5b2a2aa343f91b07fc998f"
   },
   ".agents/skills/playwright-cli/SKILL.md": {
     "mtime": 1783491067.4771683,
     "ast_hash": "6e53df61db9abb939ccb47d868526d27",
-    "semantic_hash": ""
+    "semantic_hash": "6e53df61db9abb939ccb47d868526d27"
   },
   ".agents/skills/playwright-cli/references/element-attributes.md": {
     "mtime": 1783491067.4771683,
     "ast_hash": "06a9cd91326c0fb1eeafa6853132ff0d",
-    "semantic_hash": ""
+    "semantic_hash": "06a9cd91326c0fb1eeafa6853132ff0d"
   },
   ".agents/skills/playwright-cli/references/playwright-tests.md": {
     "mtime": 1783491067.4771683,
     "ast_hash": "2098b51f50cfc25605dfabd6d0368fd8",
-    "semantic_hash": ""
+    "semantic_hash": "2098b51f50cfc25605dfabd6d0368fd8"
   },
   ".agents/skills/playwright-cli/references/request-mocking.md": {
     "mtime": 1783491067.4830496,
     "ast_hash": "281652081dacf00f27a637ce372c0d17",
-    "semantic_hash": ""
+    "semantic_hash": "281652081dacf00f27a637ce372c0d17"
   },
   ".agents/skills/playwright-cli/references/running-code.md": {
     "mtime": 1783491067.4830496,
     "ast_hash": "39be2ef507d2943ee6e969f23e8f6c20",
-    "semantic_hash": ""
+    "semantic_hash": "39be2ef507d2943ee6e969f23e8f6c20"
   },
   ".agents/skills/playwright-cli/references/session-management.md": {
     "mtime": 1783491067.4830496,
     "ast_hash": "50d6f92a413c507cd066e33526e5298e",
-    "semantic_hash": ""
+    "semantic_hash": "50d6f92a413c507cd066e33526e5298e"
   },
   ".agents/skills/playwright-cli/references/spec-driven-testing.md": {
     "mtime": 1783491067.4830496,
     "ast_hash": "723ae46d45217aeb9b6839efb3b885b2",
-    "semantic_hash": ""
+    "semantic_hash": "723ae46d45217aeb9b6839efb3b885b2"
   },
   ".agents/skills/playwright-cli/references/storage-state.md": {
     "mtime": 1783491067.4830496,
     "ast_hash": "16c4d7ae1f2d8eceef11fc14de4ae130",
-    "semantic_hash": ""
+    "semantic_hash": "16c4d7ae1f2d8eceef11fc14de4ae130"
   },
   ".agents/skills/playwright-cli/references/test-generation.md": {
     "mtime": 1783491067.4830496,
     "ast_hash": "cf0042e9ee13faef404a0a0a39a20591",
-    "semantic_hash": ""
+    "semantic_hash": "cf0042e9ee13faef404a0a0a39a20591"
   },
   ".agents/skills/playwright-cli/references/tracing.md": {
     "mtime": 1783491067.486652,
     "ast_hash": "8c66ddbc29fc172bde7d71211d4e3473",
-    "semantic_hash": ""
+    "semantic_hash": "8c66ddbc29fc172bde7d71211d4e3473"
   },
   ".agents/skills/playwright-cli/references/video-recording.md": {
     "mtime": 1783491067.486652,
     "ast_hash": "29e61c00414ae28d7719b6cc285a18bf",
-    "semantic_hash": ""
+    "semantic_hash": "29e61c00414ae28d7719b6cc285a18bf"
   },
   ".agents/skills/shadcn/cli.md": {
     "mtime": 1783491077.737944,
     "ast_hash": "06dc1478b5449f2a3c60f4bf4e043687",
-    "semantic_hash": ""
+    "semantic_hash": "06dc1478b5449f2a3c60f4bf4e043687"
   },
   ".agents/skills/shadcn/customization.md": {
     "mtime": 1783491077.737944,
     "ast_hash": "7454b40655ce6bcbbfa8fa3804b66fbe",
-    "semantic_hash": ""
+    "semantic_hash": "7454b40655ce6bcbbfa8fa3804b66fbe"
   },
   ".agents/skills/shadcn/mcp.md": {
     "mtime": 1783491077.739065,
     "ast_hash": "aa876f97643326a64e99b86d5ac41bc5",
-    "semantic_hash": ""
+    "semantic_hash": "aa876f97643326a64e99b86d5ac41bc5"
   },
   ".agents/skills/shadcn/registry.md": {
     "mtime": 1783491077.739065,
     "ast_hash": "f7e28f2e510e8ec5847619641ddfeea4",
-    "semantic_hash": ""
+    "semantic_hash": "f7e28f2e510e8ec5847619641ddfeea4"
   },
   ".agents/skills/shadcn/SKILL.md": {
     "mtime": 1783491077.731865,
     "ast_hash": "8ca325db76a09da36966154c8b5b6afb",
-    "semantic_hash": ""
+    "semantic_hash": "8ca325db76a09da36966154c8b5b6afb"
   },
   ".agents/skills/shadcn/agents/openai.yml": {
     "mtime": 1783491077.731865,
     "ast_hash": "a93201a1b378a868c0795edbf1ae751c",
-    "semantic_hash": ""
+    "semantic_hash": "a93201a1b378a868c0795edbf1ae751c"
   },
   ".agents/skills/shadcn/rules/base-vs-radix.md": {
     "mtime": 1783491077.739065,
     "ast_hash": "582481904d3c35aae4125153db97fc37",
-    "semantic_hash": ""
+    "semantic_hash": "582481904d3c35aae4125153db97fc37"
   },
   ".agents/skills/shadcn/rules/chat.md": {
     "mtime": 1783491077.739065,
     "ast_hash": "a69a0fa62f7d005e3a5f9aa0b0584ad8",
-    "semantic_hash": ""
+    "semantic_hash": "a69a0fa62f7d005e3a5f9aa0b0584ad8"
   },
   ".agents/skills/shadcn/rules/composition.md": {
     "mtime": 1783491077.739065,
     "ast_hash": "f8472e2b9dcb99920ed23cd6ab17defd",
-    "semantic_hash": ""
+    "semantic_hash": "f8472e2b9dcb99920ed23cd6ab17defd"
   },
   ".agents/skills/shadcn/rules/forms.md": {
     "mtime": 1783491077.739065,
     "ast_hash": "41155ed5a844952613e717a5add76606",
-    "semantic_hash": ""
+    "semantic_hash": "41155ed5a844952613e717a5add76606"
   },
   ".agents/skills/shadcn/rules/icons.md": {
     "mtime": 1783491077.7439837,
     "ast_hash": "56b5a01599f8c03c90f248c5e5e01f67",
-    "semantic_hash": ""
+    "semantic_hash": "56b5a01599f8c03c90f248c5e5e01f67"
   },
   ".agents/skills/shadcn/rules/styling.md": {
     "mtime": 1783491077.7439837,
     "ast_hash": "149558687b4e92802f34951bceda7983",
-    "semantic_hash": ""
+    "semantic_hash": "149558687b4e92802f34951bceda7983"
   },
   ".agents/skills/vercel-react-best-practices/AGENTS.md": {
     "mtime": 1783491070.5499797,
     "ast_hash": "fc8f9b0218d2173112a8418bf9d8abe7",
-    "semantic_hash": ""
+    "semantic_hash": "fc8f9b0218d2173112a8418bf9d8abe7"
   },
   ".agents/skills/vercel-react-best-practices/README.md": {
     "mtime": 1783491070.5567899,
     "ast_hash": "abb5236c535db0bf7ce6f38c8998bc47",
-    "semantic_hash": ""
+    "semantic_hash": "abb5236c535db0bf7ce6f38c8998bc47"
   },
   ".agents/skills/vercel-react-best-practices/SKILL.md": {
     "mtime": 1783491070.6430337,
     "ast_hash": "995a667ef0b53598f56ff897d9e4b334",
-    "semantic_hash": ""
+    "semantic_hash": "995a667ef0b53598f56ff897d9e4b334"
   },
   ".agents/skills/vercel-react-best-practices/rules/advanced-effect-event-deps.md": {
     "mtime": 1783491070.558659,
     "ast_hash": "3a0e314bb9576bab61f68d5de5afaf3e",
-    "semantic_hash": ""
+    "semantic_hash": "3a0e314bb9576bab61f68d5de5afaf3e"
   },
   ".agents/skills/vercel-react-best-practices/rules/advanced-event-handler-refs.md": {
     "mtime": 1783491070.558659,
     "ast_hash": "f2a0d125f3773bfda91e187fa5bed48a",
-    "semantic_hash": ""
+    "semantic_hash": "f2a0d125f3773bfda91e187fa5bed48a"
   },
   ".agents/skills/vercel-react-best-practices/rules/advanced-init-once.md": {
     "mtime": 1783491070.562787,
     "ast_hash": "0100519098b834e69a3515657a39bdc9",
-    "semantic_hash": ""
+    "semantic_hash": "0100519098b834e69a3515657a39bdc9"
   },
   ".agents/skills/vercel-react-best-practices/rules/advanced-use-latest.md": {
     "mtime": 1783491070.562787,
     "ast_hash": "60309961293388c9b9e9fd4e0db344e3",
-    "semantic_hash": ""
+    "semantic_hash": "60309961293388c9b9e9fd4e0db344e3"
   },
   ".agents/skills/vercel-react-best-practices/rules/async-api-routes.md": {
     "mtime": 1783491070.5642083,
     "ast_hash": "344fa543b37e303660404e1ef3a4638b",
-    "semantic_hash": ""
+    "semantic_hash": "344fa543b37e303660404e1ef3a4638b"
   },
   ".agents/skills/vercel-react-best-practices/rules/async-cheap-condition-before-await.md": {
     "mtime": 1783491070.565593,
     "ast_hash": "96352f626f328e15a6213d485e29e36f",
-    "semantic_hash": ""
+    "semantic_hash": "96352f626f328e15a6213d485e29e36f"
   },
   ".agents/skills/vercel-react-best-practices/rules/async-defer-await.md": {
     "mtime": 1783491070.5667107,
     "ast_hash": "235a6b5760c2e4843d778167e462cb0e",
-    "semantic_hash": ""
+    "semantic_hash": "235a6b5760c2e4843d778167e462cb0e"
   },
   ".agents/skills/vercel-react-best-practices/rules/async-dependencies.md": {
     "mtime": 1783491070.568101,
     "ast_hash": "9c5622d97b20b9e0cb79455b4322061a",
-    "semantic_hash": ""
+    "semantic_hash": "9c5622d97b20b9e0cb79455b4322061a"
   },
   ".agents/skills/vercel-react-best-practices/rules/async-parallel.md": {
     "mtime": 1783491070.5695393,
     "ast_hash": "a0e06a8e9985cdff4ece0312d8ee35db",
-    "semantic_hash": ""
+    "semantic_hash": "a0e06a8e9985cdff4ece0312d8ee35db"
   },
   ".agents/skills/vercel-react-best-practices/rules/async-suspense-boundaries.md": {
     "mtime": 1783491070.5695393,
     "ast_hash": "dbb2fc80721ca1ce32426f43219d314f",
-    "semantic_hash": ""
+    "semantic_hash": "dbb2fc80721ca1ce32426f43219d314f"
   },
   ".agents/skills/vercel-react-best-practices/rules/bundle-analyzable-paths.md": {
     "mtime": 1783491070.5695393,
     "ast_hash": "8cfe6e284cafd2be33f09c6a1abc78fd",
-    "semantic_hash": ""
+    "semantic_hash": "8cfe6e284cafd2be33f09c6a1abc78fd"
   },
   ".agents/skills/vercel-react-best-practices/rules/bundle-barrel-imports.md": {
     "mtime": 1783491070.573305,
     "ast_hash": "fcba301df7f11c6847dca5962ac78828",
-    "semantic_hash": ""
+    "semantic_hash": "fcba301df7f11c6847dca5962ac78828"
   },
   ".agents/skills/vercel-react-best-practices/rules/bundle-conditional.md": {
     "mtime": 1783491070.574262,
     "ast_hash": "585be2b6fc418c766e5b91cc2141d334",
-    "semantic_hash": ""
+    "semantic_hash": "585be2b6fc418c766e5b91cc2141d334"
   },
   ".agents/skills/vercel-react-best-practices/rules/bundle-defer-third-party.md": {
     "mtime": 1783491070.5762732,
     "ast_hash": "6d4d1d4fac411f724071428dd0bc93ba",
-    "semantic_hash": ""
+    "semantic_hash": "6d4d1d4fac411f724071428dd0bc93ba"
   },
   ".agents/skills/vercel-react-best-practices/rules/bundle-dynamic-imports.md": {
     "mtime": 1783491070.5762732,
     "ast_hash": "72d89583306887810f67e9f7860f06af",
-    "semantic_hash": ""
+    "semantic_hash": "72d89583306887810f67e9f7860f06af"
   },
   ".agents/skills/vercel-react-best-practices/rules/bundle-preload.md": {
     "mtime": 1783491070.578033,
     "ast_hash": "924ec7e7502ca042070326d38e88f8cd",
-    "semantic_hash": ""
+    "semantic_hash": "924ec7e7502ca042070326d38e88f8cd"
   },
   ".agents/skills/vercel-react-best-practices/rules/client-event-listeners.md": {
     "mtime": 1783491070.5790434,
     "ast_hash": "71062add972f9735348b7ae77e778eb8",
-    "semantic_hash": ""
+    "semantic_hash": "71062add972f9735348b7ae77e778eb8"
   },
   ".agents/skills/vercel-react-best-practices/rules/client-localstorage-schema.md": {
     "mtime": 1783491070.5804398,
     "ast_hash": "982a459b07cbec2f8386e526b924c339",
-    "semantic_hash": ""
+    "semantic_hash": "982a459b07cbec2f8386e526b924c339"
   },
   ".agents/skills/vercel-react-best-practices/rules/client-passive-event-listeners.md": {
     "mtime": 1783491070.5804398,
     "ast_hash": "3853533fd5f49fa2fc98296f9c34d84f",
-    "semantic_hash": ""
+    "semantic_hash": "3853533fd5f49fa2fc98296f9c34d84f"
   },
   ".agents/skills/vercel-react-best-practices/rules/client-swr-dedup.md": {
     "mtime": 1783491070.5804398,
     "ast_hash": "e565fcba7836d339ca4707aad6fdaa4a",
-    "semantic_hash": ""
+    "semantic_hash": "e565fcba7836d339ca4707aad6fdaa4a"
   },
   ".agents/skills/vercel-react-best-practices/rules/js-batch-dom-css.md": {
     "mtime": 1783491070.5845764,
     "ast_hash": "869dbc06a931ccfb899b739316c348af",
-    "semantic_hash": ""
+    "semantic_hash": "869dbc06a931ccfb899b739316c348af"
   },
   ".agents/skills/vercel-react-best-practices/rules/js-cache-function-results.md": {
     "mtime": 1783491070.5864537,
     "ast_hash": "5d641ce87ef753d59e3205244e2851a1",
-    "semantic_hash": ""
+    "semantic_hash": "5d641ce87ef753d59e3205244e2851a1"
   },
   ".agents/skills/vercel-react-best-practices/rules/js-cache-property-access.md": {
     "mtime": 1783491070.5864537,
     "ast_hash": "5b4ae3cd853b92222a8fd8c8d8202426",
-    "semantic_hash": ""
+    "semantic_hash": "5b4ae3cd853b92222a8fd8c8d8202426"
   },
   ".agents/skills/vercel-react-best-practices/rules/js-cache-storage.md": {
     "mtime": 1783491070.5864537,
     "ast_hash": "828f260566ff92df56089321fa41c116",
-    "semantic_hash": ""
+    "semantic_hash": "828f260566ff92df56089321fa41c116"
   },
   ".agents/skills/vercel-react-best-practices/rules/js-combine-iterations.md": {
     "mtime": 1783491070.5864537,
     "ast_hash": "4f241532133637fee75304d40f016713",
-    "semantic_hash": ""
+    "semantic_hash": "4f241532133637fee75304d40f016713"
   },
   ".agents/skills/vercel-react-best-practices/rules/js-early-exit.md": {
     "mtime": 1783491070.5864537,
     "ast_hash": "d300cb3e57255029e446bdfa49dc4074",
-    "semantic_hash": ""
+    "semantic_hash": "d300cb3e57255029e446bdfa49dc4074"
   },
   ".agents/skills/vercel-react-best-practices/rules/js-flatmap-filter.md": {
     "mtime": 1783491070.5923803,
     "ast_hash": "161d9d8b444e5ec9cb58bffb0e1b76cd",
-    "semantic_hash": ""
+    "semantic_hash": "161d9d8b444e5ec9cb58bffb0e1b76cd"
   },
   ".agents/skills/vercel-react-best-practices/rules/js-hoist-regexp.md": {
     "mtime": 1783491070.594666,
     "ast_hash": "ced4609a5916db47bbaccfcc3f2dcdbb",
-    "semantic_hash": ""
+    "semantic_hash": "ced4609a5916db47bbaccfcc3f2dcdbb"
   },
   ".agents/skills/vercel-react-best-practices/rules/js-index-maps.md": {
     "mtime": 1783491070.594666,
     "ast_hash": "db5bcfde02e1ce9f41d6ed1f5aafc8c5",
-    "semantic_hash": ""
+    "semantic_hash": "db5bcfde02e1ce9f41d6ed1f5aafc8c5"
   },
   ".agents/skills/vercel-react-best-practices/rules/js-length-check-first.md": {
     "mtime": 1783491070.594666,
     "ast_hash": "2ba208759dd91578f1085c28e6a92ce9",
-    "semantic_hash": ""
+    "semantic_hash": "2ba208759dd91578f1085c28e6a92ce9"
   },
   ".agents/skills/vercel-react-best-practices/rules/js-min-max-loop.md": {
     "mtime": 1783491070.5985117,
     "ast_hash": "82f654d27529dd80be7ae33d45dcdf8c",
-    "semantic_hash": ""
+    "semantic_hash": "82f654d27529dd80be7ae33d45dcdf8c"
   },
   ".agents/skills/vercel-react-best-practices/rules/js-request-idle-callback.md": {
     "mtime": 1783491070.5985117,
     "ast_hash": "91d7e7fca676efb7cecb4ccff1eaec01",
-    "semantic_hash": ""
+    "semantic_hash": "91d7e7fca676efb7cecb4ccff1eaec01"
   },
   ".agents/skills/vercel-react-best-practices/rules/js-set-map-lookups.md": {
     "mtime": 1783491070.5985117,
     "ast_hash": "59a278e21ecd322bff566ba4ad7f5a30",
-    "semantic_hash": ""
+    "semantic_hash": "59a278e21ecd322bff566ba4ad7f5a30"
   },
   ".agents/skills/vercel-react-best-practices/rules/js-tosorted-immutable.md": {
     "mtime": 1783491070.5985117,
     "ast_hash": "fd0804905877b6b7b1858e5df1b5f3c4",
-    "semantic_hash": ""
+    "semantic_hash": "fd0804905877b6b7b1858e5df1b5f3c4"
   },
   ".agents/skills/vercel-react-best-practices/rules/rendering-activity.md": {
     "mtime": 1783491070.604455,
     "ast_hash": "b66bde1377564aa196ba15fc94215cd3",
-    "semantic_hash": ""
+    "semantic_hash": "b66bde1377564aa196ba15fc94215cd3"
   },
   ".agents/skills/vercel-react-best-practices/rules/rendering-animate-svg-wrapper.md": {
     "mtime": 1783491070.6052995,
     "ast_hash": "7301cbe48bf0e1c44934847861384d03",
-    "semantic_hash": ""
+    "semantic_hash": "7301cbe48bf0e1c44934847861384d03"
   },
   ".agents/skills/vercel-react-best-practices/rules/rendering-conditional-render.md": {
     "mtime": 1783491070.6068153,
     "ast_hash": "7aa6112d7544d55147e183b84add9c31",
-    "semantic_hash": ""
+    "semantic_hash": "7aa6112d7544d55147e183b84add9c31"
   },
   ".agents/skills/vercel-react-best-practices/rules/rendering-content-visibility.md": {
     "mtime": 1783491070.6068153,
     "ast_hash": "a4ec0125d3a9d79ac2ab5f7a7b5b4d7d",
-    "semantic_hash": ""
+    "semantic_hash": "a4ec0125d3a9d79ac2ab5f7a7b5b4d7d"
   },
   ".agents/skills/vercel-react-best-practices/rules/rendering-hoist-jsx.md": {
     "mtime": 1783491070.6068153,
     "ast_hash": "00519c11155c5c2a6f493d7980211a71",
-    "semantic_hash": ""
+    "semantic_hash": "00519c11155c5c2a6f493d7980211a71"
   },
   ".agents/skills/vercel-react-best-practices/rules/rendering-hydration-no-flicker.md": {
     "mtime": 1783491070.61062,
     "ast_hash": "a33ebc96d26525f94c460342d913e47a",
-    "semantic_hash": ""
+    "semantic_hash": "a33ebc96d26525f94c460342d913e47a"
   },
   ".agents/skills/vercel-react-best-practices/rules/rendering-hydration-suppress-warning.md": {
     "mtime": 1783491070.61126,
     "ast_hash": "23bc895f5697c19a59712bf19474ec12",
-    "semantic_hash": ""
+    "semantic_hash": "23bc895f5697c19a59712bf19474ec12"
   },
   ".agents/skills/vercel-react-best-practices/rules/rendering-resource-hints.md": {
     "mtime": 1783491070.61126,
     "ast_hash": "a612b2d1d86d1b8205b92ff7dfd81eb8",
-    "semantic_hash": ""
+    "semantic_hash": "a612b2d1d86d1b8205b92ff7dfd81eb8"
   },
   ".agents/skills/vercel-react-best-practices/rules/rendering-script-defer-async.md": {
     "mtime": 1783491070.61126,
     "ast_hash": "d62596aed565dd3ad7bddd38bc8f7798",
-    "semantic_hash": ""
+    "semantic_hash": "d62596aed565dd3ad7bddd38bc8f7798"
   },
   ".agents/skills/vercel-react-best-practices/rules/rendering-svg-precision.md": {
     "mtime": 1783491070.615292,
     "ast_hash": "1b880754ee449c52ccc725481f8b2e90",
-    "semantic_hash": ""
+    "semantic_hash": "1b880754ee449c52ccc725481f8b2e90"
   },
   ".agents/skills/vercel-react-best-practices/rules/rendering-usetransition-loading.md": {
     "mtime": 1783491070.615292,
     "ast_hash": "3cea04ec76a76183cebc6571ac6365a2",
-    "semantic_hash": ""
+    "semantic_hash": "3cea04ec76a76183cebc6571ac6365a2"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-defer-reads.md": {
     "mtime": 1783491070.6175368,
     "ast_hash": "2b754062eb7b203632859f6515ed3561",
-    "semantic_hash": ""
+    "semantic_hash": "2b754062eb7b203632859f6515ed3561"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-dependencies.md": {
     "mtime": 1783491070.6175368,
     "ast_hash": "ad0e42cd0616237f62f8a5abbc2138bc",
-    "semantic_hash": ""
+    "semantic_hash": "ad0e42cd0616237f62f8a5abbc2138bc"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-derived-state-no-effect.md": {
     "mtime": 1783491070.6189773,
     "ast_hash": "c83ba3c8ea58015fd30072790a4959c4",
-    "semantic_hash": ""
+    "semantic_hash": "c83ba3c8ea58015fd30072790a4959c4"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-derived-state.md": {
     "mtime": 1783491070.6199982,
     "ast_hash": "fadd31941e355786cb0cc7bba3c672fd",
-    "semantic_hash": ""
+    "semantic_hash": "fadd31941e355786cb0cc7bba3c672fd"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-functional-setstate.md": {
     "mtime": 1783491070.6211112,
     "ast_hash": "188c0b949d23c11885914c573f4a770a",
-    "semantic_hash": ""
+    "semantic_hash": "188c0b949d23c11885914c573f4a770a"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-lazy-state-init.md": {
     "mtime": 1783491070.6226861,
     "ast_hash": "6f9fc3d826cea2ca484912256149b077",
-    "semantic_hash": ""
+    "semantic_hash": "6f9fc3d826cea2ca484912256149b077"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-memo-with-default-value.md": {
     "mtime": 1783491070.6238682,
     "ast_hash": "9bfa45660e0a4d4f180e1d12d9ed44ea",
-    "semantic_hash": ""
+    "semantic_hash": "9bfa45660e0a4d4f180e1d12d9ed44ea"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-memo.md": {
     "mtime": 1783491070.6248722,
     "ast_hash": "f0decabf1e4cf032c36f0977c81167b7",
-    "semantic_hash": ""
+    "semantic_hash": "f0decabf1e4cf032c36f0977c81167b7"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-move-effect-to-event.md": {
     "mtime": 1783491070.6262426,
     "ast_hash": "599463fe624afd8822ba2bfa7c0138d5",
-    "semantic_hash": ""
+    "semantic_hash": "599463fe624afd8822ba2bfa7c0138d5"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-no-inline-components.md": {
     "mtime": 1783491070.6262426,
     "ast_hash": "713855e0060cfe2ce549d08ea77e1af6",
-    "semantic_hash": ""
+    "semantic_hash": "713855e0060cfe2ce549d08ea77e1af6"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-simple-expression-in-memo.md": {
     "mtime": 1783491070.6276102,
     "ast_hash": "42c37552160cff86a0fcbd93a27aa74e",
-    "semantic_hash": ""
+    "semantic_hash": "42c37552160cff86a0fcbd93a27aa74e"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-split-combined-hooks.md": {
     "mtime": 1783491070.6291325,
     "ast_hash": "b7485878ff82ce8468078a31fc1b7f19",
-    "semantic_hash": ""
+    "semantic_hash": "b7485878ff82ce8468078a31fc1b7f19"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-transitions.md": {
     "mtime": 1783491070.629538,
     "ast_hash": "3f275bbfb966fcb39c554ad959fdf016",
-    "semantic_hash": ""
+    "semantic_hash": "3f275bbfb966fcb39c554ad959fdf016"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-use-deferred-value.md": {
     "mtime": 1783491070.6305573,
     "ast_hash": "913dc783397142c25ec997b5dc11245b",
-    "semantic_hash": ""
+    "semantic_hash": "913dc783397142c25ec997b5dc11245b"
   },
   ".agents/skills/vercel-react-best-practices/rules/rerender-use-ref-transient-values.md": {
     "mtime": 1783491070.6318228,
     "ast_hash": "24d2e82617e2da4207afaf049e1314f3",
-    "semantic_hash": ""
+    "semantic_hash": "24d2e82617e2da4207afaf049e1314f3"
   },
   ".agents/skills/vercel-react-best-practices/rules/server-after-nonblocking.md": {
     "mtime": 1783491070.6328228,
     "ast_hash": "c88a79384f87826bf1b20aa3637093a5",
-    "semantic_hash": ""
+    "semantic_hash": "c88a79384f87826bf1b20aa3637093a5"
   },
   ".agents/skills/vercel-react-best-practices/rules/server-auth-actions.md": {
     "mtime": 1783491070.6328228,
     "ast_hash": "d8691820d666e5dd9094ccc6996398e3",
-    "semantic_hash": ""
+    "semantic_hash": "d8691820d666e5dd9094ccc6996398e3"
   },
   ".agents/skills/vercel-react-best-practices/rules/server-cache-lru.md": {
     "mtime": 1783491070.6349237,
     "ast_hash": "723195ea460bfbc4d43b4eb0c47b246b",
-    "semantic_hash": ""
+    "semantic_hash": "723195ea460bfbc4d43b4eb0c47b246b"
   },
   ".agents/skills/vercel-react-best-practices/rules/server-cache-react.md": {
     "mtime": 1783491070.6360197,
     "ast_hash": "bc168ee66c4378854c7aa23cb9ca1369",
-    "semantic_hash": ""
+    "semantic_hash": "bc168ee66c4378854c7aa23cb9ca1369"
   },
   ".agents/skills/vercel-react-best-practices/rules/server-dedup-props.md": {
     "mtime": 1783491070.6370187,
     "ast_hash": "86bf6f2d562ca98bca778a5b9d2f0251",
-    "semantic_hash": ""
+    "semantic_hash": "86bf6f2d562ca98bca778a5b9d2f0251"
   },
   ".agents/skills/vercel-react-best-practices/rules/server-hoist-static-io.md": {
     "mtime": 1783491070.6380217,
     "ast_hash": "05789c4ba35f68cc0ed6deba3078f7ab",
-    "semantic_hash": ""
+    "semantic_hash": "05789c4ba35f68cc0ed6deba3078f7ab"
   },
   ".agents/skills/vercel-react-best-practices/rules/server-no-shared-module-state.md": {
     "mtime": 1783491070.6390207,
     "ast_hash": "7733faf82c146008e8f1c65660bac4bb",
-    "semantic_hash": ""
+    "semantic_hash": "7733faf82c146008e8f1c65660bac4bb"
   },
   ".agents/skills/vercel-react-best-practices/rules/server-parallel-fetching.md": {
     "mtime": 1783491070.6390207,
     "ast_hash": "1a36cf0b49a1a498fc1150afbf7a42c2",
-    "semantic_hash": ""
+    "semantic_hash": "1a36cf0b49a1a498fc1150afbf7a42c2"
   },
   ".agents/skills/vercel-react-best-practices/rules/server-parallel-nested-fetching.md": {
     "mtime": 1783491070.6409202,
     "ast_hash": "eaa7835a15d41842406acc34002f0d6c",
-    "semantic_hash": ""
+    "semantic_hash": "eaa7835a15d41842406acc34002f0d6c"
   },
   ".agents/skills/vercel-react-best-practices/rules/server-serialization.md": {
     "mtime": 1783491070.6420329,
     "ast_hash": "e6d34426614852685f43609dd9e3b250",
-    "semantic_hash": ""
+    "semantic_hash": "e6d34426614852685f43609dd9e3b250"
   },
   ".agents/skills/vercel-react-best-practices/rules/_sections.md": {
     "mtime": 1783491070.5577304,
     "ast_hash": "b8c110b45145ded6919562772afe067c",
-    "semantic_hash": ""
+    "semantic_hash": "b8c110b45145ded6919562772afe067c"
   },
   ".agents/skills/vercel-react-best-practices/rules/_template.md": {
     "mtime": 1783491070.558659,
     "ast_hash": "a0d76a2f87f3f80e9a8f3a2a1054aaaf",
-    "semantic_hash": ""
+    "semantic_hash": "a0d76a2f87f3f80e9a8f3a2a1054aaaf"
   },
   ".agents/skills/shadcn/assets/shadcn-small.png": {
     "mtime": 1783491077.731865,
     "ast_hash": "72349c6b7f303e6be598a2196391291b",
-    "semantic_hash": ""
+    "semantic_hash": "72349c6b7f303e6be598a2196391291b"
   },
   ".agents/skills/shadcn/assets/shadcn.png": {
     "mtime": 1783491077.731865,
     "ast_hash": "cb56bf002d36bb860c3d320a23bd871a",
-    "semantic_hash": ""
+    "semantic_hash": "cb56bf002d36bb860c3d320a23bd871a"
   },
   "src/orchestrator/event-orchestrator.ts": {
     "mtime": 1783491617.2292347,
     "ast_hash": "4d7655cf9c1f57ba247ff813764c832c",
-    "semantic_hash": ""
+    "semantic_hash": "4d7655cf9c1f57ba247ff813764c832c"
   },
   "src/utils/stream-broadcaster.ts": {
     "mtime": 1783492195.882138,
     "ast_hash": "456cb4ca35dff19e260ff72c1283a77f",
-    "semantic_hash": ""
+    "semantic_hash": "456cb4ca35dff19e260ff72c1283a77f"
   },
   "drizzle/migrations/0001_tricky_sumo.sql": {
     "mtime": 1783492880.4077408,
     "ast_hash": "225b3d48ffc4438a97ba16bd0a804a8d",
-    "semantic_hash": ""
+    "semantic_hash": "225b3d48ffc4438a97ba16bd0a804a8d"
   },
   "drizzle/migrations/meta/0001_snapshot.json": {
     "mtime": 1783492880.4044118,
     "ast_hash": "b7f38d91db815dff538536c8172c890c",
-    "semantic_hash": ""
+    "semantic_hash": "b7f38d91db815dff538536c8172c890c"
   },
   "src/utils/vector-matcher.ts": {
     "mtime": 1783492792.9726,
     "ast_hash": "292d85f2cbc0392c73a16788f55e2b43",
-    "semantic_hash": ""
+    "semantic_hash": "292d85f2cbc0392c73a16788f55e2b43"
   },
   "src/utils/crypto-vault.ts": {
     "mtime": 1783493883.9845686,
     "ast_hash": "df5383b10c06525cc294656aba2920c4",
-    "semantic_hash": ""
+    "semantic_hash": "df5383b10c06525cc294656aba2920c4"
   },
   "drizzle/migrations/0002_third_sentinels.sql": {
     "mtime": 1783494607.332997,
     "ast_hash": "1b72b8b41d870cb9d7291b1e90d92297",
-    "semantic_hash": ""
+    "semantic_hash": "1b72b8b41d870cb9d7291b1e90d92297"
   },
   "drizzle/migrations/meta/0002_snapshot.json": {
     "mtime": 1783494607.3309872,
     "ast_hash": "aa841078b3c245ec40a624c6c8edb3da",
-    "semantic_hash": ""
+    "semantic_hash": "aa841078b3c245ec40a624c6c8edb3da"
   },
   "src/services/llm-switchboard.ts": {
-    "mtime": 1783520433.75876,
-    "ast_hash": "24ad771feb27f8e13883618a4747265a",
-    "semantic_hash": ""
+    "mtime": 1783825583.07957,
+    "ast_hash": "7d8c7d15a06750c131638a469d870b02",
+    "semantic_hash": "7d8c7d15a06750c131638a469d870b02"
   },
   "src/orchestrator/okf-verifier.ts": {
     "mtime": 1783495597.65937,
     "ast_hash": "f01ec56bc84837b73695582f404c3068",
-    "semantic_hash": ""
+    "semantic_hash": "f01ec56bc84837b73695582f404c3068"
   },
   "src/utils/telemetry.ts": {
     "mtime": 1783496496.5646226,
     "ast_hash": "f59d6d6c5bec58a777fb9f5fa00fa44d",
-    "semantic_hash": ""
+    "semantic_hash": "f59d6d6c5bec58a777fb9f5fa00fa44d"
   },
   "drizzle/migrations/0003_volatile_tusk.sql": {
     "mtime": 1783499789.1571383,
     "ast_hash": "3eda672d95a568f6b77fefc53d8b59ff",
-    "semantic_hash": ""
+    "semantic_hash": "3eda672d95a568f6b77fefc53d8b59ff"
   },
   "drizzle/migrations/meta/0003_snapshot.json": {
     "mtime": 1783499789.156041,
     "ast_hash": "866003d13a7d885610a93919c8e4730c",
-    "semantic_hash": ""
+    "semantic_hash": "866003d13a7d885610a93919c8e4730c"
   },
   "savazai-console/eslint.config.mjs": {
     "mtime": 1783500754.2234395,
     "ast_hash": "dfa1f5f6a7037bf39dc510f30b180002",
-    "semantic_hash": ""
+    "semantic_hash": "dfa1f5f6a7037bf39dc510f30b180002"
   },
   "savazai-console/next-env.d.ts": {
     "mtime": 1783500754.3843591,
     "ast_hash": "2a74d3909800ca5467fa83b0ab4a4890",
-    "semantic_hash": ""
+    "semantic_hash": "2a74d3909800ca5467fa83b0ab4a4890"
   },
   "savazai-console/next.config.ts": {
     "mtime": 1783744577.7224634,
     "ast_hash": "c7837c1ce3d6e0a2b6faa4e778cd0116",
-    "semantic_hash": ""
+    "semantic_hash": "c7837c1ce3d6e0a2b6faa4e778cd0116"
   },
   "savazai-console/package.json": {
     "mtime": 1783740012.657589,
     "ast_hash": "71c5feb202014752f2e14d0cec7fb6b2",
-    "semantic_hash": ""
+    "semantic_hash": "71c5feb202014752f2e14d0cec7fb6b2"
   },
   "savazai-console/postcss.config.mjs": {
     "mtime": 1783500754.2621527,
     "ast_hash": "239f3ebf717465dc636818a1a619398d",
-    "semantic_hash": ""
+    "semantic_hash": "239f3ebf717465dc636818a1a619398d"
   },
   "savazai-console/tsconfig.json": {
     "mtime": 1783500857.3021874,
     "ast_hash": "ee17fd1c97c735e9f3564e3f5251f125",
-    "semantic_hash": ""
+    "semantic_hash": "ee17fd1c97c735e9f3564e3f5251f125"
   },
   "savazai-console/src/app/layout.tsx": {
     "mtime": 1783516242.630418,
     "ast_hash": "f82f95a8f57cc9bc11aa14c4f34faa98",
-    "semantic_hash": ""
+    "semantic_hash": "f82f95a8f57cc9bc11aa14c4f34faa98"
   },
   "savazai-console/src/app/page.tsx": {
     "mtime": 1783502205.9267576,
     "ast_hash": "7c1a77874e49c32a40b00322968c731c",
-    "semantic_hash": ""
+    "semantic_hash": "7c1a77874e49c32a40b00322968c731c"
   },
   "savazai-console/AGENTS.md": {
     "mtime": 1783500948.8212163,
     "ast_hash": "9e09241799026ac05be315a2f0b50055",
-    "semantic_hash": ""
+    "semantic_hash": "9e09241799026ac05be315a2f0b50055"
   },
   "savazai-console/CLAUDE.md": {
     "mtime": 1783500948.8217368,
     "ast_hash": "5c27369b226fcf2be8a6cfe52224e767",
-    "semantic_hash": ""
+    "semantic_hash": "5c27369b226fcf2be8a6cfe52224e767"
   },
   "savazai-console/README.md": {
     "mtime": 1783500754.19426,
     "ast_hash": "f15aaa42d5d299d091b1171097ea56ad",
-    "semantic_hash": ""
+    "semantic_hash": "f15aaa42d5d299d091b1171097ea56ad"
   },
   "savazai-console/public/file.svg": {
     "mtime": 1783500754.2753806,
     "ast_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71",
-    "semantic_hash": ""
+    "semantic_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71"
   },
   "savazai-console/public/globe.svg": {
     "mtime": 1783500754.2931426,
     "ast_hash": "2aaafa6a49b6563925fe440891e32717",
-    "semantic_hash": ""
+    "semantic_hash": "2aaafa6a49b6563925fe440891e32717"
   },
   "savazai-console/public/next.svg": {
     "mtime": 1783500754.320295,
     "ast_hash": "8e061864f388b47f33a1c3780831193e",
-    "semantic_hash": ""
+    "semantic_hash": "8e061864f388b47f33a1c3780831193e"
   },
   "savazai-console/public/vercel.svg": {
     "mtime": 1783500754.3427596,
     "ast_hash": "c0af2f507b369b085b35ef4bbe3bcf1e",
-    "semantic_hash": ""
+    "semantic_hash": "c0af2f507b369b085b35ef4bbe3bcf1e"
   },
   "savazai-console/public/window.svg": {
     "mtime": 1783500754.3610501,
     "ast_hash": "a2760511c65806022ad20adf74370ff3",
-    "semantic_hash": ""
+    "semantic_hash": "a2760511c65806022ad20adf74370ff3"
   },
   "savazai-console/src/app/api/auth/[...all]/route.ts": {
     "mtime": 1783501646.5694232,
     "ast_hash": "1904de94f5362beedc269759cad175f0",
-    "semantic_hash": ""
+    "semantic_hash": "1904de94f5362beedc269759cad175f0"
   },
   "savazai-console/src/lib/auth.ts": {
     "mtime": 1783501540.8803434,
     "ast_hash": "67b46f1027f70ef167f5e7b53eedf636",
-    "semantic_hash": ""
+    "semantic_hash": "67b46f1027f70ef167f5e7b53eedf636"
   },
   "savazai-console/src/app/signin/page.tsx": {
     "mtime": 1783502097.8587801,
     "ast_hash": "5d569ae371724e651b8b41aacd06c7a7",
-    "semantic_hash": ""
+    "semantic_hash": "5d569ae371724e651b8b41aacd06c7a7"
   },
   "savazai-console/src/app/signup/page.tsx": {
     "mtime": 1783502117.6758592,
     "ast_hash": "c9bff3d98f73f421aa7026e9ccc49480",
-    "semantic_hash": ""
+    "semantic_hash": "c9bff3d98f73f421aa7026e9ccc49480"
   },
   "savazai-console/src/components/signin-form.tsx": {
     "mtime": 1783507969.3937745,
     "ast_hash": "129a24ea9359fd250103ef9587a2b66c",
-    "semantic_hash": ""
+    "semantic_hash": "129a24ea9359fd250103ef9587a2b66c"
   },
   "savazai-console/src/components/signup-form.tsx": {
     "mtime": 1783507973.1515446,
     "ast_hash": "f9a87aa8e7c9ed967cacc290e97c509c",
-    "semantic_hash": ""
+    "semantic_hash": "f9a87aa8e7c9ed967cacc290e97c509c"
   },
   "savazai-console/src/components/theme-provider.tsx": {
     "mtime": 1783513577.3136759,
     "ast_hash": "b90fe027d7990688c87ae1e2f1002f0f",
-    "semantic_hash": ""
+    "semantic_hash": "b90fe027d7990688c87ae1e2f1002f0f"
   },
   "savazai-console/src/lib/auth-client.ts": {
     "mtime": 1783502080.383308,
     "ast_hash": "7e5ffd0852aee321277975c6e0ef14a2",
-    "semantic_hash": ""
+    "semantic_hash": "7e5ffd0852aee321277975c6e0ef14a2"
   },
   "savazai-console/src/app/admin/layout.tsx": {
     "mtime": 1783510207.4090216,
     "ast_hash": "6facc399c7c7bd76c9006395e2b62029",
-    "semantic_hash": ""
+    "semantic_hash": "6facc399c7c7bd76c9006395e2b62029"
   },
   "savazai-console/src/app/admin/settings/actions.ts": {
-    "mtime": 1783741656.8571057,
-    "ast_hash": "ca04f63086f248eaadb3e932f5887fd8",
-    "semantic_hash": ""
+    "mtime": 1783834281.0253837,
+    "ast_hash": "612146838339b7f8feecd91811d0c93b",
+    "semantic_hash": "612146838339b7f8feecd91811d0c93b"
   },
   "savazai-console/src/app/admin/settings/page.tsx": {
     "mtime": 1783502911.602754,
     "ast_hash": "ec185f843c7b7b170032374dae568928",
-    "semantic_hash": ""
+    "semantic_hash": "ec185f843c7b7b170032374dae568928"
   },
   "savazai-console/src/components/settings-dashboard.tsx": {
-    "mtime": 1783519662.077606,
-    "ast_hash": "fd51922730a47d7a47ee7d57100c69eb",
-    "semantic_hash": ""
+    "mtime": 1783834306.300809,
+    "ast_hash": "14f04abe928ebe6de395171993339ec0",
+    "semantic_hash": "14f04abe928ebe6de395171993339ec0"
   },
   "AGENTS - Copy.md": {
     "mtime": 1783491108.618693,
     "ast_hash": "194876b6c495cd7d50dc9d5e1b34d634",
-    "semantic_hash": ""
+    "semantic_hash": "194876b6c495cd7d50dc9d5e1b34d634"
   },
   "savazai-console/src/app/api/chat/route.ts": {
-    "mtime": 1783518568.351242,
-    "ast_hash": "4e819eafd74e213698558ba40f34ff6a",
+    "mtime": 1783937383.9622374,
+    "ast_hash": "535d62709961e0627409897b47bf6a49",
     "semantic_hash": ""
   },
   "savazai-console/src/app/dashboard/layout.tsx": {
     "mtime": 1783510184.710997,
     "ast_hash": "780a2dda58317845f125316c5898040e",
-    "semantic_hash": ""
+    "semantic_hash": "780a2dda58317845f125316c5898040e"
   },
   "savazai-console/src/app/dashboard/page.tsx": {
     "mtime": 1783513654.3279727,
     "ast_hash": "48c01731cca561f4e6ed7819603c96e6",
-    "semantic_hash": ""
+    "semantic_hash": "48c01731cca561f4e6ed7819603c96e6"
   },
   "savazai-console/src/components/chat-message.tsx": {
-    "mtime": 1783510149.9103324,
-    "ast_hash": "ff8cf0383cb8f299a5bd6db9582b5f6e",
-    "semantic_hash": ""
+    "mtime": 1783830539.0010116,
+    "ast_hash": "ce3ae1e44922cce83680f3e0823097ef",
+    "semantic_hash": "ce3ae1e44922cce83680f3e0823097ef"
   },
   "savazai-console/src/components/chat-workspace.tsx": {
-    "mtime": 1783519667.771754,
-    "ast_hash": "3a46b1cb51d065e0f91e1b0f4c7ddf69",
+    "mtime": 1783937440.4698343,
+    "ast_hash": "4cbfc361ef3c674c6c20cb4e11c4b01e",
     "semantic_hash": ""
   },
   "savazai-console/src/components/sidebar.tsx": {
-    "mtime": 1783510142.8359454,
-    "ast_hash": "6f40e9b1260af9778177049d8a5cf919",
+    "mtime": 1783937412.3928869,
+    "ast_hash": "1febae870114ace9366743ebe5f92829",
     "semantic_hash": ""
   },
   "savazai-console/src/components/system-trace.tsx": {
-    "mtime": 1783510160.3135903,
-    "ast_hash": "a7f1120e0f932f0e0ba1eaef5ef3a375",
+    "mtime": 1783937466.06095,
+    "ast_hash": "49da9ea2f9eb16d875b59576cede2bd9",
     "semantic_hash": ""
   },
   "savazai-console/src/lib/stream-client.ts": {
-    "mtime": 1783518575.6867394,
-    "ast_hash": "e6e7bcd6749b9c6bd713e29abe64200d",
-    "semantic_hash": ""
+    "mtime": 1783829458.6257164,
+    "ast_hash": "2403805d1ff8ce75f6f1ce02f0d3d7b7",
+    "semantic_hash": "2403805d1ff8ce75f6f1ce02f0d3d7b7"
   },
   "README.md": {
     "mtime": 1783521364.8212893,
     "ast_hash": "140a6f5e54adb942b245263fb2f8f17e",
+    "semantic_hash": "140a6f5e54adb942b245263fb2f8f17e"
+  },
+  "src/db/wait-for-db.ts": {
+    "mtime": 1783747065.6061802,
+    "ast_hash": "3f45b11097ea2a06d065b06e0e27e545",
+    "semantic_hash": "3f45b11097ea2a06d065b06e0e27e545"
+  },
+  "opencode.json": {
+    "mtime": 1783936703.638887,
+    "ast_hash": "60c69df33e42291b968a2a75159e29a8",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\drizzle.config.ts": {
     "mtime": 1783484890.17364,
     "ast_hash": "cffa15d7bfcbe225b8badc2a74b4290f",
-    "semantic_hash": "cffa15d7bfcbe225b8badc2a74b4290f"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\eslint.config.js": {
     "mtime": 1783488054.5316968,
     "ast_hash": "ea06c41610c9cbd6daebd7c6e9f9ab8b",
-    "semantic_hash": "ea06c41610c9cbd6daebd7c6e9f9ab8b"
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\opencode.json": {
+    "mtime": 1783936703.638887,
+    "ast_hash": "60c69df33e42291b968a2a75159e29a8",
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\package.json": {
     "mtime": 1783490600.7339976,
     "ast_hash": "13721cffb91813c470035ef3715668c4",
-    "semantic_hash": "13721cffb91813c470035ef3715668c4"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\playwright.config.ts": {
     "mtime": 1783490581.8481135,
     "ast_hash": "bc702e80f7b0d7184b32b8832553dc1d",
-    "semantic_hash": "bc702e80f7b0d7184b32b8832553dc1d"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\skills-lock.json": {
     "mtime": 1783491078.5480464,
     "ast_hash": "8f8e439032169c3971a7cc9381282675",
-    "semantic_hash": "8f8e439032169c3971a7cc9381282675"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\tsconfig.json": {
     "mtime": 1783484889.593498,
     "ast_hash": "b3d332ffae4e112899fdceaa7bf81d40",
-    "semantic_hash": "b3d332ffae4e112899fdceaa7bf81d40"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\evals\\evals.json": {
     "mtime": 1783491077.739065,
     "ast_hash": "9a6d011eeef9a02a52ff1b43faa80ec9",
-    "semantic_hash": "9a6d011eeef9a02a52ff1b43faa80ec9"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\metadata.json": {
     "mtime": 1783491070.5499797,
     "ast_hash": "5cd9ae4fc688353236c3b92e8f06dfcc",
-    "semantic_hash": "5cd9ae4fc688353236c3b92e8f06dfcc"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.claude\\settings.json": {
     "mtime": 1783487995.9740584,
     "ast_hash": "7bf81dca0376bde3a32244b82bc7cbc0",
-    "semantic_hash": "7bf81dca0376bde3a32244b82bc7cbc0"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.opencode\\plugins\\graphify.js": {
     "mtime": 1783488001.4504254,
     "ast_hash": "32b67963417a30cb80544e0b2a56a98d",
-    "semantic_hash": "32b67963417a30cb80544e0b2a56a98d"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\drizzle\\migrations\\0000_green_texas_twister.sql": {
     "mtime": 1783489796.384348,
     "ast_hash": "7f5d0fc2f0ff30b42c9245f9c663f2ee",
-    "semantic_hash": "7f5d0fc2f0ff30b42c9245f9c663f2ee"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\drizzle\\migrations\\0001_tricky_sumo.sql": {
     "mtime": 1783492880.4077408,
     "ast_hash": "225b3d48ffc4438a97ba16bd0a804a8d",
-    "semantic_hash": "225b3d48ffc4438a97ba16bd0a804a8d"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\drizzle\\migrations\\0002_third_sentinels.sql": {
     "mtime": 1783494607.332997,
     "ast_hash": "1b72b8b41d870cb9d7291b1e90d92297",
-    "semantic_hash": "1b72b8b41d870cb9d7291b1e90d92297"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\drizzle\\migrations\\0003_volatile_tusk.sql": {
     "mtime": 1783499789.1571383,
     "ast_hash": "3eda672d95a568f6b77fefc53d8b59ff",
-    "semantic_hash": "3eda672d95a568f6b77fefc53d8b59ff"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\drizzle\\migrations\\meta\\0000_snapshot.json": {
     "mtime": 1783489778.799649,
     "ast_hash": "6499280300e1838b52a9bc976abbac6b",
-    "semantic_hash": "6499280300e1838b52a9bc976abbac6b"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\drizzle\\migrations\\meta\\0001_snapshot.json": {
     "mtime": 1783492880.4044118,
     "ast_hash": "b7f38d91db815dff538536c8172c890c",
-    "semantic_hash": "b7f38d91db815dff538536c8172c890c"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\drizzle\\migrations\\meta\\0002_snapshot.json": {
     "mtime": 1783494607.3309872,
     "ast_hash": "aa841078b3c245ec40a624c6c8edb3da",
-    "semantic_hash": "aa841078b3c245ec40a624c6c8edb3da"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\drizzle\\migrations\\meta\\0003_snapshot.json": {
     "mtime": 1783499789.156041,
     "ast_hash": "866003d13a7d885610a93919c8e4730c",
-    "semantic_hash": "866003d13a7d885610a93919c8e4730c"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\drizzle\\migrations\\meta\\_journal.json": {
     "mtime": 1783499789.156613,
     "ast_hash": "70d68678ca546784024ddb27088fdf73",
-    "semantic_hash": "70d68678ca546784024ddb27088fdf73"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\eslint.config.mjs": {
     "mtime": 1783500754.2234395,
     "ast_hash": "dfa1f5f6a7037bf39dc510f30b180002",
-    "semantic_hash": "dfa1f5f6a7037bf39dc510f30b180002"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\next-env.d.ts": {
     "mtime": 1783500754.3843591,
     "ast_hash": "2a74d3909800ca5467fa83b0ab4a4890",
-    "semantic_hash": "2a74d3909800ca5467fa83b0ab4a4890"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\next.config.ts": {
     "mtime": 1783744577.7224634,
     "ast_hash": "c7837c1ce3d6e0a2b6faa4e778cd0116",
-    "semantic_hash": "c7837c1ce3d6e0a2b6faa4e778cd0116"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\package.json": {
-    "mtime": 1783740012.657589,
-    "ast_hash": "71c5feb202014752f2e14d0cec7fb6b2",
-    "semantic_hash": "71c5feb202014752f2e14d0cec7fb6b2"
+    "mtime": 1783994734.5688815,
+    "ast_hash": "a2c71c214adf8afbd635007c62e178fe",
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\postcss.config.mjs": {
     "mtime": 1783500754.2621527,
     "ast_hash": "239f3ebf717465dc636818a1a619398d",
-    "semantic_hash": "239f3ebf717465dc636818a1a619398d"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\tsconfig.json": {
     "mtime": 1783500857.3021874,
     "ast_hash": "ee17fd1c97c735e9f3564e3f5251f125",
-    "semantic_hash": "ee17fd1c97c735e9f3564e3f5251f125"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\layout.tsx": {
     "mtime": 1783516242.630418,
     "ast_hash": "f82f95a8f57cc9bc11aa14c4f34faa98",
-    "semantic_hash": "f82f95a8f57cc9bc11aa14c4f34faa98"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\page.tsx": {
     "mtime": 1783502205.9267576,
     "ast_hash": "7c1a77874e49c32a40b00322968c731c",
-    "semantic_hash": "7c1a77874e49c32a40b00322968c731c"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\admin\\layout.tsx": {
     "mtime": 1783510207.4090216,
     "ast_hash": "6facc399c7c7bd76c9006395e2b62029",
-    "semantic_hash": "6facc399c7c7bd76c9006395e2b62029"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\admin\\settings\\actions.ts": {
     "mtime": 1783834281.0253837,
     "ast_hash": "612146838339b7f8feecd91811d0c93b",
-    "semantic_hash": "612146838339b7f8feecd91811d0c93b"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\admin\\settings\\page.tsx": {
     "mtime": 1783502911.602754,
     "ast_hash": "ec185f843c7b7b170032374dae568928",
-    "semantic_hash": "ec185f843c7b7b170032374dae568928"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\api\\auth\\[...all]\\route.ts": {
     "mtime": 1783501646.5694232,
     "ast_hash": "1904de94f5362beedc269759cad175f0",
-    "semantic_hash": "1904de94f5362beedc269759cad175f0"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\api\\chat\\route.ts": {
-    "mtime": 1783829462.0400634,
-    "ast_hash": "9977285d48578e21041798112fd471b3",
-    "semantic_hash": "9977285d48578e21041798112fd471b3"
+    "mtime": 1783937383.9622374,
+    "ast_hash": "535d62709961e0627409897b47bf6a49",
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\dashboard\\layout.tsx": {
     "mtime": 1783510184.710997,
     "ast_hash": "780a2dda58317845f125316c5898040e",
-    "semantic_hash": "780a2dda58317845f125316c5898040e"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\dashboard\\page.tsx": {
     "mtime": 1783513654.3279727,
     "ast_hash": "48c01731cca561f4e6ed7819603c96e6",
-    "semantic_hash": "48c01731cca561f4e6ed7819603c96e6"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\signin\\page.tsx": {
     "mtime": 1783502097.8587801,
     "ast_hash": "5d569ae371724e651b8b41aacd06c7a7",
-    "semantic_hash": "5d569ae371724e651b8b41aacd06c7a7"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\signup\\page.tsx": {
     "mtime": 1783502117.6758592,
     "ast_hash": "c9bff3d98f73f421aa7026e9ccc49480",
-    "semantic_hash": "c9bff3d98f73f421aa7026e9ccc49480"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\chat-message.tsx": {
-    "mtime": 1783830539.0010116,
-    "ast_hash": "ce3ae1e44922cce83680f3e0823097ef",
-    "semantic_hash": "ce3ae1e44922cce83680f3e0823097ef"
+    "mtime": 1783994922.5518575,
+    "ast_hash": "ec1cbc66d614816b82a2bc45a1d8ea3b",
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\chat-workspace.tsx": {
-    "mtime": 1783850120.3076859,
-    "ast_hash": "1fb4736026ae2eedd54f6ea6207c4431",
+    "mtime": 1783937440.4698343,
+    "ast_hash": "4cbfc361ef3c674c6c20cb4e11c4b01e",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\settings-dashboard.tsx": {
     "mtime": 1783834306.300809,
     "ast_hash": "14f04abe928ebe6de395171993339ec0",
-    "semantic_hash": "14f04abe928ebe6de395171993339ec0"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\sidebar.tsx": {
-    "mtime": 1783850126.7986362,
-    "ast_hash": "ba924ec35a899d0a2dbe545457354e53",
+    "mtime": 1783937412.3928869,
+    "ast_hash": "1febae870114ace9366743ebe5f92829",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\signin-form.tsx": {
     "mtime": 1783507969.3937745,
     "ast_hash": "129a24ea9359fd250103ef9587a2b66c",
-    "semantic_hash": "129a24ea9359fd250103ef9587a2b66c"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\signup-form.tsx": {
     "mtime": 1783507973.1515446,
     "ast_hash": "f9a87aa8e7c9ed967cacc290e97c509c",
-    "semantic_hash": "f9a87aa8e7c9ed967cacc290e97c509c"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\system-trace.tsx": {
-    "mtime": 1783848944.227094,
-    "ast_hash": "5c9f3545b8be558db3838231e67af364",
+    "mtime": 1783937466.06095,
+    "ast_hash": "49da9ea2f9eb16d875b59576cede2bd9",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\theme-provider.tsx": {
     "mtime": 1783513577.3136759,
     "ast_hash": "b90fe027d7990688c87ae1e2f1002f0f",
-    "semantic_hash": "b90fe027d7990688c87ae1e2f1002f0f"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\lib\\auth-client.ts": {
     "mtime": 1783502080.383308,
     "ast_hash": "7e5ffd0852aee321277975c6e0ef14a2",
-    "semantic_hash": "7e5ffd0852aee321277975c6e0ef14a2"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\lib\\auth.ts": {
     "mtime": 1783501540.8803434,
     "ast_hash": "67b46f1027f70ef167f5e7b53eedf636",
-    "semantic_hash": "67b46f1027f70ef167f5e7b53eedf636"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\lib\\stream-client.ts": {
     "mtime": 1783829458.6257164,
     "ast_hash": "2403805d1ff8ce75f6f1ce02f0d3d7b7",
-    "semantic_hash": "2403805d1ff8ce75f6f1ce02f0d3d7b7"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\index.ts": {
-    "mtime": 1783847632.6689167,
-    "ast_hash": "94d6678db19b675b23d0c6fca8c18bf9",
+    "mtime": 1783996172.6334257,
+    "ast_hash": "2a04f2638640a3d84807a587470bfac2",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\db\\index.ts": {
     "mtime": 1783739287.3193827,
     "ast_hash": "6cff9f73469b7ad6ad5bcaaed26f00f2",
-    "semantic_hash": "6cff9f73469b7ad6ad5bcaaed26f00f2"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\db\\schema.ts": {
     "mtime": 1783499760.7957232,
     "ast_hash": "c466ba77646850efbf5b5b7be8df8db1",
-    "semantic_hash": "c466ba77646850efbf5b5b7be8df8db1"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\db\\seed.ts": {
-    "mtime": 1783848825.0151165,
-    "ast_hash": "fa17c85b8ce06223cf643cbb044cb333",
+    "mtime": 1783949912.1725414,
+    "ast_hash": "543196068187dbf11f1125551c8cc3b3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\db\\wait-for-db.ts": {
+    "mtime": 1783747065.6061802,
+    "ast_hash": "3f45b11097ea2a06d065b06e0e27e545",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\orchestrator\\event-orchestrator.ts": {
     "mtime": 1783491617.2292347,
     "ast_hash": "4d7655cf9c1f57ba247ff813764c832c",
-    "semantic_hash": "4d7655cf9c1f57ba247ff813764c832c"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\orchestrator\\graph.ts": {
-    "mtime": 1783851833.3395426,
-    "ast_hash": "8c0cf3d98e54563c9bbcdfd6d078521e",
+    "mtime": 1783998974.5315568,
+    "ast_hash": "9e9f7b244e6a2e465d0c540becd9dd5f",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\orchestrator\\okf-verifier.ts": {
     "mtime": 1783495597.65937,
     "ast_hash": "f01ec56bc84837b73695582f404c3068",
-    "semantic_hash": "f01ec56bc84837b73695582f404c3068"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\services\\llm-switchboard.ts": {
-    "mtime": 1783825583.07957,
-    "ast_hash": "7d8c7d15a06750c131638a469d870b02",
-    "semantic_hash": "7d8c7d15a06750c131638a469d870b02"
+    "mtime": 1783949346.0669587,
+    "ast_hash": "06e1990d4c021f1600c0ee45e2eebb03",
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\utils\\crypto-vault.ts": {
     "mtime": 1783493883.9845686,
     "ast_hash": "df5383b10c06525cc294656aba2920c4",
-    "semantic_hash": "df5383b10c06525cc294656aba2920c4"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\utils\\privacy-gateway.ts": {
     "mtime": 1783488849.9367275,
     "ast_hash": "4cbcfed78645b9c84c868014e115a420",
-    "semantic_hash": "4cbcfed78645b9c84c868014e115a420"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\utils\\python-runner.ts": {
     "mtime": 1783484906.1641307,
     "ast_hash": "08f3f0bfa8cf15bb8d240116cf41bcc1",
-    "semantic_hash": "08f3f0bfa8cf15bb8d240116cf41bcc1"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\utils\\skills-loader.ts": {
     "mtime": 1783486912.6522405,
     "ast_hash": "fe79acdf140a9c33fa28cef296a4a542",
-    "semantic_hash": "fe79acdf140a9c33fa28cef296a4a542"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\utils\\stream-broadcaster.ts": {
     "mtime": 1783492195.882138,
     "ast_hash": "456cb4ca35dff19e260ff72c1283a77f",
-    "semantic_hash": "456cb4ca35dff19e260ff72c1283a77f"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\utils\\telemetry.ts": {
     "mtime": 1783496496.5646226,
     "ast_hash": "f59d6d6c5bec58a777fb9f5fa00fa44d",
-    "semantic_hash": "f59d6d6c5bec58a777fb9f5fa00fa44d"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\utils\\vector-matcher.ts": {
     "mtime": 1783492792.9726,
     "ast_hash": "292d85f2cbc0392c73a16788f55e2b43",
-    "semantic_hash": "292d85f2cbc0392c73a16788f55e2b43"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\tests\\gateway.spec.ts": {
     "mtime": 1783490592.097326,
     "ast_hash": "4f2083bc40c4a7781f5e22d0f0984f45",
-    "semantic_hash": "4f2083bc40c4a7781f5e22d0f0984f45"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\AGENTS - Copy.md": {
     "mtime": 1783491108.618693,
     "ast_hash": "194876b6c495cd7d50dc9d5e1b34d634",
-    "semantic_hash": "194876b6c495cd7d50dc9d5e1b34d634"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\AGENTS.md": {
     "mtime": 1783504225.6083524,
     "ast_hash": "3edd502ed24a7b07cb4fd326306e25a6",
-    "semantic_hash": "3edd502ed24a7b07cb4fd326306e25a6"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\Claude.md": {
     "mtime": 1783488561.6657028,
     "ast_hash": "5c27369b226fcf2be8a6cfe52224e767",
-    "semantic_hash": "5c27369b226fcf2be8a6cfe52224e767"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\docker-compose.yml": {
     "mtime": 1783522036.8969882,
     "ast_hash": "3b8670470f7150beefba2df773374f22",
-    "semantic_hash": "3b8670470f7150beefba2df773374f22"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\README.md": {
     "mtime": 1783521364.8212893,
     "ast_hash": "140a6f5e54adb942b245263fb2f8f17e",
-    "semantic_hash": "140a6f5e54adb942b245263fb2f8f17e"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\requirements.txt": {
     "mtime": 1783484880.4921632,
     "ast_hash": "15d3a1219375d7ebf5be2245397812ae",
-    "semantic_hash": "15d3a1219375d7ebf5be2245397812ae"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\better-auth-best-practices\\SKILL.md": {
     "mtime": 1783491068.6452353,
     "ast_hash": "d2dfe1651f5b2a2aa343f91b07fc998f",
-    "semantic_hash": "d2dfe1651f5b2a2aa343f91b07fc998f"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\playwright-cli\\SKILL.md": {
     "mtime": 1783491067.4771683,
     "ast_hash": "6e53df61db9abb939ccb47d868526d27",
-    "semantic_hash": "6e53df61db9abb939ccb47d868526d27"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\playwright-cli\\references\\element-attributes.md": {
     "mtime": 1783491067.4771683,
     "ast_hash": "06a9cd91326c0fb1eeafa6853132ff0d",
-    "semantic_hash": "06a9cd91326c0fb1eeafa6853132ff0d"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\playwright-cli\\references\\playwright-tests.md": {
     "mtime": 1783491067.4771683,
     "ast_hash": "2098b51f50cfc25605dfabd6d0368fd8",
-    "semantic_hash": "2098b51f50cfc25605dfabd6d0368fd8"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\playwright-cli\\references\\request-mocking.md": {
     "mtime": 1783491067.4830496,
     "ast_hash": "281652081dacf00f27a637ce372c0d17",
-    "semantic_hash": "281652081dacf00f27a637ce372c0d17"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\playwright-cli\\references\\running-code.md": {
     "mtime": 1783491067.4830496,
     "ast_hash": "39be2ef507d2943ee6e969f23e8f6c20",
-    "semantic_hash": "39be2ef507d2943ee6e969f23e8f6c20"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\playwright-cli\\references\\session-management.md": {
     "mtime": 1783491067.4830496,
     "ast_hash": "50d6f92a413c507cd066e33526e5298e",
-    "semantic_hash": "50d6f92a413c507cd066e33526e5298e"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\playwright-cli\\references\\spec-driven-testing.md": {
     "mtime": 1783491067.4830496,
     "ast_hash": "723ae46d45217aeb9b6839efb3b885b2",
-    "semantic_hash": "723ae46d45217aeb9b6839efb3b885b2"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\playwright-cli\\references\\storage-state.md": {
     "mtime": 1783491067.4830496,
     "ast_hash": "16c4d7ae1f2d8eceef11fc14de4ae130",
-    "semantic_hash": "16c4d7ae1f2d8eceef11fc14de4ae130"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\playwright-cli\\references\\test-generation.md": {
     "mtime": 1783491067.4830496,
     "ast_hash": "cf0042e9ee13faef404a0a0a39a20591",
-    "semantic_hash": "cf0042e9ee13faef404a0a0a39a20591"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\playwright-cli\\references\\tracing.md": {
     "mtime": 1783491067.486652,
     "ast_hash": "8c66ddbc29fc172bde7d71211d4e3473",
-    "semantic_hash": "8c66ddbc29fc172bde7d71211d4e3473"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\playwright-cli\\references\\video-recording.md": {
     "mtime": 1783491067.486652,
     "ast_hash": "29e61c00414ae28d7719b6cc285a18bf",
-    "semantic_hash": "29e61c00414ae28d7719b6cc285a18bf"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\cli.md": {
     "mtime": 1783491077.737944,
     "ast_hash": "06dc1478b5449f2a3c60f4bf4e043687",
-    "semantic_hash": "06dc1478b5449f2a3c60f4bf4e043687"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\customization.md": {
     "mtime": 1783491077.737944,
     "ast_hash": "7454b40655ce6bcbbfa8fa3804b66fbe",
-    "semantic_hash": "7454b40655ce6bcbbfa8fa3804b66fbe"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\mcp.md": {
     "mtime": 1783491077.739065,
     "ast_hash": "aa876f97643326a64e99b86d5ac41bc5",
-    "semantic_hash": "aa876f97643326a64e99b86d5ac41bc5"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\registry.md": {
     "mtime": 1783491077.739065,
     "ast_hash": "f7e28f2e510e8ec5847619641ddfeea4",
-    "semantic_hash": "f7e28f2e510e8ec5847619641ddfeea4"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\SKILL.md": {
     "mtime": 1783491077.731865,
     "ast_hash": "8ca325db76a09da36966154c8b5b6afb",
-    "semantic_hash": "8ca325db76a09da36966154c8b5b6afb"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\agents\\openai.yml": {
     "mtime": 1783491077.731865,
     "ast_hash": "a93201a1b378a868c0795edbf1ae751c",
-    "semantic_hash": "a93201a1b378a868c0795edbf1ae751c"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\rules\\base-vs-radix.md": {
     "mtime": 1783491077.739065,
     "ast_hash": "582481904d3c35aae4125153db97fc37",
-    "semantic_hash": "582481904d3c35aae4125153db97fc37"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\rules\\chat.md": {
     "mtime": 1783491077.739065,
     "ast_hash": "a69a0fa62f7d005e3a5f9aa0b0584ad8",
-    "semantic_hash": "a69a0fa62f7d005e3a5f9aa0b0584ad8"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\rules\\composition.md": {
     "mtime": 1783491077.739065,
     "ast_hash": "f8472e2b9dcb99920ed23cd6ab17defd",
-    "semantic_hash": "f8472e2b9dcb99920ed23cd6ab17defd"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\rules\\forms.md": {
     "mtime": 1783491077.739065,
     "ast_hash": "41155ed5a844952613e717a5add76606",
-    "semantic_hash": "41155ed5a844952613e717a5add76606"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\rules\\icons.md": {
     "mtime": 1783491077.7439837,
     "ast_hash": "56b5a01599f8c03c90f248c5e5e01f67",
-    "semantic_hash": "56b5a01599f8c03c90f248c5e5e01f67"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\rules\\styling.md": {
     "mtime": 1783491077.7439837,
     "ast_hash": "149558687b4e92802f34951bceda7983",
-    "semantic_hash": "149558687b4e92802f34951bceda7983"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\AGENTS.md": {
     "mtime": 1783491070.5499797,
     "ast_hash": "fc8f9b0218d2173112a8418bf9d8abe7",
-    "semantic_hash": "fc8f9b0218d2173112a8418bf9d8abe7"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\README.md": {
     "mtime": 1783491070.5567899,
     "ast_hash": "abb5236c535db0bf7ce6f38c8998bc47",
-    "semantic_hash": "abb5236c535db0bf7ce6f38c8998bc47"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\SKILL.md": {
     "mtime": 1783491070.6430337,
     "ast_hash": "995a667ef0b53598f56ff897d9e4b334",
-    "semantic_hash": "995a667ef0b53598f56ff897d9e4b334"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\advanced-effect-event-deps.md": {
     "mtime": 1783491070.558659,
     "ast_hash": "3a0e314bb9576bab61f68d5de5afaf3e",
-    "semantic_hash": "3a0e314bb9576bab61f68d5de5afaf3e"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\advanced-event-handler-refs.md": {
     "mtime": 1783491070.558659,
     "ast_hash": "f2a0d125f3773bfda91e187fa5bed48a",
-    "semantic_hash": "f2a0d125f3773bfda91e187fa5bed48a"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\advanced-init-once.md": {
     "mtime": 1783491070.562787,
     "ast_hash": "0100519098b834e69a3515657a39bdc9",
-    "semantic_hash": "0100519098b834e69a3515657a39bdc9"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\advanced-use-latest.md": {
     "mtime": 1783491070.562787,
     "ast_hash": "60309961293388c9b9e9fd4e0db344e3",
-    "semantic_hash": "60309961293388c9b9e9fd4e0db344e3"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\async-api-routes.md": {
     "mtime": 1783491070.5642083,
     "ast_hash": "344fa543b37e303660404e1ef3a4638b",
-    "semantic_hash": "344fa543b37e303660404e1ef3a4638b"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\async-cheap-condition-before-await.md": {
     "mtime": 1783491070.565593,
     "ast_hash": "96352f626f328e15a6213d485e29e36f",
-    "semantic_hash": "96352f626f328e15a6213d485e29e36f"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\async-defer-await.md": {
     "mtime": 1783491070.5667107,
     "ast_hash": "235a6b5760c2e4843d778167e462cb0e",
-    "semantic_hash": "235a6b5760c2e4843d778167e462cb0e"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\async-dependencies.md": {
     "mtime": 1783491070.568101,
     "ast_hash": "9c5622d97b20b9e0cb79455b4322061a",
-    "semantic_hash": "9c5622d97b20b9e0cb79455b4322061a"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\async-parallel.md": {
     "mtime": 1783491070.5695393,
     "ast_hash": "a0e06a8e9985cdff4ece0312d8ee35db",
-    "semantic_hash": "a0e06a8e9985cdff4ece0312d8ee35db"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\async-suspense-boundaries.md": {
     "mtime": 1783491070.5695393,
     "ast_hash": "dbb2fc80721ca1ce32426f43219d314f",
-    "semantic_hash": "dbb2fc80721ca1ce32426f43219d314f"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\bundle-analyzable-paths.md": {
     "mtime": 1783491070.5695393,
     "ast_hash": "8cfe6e284cafd2be33f09c6a1abc78fd",
-    "semantic_hash": "8cfe6e284cafd2be33f09c6a1abc78fd"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\bundle-barrel-imports.md": {
     "mtime": 1783491070.573305,
     "ast_hash": "fcba301df7f11c6847dca5962ac78828",
-    "semantic_hash": "fcba301df7f11c6847dca5962ac78828"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\bundle-conditional.md": {
     "mtime": 1783491070.574262,
     "ast_hash": "585be2b6fc418c766e5b91cc2141d334",
-    "semantic_hash": "585be2b6fc418c766e5b91cc2141d334"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\bundle-defer-third-party.md": {
     "mtime": 1783491070.5762732,
     "ast_hash": "6d4d1d4fac411f724071428dd0bc93ba",
-    "semantic_hash": "6d4d1d4fac411f724071428dd0bc93ba"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\bundle-dynamic-imports.md": {
     "mtime": 1783491070.5762732,
     "ast_hash": "72d89583306887810f67e9f7860f06af",
-    "semantic_hash": "72d89583306887810f67e9f7860f06af"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\bundle-preload.md": {
     "mtime": 1783491070.578033,
     "ast_hash": "924ec7e7502ca042070326d38e88f8cd",
-    "semantic_hash": "924ec7e7502ca042070326d38e88f8cd"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\client-event-listeners.md": {
     "mtime": 1783491070.5790434,
     "ast_hash": "71062add972f9735348b7ae77e778eb8",
-    "semantic_hash": "71062add972f9735348b7ae77e778eb8"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\client-localstorage-schema.md": {
     "mtime": 1783491070.5804398,
     "ast_hash": "982a459b07cbec2f8386e526b924c339",
-    "semantic_hash": "982a459b07cbec2f8386e526b924c339"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\client-passive-event-listeners.md": {
     "mtime": 1783491070.5804398,
     "ast_hash": "3853533fd5f49fa2fc98296f9c34d84f",
-    "semantic_hash": "3853533fd5f49fa2fc98296f9c34d84f"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\client-swr-dedup.md": {
     "mtime": 1783491070.5804398,
     "ast_hash": "e565fcba7836d339ca4707aad6fdaa4a",
-    "semantic_hash": "e565fcba7836d339ca4707aad6fdaa4a"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\js-batch-dom-css.md": {
     "mtime": 1783491070.5845764,
     "ast_hash": "869dbc06a931ccfb899b739316c348af",
-    "semantic_hash": "869dbc06a931ccfb899b739316c348af"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\js-cache-function-results.md": {
     "mtime": 1783491070.5864537,
     "ast_hash": "5d641ce87ef753d59e3205244e2851a1",
-    "semantic_hash": "5d641ce87ef753d59e3205244e2851a1"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\js-cache-property-access.md": {
     "mtime": 1783491070.5864537,
     "ast_hash": "5b4ae3cd853b92222a8fd8c8d8202426",
-    "semantic_hash": "5b4ae3cd853b92222a8fd8c8d8202426"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\js-cache-storage.md": {
     "mtime": 1783491070.5864537,
     "ast_hash": "828f260566ff92df56089321fa41c116",
-    "semantic_hash": "828f260566ff92df56089321fa41c116"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\js-combine-iterations.md": {
     "mtime": 1783491070.5864537,
     "ast_hash": "4f241532133637fee75304d40f016713",
-    "semantic_hash": "4f241532133637fee75304d40f016713"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\js-early-exit.md": {
     "mtime": 1783491070.5864537,
     "ast_hash": "d300cb3e57255029e446bdfa49dc4074",
-    "semantic_hash": "d300cb3e57255029e446bdfa49dc4074"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\js-flatmap-filter.md": {
     "mtime": 1783491070.5923803,
     "ast_hash": "161d9d8b444e5ec9cb58bffb0e1b76cd",
-    "semantic_hash": "161d9d8b444e5ec9cb58bffb0e1b76cd"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\js-hoist-regexp.md": {
     "mtime": 1783491070.594666,
     "ast_hash": "ced4609a5916db47bbaccfcc3f2dcdbb",
-    "semantic_hash": "ced4609a5916db47bbaccfcc3f2dcdbb"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\js-index-maps.md": {
     "mtime": 1783491070.594666,
     "ast_hash": "db5bcfde02e1ce9f41d6ed1f5aafc8c5",
-    "semantic_hash": "db5bcfde02e1ce9f41d6ed1f5aafc8c5"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\js-length-check-first.md": {
     "mtime": 1783491070.594666,
     "ast_hash": "2ba208759dd91578f1085c28e6a92ce9",
-    "semantic_hash": "2ba208759dd91578f1085c28e6a92ce9"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\js-min-max-loop.md": {
     "mtime": 1783491070.5985117,
     "ast_hash": "82f654d27529dd80be7ae33d45dcdf8c",
-    "semantic_hash": "82f654d27529dd80be7ae33d45dcdf8c"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\js-request-idle-callback.md": {
     "mtime": 1783491070.5985117,
     "ast_hash": "91d7e7fca676efb7cecb4ccff1eaec01",
-    "semantic_hash": "91d7e7fca676efb7cecb4ccff1eaec01"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\js-set-map-lookups.md": {
     "mtime": 1783491070.5985117,
     "ast_hash": "59a278e21ecd322bff566ba4ad7f5a30",
-    "semantic_hash": "59a278e21ecd322bff566ba4ad7f5a30"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\js-tosorted-immutable.md": {
     "mtime": 1783491070.5985117,
     "ast_hash": "fd0804905877b6b7b1858e5df1b5f3c4",
-    "semantic_hash": "fd0804905877b6b7b1858e5df1b5f3c4"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rendering-activity.md": {
     "mtime": 1783491070.604455,
     "ast_hash": "b66bde1377564aa196ba15fc94215cd3",
-    "semantic_hash": "b66bde1377564aa196ba15fc94215cd3"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rendering-animate-svg-wrapper.md": {
     "mtime": 1783491070.6052995,
     "ast_hash": "7301cbe48bf0e1c44934847861384d03",
-    "semantic_hash": "7301cbe48bf0e1c44934847861384d03"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rendering-conditional-render.md": {
     "mtime": 1783491070.6068153,
     "ast_hash": "7aa6112d7544d55147e183b84add9c31",
-    "semantic_hash": "7aa6112d7544d55147e183b84add9c31"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rendering-content-visibility.md": {
     "mtime": 1783491070.6068153,
     "ast_hash": "a4ec0125d3a9d79ac2ab5f7a7b5b4d7d",
-    "semantic_hash": "a4ec0125d3a9d79ac2ab5f7a7b5b4d7d"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rendering-hoist-jsx.md": {
     "mtime": 1783491070.6068153,
     "ast_hash": "00519c11155c5c2a6f493d7980211a71",
-    "semantic_hash": "00519c11155c5c2a6f493d7980211a71"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rendering-hydration-no-flicker.md": {
     "mtime": 1783491070.61062,
     "ast_hash": "a33ebc96d26525f94c460342d913e47a",
-    "semantic_hash": "a33ebc96d26525f94c460342d913e47a"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rendering-hydration-suppress-warning.md": {
     "mtime": 1783491070.61126,
     "ast_hash": "23bc895f5697c19a59712bf19474ec12",
-    "semantic_hash": "23bc895f5697c19a59712bf19474ec12"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rendering-resource-hints.md": {
     "mtime": 1783491070.61126,
     "ast_hash": "a612b2d1d86d1b8205b92ff7dfd81eb8",
-    "semantic_hash": "a612b2d1d86d1b8205b92ff7dfd81eb8"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rendering-script-defer-async.md": {
     "mtime": 1783491070.61126,
     "ast_hash": "d62596aed565dd3ad7bddd38bc8f7798",
-    "semantic_hash": "d62596aed565dd3ad7bddd38bc8f7798"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rendering-svg-precision.md": {
     "mtime": 1783491070.615292,
     "ast_hash": "1b880754ee449c52ccc725481f8b2e90",
-    "semantic_hash": "1b880754ee449c52ccc725481f8b2e90"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rendering-usetransition-loading.md": {
     "mtime": 1783491070.615292,
     "ast_hash": "3cea04ec76a76183cebc6571ac6365a2",
-    "semantic_hash": "3cea04ec76a76183cebc6571ac6365a2"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-defer-reads.md": {
     "mtime": 1783491070.6175368,
     "ast_hash": "2b754062eb7b203632859f6515ed3561",
-    "semantic_hash": "2b754062eb7b203632859f6515ed3561"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-dependencies.md": {
     "mtime": 1783491070.6175368,
     "ast_hash": "ad0e42cd0616237f62f8a5abbc2138bc",
-    "semantic_hash": "ad0e42cd0616237f62f8a5abbc2138bc"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-derived-state-no-effect.md": {
     "mtime": 1783491070.6189773,
     "ast_hash": "c83ba3c8ea58015fd30072790a4959c4",
-    "semantic_hash": "c83ba3c8ea58015fd30072790a4959c4"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-derived-state.md": {
     "mtime": 1783491070.6199982,
     "ast_hash": "fadd31941e355786cb0cc7bba3c672fd",
-    "semantic_hash": "fadd31941e355786cb0cc7bba3c672fd"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-functional-setstate.md": {
     "mtime": 1783491070.6211112,
     "ast_hash": "188c0b949d23c11885914c573f4a770a",
-    "semantic_hash": "188c0b949d23c11885914c573f4a770a"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-lazy-state-init.md": {
     "mtime": 1783491070.6226861,
     "ast_hash": "6f9fc3d826cea2ca484912256149b077",
-    "semantic_hash": "6f9fc3d826cea2ca484912256149b077"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-memo-with-default-value.md": {
     "mtime": 1783491070.6238682,
     "ast_hash": "9bfa45660e0a4d4f180e1d12d9ed44ea",
-    "semantic_hash": "9bfa45660e0a4d4f180e1d12d9ed44ea"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-memo.md": {
     "mtime": 1783491070.6248722,
     "ast_hash": "f0decabf1e4cf032c36f0977c81167b7",
-    "semantic_hash": "f0decabf1e4cf032c36f0977c81167b7"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-move-effect-to-event.md": {
     "mtime": 1783491070.6262426,
     "ast_hash": "599463fe624afd8822ba2bfa7c0138d5",
-    "semantic_hash": "599463fe624afd8822ba2bfa7c0138d5"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-no-inline-components.md": {
     "mtime": 1783491070.6262426,
     "ast_hash": "713855e0060cfe2ce549d08ea77e1af6",
-    "semantic_hash": "713855e0060cfe2ce549d08ea77e1af6"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-simple-expression-in-memo.md": {
     "mtime": 1783491070.6276102,
     "ast_hash": "42c37552160cff86a0fcbd93a27aa74e",
-    "semantic_hash": "42c37552160cff86a0fcbd93a27aa74e"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-split-combined-hooks.md": {
     "mtime": 1783491070.6291325,
     "ast_hash": "b7485878ff82ce8468078a31fc1b7f19",
-    "semantic_hash": "b7485878ff82ce8468078a31fc1b7f19"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-transitions.md": {
     "mtime": 1783491070.629538,
     "ast_hash": "3f275bbfb966fcb39c554ad959fdf016",
-    "semantic_hash": "3f275bbfb966fcb39c554ad959fdf016"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-use-deferred-value.md": {
     "mtime": 1783491070.6305573,
     "ast_hash": "913dc783397142c25ec997b5dc11245b",
-    "semantic_hash": "913dc783397142c25ec997b5dc11245b"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\rerender-use-ref-transient-values.md": {
     "mtime": 1783491070.6318228,
     "ast_hash": "24d2e82617e2da4207afaf049e1314f3",
-    "semantic_hash": "24d2e82617e2da4207afaf049e1314f3"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\server-after-nonblocking.md": {
     "mtime": 1783491070.6328228,
     "ast_hash": "c88a79384f87826bf1b20aa3637093a5",
-    "semantic_hash": "c88a79384f87826bf1b20aa3637093a5"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\server-auth-actions.md": {
     "mtime": 1783491070.6328228,
     "ast_hash": "d8691820d666e5dd9094ccc6996398e3",
-    "semantic_hash": "d8691820d666e5dd9094ccc6996398e3"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\server-cache-lru.md": {
     "mtime": 1783491070.6349237,
     "ast_hash": "723195ea460bfbc4d43b4eb0c47b246b",
-    "semantic_hash": "723195ea460bfbc4d43b4eb0c47b246b"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\server-cache-react.md": {
     "mtime": 1783491070.6360197,
     "ast_hash": "bc168ee66c4378854c7aa23cb9ca1369",
-    "semantic_hash": "bc168ee66c4378854c7aa23cb9ca1369"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\server-dedup-props.md": {
     "mtime": 1783491070.6370187,
     "ast_hash": "86bf6f2d562ca98bca778a5b9d2f0251",
-    "semantic_hash": "86bf6f2d562ca98bca778a5b9d2f0251"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\server-hoist-static-io.md": {
     "mtime": 1783491070.6380217,
     "ast_hash": "05789c4ba35f68cc0ed6deba3078f7ab",
-    "semantic_hash": "05789c4ba35f68cc0ed6deba3078f7ab"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\server-no-shared-module-state.md": {
     "mtime": 1783491070.6390207,
     "ast_hash": "7733faf82c146008e8f1c65660bac4bb",
-    "semantic_hash": "7733faf82c146008e8f1c65660bac4bb"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\server-parallel-fetching.md": {
     "mtime": 1783491070.6390207,
     "ast_hash": "1a36cf0b49a1a498fc1150afbf7a42c2",
-    "semantic_hash": "1a36cf0b49a1a498fc1150afbf7a42c2"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\server-parallel-nested-fetching.md": {
     "mtime": 1783491070.6409202,
     "ast_hash": "eaa7835a15d41842406acc34002f0d6c",
-    "semantic_hash": "eaa7835a15d41842406acc34002f0d6c"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\server-serialization.md": {
     "mtime": 1783491070.6420329,
     "ast_hash": "e6d34426614852685f43609dd9e3b250",
-    "semantic_hash": "e6d34426614852685f43609dd9e3b250"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\_sections.md": {
     "mtime": 1783491070.5577304,
     "ast_hash": "b8c110b45145ded6919562772afe067c",
-    "semantic_hash": "b8c110b45145ded6919562772afe067c"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\vercel-react-best-practices\\rules\\_template.md": {
     "mtime": 1783491070.558659,
     "ast_hash": "a0d76a2f87f3f80e9a8f3a2a1054aaaf",
-    "semantic_hash": "a0d76a2f87f3f80e9a8f3a2a1054aaaf"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.claude\\CLAUDE.md": {
     "mtime": 1783487995.9646397,
     "ast_hash": "817fe671013b35ae0bc9301dfe449a87",
-    "semantic_hash": "817fe671013b35ae0bc9301dfe449a87"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.claude\\skills\\graphify\\SKILL.md": {
     "mtime": 1783487995.962003,
     "ast_hash": "26828fbc6cf325d3fb0ba6a3a28e03a1",
-    "semantic_hash": "26828fbc6cf325d3fb0ba6a3a28e03a1"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.claude\\skills\\graphify\\references\\add-watch.md": {
     "mtime": 1781325236.0019634,
     "ast_hash": "0df0589623217ca38a12bdcabfb42f4c",
-    "semantic_hash": "0df0589623217ca38a12bdcabfb42f4c"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.claude\\skills\\graphify\\references\\exports.md": {
     "mtime": 1781325236.0024805,
     "ast_hash": "c04ddf8f1f5ef5e262ebec491a523c74",
-    "semantic_hash": "c04ddf8f1f5ef5e262ebec491a523c74"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.claude\\skills\\graphify\\references\\extraction-spec.md": {
     "mtime": 1781325236.002987,
     "ast_hash": "24808b03abfeaf5f6435bb69c0125b2c",
-    "semantic_hash": "24808b03abfeaf5f6435bb69c0125b2c"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.claude\\skills\\graphify\\references\\github-and-merge.md": {
     "mtime": 1781325236.0042338,
     "ast_hash": "cde13df085e4c492aeb7ba298a996d0d",
-    "semantic_hash": "cde13df085e4c492aeb7ba298a996d0d"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.claude\\skills\\graphify\\references\\hooks.md": {
     "mtime": 1781325236.0042338,
     "ast_hash": "3f545db6ce646650bb9de588f5512a27",
-    "semantic_hash": "3f545db6ce646650bb9de588f5512a27"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.claude\\skills\\graphify\\references\\query.md": {
     "mtime": 1781325236.0042338,
     "ast_hash": "c2a8e798674a81b02aa9975f43023819",
-    "semantic_hash": "c2a8e798674a81b02aa9975f43023819"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.claude\\skills\\graphify\\references\\transcribe.md": {
     "mtime": 1781325236.0042338,
     "ast_hash": "70f6aa30d6211f3a2c7e9fc45479f50c",
-    "semantic_hash": "70f6aa30d6211f3a2c7e9fc45479f50c"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.claude\\skills\\graphify\\references\\update.md": {
     "mtime": 1781325236.0069196,
     "ast_hash": "0dad167a95bdb389f02fecffb60b1bc8",
-    "semantic_hash": "0dad167a95bdb389f02fecffb60b1bc8"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\AGENTS.md": {
     "mtime": 1783500948.8212163,
     "ast_hash": "9e09241799026ac05be315a2f0b50055",
-    "semantic_hash": "9e09241799026ac05be315a2f0b50055"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\CLAUDE.md": {
     "mtime": 1783500948.8217368,
     "ast_hash": "5c27369b226fcf2be8a6cfe52224e767",
-    "semantic_hash": "5c27369b226fcf2be8a6cfe52224e767"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\README.md": {
     "mtime": 1783500754.19426,
     "ast_hash": "f15aaa42d5d299d091b1171097ea56ad",
-    "semantic_hash": "f15aaa42d5d299d091b1171097ea56ad"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\skills\\brave-search-transformer.md": {
     "mtime": 1783486904.0157216,
     "ast_hash": "ed5e40887f71417e0c66535cec25c6ce",
-    "semantic_hash": "ed5e40887f71417e0c66535cec25c6ce"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\skills\\generate-pdf.md": {
     "mtime": 1783486902.2350428,
     "ast_hash": "41914dd4b66a5b454cb7bca74092a803",
-    "semantic_hash": "41914dd4b66a5b454cb7bca74092a803"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\skills\\send-email.md": {
     "mtime": 1783486903.1922352,
     "ast_hash": "0d2193075bf0c7dfbb9a47cbe1bcd36a",
-    "semantic_hash": "0d2193075bf0c7dfbb9a47cbe1bcd36a"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\assets\\shadcn-small.png": {
     "mtime": 1783491077.731865,
     "ast_hash": "72349c6b7f303e6be598a2196391291b",
-    "semantic_hash": "72349c6b7f303e6be598a2196391291b"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.agents\\skills\\shadcn\\assets\\shadcn.png": {
     "mtime": 1783491077.731865,
     "ast_hash": "cb56bf002d36bb860c3d320a23bd871a",
-    "semantic_hash": "cb56bf002d36bb860c3d320a23bd871a"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\public\\file.svg": {
     "mtime": 1783500754.2753806,
     "ast_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71",
-    "semantic_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\public\\globe.svg": {
     "mtime": 1783500754.2931426,
     "ast_hash": "2aaafa6a49b6563925fe440891e32717",
-    "semantic_hash": "2aaafa6a49b6563925fe440891e32717"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\public\\next.svg": {
     "mtime": 1783500754.320295,
     "ast_hash": "8e061864f388b47f33a1c3780831193e",
-    "semantic_hash": "8e061864f388b47f33a1c3780831193e"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\public\\vercel.svg": {
     "mtime": 1783500754.3427596,
     "ast_hash": "c0af2f507b369b085b35ef4bbe3bcf1e",
-    "semantic_hash": "c0af2f507b369b085b35ef4bbe3bcf1e"
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\public\\window.svg": {
     "mtime": 1783500754.3610501,
     "ast_hash": "a2760511c65806022ad20adf74370ff3",
-    "semantic_hash": "a2760511c65806022ad20adf74370ff3"
+    "semantic_hash": ""
   },
-  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\db\\wait-for-db.ts": {
-    "mtime": 1783747065.6061802,
-    "ast_hash": "3f45b11097ea2a06d065b06e0e27e545",
-    "semantic_hash": "3f45b11097ea2a06d065b06e0e27e545"
-  },
-  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\opencode.json": {
-    "mtime": 1783843958.8598998,
-    "ast_hash": "d8254f7502c69926615c41b12e05a294",
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\api\\chat\\threads\\[threadId]\\route.ts": {
+    "mtime": 1783993445.093308,
+    "ast_hash": "0ee98db59e40d71491051b458ef0843b",
     "semantic_hash": ""
   }
 }
