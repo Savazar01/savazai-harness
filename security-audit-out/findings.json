@@ -1,0 +1,230 @@
+[
+  {
+    "verdict": "confirmed",
+    "title": "SQL Injection Risk via Vulnerable Drizzle ORM Version",
+    "description": "The backend package manifest package.json specifies drizzle-orm version ^0.38.0. Drizzle ORM versions below 0.45.2 contain a vulnerability where SQL identifiers are not properly escaped, exposing the database to potential SQL injection under specific usage conditions.",
+    "root_cause": "drizzle-orm dependency in package.json does not properly escape SQL identifiers in versions below 0.45.2, allowing potential SQL injection attacks if dynamic identifiers are used in queries.",
+    "intended_behavior": "The database framework should securely escape all identifiers and values in generated SQL queries.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "package.json",
+        "line": 22,
+        "scope": "dependencies",
+        "description": "package.json lists drizzle-orm version ^0.38.0 as a project dependency"
+      },
+      {
+        "kind": "sink",
+        "file": "package.json",
+        "line": 22,
+        "scope": "dependencies",
+        "description": "The application loads the vulnerable package version during server boot"
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "third_party_dependency",
+        "description": "drizzle-orm is used to query database models"
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "External attacker targeting SQL inputs",
+      "payloads": ["'; DROP TABLE users;--"],
+      "instructions": [
+        "Audit package.json to identify vulnerable packages",
+        "Find dynamic query builders utilizing unescaped identifiers",
+        "Execute injection payloads on target fields"
+      ],
+      "expected_result": "Improper escaping of queries leading to SQL syntax execution errors or data leakage"
+    },
+    "remediation": {
+      "strategy": "Upgrade drizzle-orm package to version 0.45.2 or higher."
+    },
+    "severity": {
+      "likelihood": {
+        "score": "low",
+        "reason": "Queries in the codebase are currently parameterized and do not use dynamic identifiers directly from inputs."
+      },
+      "impact": {
+        "score": "high",
+        "reason": "A successful SQL injection leads to complete data exposure or database compromise."
+      },
+      "overall_severity": "medium"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Confirmed by public CVE advisory and local npm audit check."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "title": "Cleartext Default Database Credentials in Version Control",
+    "description": "Default PostgreSQL password sz_secure_vault_pass_99 and Master Vault Secrets are defined in plain text in .env and src/db/seed.ts files. Pushing these default keys to version control poses a risk of secrets exposure if environments are not properly overridden.",
+    "root_cause": "seed in src/db/seed.ts does not load production secret keys dynamically from external environment variables, allowing default cleartext credentials to persist.",
+    "intended_behavior": "All database and API credentials must be injected dynamically via environment parameters and never hardcoded in configurations or source code.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "src/db/seed.ts",
+        "line": 34,
+        "scope": "seed",
+        "description": "A hardcoded bearer token string is defined in seed.ts"
+      },
+      {
+        "kind": "sink",
+        "file": "src/db/seed.ts",
+        "line": 39,
+        "scope": "seed",
+        "description": "The hardcoded credential is encrypted and written to the postgres database"
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "system_configuration",
+        "description": "No secure environment override provided during database seeding operations"
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Attacker inspecting repository source code",
+      "payloads": ["sz_secure_vault_pass_99"],
+      "instructions": [
+        "Inspect version control history for .env and seed.ts files",
+        "Retrieve the default credentials and connection strings",
+        "Connect externally to the exposed database using the retrieved keys"
+      ],
+      "expected_result": "Successful authentication and administrative access to the database container"
+    },
+    "remediation": {
+      "strategy": "Override all passwords, secrets, and bearer tokens in production using secure env vars and never commit default keys in raw form."
+    },
+    "severity": {
+      "likelihood": {
+        "score": "medium",
+        "reason": "Default keys are likely to be used if the administrator does not explicitly configure environment overrides."
+      },
+      "impact": {
+        "score": "high",
+        "reason": "Exposes database contents and administrative roles to any party with repo visibility."
+      },
+      "overall_severity": "high"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Confirmed by direct inspection of seed.ts and .env files."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "title": "Loose Regular Expression Parsing in PII Privacy Gateway",
+    "description": "The PII gateway privacy-gateway.ts uses simplified regex patterns for email, card, and SSN formats. Sophisticated or non-standard inputs can bypass the filters, leaking unmasked PII data to external LLM providers.",
+    "root_cause": "maskPayload in src/utils/privacy-gateway.ts does not use comprehensive regex boundaries, allowing modified PII formats to bypass masking.",
+    "intended_behavior": "The privacy gateway should sanitize all PII formats, ignoring variation formatting details like spaces or special casing.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "src/utils/privacy-gateway.ts",
+        "line": 1,
+        "scope": "DEFAULT_PATTERNS",
+        "description": "Simple regular expressions are defined for sensitive data types"
+      },
+      {
+        "kind": "sink",
+        "file": "src/utils/privacy-gateway.ts",
+        "line": 21,
+        "scope": "maskPayload",
+        "description": "The simplified regex replaces text, potentially leaving non-standard formats unmasked"
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "data_state",
+        "description": "PII data is passed in modified or non-standard formats (e.g., spaces in card numbers or special characters in emails)"
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "User entering non-standard PII formatted input",
+      "payloads": ["1234 5678 1234 5678"],
+      "instructions": [
+        "Input sensitive card information containing spaces",
+        "Submit payload to the invoke endpoint",
+        "Inspect the request sent to the external LLM provider"
+      ],
+      "expected_result": "PII is sent to external LLMs without being intercepted or masked by the gateway"
+    },
+    "remediation": {
+      "strategy": "Deploy exhaustive regular expression sets or dedicate a parser to filter all variations of PII formats."
+    },
+    "severity": {
+      "likelihood": {
+        "score": "medium",
+        "reason": "Modified PII formats like spaced credit cards are commonly entered by users."
+      },
+      "impact": {
+        "score": "medium",
+        "reason": "Exposes sensitive PII/SPI to external LLM providers, breaching privacy compliance bounds."
+      },
+      "overall_severity": "medium"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Confirmed by analyzing regex structures in privacy-gateway.ts."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "title": "Exposed Database and Backend Container Ports",
+    "description": "The docker-compose.yml configuration maps port 5622:5432 and 3055:3055 directly to the host network interface. On a VPS without firewall restrictions, this exposes the postgres database and backend API to the public internet.",
+    "root_cause": "ports configuration in docker-compose.yml does not bind mapped ports to 127.0.0.1, allowing open host interfaces to bind to port 5622 and 3055.",
+    "intended_behavior": "All internal container ports should only bind to local loopback interfaces or container networks unless public exposure is explicitly intended.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "docker-compose.yml",
+        "line": 6,
+        "scope": "savazai-db.ports",
+        "description": "docker-compose.yml maps database port 5622 publicly"
+      },
+      {
+        "kind": "sink",
+        "file": "docker-compose.yml",
+        "line": 24,
+        "scope": "savazai-backend.ports",
+        "description": "docker-compose.yml maps backend port 3055 publicly"
+      }
+    ],
+    "remediation": {
+      "strategy": "Bind mapped ports strictly to localhost (127.0.0.1) in docker-compose.yml configurations."
+    },
+    "conditions": [
+      {
+        "kind": "network_routing",
+        "description": "The host system VPS does not run firewall rules to block port 5622 and 3055"
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "External attacker scanning internet ports",
+      "payloads": ["port scan on 5622"],
+      "instructions": [
+        "Locate target VPS IP address",
+        "Perform TCP port scan on port 5622 and 3055",
+        "Send PostgreSQL connection handshake request to port 5622"
+      ],
+      "expected_result": "Database container responds to connection requests from public IP addresses"
+    },
+    "severity": {
+      "likelihood": {
+        "score": "medium",
+        "reason": "VPS environments frequently lack customized firewall profiles on secondary ports."
+      },
+      "impact": {
+        "score": "high",
+        "reason": "Exposes database port directly to global brute force and injection attempts."
+      },
+      "overall_severity": "high"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Confirmed by auditing docker-compose.yml ports mappings."
+    }
+  }
+]
