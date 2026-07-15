@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import fs from "fs";
 import path from "path";
 import type { LLMProviderConfig } from "@/components/theme-provider";
+import { encrypt } from "@/lib/crypto";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -33,6 +34,7 @@ export interface UpdateSettingsInput {
   gmailClientId?: string;
   gmailClientSecret?: string;
   gmailRedirectUri?: string;
+  gmailRefreshToken?: string;
   sendgridApiKey?: string;
   sendgridSenderEmail?: string;
   wabaId?: string;
@@ -96,9 +98,12 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
       ...(input.googlePlacesRadius !== undefined && { googlePlacesRadius: input.googlePlacesRadius }),
       ...(input.yelpClientId !== undefined && { yelpClientId: input.yelpClientId }),
       ...(input.yelpApiKey !== undefined && { yelpApiKey: input.yelpApiKey }),
-      ...(input.gmailClientId !== undefined && { gmailClientId: input.gmailClientId }),
-      ...(input.gmailClientSecret !== undefined && { gmailClientSecret: input.gmailClientSecret }),
-      ...(input.gmailRedirectUri !== undefined && { gmailRedirectUri: input.gmailRedirectUri }),
+      ...(input.gmailClientId !== undefined && { gmailClientId: encrypt(input.gmailClientId) }),
+      ...(input.gmailClientSecret !== undefined && { gmailClientSecret: encrypt(input.gmailClientSecret) }),
+      ...(input.gmailRefreshToken !== undefined && { 
+        gmailRefreshToken: encrypt(input.gmailRefreshToken),
+        OAUTH_REFRESH_TOKEN: encrypt(input.gmailRefreshToken) 
+      }),
       ...(input.sendgridApiKey !== undefined && { sendgridApiKey: input.sendgridApiKey }),
       ...(input.sendgridSenderEmail !== undefined && { sendgridSenderEmail: input.sendgridSenderEmail }),
       ...(input.wabaId !== undefined && { wabaId: input.wabaId }),

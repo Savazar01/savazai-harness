@@ -124,7 +124,7 @@ app.post("/api/graph/invoke/stream", async (req, res) => {
           if (assistantMsg && assistantMsg.content) {
             let content = assistantMsg.content.trim();
             // Verify and skip any diagnostics prefixed with [MutationAgent] or [DataFetchAgent]
-            if (content.startsWith("[MutationAgent]") || content.startsWith("[DataFetchAgent]")) {
+            if (content.startsWith("[MutationAgent]") || content.startsWith("[DataFetchAgent]") || content.startsWith("[CommunicationAgent]")) {
               continue;
             }
             // Rigorously filter trailing JSON braces/brackets and routing structures
@@ -177,7 +177,7 @@ app.get(["/api/graph/threads/:threadId", "/api/history/threads/:threadId"], asyn
     const filteredMessages = (state.values.messages || []).filter((m: any) => {
       if (m.role === "assistant") {
         const content = m.content || "";
-        if (content.startsWith("[MutationAgent]") || content.startsWith("[DataFetchAgent]")) {
+        if (content.startsWith("[MutationAgent]") || content.startsWith("[DataFetchAgent]") || content.startsWith("[CommunicationAgent]")) {
           return false;
         }
       }

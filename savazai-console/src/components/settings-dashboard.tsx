@@ -146,7 +146,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
   const [yelpApiKey, setYelpApiKey] = useState(tokens.yelpApiKey || "");
   const [gmailClientId, setGmailClientId] = useState(tokens.gmailClientId || "");
   const [gmailClientSecret, setGmailClientSecret] = useState(tokens.gmailClientSecret || "");
-  const [gmailRedirectUri, setGmailRedirectUri] = useState(tokens.gmailRedirectUri || "");
+  const [gmailRefreshToken, setGmailRefreshToken] = useState(tokens.gmailRefreshToken || tokens.OAUTH_REFRESH_TOKEN || "");
   const [sendgridApiKey, setSendgridApiKey] = useState(tokens.sendgridApiKey || "");
   const [sendgridSenderEmail, setSendgridSenderEmail] = useState(tokens.sendgridSenderEmail || "");
   const [wabaId, setWabaId] = useState(tokens.wabaId || "");
@@ -218,7 +218,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
       yelpApiKey,
       gmailClientId,
       gmailClientSecret,
-      gmailRedirectUri,
+      gmailRefreshToken,
       sendgridApiKey,
       sendgridSenderEmail,
       wabaId,
@@ -612,9 +612,9 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                         className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Authorized Redirect URI</label>
-                      <input type="url" value={gmailRedirectUri} onChange={(e) => setGmailRedirectUri(e.target.value)} placeholder="https://yourdomain.com/api/auth/gmail/callback"
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50" />
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Refresh Token</label>
+                      <input type="password" value={gmailRefreshToken} onChange={(e) => setGmailRefreshToken(e.target.value)} placeholder="..."
+                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">SendGrid API Key</label>

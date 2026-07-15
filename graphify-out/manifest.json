@@ -1110,8 +1110,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\admin\\settings\\actions.ts": {
-    "mtime": 1783834281.0253837,
-    "ast_hash": "612146838339b7f8feecd91811d0c93b",
+    "mtime": 1784115537.009133,
+    "ast_hash": "102f7cb73b73c4c0aeca74d5e86f2923",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\admin\\settings\\page.tsx": {
@@ -1160,8 +1160,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\settings-dashboard.tsx": {
-    "mtime": 1783834306.300809,
-    "ast_hash": "14f04abe928ebe6de395171993339ec0",
+    "mtime": 1784115642.8823693,
+    "ast_hash": "127d5b473f61c00b07aa607907124c4d",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\sidebar.tsx": {
@@ -1185,8 +1185,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\theme-provider.tsx": {
-    "mtime": 1783513577.3136759,
-    "ast_hash": "b90fe027d7990688c87ae1e2f1002f0f",
+    "mtime": 1784115555.793565,
+    "ast_hash": "8a863c7b606c589f134dec884efc7ec2",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\lib\\auth-client.ts": {
@@ -1205,8 +1205,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\index.ts": {
-    "mtime": 1784085316.0987399,
-    "ast_hash": "649582dee3b8e3af8367bda75f44cf65",
+    "mtime": 1784113040.535389,
+    "ast_hash": "3002865dedc4df93d4a04e601b81552c",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\db\\index.ts": {
@@ -1235,8 +1235,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\orchestrator\\graph.ts": {
-    "mtime": 1784084551.6873262,
-    "ast_hash": "7b03e2a78bb6ce5853213bb2cf0ddaa8",
+    "mtime": 1784113064.1780932,
+    "ast_hash": "a6f147477537eb101e3421e5d65f05fa",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\orchestrator\\okf-verifier.ts": {
@@ -1305,8 +1305,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\docker-compose.yml": {
-    "mtime": 1783522036.8969882,
-    "ast_hash": "3b8670470f7150beefba2df773374f22",
+    "mtime": 1784116748.1081038,
+    "ast_hash": "52cb51e919b9d2436fd58e77e41e6c31",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\README.md": {
@@ -2007,6 +2007,16 @@
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\skills\\security-audit\\skills\\security-audit\\WEB-PROTOCOL-AND-AUTH.md": {
     "mtime": 1784003619.5743704,
     "ast_hash": "a6b71c7275ed5856d2a4f9504c541967",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\utils\\config-registry.ts": {
+    "mtime": 1784117724.6937106,
+    "ast_hash": "50e4a47935d96795002720af7cc76829",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\lib\\crypto.ts": {
+    "mtime": 1784115468.964451,
+    "ast_hash": "0f09dea28d88bceb45a670acbdb92fb4",
     "semantic_hash": ""
   }
 }

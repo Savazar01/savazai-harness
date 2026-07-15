@@ -36,6 +36,14 @@ We operate under a strict separation of concerns at the folder level:
 - **GFM Render Engines**: Employs `react-markdown` and `remark-gfm` in the console UI.
 - **Layout Styling**: Maps pipe tables to clean, styled HTML tables with padding and borders, lists to `list-outside pl-5` alignments, and media wrappers (`![Visual Asset](url)`) to responsive `<img>` cards.
 
+### 7. Background Dynamic Communication Subsystem & Persistent Cryptographic Vault
+- **Dynamic Worker Node**: Registers a background `CommunicationAgent` node in the LangGraph loop, enabling it to asynchronously dispatch summaries and notifications.
+- **Loop Termination Guard**: Clears enqueued communication envelopes immediately after dispatch, preventing infinite dispatch loops.
+- **Ambient Token Rotation**: Automatically intercepts API calls, verifies credentials, and rotates expired OAuth access tokens, persisting fresh tokens back to the database.
+- **Cryptographic Encryption-at-Rest**: Encrypts sensitive OAuth credentials (`gmailClientId`, `gmailClientSecret`, `gmailRefreshToken`) in `system_configurations` using AES-256-CBC and `process.env.MASTER_VAULT_SECRET`. Decrypts them transparently on database load (frontend) and prior to API dispatches (backend).
+- **MIME Subject & HTML Body Refactor**: Compiles text summaries into beautiful, responsive HTML email layouts and encodes subjects using MIME encoded-words (`=?utf-8?B?...?=`) to preserve Unicode characters and formatting.
+- **Static Token Paste Paradigm**: Deprecates Authorized Redirect URIs in the settings layout in favor of a secure, direct REFRESH_TOKEN entry box.
+
 ---
 
 ## 🔐 Production Environment Variables Guide

@@ -7,6 +7,7 @@ import { db } from "../db/index.js";
 import { connectedApps, systemConfigurations, type ModelConfig } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { TelemetryGateway } from "../utils/telemetry.js";
+import { getValidGmailAccessToken, sendGmailEmail } from "../utils/config-registry.js";
 
 export const MessageSchema = z.object({
   role: z.enum(["user", "assistant", "system"]),
@@ -23,7 +24,18 @@ export const GraphStateSchema = z.object({
   relevantSkills: z.array(z.string()),
   verificationFailures: z.array(z.string()),
   correctAttempts: z.number(),
-  routingDecision: z.enum(["sub_agent", "mcp_action", "respond", "correct", "end", "DataFetchAgent", "MutationAgent", "SynthesisAgent"]).optional(),
+  routingDecision: z.enum([
+    "sub_agent",
+    "mcp_action",
+    "respond",
+    "correct",
+    "end",
+    "DataFetchAgent",
+    "MutationAgent",
+    "SynthesisAgent",
+    "CommunicationAgent",
+    "communication_dispatch"
+  ]).optional(),
   modelConfig: z.object({
     providerType: z.string(),
     modelName: z.string().optional(),
@@ -47,10 +59,29 @@ export const GraphStateSchema = z.object({
     name: z.string(),
     args: z.record(z.string(), z.any()),
   })).optional(),
-  target_action: z.enum(["sub_agent", "mcp_action", "respond", "correct", "end", "DataFetchAgent", "MutationAgent", "SynthesisAgent"]).optional(),
+  target_action: z.enum([
+    "sub_agent",
+    "mcp_action",
+    "respond",
+    "correct",
+    "end",
+    "DataFetchAgent",
+    "MutationAgent",
+    "SynthesisAgent",
+    "CommunicationAgent",
+    "communication_dispatch"
+  ]).optional(),
   delegationQueue: z.array(z.string()).optional(),
   delegatedTasks: z.record(z.string(), z.any()).optional(),
   synthesisOutput: z.string().optional(),
+  pendingCommunications: z.array(
+    z.object({
+      recipients: z.array(z.string()),
+      subject: z.string(),
+      body: z.string(),
+      metadata: z.record(z.any()).optional(),
+    })
+  ).optional(),
 });
 
 export type GraphState = z.infer<typeof GraphStateSchema>;
@@ -88,7 +119,19 @@ const StateAnnotation = Annotation.Root({
     reducer: (x, y) => y ?? x,
     default: () => 0,
   }),
-  routingDecision: Annotation<"sub_agent" | "mcp_action" | "respond" | "correct" | "end" | "DataFetchAgent" | "MutationAgent" | "SynthesisAgent" | undefined>({
+  routingDecision: Annotation<
+    | "sub_agent"
+    | "mcp_action"
+    | "respond"
+    | "correct"
+    | "end"
+    | "DataFetchAgent"
+    | "MutationAgent"
+    | "SynthesisAgent"
+    | "CommunicationAgent"
+    | "communication_dispatch"
+    | undefined
+  >({
     reducer: (x, y) => y ?? x,
     default: () => undefined,
   }),
@@ -136,7 +179,19 @@ const StateAnnotation = Annotation.Root({
     reducer: (x, y) => y !== undefined ? y : (x ?? []),
     default: () => [],
   }),
-  target_action: Annotation<"sub_agent" | "mcp_action" | "respond" | "correct" | "end" | "DataFetchAgent" | "MutationAgent" | "SynthesisAgent" | undefined>({
+  target_action: Annotation<
+    | "sub_agent"
+    | "mcp_action"
+    | "respond"
+    | "correct"
+    | "end"
+    | "DataFetchAgent"
+    | "MutationAgent"
+    | "SynthesisAgent"
+    | "CommunicationAgent"
+    | "communication_dispatch"
+    | undefined
+  >({
     reducer: (x, y) => y ?? x,
     default: () => undefined,
   }),
@@ -151,6 +206,12 @@ const StateAnnotation = Annotation.Root({
   synthesisOutput: Annotation<string | undefined>({
     reducer: (x, y) => y ?? x,
     default: () => undefined,
+  }),
+  pendingCommunications: Annotation<
+    Array<{ recipients: string[]; subject: string; body: string; metadata?: Record<string, any> }> | undefined
+  >({
+    reducer: (x, y) => y !== undefined ? y : (x ?? []),
+    default: () => [],
   }),
 });
 
@@ -519,15 +580,17 @@ ${customOrchestrationRules ? `Orchestration Rules:\n${customOrchestrationRules}\
 Available Sub-Agents:
 1. DataFetchAgent: Specialized in gathering, listing, or retrieving data. Use this if the user wants a report, summary, details, or lists of weddings, guests, tasks, ceremonies, etc.
 2. MutationAgent: Specialized in database writing, creation, updates, or deletions. Use this if the user wants to create, change, delete, or add any wedding, guest, task, ceremony, etc.
+3. CommunicationAgent: Specialized in sending emails, notifications, alerts, or messages to recipients. Use this if the user wants to send an email or message to a guest, vendor, or anyone.
 
 Analyze the user's intent:
 - If the user wants to fetch data, delegate to 'DataFetchAgent'.
 - If the user wants to mutate data, delegate to 'MutationAgent'.
-- If they want both (e.g. create a guest and show the updated list), delegate to 'MutationAgent' then 'DataFetchAgent'.
+- If the user wants to send an email, message, or notification, delegate to 'CommunicationAgent'.
+- If they want a mixture (e.g., fetch guest list details and then email it to someone), delegate in sequence: ['DataFetchAgent', 'CommunicationAgent'].
 
 You MUST respond with a JSON object strictly matching this schema:
 {
-  "delegationQueue": ["MutationAgent" | "DataFetchAgent"]
+  "delegationQueue": ["MutationAgent" | "DataFetchAgent" | "CommunicationAgent"]
 }
 Return only the raw JSON.`;
 
@@ -550,15 +613,33 @@ Return only the raw JSON.`;
           const model = new StructuredModelWrapper(currentApp, state.modelConfig);
           const structuralPlanner = model.withStructuredOutput(
             z.object({
-              delegationQueue: z.array(z.enum(["MutationAgent", "DataFetchAgent"])),
+              delegationQueue: z.array(z.enum(["MutationAgent", "DataFetchAgent", "CommunicationAgent"])),
+              target_action: z.enum([
+                "sub_agent",
+                "mcp_action",
+                "respond",
+                "correct",
+                "end",
+                "DataFetchAgent",
+                "MutationAgent",
+                "SynthesisAgent",
+                "CommunicationAgent",
+                "communication_dispatch"
+              ]).optional(),
             })
           );
           const decision = await structuralPlanner.invoke(plannerMessages, { requestId });
           queue = decision.delegationQueue.map((agent: string) => {
             if (agent === "MutationAgent") return "MutationAgent";
+            if (agent === "CommunicationAgent") return "CommunicationAgent";
             return "DataFetchAgent";
           });
-          console.log("[supervisorNode] Structured Planner Decided Queue:", queue);
+          
+          // If the model explicitly decides communication_dispatch, force queue to contain CommunicationAgent
+          if (decision.target_action === "communication_dispatch" && !queue.includes("CommunicationAgent")) {
+            queue.push("CommunicationAgent");
+          }
+          console.log("[supervisorNode] Structured Planner Decided Queue:", queue, "target_action:", decision.target_action);
         } catch (err: any) {
           console.error("[supervisorNode] Structured Planner LLM call failed with schema validation/parsing error:", err?.stack || err?.message || err);
           throw err;
@@ -569,11 +650,13 @@ Return only the raw JSON.`;
     }
 
     // Process the delegation queue sequentially
-    let routingDecision: "MutationAgent" | "DataFetchAgent" | "SynthesisAgent" | "respond" = "respond";
+    let routingDecision: "MutationAgent" | "DataFetchAgent" | "CommunicationAgent" | "SynthesisAgent" | "respond" = "respond";
     if (queue.length > 0) {
       const nextAgent = queue.shift()!;
       if (nextAgent === "MutationAgent" || nextAgent === "mutationAgent") {
         routingDecision = "MutationAgent";
+      } else if (nextAgent === "CommunicationAgent" || nextAgent === "communicationAgent") {
+        routingDecision = "CommunicationAgent";
       } else {
         routingDecision = "DataFetchAgent";
       }
@@ -1053,6 +1136,122 @@ Once all changes are performed, stop planning tool calls.`;
   };
 }
 
+async function communicationAgentNode(state: typeof StateAnnotation.State, config?: any) {
+  const currentApp = state.currentApp || "WedPlanAI-Local";
+  const telemetry = TelemetryGateway.getInstance();
+  const span = telemetry.startSpan("CommunicationAgent", "node");
+  const requestId = config?.configurable?.requestId || "communication-default";
+
+  console.log("[CommunicationAgent] Running communication agent lane...");
+  let envelopes = state.pendingCommunications || [];
+
+  // If envelopes are empty, invoke the LLM to inspect message history and construct envelopes
+  if (envelopes.length === 0) {
+    console.log("[CommunicationAgent] No pending communications in state. Analyzing history to construct envelopes...");
+    try {
+      await registerAppProvider(currentApp, state.modelConfig);
+      const model = new StructuredModelWrapper(currentApp, state.modelConfig);
+      
+      const prompt = `You are the CommunicationAgent. Your role is to formulate email envelopes based on the user's intent and the data gathered so far in the conversation history.
+Each email envelope MUST contain:
+- recipients: string[] (The list of recipient email addresses. Look for email addresses in the user request or tool results)
+- subject: string (A concise and relevant subject line)
+- body: string (The actual HTML or plain text body of the email. Write a fully polished, professional message body satisfying the user's requirements)
+- metadata: Record<string, any> (Any helpful metadata keys, e.g. target_audience, app_domain)
+
+Ensure that you look at the tool outputs (such as guest lists, wedding details, or task summaries) in the recent messages to compile accurate information in the email body.
+If no recipient email address is found or the user did not specify sending any message, return an empty list of envelopes.
+
+You MUST respond with a JSON object containing the "envelopes" array. The word "json" must be present in your system instructions.`;
+
+      const responseSchema = z.object({
+        envelopes: z.array(
+          z.object({
+            recipients: z.array(z.string()),
+            subject: z.string(),
+            body: z.string(),
+            metadata: z.record(z.any()).optional(),
+          })
+        )
+      });
+
+      const planner = model.withStructuredOutput(responseSchema);
+      // Construct message history for the LLM
+      const messagesForLlm = [
+        { role: "system" as const, content: prompt },
+        ...state.messages.map((m) => ({ role: m.role as any, content: m.content })),
+      ];
+
+      const result = await planner.invoke(messagesForLlm);
+      if (result && result.envelopes) {
+        envelopes = result.envelopes;
+        console.log(`[CommunicationAgent] Constructed ${envelopes.length} envelopes from LLM.`);
+      }
+    } catch (err) {
+      console.error("[CommunicationAgent] Failed to construct envelopes using LLM:", err);
+    }
+  }
+
+  const receipts: Array<{ recipient: string; subject: string; success: boolean; error?: string; id?: string }> = [];
+
+  if (envelopes.length > 0) {
+    console.log(`[CommunicationAgent] Dispatched queue has ${envelopes.length} envelopes. Refreshing credentials...`);
+    const accessToken = await getValidGmailAccessToken();
+
+    if (!accessToken) {
+      console.error("[CommunicationAgent] Failed to obtain valid Gmail OAuth access token. Aborting dispatches.");
+      for (const env of envelopes) {
+        receipts.push({
+          recipient: env.recipients.join(", "),
+          subject: env.subject,
+          success: false,
+          error: "Missing or invalid OAuth access token",
+        });
+      }
+    } else {
+      for (const env of envelopes) {
+        console.log(`[CommunicationAgent] Sending email to ${env.recipients.join(", ")}...`);
+        const sendResult = await sendGmailEmail(accessToken, env.recipients, env.subject, env.body);
+        receipts.push({
+          recipient: env.recipients.join(", "),
+          subject: env.subject,
+          success: sendResult.success,
+          error: sendResult.error,
+          id: sendResult.id,
+        });
+      }
+    }
+  } else {
+    console.log("[CommunicationAgent] No envelopes to dispatch.");
+  }
+
+  // Wiping the pendingCommunications state block to protect against duplicate email looping behaviors (Loop Termination Guard)
+  const clearedCommunications: typeof state.pendingCommunications = [];
+
+  const updatedTasks = {
+    ...state.delegatedTasks,
+    CommunicationAgent: { status: "completed", timestamp: new Date().toISOString() },
+  };
+
+  telemetry.endSpan(requestId, span);
+
+  // Append results silently directly to the hidden background thread state.
+  // We do NOT return any user-facing assistant messages containing raw email bodies.
+  return {
+    messages: [
+      {
+        role: "system" as const,
+        content: `[CommunicationAgent] Dispatch Receipts: ${JSON.stringify(receipts)}`,
+        timestamp: new Date().toISOString(),
+      },
+    ],
+    pendingCommunications: clearedCommunications,
+    delegatedTasks: updatedTasks,
+    routingDecision: "supervisor" as const,
+    target_action: "supervisor" as const,
+  };
+}
+
 function sanitizeOutput(text: string): string {
   let clean = text.replace(/\[supervisor\]\s*planner routing.*$/gm, '').trim();
   clean = clean.replace(/PENDING_APPROVAL:\s*delete action detected.*$/gm, '').trim();
@@ -1199,6 +1398,9 @@ function agentRoutingLogic(state: typeof StateAnnotation.State): string {
   if (state.routingDecision === "MutationAgent") {
     return "MutationAgent";
   }
+  if (state.routingDecision === "CommunicationAgent" || state.routingDecision === "communication_dispatch") {
+    return "communication_dispatch";
+  }
   if (state.routingDecision === "SynthesisAgent") {
     return "SynthesisAgent";
   }
@@ -1214,18 +1416,21 @@ const graph = new StateGraph(StateAnnotation)
   .addNode("supervisorNode", supervisorNode)
   .addNode("DataFetchAgent", dataFetchAgentNode)
   .addNode("MutationAgent", mutationAgentNode)
+  .addNode("CommunicationAgent", communicationAgentNode)
   .addNode("SynthesisAgent", synthesisAgentNode)
   .addNode("respondNode", respondNode)
   .addEdge(START, "supervisorNode")
   .addConditionalEdges("supervisorNode", agentRoutingLogic, {
     DataFetchAgent: "DataFetchAgent",
     MutationAgent: "MutationAgent",
+    communication_dispatch: "CommunicationAgent",
     SynthesisAgent: "SynthesisAgent",
     respond: "respondNode",
     end: END,
   })
   .addEdge("DataFetchAgent", "supervisorNode")
   .addEdge("MutationAgent", "supervisorNode")
+  .addEdge("CommunicationAgent", "supervisorNode")
   .addEdge("SynthesisAgent", "respondNode")
   .addEdge("respondNode", END);
 

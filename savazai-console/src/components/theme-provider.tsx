@@ -1,5 +1,6 @@
 import React from "react";
 import { Pool } from "pg";
+import { decrypt } from "@/lib/crypto";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -37,6 +38,8 @@ export interface SystemConfig {
     gmailClientId?: string;
     gmailClientSecret?: string;
     gmailRedirectUri?: string;
+    gmailRefreshToken?: string;
+    OAUTH_REFRESH_TOKEN?: string;
     sendgridApiKey?: string;
     sendgridSenderEmail?: string;
     wabaId?: string;
@@ -52,7 +55,15 @@ export async function getSystemConfig(): Promise<SystemConfig> {
     ).catch(() => null);
 
     if (res && res.rows.length > 0) {
-      return res.rows[0];
+      const config = res.rows[0] as SystemConfig;
+      if (config.designTokens) {
+        const dt = config.designTokens;
+        if (dt.gmailClientId) dt.gmailClientId = decrypt(dt.gmailClientId);
+        if (dt.gmailClientSecret) dt.gmailClientSecret = decrypt(dt.gmailClientSecret);
+        if (dt.gmailRefreshToken) dt.gmailRefreshToken = decrypt(dt.gmailRefreshToken);
+        if (dt.OAUTH_REFRESH_TOKEN) dt.OAUTH_REFRESH_TOKEN = decrypt(dt.OAUTH_REFRESH_TOKEN);
+      }
+      return config;
     }
   } catch (err) {
     console.error("[theme-provider] Error querying system_configurations:", err);
