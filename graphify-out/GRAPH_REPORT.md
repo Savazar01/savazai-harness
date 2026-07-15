@@ -1,16 +1,16 @@
-# Graph Report - savazai-harness  (2026-07-14)
+# Graph Report - savazai-harness  (2026-07-15)
 
 ## Corpus Check
-- 199 files · ~104,280 words
+- 199 files · ~102,410 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2865 nodes · 3442 edges · 264 communities (246 shown, 18 thin omitted)
+- 2874 nodes · 3469 edges · 266 communities (248 shown, 18 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `321e76d0`
+- Built from commit: `5ff4dda4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -246,12 +246,14 @@
 - [[_COMMUNITY_Community 251|Community 251]]
 - [[_COMMUNITY_Community 252|Community 252]]
 - [[_COMMUNITY_Community 253|Community 253]]
+- [[_COMMUNITY_Community 254|Community 254]]
 - [[_COMMUNITY_Community 255|Community 255]]
 - [[_COMMUNITY_Community 257|Community 257]]
+- [[_COMMUNITY_Community 258|Community 258]]
 - [[_COMMUNITY_Community 259|Community 259]]
 - [[_COMMUNITY_Community 260|Community 260]]
+- [[_COMMUNITY_Community 262|Community 262]]
 - [[_COMMUNITY_Community 263|Community 263]]
-- [[_COMMUNITY_Community 268|Community 268]]
 - [[_COMMUNITY_Community 274|Community 274]]
 - [[_COMMUNITY_Community 275|Community 275]]
 - [[_COMMUNITY_Community 276|Community 276]]
@@ -280,7 +282,7 @@
 - `Home()` --calls--> `getSystemConfig()`  [EXTRACTED]
   savazai-console/src/app/page.tsx → savazai-console/src/components/theme-provider.tsx
 
-## Communities (264 total, 18 thin omitted)
+## Communities (266 total, 18 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.07
@@ -311,16 +313,16 @@ Cohesion: 0.10
 Nodes (18): code:bash (graphify export wiki), code:bash (graphify benchmark), code:bash (graphify export neo4j), code:bash (graphify export neo4j --push bolt://localhost:7687 --user ne), code:bash (graphify export falkordb), code:bash (graphify export falkordb --push falkordb://localhost:6379), code:bash (graphify export svg), code:bash (graphify export graphml) (+10 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.08
-Nodes (26): base, client, Db, parsed, query, queryIndex, compiledGraph, GraphState (+18 more)
+Cohesion: 0.09
+Nodes (21): compiledGraph, GraphState, anyChunk, app, assistantMsg, broadcaster, content, event (+13 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.05
 Nodes (35): 1. Name Browser Sessions Semantically, 2. Always Clean Up, 3. Delete Stale Browser Data, A/B Testing Sessions, Attach by channel name, Attach via browser extension, Attach via CDP endpoint, Attaching to a Running Browser (+27 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.06
-Nodes (35): 6.10 Use React DOM Resource Hints, 6.11 Use useTransition Over Manual Loading States, 6.1 Animate SVG Wrapper Instead of SVG Element, 6.2 CSS content-visibility for Long Lists, 6.3 Hoist Static JSX Elements, 6.4 Optimize SVG Precision, 6.5 Prevent Hydration Mismatch Without Flickering, 6.6 Suppress Expected Hydration Mismatches (+27 more)
+Cohesion: 0.11
+Nodes (17): 6.11 Use useTransition Over Manual Loading States, 6.1 Animate SVG Wrapper Instead of SVG Element, 6.3 Hoist Static JSX Elements, 6.6 Suppress Expected Hydration Mismatches, 6.7 Use Activity Component for Show/Hide, 6.9 Use Explicit Conditional Rendering, 6. Rendering Performance, code:tsx (function LoadingSpinner() {) (+9 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.29
@@ -431,8 +433,8 @@ Cohesion: 0.12
 Nodes (16): name, notNull, primaryKey, type, bearer_token_hash, is_core_agent, raw_content, default (+8 more)
 
 ### Community 47 - "Community 47"
-Cohesion: 0.20
-Nodes (10): 2.1 Avoid Barrel File Imports, 2.2 Conditional Module Loading, 2.6 Preload Based on User Intent, 2. Bundle Size Optimization, code:tsx (import { Check, X, Menu } from 'lucide-react'), code:tsx (// Keep the standard imports - Next.js transforms them to di), code:tsx (import Button from '@mui/material/Button'), code:tsx (function AnimationPlayer({ enabled, setEnabled }: { enabled:) (+2 more)
+Cohesion: 0.13
+Nodes (16): 2.1 Avoid Barrel File Imports, 2.2 Conditional Module Loading, 2.3 Defer Non-Critical Third-Party Libraries, 2.4 Dynamic Imports for Heavy Components, 2.6 Preload Based on User Intent, 2. Bundle Size Optimization, code:tsx (import { Check, X, Menu } from 'lucide-react'), code:tsx (// Keep the standard imports - Next.js transforms them to di) (+8 more)
 
 ### Community 48 - "Community 48"
 Cohesion: 0.14
@@ -479,8 +481,8 @@ Cohesion: 0.25
 Nodes (9): Clear sessionStorage, code:bash (playwright-cli localstorage-delete token), code:bash (playwright-cli sessionstorage-list), code:bash (playwright-cli sessionstorage-delete step), code:bash (playwright-cli sessionstorage-clear), Delete Single Item, Delete Single Item, List All sessionStorage Items (+1 more)
 
 ### Community 59 - "Community 59"
-Cohesion: 0.18
-Nodes (11): 4.1 Deduplicate Global Event Listeners, 4.2 Use Passive Event Listeners for Scrolling Performance, 4.4 Version and Minimize localStorage Data, 4. Client-Side Data Fetching, code:tsx (function useKeyboardShortcut(key: string, callback: () => vo), code:tsx (import useSWRSubscription from 'swr/subscription'), code:typescript (useEffect(() => {), code:typescript (useEffect(() => {) (+3 more)
+Cohesion: 0.12
+Nodes (16): 4.1 Deduplicate Global Event Listeners, 4.2 Use Passive Event Listeners for Scrolling Performance, 4.3 Use SWR for Automatic Deduplication, 4.4 Version and Minimize localStorage Data, 4. Client-Side Data Fetching, code:tsx (function useKeyboardShortcut(key: string, callback: () => vo), code:tsx (import useSWRSubscription from 'swr/subscription'), code:typescript (useEffect(() => {) (+8 more)
 
 ### Community 60 - "Community 60"
 Cohesion: 0.18
@@ -499,8 +501,8 @@ Cohesion: 0.09
 Nodes (32): columns, name, nullsNotDistinct, checkConstraints, compositePrimaryKeys, indexes, isRLSEnabled, name (+24 more)
 
 ### Community 64 - "Community 64"
-Cohesion: 0.17
-Nodes (16): columnsFrom, columnsTo, name, onDelete, onUpdate, tableFrom, tableTo, columnsFrom (+8 more)
+Cohesion: 0.14
+Nodes (18): columnsFrom, columnsTo, name, onDelete, onUpdate, tableFrom, tableTo, columnsFrom (+10 more)
 
 ### Community 65 - "Community 65"
 Cohesion: 0.22
@@ -523,8 +525,8 @@ Cohesion: 0.29
 Nodes (7): code:bash (# Save to auto-generated filename (storage-state-{timestamp}), code:bash (# Load storage state from file), code:json ({), Restore Storage State, Save Storage State, Storage State, Storage State File Format
 
 ### Community 70 - "Community 70"
-Cohesion: 0.29
-Nodes (7): 7.2 Build Index Maps for Repeated Lookups, 7.9 Early Return from Functions, 7. JavaScript Performance, code:typescript (function processOrders(orders: Order[], users: User[]) {), code:typescript (function processOrders(orders: Order[], users: User[]) {), code:typescript (function validateUsers(users: User[]) {), code:typescript (function validateUsers(users: User[]) {)
+Cohesion: 0.33
+Nodes (6): 7.1 Avoid Layout Thrashing, code:typescript (function updateElementStyles(element: HTMLElement) {), code:typescript (function layoutThrashing(element: HTMLElement) {), code:typescript (function updateElementStyles(element: HTMLElement) {), code:typescript (function updateElementStyles(element: HTMLElement) {), code:tsx (// Incorrect: interleaving style changes with layout queries)
 
 ### Community 71 - "Community 71"
 Cohesion: 0.33
@@ -567,16 +569,16 @@ Cohesion: 0.12
 Nodes (17): default, name, notNull, primaryKey, type, allowed_mcp_tools, is_core_agent, system_prompt (+9 more)
 
 ### Community 81 - "Community 81"
-Cohesion: 0.12
-Nodes (17): name, notNull, primaryKey, type, bearer_token_hash, created_at, mcp_endpoint_url, default (+9 more)
+Cohesion: 0.25
+Nodes (9): DaySchedule, DayScheduleSchema, distributeObjectives(), EventOrchestrator, generateId(), inferSkills(), OrchestratedEvent, OrchestratedEventSchema (+1 more)
 
 ### Community 82 - "Community 82"
 Cohesion: 0.12
-Nodes (17): name, notNull, primaryKey, type, default, name, notNull, primaryKey (+9 more)
+Nodes (18): name, notNull, primaryKey, type, default, name, notNull, primaryKey (+10 more)
 
 ### Community 83 - "Community 83"
-Cohesion: 0.33
-Nodes (6): 7.1 Avoid Layout Thrashing, code:typescript (function updateElementStyles(element: HTMLElement) {), code:typescript (function layoutThrashing(element: HTMLElement) {), code:typescript (function updateElementStyles(element: HTMLElement) {), code:typescript (function updateElementStyles(element: HTMLElement) {), code:tsx (// Incorrect: interleaving style changes with layout queries)
+Cohesion: 0.29
+Nodes (7): 7.6 Combine Multiple Array Iterations, 7.9 Early Return from Functions, 7. JavaScript Performance, code:typescript (const admins = users.filter(u => u.isAdmin)), code:typescript (const admins: User[] = []), code:typescript (function validateUsers(users: User[]) {), code:typescript (function validateUsers(users: User[]) {)
 
 ### Community 84 - "Community 84"
 Cohesion: 0.33
@@ -847,8 +849,8 @@ Cohesion: 0.50
 Nodes (3): dialect, entries, version
 
 ### Community 153 - "Community 153"
-Cohesion: 0.11
-Nodes (20): checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies, schema (+12 more)
+Cohesion: 0.33
+Nodes (4): Abstract, React Best Practices, References, Table of Contents
 
 ### Community 154 - "Community 154"
 Cohesion: 0.09
@@ -859,8 +861,8 @@ Cohesion: 0.12
 Nodes (17): masked_content, raw_content, role, notNull, name, notNull, primaryKey, type (+9 more)
 
 ### Community 157 - "Community 157"
-Cohesion: 0.50
-Nodes (4): 7.10 Hoist RegExp Creation, code:tsx (function Highlighter({ text, query }: Props) {), code:tsx (const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/), code:typescript (const regex = /foo/g)
+Cohesion: 0.12
+Nodes (17): name, notNull, primaryKey, type, bearer_token_hash, created_at, mcp_endpoint_url, default (+9 more)
 
 ### Community 158 - "Community 158"
 Cohesion: 0.18
@@ -872,7 +874,7 @@ Nodes (4): 7.14 Use toSorted() Instead of sort() for Immutability, code:typescri
 
 ### Community 160 - "Community 160"
 Cohesion: 0.09
-Nodes (27): columns, name, nullsNotDistinct, checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled (+19 more)
+Nodes (27): columns, name, nullsNotDistinct, checkConstraints, compositePrimaryKeys, indexes, isRLSEnabled, name (+19 more)
 
 ### Community 166 - "Community 166"
 Cohesion: 0.67
@@ -903,8 +905,8 @@ Cohesion: 0.12
 Nodes (17): default, name, notNull, primaryKey, type, allowed_mcp_tools, model_config, raw_content (+9 more)
 
 ### Community 173 - "Community 173"
-Cohesion: 0.17
-Nodes (25): agentRoutingLogic(), buildTimestamp(), CachedTools, correctorNode(), extractAndFormatImages(), fetchMcpTools(), graph, GraphAnnotationType (+17 more)
+Cohesion: 0.14
+Nodes (32): agentRoutingLogic(), buildTimestamp(), CachedTools, correctorNode(), dataFetchAgentNode(), executeToolByName(), extractAndFormatImages(), fetchMcpTools() (+24 more)
 
 ### Community 174 - "Community 174"
 Cohesion: 0.18
@@ -935,12 +937,12 @@ Cohesion: 0.29
 Nodes (7): 3.3 Avoid Shared Module State for Request Data, 3.7 Parallel Data Fetching with Component Composition, code:tsx (let currentUser: User | null = null), code:tsx (export default async function Page() {), code:tsx (export default async function Page() {), code:tsx (async function Header() {), code:tsx (async function Header() {)
 
 ### Community 181 - "Community 181"
-Cohesion: 0.40
-Nodes (5): 2.5 Prefer Statically Analyzable Paths, code:ts (const PAGE_MODULES = {), code:ts (const PAGE_MODULES = {), code:ts (const baseDir = path.join(process.cwd(), 'content/' + conten), code:ts (const baseDir =)
+Cohesion: 0.67
+Nodes (3): 7.8 Early Length Check for Array Comparisons, code:typescript (function hasChanges(current: string[], original: string[]) {), code:typescript (function hasChanges(current: string[], original: string[]) {)
 
 ### Community 182 - "Community 182"
-Cohesion: 0.67
-Nodes (3): 7.3 Cache Property Access in Loops, code:typescript (for (let i = 0; i < arr.length; i++) {), code:typescript (const value = obj.config.settings.value)
+Cohesion: 0.13
+Nodes (17): checkConstraints, compositePrimaryKeys, indexes, isRLSEnabled, name, policies, schema, uniqueConstraints (+9 more)
 
 ### Community 187 - "Community 187"
 Cohesion: 0.10
@@ -967,8 +969,8 @@ Cohesion: 0.13
 Nodes (19): columnsFrom, columnsTo, name, onDelete, onUpdate, tableFrom, tableTo, columnsFrom (+11 more)
 
 ### Community 194 - "Community 194"
-Cohesion: 0.33
-Nodes (4): Abstract, React Best Practices, References, Table of Contents
+Cohesion: 0.40
+Nodes (5): 2.5 Prefer Statically Analyzable Paths, code:ts (const PAGE_MODULES = {), code:ts (const PAGE_MODULES = {), code:ts (const baseDir = path.join(process.cwd(), 'content/' + conten), code:ts (const baseDir =)
 
 ### Community 195 - "Community 195"
 Cohesion: 0.33
@@ -983,8 +985,8 @@ Cohesion: 0.40
 Nodes (5): 3.2 Avoid Duplicate Serialization in RSC Props, code:tsx (// RSC: sends 6 strings (2 arrays × 3 items)), code:tsx (// RSC: send once), code:tsx (// string[] - duplicates everything), code:tsx (// ❌ Bad)
 
 ### Community 199 - "Community 199"
-Cohesion: 0.25
-Nodes (9): DaySchedule, DayScheduleSchema, distributeObjectives(), EventOrchestrator, generateId(), inferSkills(), OrchestratedEvent, OrchestratedEventSchema (+1 more)
+Cohesion: 0.50
+Nodes (4): 6.4 Optimize SVG Precision, code:svg (<path d="M 10.293847 20.847362 L 30.938472 40.192837" />), code:svg (<path d="M 10.3 20.8 L 30.9 40.2" />), code:bash (npx svgo --precision=1 --multipass icon.svg)
 
 ### Community 200 - "Community 200"
 Cohesion: 0.09
@@ -1023,8 +1025,8 @@ Cohesion: 0.50
 Nodes (4): 3.9 Per-Request Deduplication with React.cache(), code:typescript (import { cache } from 'react'), code:typescript (const getUser = cache(async (params: { uid: number }) => {), code:typescript (const params = { uid: 1 })
 
 ### Community 210 - "Community 210"
-Cohesion: 0.15
-Nodes (14): dialect, enums, id, _meta, schemas, tables, policies, prevId (+6 more)
+Cohesion: 0.14
+Nodes (15): dialect, enums, id, _meta, schemas, tables, policies, prevId (+7 more)
 
 ### Community 211 - "Community 211"
 Cohesion: 0.25
@@ -1036,7 +1038,7 @@ Nodes (12): Anti-Patterns to Avoid, Confirm dynamically when you can, Core Princ
 
 ### Community 213 - "Community 213"
 Cohesion: 0.18
-Nodes (11): compositePrimaryKeys, checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies (+3 more)
+Nodes (11): indexes, checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies (+3 more)
 
 ### Community 214 - "Community 214"
 Cohesion: 0.38
@@ -1051,12 +1053,12 @@ Cohesion: 0.18
 Nodes (10): Client-Side and Browser Hunting, Client-side trust and messaging attack classes (subagent_type: `general`), code:block1 (- Client-side taint needs a controllable SOURCE and an execu), Core discipline (include in every agent prompt for this domain), DOM-based injection attack classes (subagent_type: `general`), Prototype pollution attack classes (subagent_type: `general`), UI-redress and navigation attack classes (subagent_type: `general`), Universal moves (apply across the above) (+2 more)
 
 ### Community 217 - "Community 217"
-Cohesion: 0.12
-Nodes (17): name, notNull, primaryKey, type, app_name, id, mcp_endpoint_url, default (+9 more)
+Cohesion: 0.11
+Nodes (18): name, notNull, primaryKey, type, app_name, mcp_endpoint_url, model_config, primaryKey (+10 more)
 
 ### Community 218 - "Community 218"
-Cohesion: 0.20
-Nodes (11): description, skill_name, name, notNull, primaryKey, type, columns, name (+3 more)
+Cohesion: 0.13
+Nodes (16): description, embedding, skill_name, name, notNull, primaryKey, type, name (+8 more)
 
 ### Community 219 - "Community 219"
 Cohesion: 0.20
@@ -1071,8 +1073,8 @@ Cohesion: 0.08
 Nodes (29): name, notNull, primaryKey, type, name, notNull, primaryKey, type (+21 more)
 
 ### Community 222 - "Community 222"
-Cohesion: 0.67
-Nodes (3): 7.8 Early Length Check for Array Comparisons, code:typescript (function hasChanges(current: string[], original: string[]) {), code:typescript (function hasChanges(current: string[], original: string[]) {)
+Cohesion: 0.50
+Nodes (4): 7.10 Hoist RegExp Creation, code:tsx (function Highlighter({ text, query }: Props) {), code:tsx (const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/), code:typescript (const regex = /foo/g)
 
 ### Community 224 - "Community 224"
 Cohesion: 0.13
@@ -1084,15 +1086,15 @@ Nodes (27): name, notNull, primaryKey, type, name, notNull, primaryKey, type (+1
 
 ### Community 227 - "Community 227"
 Cohesion: 0.12
-Nodes (16): embedding, masked_content, role, name, notNull, primaryKey, type, name (+8 more)
+Nodes (16): name, notNull, primaryKey, type, app_id, masked_content, role, name (+8 more)
 
 ### Community 229 - "Community 229"
 Cohesion: 0.11
 Nodes (20): columns, nullsNotDistinct, isRLSEnabled, uniqueConstraints, compositePrimaryKeys, uniqueConstraints, checkConstraints, compositePrimaryKeys (+12 more)
 
 ### Community 231 - "Community 231"
-Cohesion: 0.33
-Nodes (6): 2.3 Defer Non-Critical Third-Party Libraries, 2.4 Dynamic Imports for Heavy Components, code:tsx (import { Analytics } from '@vercel/analytics/react'), code:tsx (import dynamic from 'next/dynamic'), code:tsx (import { MonacoEditor } from './monaco-editor'), code:tsx (import dynamic from 'next/dynamic')
+Cohesion: 0.67
+Nodes (3): 7.13 Use Set/Map for O(1) Lookups, code:typescript (const allowedIds = ['a', 'b', 'c', ...]), code:typescript (const allowedIds = new Set(['a', 'b', 'c', ...]))
 
 ### Community 239 - "Community 239"
 Cohesion: 0.20
@@ -1127,8 +1129,8 @@ Cohesion: 0.25
 Nodes (7): code:block1 (Your job is to DISPROVE this finding. Read the actual source), code:block2 (You are an independent verifier. You did NOT write this find), Phase 3: Validate findings, Phase 4: Report, Phase 5: Structured output and schema check, Phase 6: Independent verification, Validation, Reporting, and Verification
 
 ### Community 248 - "Community 248"
-Cohesion: 0.29
-Nodes (7): model_config, primaryKey, default, name, notNull, primaryKey, type
+Cohesion: 0.50
+Nodes (4): 6.10 Use React DOM Resource Hints, code:tsx (import { preconnect, prefetchDNS } from 'react-dom'), code:tsx (import { preload, preinit } from 'react-dom'), code:tsx (import { preloadModule, preinitModule } from 'react-dom')
 
 ### Community 249 - "Community 249"
 Cohesion: 0.33
@@ -1139,8 +1141,8 @@ Cohesion: 0.40
 Nodes (4): code:block1 (## How to hunt), Hunting methodology — include in every Phase 2 agent prompt, Phase 2: Hunt for vulnerabilities, Vulnerability Hunting
 
 ### Community 251 - "Community 251"
-Cohesion: 0.40
-Nodes (5): 4.3 Use SWR for Automatic Deduplication, code:tsx (function UserList() {), code:tsx (import useSWR from 'swr'), code:tsx (import { useImmutableSWR } from '@/lib/swr'), code:tsx (import { useSWRMutation } from 'swr/mutation')
+Cohesion: 0.67
+Nodes (3): 7.3 Cache Property Access in Loops, code:typescript (for (let i = 0; i < arr.length; i++) {), code:typescript (const value = obj.config.settings.value)
 
 ### Community 252 - "Community 252"
 Cohesion: 0.50
@@ -1150,42 +1152,50 @@ Nodes (3): 1. System Components, 2. Trust Boundaries, Architecture Review: Savaz
 Cohesion: 0.50
 Nodes (3): $comment, output_schema, oneOf
 
+### Community 254 - "Community 254"
+Cohesion: 0.50
+Nodes (4): 6.5 Prevent Hydration Mismatch Without Flickering, code:tsx (function ThemeWrapper({ children }: { children: ReactNode })), code:tsx (function ThemeWrapper({ children }: { children: ReactNode })), code:tsx (function ThemeWrapper({ children }: { children: ReactNode }))
+
 ### Community 257 - "Community 257"
 Cohesion: 0.67
-Nodes (3): 7.6 Combine Multiple Array Iterations, code:typescript (const admins = users.filter(u => u.isAdmin)), code:typescript (const admins: User[] = [])
+Nodes (3): 6.2 CSS content-visibility for Long Lists, code:css (.message-item {), code:tsx (function MessageList({ messages }: { messages: Message[] }) )
+
+### Community 258 - "Community 258"
+Cohesion: 0.67
+Nodes (3): 6.8 Use defer or async on Script Tags, code:tsx (export default function Document() {), code:tsx (import Script from 'next/script')
 
 ### Community 259 - "Community 259"
-Cohesion: 0.26
-Nodes (14): agentSessionMemory, autonomousAgents, connectedApps, ModelConfig, skillEmbeddings, systemConfigurations, vector, seed() (+6 more)
+Cohesion: 0.19
+Nodes (20): base, client, Db, parsed, query, queryIndex, agentSessionMemory, autonomousAgents (+12 more)
 
 ### Community 260 - "Community 260"
 Cohesion: 0.30
 Nodes (5): SignInForm(), SignInFormProps, SignUpFormProps, authClient, SignInPage()
 
+### Community 262 - "Community 262"
+Cohesion: 0.67
+Nodes (3): 7.2 Build Index Maps for Repeated Lookups, code:typescript (function processOrders(orders: Order[], users: User[]) {), code:typescript (function processOrders(orders: Order[], users: User[]) {)
+
 ### Community 263 - "Community 263"
 Cohesion: 0.50
 Nodes (4): 7.11 Use flatMap to Map and Filter in One Pass, code:typescript (const userNames = users), code:typescript (const userNames = users.flatMap(user =>), code:typescript (// Extract valid emails from responses)
 
-### Community 268 - "Community 268"
-Cohesion: 0.67
-Nodes (3): 7.13 Use Set/Map for O(1) Lookups, code:typescript (const allowedIds = ['a', 'b', 'c', ...]), code:typescript (const allowedIds = new Set(['a', 'b', 'c', ...]))
-
 ## Knowledge Gaps
-- **1443 isolated node(s):** `$schema`, `plugin`, `instructions`, `name`, `version` (+1438 more)
+- **1444 isolated node(s):** `$schema`, `plugin`, `instructions`, `name`, `version` (+1439 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **18 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `React Best Practices` connect `Community 194` to `Community 2`, `Community 70`, `Community 9`, `Community 47`, `Community 178`, `Community 53`, `Community 59`, `Community 61`?**
+- **Why does `React Best Practices` connect `Community 153` to `Community 2`, `Community 9`, `Community 47`, `Community 178`, `Community 83`, `Community 53`, `Community 59`, `Community 61`?**
   _High betweenness centrality (0.003) - this node is a cross-community bridge._
-- **Why does `columns` connect `Community 30` to `Community 3`, `Community 240`, `Community 81`, `Community 158`, `Community 63`?**
+- **Why does `columns` connect `Community 30` to `Community 3`, `Community 240`, `Community 157`, `Community 158`, `Community 63`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
-- **Why does `5. Re-render Optimization` connect `Community 2` to `Community 194`?**
+- **Why does `5. Re-render Optimization` connect `Community 2` to `Community 153`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **What connects `$schema`, `plugin`, `instructions` to the rest of the system?**
-  _1443 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1444 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.07057057057057058 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**

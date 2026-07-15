@@ -114,11 +114,19 @@ app.post("/api/graph/invoke/stream", async (req, res) => {
       const anyChunk = chunk as any;
       const nodeKeys = Object.keys(anyChunk);
       for (const nodeKey of nodeKeys) {
+        // Exclude intermediate diagnostic messages from background sub-agents
+        if (nodeKey !== "respondNode") {
+          continue;
+        }
         const nodeUpdate = anyChunk[nodeKey];
         if (nodeUpdate && Array.isArray(nodeUpdate.messages)) {
           const assistantMsg = nodeUpdate.messages.find((m: any) => m.role === "assistant");
           if (assistantMsg && assistantMsg.content) {
             let content = assistantMsg.content.trim();
+            // Verify and skip any diagnostics prefixed with [MutationAgent] or [DataFetchAgent]
+            if (content.startsWith("[MutationAgent]") || content.startsWith("[DataFetchAgent]")) {
+              continue;
+            }
             // Rigorously filter trailing JSON braces/brackets and routing structures
             content = content.replace(/(?:\s*\}|\])+\s*$/g, '').trim();
             content = content.replace(/\{\s*"routingDecision".*?\}\s*$/gs, '').trim();
@@ -166,9 +174,19 @@ app.get(["/api/graph/threads/:threadId", "/api/history/threads/:threadId"], asyn
       res.status(404).json({ error: "Thread not found", threadId });
       return;
     }
+    const filteredMessages = (state.values.messages || []).filter((m: any) => {
+      if (m.role === "assistant") {
+        const content = m.content || "";
+        if (content.startsWith("[MutationAgent]") || content.startsWith("[DataFetchAgent]")) {
+          return false;
+        }
+      }
+      return true;
+    });
+
     res.json({
       threadId,
-      messages: state.values.messages,
+      messages: filteredMessages,
       hasTokenMap: Object.keys(state.values.tokenMap || {}).length > 0,
     });
   } catch (err) {

@@ -9,6 +9,7 @@ export interface UniversalPayload {
 export interface UniversalResult {
   text: string;
   usage: { promptTokens: number; completionTokens: number; totalTokens: number };
+  toolCalls?: Array<{ name: string; args: Record<string, any> }>;
 }
 
 export interface ProviderConfig {
@@ -88,9 +89,29 @@ class OpenAICompatibleDriver implements LLMDriver {
     }
 
     const data = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
+      choices?: { message?: { content?: string; tool_calls?: any[] } }[];
       usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
     };
+
+    const nativeToolCalls = data.choices?.[0]?.message?.tool_calls;
+    const toolCalls = nativeToolCalls?.map((tc: any) => {
+      let parsedArgs = {};
+      try {
+        if (typeof tc.function?.arguments === "string") {
+          parsedArgs = JSON.parse(tc.function.arguments);
+        } else if (tc.function?.arguments) {
+          parsedArgs = tc.function.arguments;
+        } else if (tc.args) {
+          parsedArgs = tc.args;
+        }
+      } catch (err) {
+        console.error("[llm-switchboard] Error parsing native tool call arguments:", err);
+      }
+      return {
+        name: tc.function?.name ?? tc.name ?? "",
+        args: parsedArgs,
+      };
+    });
 
     return {
       text: data.choices?.[0]?.message?.content ?? "",
@@ -99,6 +120,7 @@ class OpenAICompatibleDriver implements LLMDriver {
         completionTokens: data.usage?.completion_tokens ?? 0,
         totalTokens: data.usage?.total_tokens ?? 0,
       },
+      toolCalls,
     };
   }
 }

@@ -1205,8 +1205,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\index.ts": {
-    "mtime": 1783996172.6334257,
-    "ast_hash": "2a04f2638640a3d84807a587470bfac2",
+    "mtime": 1784085316.0987399,
+    "ast_hash": "649582dee3b8e3af8367bda75f44cf65",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\db\\index.ts": {
@@ -1235,8 +1235,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\orchestrator\\graph.ts": {
-    "mtime": 1784008911.7601962,
-    "ast_hash": "5b5fdf6c326e21c8cb1ebb8808b1bf4f",
+    "mtime": 1784084551.6873262,
+    "ast_hash": "7b03e2a78bb6ce5853213bb2cf0ddaa8",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\orchestrator\\okf-verifier.ts": {
@@ -1245,8 +1245,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\services\\llm-switchboard.ts": {
-    "mtime": 1783949346.0669587,
-    "ast_hash": "06e1990d4c021f1600c0ee45e2eebb03",
+    "mtime": 1784080609.8983617,
+    "ast_hash": "abeea404b1b82808a9ed721efd703f1e",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\utils\\crypto-vault.ts": {
