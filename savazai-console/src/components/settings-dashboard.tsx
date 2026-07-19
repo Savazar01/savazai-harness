@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import {
   updateSystemConfig,
   testProviderConnection,
   fetchProviderModels,
   readAgentsMd,
   saveAgentsMd,
+  getTelemetryAnalytics,
 } from "@/app/admin/settings/actions";
 import { SystemConfig, LLMProviderConfig } from "@/components/theme-provider";
 import {
@@ -32,6 +33,8 @@ import {
   Plus,
   Trash2,
   HelpCircle,
+  BarChart3,
+
 } from "lucide-react";
 
 interface CustomSkill {
@@ -41,11 +44,41 @@ interface CustomSkill {
   executableScriptCode: string;
 }
 
+interface TelemetryLog {
+  createdAt: string;
+  provider: string;
+  modelName: string;
+  inputTokens: number;
+  outputTokens: number;
+  reasoningTokens: number;
+  executionLatencyMs: number;
+  spend: number;
+}
+
+interface TelemetryStats {
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalReasoningTokens: number;
+  totalSpend: number;
+  totalRuns: number;
+  totalToolCalls: number;
+  successfulToolCalls: number;
+  successRate: number;
+  toolBreakdown: Array<{
+    name: string;
+    total: number;
+    success: number;
+    rate: number;
+    avgLatencyMs: number;
+  }>;
+  logs: TelemetryLog[];
+}
+
 interface SettingsDashboardProps {
   initialConfig: SystemConfig;
 }
 
-type TabType = "appearance" | "branding" | "llm" | "mcp" | "api" | "capability";
+type TabType = "appearance" | "branding" | "llm" | "mcp" | "api" | "capability" | "analytics";
 
 const DEFAULT_LLM_PROVIDERS: Record<string, LLMProviderConfig> = {
   openai: { apiKey: "", endpoint: "https://api.openai.com/v1", defaultModel: "gpt-4o", active: false },
@@ -173,6 +206,35 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
 
   const [agentsMd, setAgentsMd] = useState(tokens.agentsMd || "");
   const [loadingAgentsMd, setLoadingAgentsMd] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<TelemetryStats | null>(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
+  const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  const [modelSearch, setModelSearch] = useState("");
+  const [sortColumn, setSortColumn] = useState<"date" | "spend">("date");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [isProviderDropdownOpen, setIsProviderDropdownOpen] = useState(false);
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+
+  const fetchAnalytics = async () => {
+    setLoadingAnalytics(true);
+    const res = await getTelemetryAnalytics();
+    if (res.success && res.data) {
+      setAnalyticsData(res.data as TelemetryStats);
+    }
+    setLoadingAnalytics(false);
+  };
+
+  useEffect(() => {
+    if (activeTab === "analytics") {
+      const timer = setTimeout(() => {
+        fetchAnalytics();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     const fetchAgentsMd = async () => {
@@ -185,6 +247,101 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
     };
     fetchAgentsMd();
   }, []);
+
+  const uniqueProviders = useMemo(() => {
+    if (!analyticsData?.logs) return [];
+    const set = new Set<string>();
+    analyticsData.logs.forEach((log) => {
+      if (log.provider) {
+        set.add(log.provider.toLowerCase());
+      }
+    });
+    return Array.from(set).map((p) => p.charAt(0).toUpperCase() + p.slice(1));
+  }, [analyticsData]);
+
+  const uniqueModels = useMemo(() => {
+    if (!analyticsData?.logs) return [];
+    const set = new Set<string>();
+    analyticsData.logs.forEach((log) => {
+      if (log.modelName) {
+        set.add(log.modelName);
+      }
+    });
+    return Array.from(set).sort();
+  }, [analyticsData]);
+
+  const filteredLogs = useMemo(() => {
+    if (!analyticsData?.logs) return [];
+    return analyticsData.logs.filter((log) => {
+      if (startDate) {
+        const start = new Date(startDate);
+        const logDate = new Date(log.createdAt);
+        if (logDate < start) return false;
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        const logDate = new Date(log.createdAt);
+        if (logDate > end) return false;
+      }
+      if (selectedProviders.length > 0) {
+        if (!selectedProviders.includes(log.provider.toLowerCase())) {
+          return false;
+        }
+      }
+      if (selectedModels.length > 0) {
+        if (!selectedModels.includes(log.modelName)) {
+          return false;
+        }
+      }
+      if (modelSearch) {
+        const search = modelSearch.toLowerCase();
+        if (!log.modelName.toLowerCase().includes(search)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [analyticsData, startDate, endDate, selectedProviders, selectedModels, modelSearch]);
+
+  const sortedLogs = useMemo(() => {
+    const logsCopy = [...filteredLogs];
+    return logsCopy.sort((a, b) => {
+      let comparison = 0;
+      if (sortColumn === "date") {
+        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      } else if (sortColumn === "spend") {
+        comparison = a.spend - b.spend;
+      }
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  }, [filteredLogs, sortColumn, sortDirection]);
+
+  const handleExportCSV = () => {
+    if (sortedLogs.length === 0) return;
+    const headers = ["Date", "Provider", "Model", "Input Tokens", "Output Tokens", "Reasoning Tokens", "Spend ($)"];
+    const rows = sortedLogs.map((log) => [
+      new Date(log.createdAt).toLocaleString(),
+      log.provider,
+      log.modelName,
+      log.inputTokens,
+      log.outputTokens,
+      log.reasoningTokens,
+      `$${log.spend.toFixed(5)}`,
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((r) => r.map((val) => `"${val}"`).join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `granular_spend_report_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const restoreLogoDefault = () => {
     setBrandLogoUrl("https://savazar.com/wp-content/uploads/2023/10/cropped-Transparent_Image_2-300x100.png");
@@ -322,6 +479,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
           <TabButton tab="mcp" icon={Wrench} activeTab={activeTab} setActiveTab={setActiveTab} label="MCP Integration" />
           <TabButton tab="api" icon={Globe} activeTab={activeTab} setActiveTab={setActiveTab} label="API Services" />
           <TabButton tab="capability" icon={BrainCircuit} activeTab={activeTab} setActiveTab={setActiveTab} label="Capability Studio" />
+          <TabButton tab="analytics" icon={BarChart3} activeTab={activeTab} setActiveTab={setActiveTab} label="Usage & Spend" />
         </div>
 
         <form onSubmit={handleSave} className="lg:col-span-3 rounded-3xl border border-slate-900 bg-slate-950/40 p-6 relative flex flex-col min-h-0">
@@ -408,6 +566,8 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   <h3 className="text-lg font-bold text-white mb-1">LLM Providers</h3>
                   <p className="text-slate-400 text-xs">Configure API keys, endpoints, and default models per provider</p>
                 </div>
+
+
 
 
 
@@ -799,16 +959,291 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                 </div>
               </div>
             )}
-          </div>
 
-          <div className="sticky bottom-0 z-10 bg-[#0c0c12]/95 py-4 border-t border-[#1f1f2e] mt-4 -mx-6 px-6 rounded-b-3xl">
-            <div className="flex justify-end">
-              <button type="submit"
-                className="flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary/95 transition-all hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={saving}>
-                {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving changes...</> : <><Save className="h-4 w-4" /> Save Configuration</>}
-              </button>
+            {activeTab === "analytics" && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">Usage & Spend</h3>
+                  <p className="text-slate-400 text-xs">Real-time harness metrics, token usage, spend stats, and tool performance</p>
+                </div>
+
+                {loadingAnalytics ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-slate-500 text-sm gap-2">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <span>Analyzing telemetry logs...</span>
+                  </div>
+                ) : !analyticsData ? (
+                  <div className="text-center py-12 text-slate-500 text-sm">
+                    No telemetry log data found. Run chat interactions to collect telemetry logs.
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Core Stats Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 space-y-1">
+                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Total Model Runs</span>
+                        <div className="text-2xl font-bold text-white font-mono">{analyticsData.totalRuns}</div>
+                      </div>
+                      <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 space-y-1">
+                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Accumulated Spend</span>
+                        <div className="text-2xl font-bold text-emerald-400 font-mono">${analyticsData.totalSpend.toFixed(5)}</div>
+                      </div>
+                      <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 space-y-1">
+                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Tool Success Rate</span>
+                        <div className="text-2xl font-bold text-cyan-400 font-mono">{analyticsData.successRate}%</div>
+                      </div>
+                    </div>
+
+                    {/* Token Breakdown */}
+                    <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 space-y-4">
+                      <h4 className="text-sm font-bold text-white uppercase tracking-wider">Token Aggregates</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-slate-400 text-xs">
+                        <div className="bg-slate-950/30 rounded-xl p-3">
+                          <div className="text-slate-500 mb-0.5 font-semibold">Input Tokens</div>
+                          <div className="text-white font-mono font-bold text-sm">{analyticsData.totalInputTokens.toLocaleString()}</div>
+                        </div>
+                        <div className="bg-slate-950/30 rounded-xl p-3">
+                          <div className="text-slate-500 mb-0.5 font-semibold">Output Tokens</div>
+                          <div className="text-white font-mono font-bold text-sm">{analyticsData.totalOutputTokens.toLocaleString()}</div>
+                        </div>
+                        <div className="bg-slate-950/30 rounded-xl p-3">
+                          <div className="text-slate-500 mb-0.5 font-semibold">Reasoning Tokens</div>
+                          <div className="text-white font-mono font-bold text-sm">{analyticsData.totalReasoningTokens.toLocaleString()}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Granular Usage Logs */}
+                    <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 space-y-4">
+                      <h4 className="text-sm font-bold text-white uppercase tracking-wider">Granular Usage Logs</h4>
+                      
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-slate-950/20 border border-slate-900 rounded-xl p-3.5 text-xs">
+                        <div className="flex flex-wrap items-center gap-3">
+                          {/* Date range picker */}
+                          <div className="flex items-center gap-2 bg-slate-900/40 border border-slate-800 rounded-lg px-2.5 py-1.5">
+                            <span className="text-slate-500 font-semibold text-[10px] uppercase">Start:</span>
+                            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                              className="bg-transparent text-slate-200 outline-none w-28 text-center font-mono cursor-pointer" />
+                            <span className="text-slate-500 font-semibold text-[10px] uppercase ml-1">End:</span>
+                            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
+                              className="bg-transparent text-slate-200 outline-none w-28 text-center font-mono cursor-pointer" />
+                          </div>
+
+                          {/* Provider Filter Dropdown */}
+                          <div className="relative">
+                            <button type="button" onClick={() => setIsProviderDropdownOpen(!isProviderDropdownOpen)}
+                              className="flex items-center justify-between gap-2 bg-slate-900/40 border border-slate-800 hover:border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 min-w-[140px] h-[32px] text-left">
+                              <span className="truncate">{selectedProviders.length === 0 ? "All Providers" : `${selectedProviders.length} Selected`}</span>
+                              <span className="text-slate-500 text-[8px]">▼</span>
+                            </button>
+                            {isProviderDropdownOpen && (
+                              <>
+                                <div className="fixed inset-0 z-30" onClick={() => setIsProviderDropdownOpen(false)} />
+                                <div className="absolute left-0 mt-2 w-48 rounded-xl border border-slate-800 bg-slate-950 p-2.5 shadow-xl z-40 space-y-1.5">
+                                  <div className="text-[10px] uppercase font-bold text-slate-500 px-1.5 pb-1 border-b border-slate-900">Filter Provider</div>
+                                  {uniqueProviders.length === 0 ? (
+                                    <div className="text-[10px] text-slate-600 px-1.5 py-1">No providers found</div>
+                                  ) : (
+                                    uniqueProviders.map((prov) => {
+                                      const lowProv = prov.toLowerCase();
+                                      const isChecked = selectedProviders.includes(lowProv);
+                                      return (
+                                        <label key={prov} className="flex items-center gap-2 px-1.5 py-1 hover:bg-slate-900 rounded-lg cursor-pointer text-slate-300 select-none">
+                                          <input type="checkbox" checked={isChecked} onChange={() => {
+                                            if (isChecked) {
+                                              setSelectedProviders(selectedProviders.filter((p) => p !== lowProv));
+                                            } else {
+                                              setSelectedProviders([...selectedProviders, lowProv]);
+                                            }
+                                          }} className="rounded border-slate-800 text-primary focus:ring-0 bg-slate-900 h-3 w-3" />
+                                          {prov}
+                                        </label>
+                                      );
+                                    })
+                                  )}
+                                  {selectedProviders.length > 0 && (
+                                    <button type="button" onClick={() => setSelectedProviders([])}
+                                      className="w-full text-center text-[10px] text-primary hover:underline pt-1 border-t border-slate-900 block">
+                                      Clear Filter
+                                    </button>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Model Filter Dropdown */}
+                          <div className="relative">
+                            <button type="button" onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                              className="flex items-center justify-between gap-2 bg-slate-900/40 border border-slate-800 hover:border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 min-w-[140px] h-[32px] text-left">
+                              <span className="truncate">{selectedModels.length === 0 ? "All Models" : `${selectedModels.length} Selected`}</span>
+                              <span className="text-slate-500 text-[8px]">▼</span>
+                            </button>
+                            {isModelDropdownOpen && (
+                              <>
+                                <div className="fixed inset-0 z-30" onClick={() => setIsModelDropdownOpen(false)} />
+                                <div className="absolute left-0 mt-2 w-56 rounded-xl border border-slate-800 bg-slate-950 p-2.5 shadow-xl z-40 space-y-1.5 max-h-60 overflow-y-auto">
+                                  <div className="text-[10px] uppercase font-bold text-slate-500 px-1.5 pb-1 border-b border-slate-900">Filter Model</div>
+                                  {uniqueModels.length === 0 ? (
+                                    <div className="text-[10px] text-slate-600 px-1.5 py-1">No models found</div>
+                                  ) : (
+                                    uniqueModels.map((model) => {
+                                      const isChecked = selectedModels.includes(model);
+                                      return (
+                                        <label key={model} className="flex items-center gap-2 px-1.5 py-1 hover:bg-slate-900 rounded-lg cursor-pointer text-slate-300 select-none text-[11px] font-mono">
+                                          <input type="checkbox" checked={isChecked} onChange={() => {
+                                            if (isChecked) {
+                                              setSelectedModels(selectedModels.filter((m) => m !== model));
+                                            } else {
+                                              setSelectedModels([...selectedModels, model]);
+                                            }
+                                          }} className="rounded border-slate-800 text-primary focus:ring-0 bg-slate-900 h-3 w-3" />
+                                          <span className="truncate">{model}</span>
+                                        </label>
+                                      );
+                                    })
+                                  )}
+                                  {selectedModels.length > 0 && (
+                                    <button type="button" onClick={() => setSelectedModels([])}
+                                      className="w-full text-center text-[10px] text-primary hover:underline pt-1 border-t border-slate-900 block">
+                                      Clear Filter
+                                    </button>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Model Search Input */}
+                          <div className="relative flex items-center bg-slate-900/40 border border-slate-800 rounded-lg px-2.5 py-1 w-48 h-[32px]">
+                            <Search className="h-3 w-3 text-slate-500 mr-1.5 flex-shrink-0" />
+                            <input type="text" placeholder="Search model..." value={modelSearch} onChange={(e) => setModelSearch(e.target.value)}
+                              className="bg-transparent text-slate-200 placeholder-slate-500 outline-none text-xs w-full font-mono" />
+                          </div>
+                        </div>
+
+                        {/* CSV Export Button */}
+                        <button type="button" onClick={handleExportCSV} disabled={sortedLogs.length === 0}
+                          className="flex items-center justify-center gap-1.5 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-200 px-3.5 py-1.5 shadow-sm transition-all hover:scale-[1.01] disabled:opacity-40 disabled:cursor-not-allowed font-semibold h-[32px]">
+                          <span>Export to CSV</span>
+                        </button>
+                      </div>
+
+                      {/* Ledger Table */}
+                      <div className="overflow-x-auto border border-slate-900/40 rounded-xl bg-slate-950/20">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="border-b border-slate-900 text-slate-500 font-semibold uppercase tracking-wider bg-slate-950/40">
+                              <th onClick={() => {
+                                if (sortColumn === "date") {
+                                  setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+                                } else {
+                                  setSortColumn("date");
+                                  setSortDirection("desc");
+                                }
+                              }} className="py-2.5 px-4 cursor-pointer hover:text-slate-300 select-none font-bold whitespace-nowrap">
+                                Date {sortColumn === "date" && (sortDirection === "asc" ? " ▲" : " ▼")}
+                              </th>
+                              <th className="py-2.5 px-4 font-bold">Provider</th>
+                              <th className="py-2.5 px-4 font-bold">Model</th>
+                              <th className="py-2.5 px-4 font-bold">Input</th>
+                              <th className="py-2.5 px-4 font-bold">Output</th>
+                              <th className="py-2.5 px-4 font-bold">Reasoning</th>
+                              <th onClick={() => {
+                                if (sortColumn === "spend") {
+                                  setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+                                } else {
+                                  setSortColumn("spend");
+                                  setSortDirection("desc");
+                                }
+                              }} className="py-2.5 px-4 cursor-pointer hover:text-slate-300 select-none font-bold text-right whitespace-nowrap">
+                                Spend ($) {sortColumn === "spend" && (sortDirection === "asc" ? " ▲" : " ▼")}
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-900/40 text-slate-300 font-mono">
+                            {sortedLogs.length === 0 ? (
+                              <tr>
+                                <td colSpan={7} className="py-6 text-center text-slate-500 text-xs">
+                                  No matching transaction records found.
+                                </td>
+                              </tr>
+                            ) : (
+                              sortedLogs.map((log, idx) => (
+                                <tr key={idx} className="hover:bg-slate-900/20">
+                                  <td className="py-2.5 px-4 text-slate-400 whitespace-nowrap">
+                                    {new Date(log.createdAt).toLocaleString()}
+                                  </td>
+                                  <td className="py-2.5 px-4 whitespace-nowrap">
+                                    <span className="bg-slate-950/40 border border-slate-900 px-2 py-0.5 rounded-md text-[10px] uppercase font-bold text-slate-400">
+                                      {log.provider}
+                                    </span>
+                                  </td>
+                                  <td className="py-2.5 px-4 text-slate-200 max-w-[180px] truncate" title={log.modelName}>
+                                    {log.modelName}
+                                  </td>
+                                  <td className="py-2.5 px-4">{log.inputTokens.toLocaleString()}</td>
+                                  <td className="py-2.5 px-4">{log.outputTokens.toLocaleString()}</td>
+                                  <td className="py-2.5 px-4">{log.reasoningTokens.toLocaleString()}</td>
+                                  <td className="py-2.5 px-4 text-right text-emerald-400 font-bold whitespace-nowrap">
+                                    ${log.spend.toFixed(5)}
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Tool Breakdown Table */}
+                    <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 space-y-4">
+                      <h4 className="text-sm font-bold text-white uppercase tracking-wider">Tool Calls breakdown</h4>
+                      {analyticsData.toolBreakdown.length === 0 ? (
+                        <p className="text-xs text-slate-600">No MCP tool invocations recorded yet</p>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                              <tr className="border-b border-slate-900 text-slate-500 font-semibold uppercase tracking-wider">
+                                <th className="py-2.5">Tool Name</th>
+                                <th className="py-2.5">Total Invocations</th>
+                                <th className="py-2.5">Avg Latency</th>
+                                <th className="py-2.5">Success Rate</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-900 text-slate-300 font-mono">
+                              {analyticsData.toolBreakdown.map((tool, idx) => (
+                                <tr key={idx} className="hover:bg-slate-900/20">
+                                  <td className="py-2.5 pr-4 text-slate-100 font-semibold">{tool.name}</td>
+                                  <td className="py-2.5 pr-4">{tool.total}</td>
+                                  <td className="py-2.5 pr-4">{tool.avgLatencyMs}ms</td>
+                                  <td className={`py-2.5 ${
+                                    tool.rate >= 90 ? "text-emerald-400" : tool.rate >= 70 ? "text-yellow-400" : "text-red-400"
+                                  }`}>{tool.rate}%</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+          {activeTab !== "analytics" && (
+            <div className="sticky bottom-0 z-10 bg-[#0c0c12]/95 py-4 border-t border-[#1f1f2e] mt-4 -mx-6 px-6 rounded-b-3xl">
+              <div className="flex justify-end">
+                <button type="submit"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary/95 transition-all hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={saving}>
+                  {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving changes...</> : <><Save className="h-4 w-4" /> Save Configuration</>}
+                </button>
+              </div>
             </div>
+          )}
           </div>
         </form>
       </div>

@@ -72,7 +72,7 @@ export default async function Home() {
             </h1>
 
             <p className="mt-6 text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-              Empower your enterprise with structured LangGraph loops, deterministic data privacy gateways, and proactive schema discovery. Stream states in real-time with zero latency.
+              Empower your enterprise with a production-ready, multi-model agentic ecosystem. Seamlessly switch between Google Gemini, OpenAI, and other LLMs with absolute stability, dynamic token pricing ledger tracing, and privacy-first data masking.
             </p>
 
             <div className="mt-10 flex justify-center items-center">
@@ -152,10 +152,10 @@ export default async function Home() {
           <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-white">
-                Engineered for High-Security & Governance
+                Multi-Model Infrastructure & Governance
               </h2>
               <p className="mt-4 text-slate-400">
-                SavazAI provides a well-defined governance harness allowing businesses, organizations, and individuals to safely control, audit, and run autonomous agent operations.
+                SavazAI provides a well-defined, cross-provider governance harness enabling organizations to securely run, audit, and coordinate autonomous agent operations across Gemini, OpenAI, and custom API endpoints.
               </p>
             </div>
 
@@ -174,17 +174,17 @@ export default async function Home() {
                 </p>
               </div>
 
-              {/* Tile 2: Capability Studio (MCPs & APIs) */}
+              {/* Tile 2: Dynamic Telemetry & Cost Ledger */}
               <div className="relative group rounded-3xl border border-slate-900 bg-slate-900/10 p-8 hover:border-slate-800/80 hover:bg-slate-900/20 transition-all duration-300">
                 <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-6">
                   <Layers className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">
-                  Capability Studio (MCPs & APIs)
+                  Dynamic Telemetry & Cost Ledger
                 </h3>
                 <p className="text-slate-400 text-sm leading-relaxed">
-                  Configure dynamic Model Context Protocol (MCP) server endpoints and API integrations at runtime. Easily bind database tables, tools, and actions dynamically to the planner.
+                  Track model execution metrics, latency, and exact token counts (including reasoning tokens) in real-time. Calculate transaction costs dynamically based on model pricing metadata rules.
                 </p>
               </div>
 

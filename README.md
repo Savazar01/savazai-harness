@@ -44,6 +44,11 @@ We operate under a strict separation of concerns at the folder level:
 - **MIME Subject & HTML Body Refactor**: Compiles text summaries into beautiful, responsive HTML email layouts and encodes subjects using MIME encoded-words (`=?utf-8?B?...?=`) to preserve Unicode characters and formatting.
 - **Static Token Paste Paradigm**: Deprecates Authorized Redirect URIs in the settings layout in favor of a secure, direct REFRESH_TOKEN entry box.
 
+### 8. Dynamic Framework-Level Telemetry Engine & Spend Ledger
+- **Zero Context Leakage**: Logs exact prompt, completion, and reasoning token usages natively from the completion driver response metadata rather than relying on transient ambient variables.
+- **Dynamic Ledger Sorting & Model Filtering**: Renders a ledger table with sorting on dates and spends, date pickers, multi-select provider and model filters dynamically populated from database records, and a client-side CSV downloader.
+- **Null Safety Validation Gate**: Intercepts writes on trace completion. If provider, model, or input tokens are empty or zero during a valid turn, it throws a runtime exception (`[Telemetry Ledger Critical Error]: Missing true LLM context on write.`) to block database pollution.
+
 ---
 
 ## 🔐 Production Environment Variables Guide
@@ -61,18 +66,27 @@ We operate under a strict separation of concerns at the folder level:
 
 ---
 
-## 🚀 VPS Docker Deployment Validation
+## 🚀 local-First Validation Loop & VPS Deployment
 
-Ensure all code changes pass compile validations before pushing:
+Before synchronizing deployment files or pushing to GitHub, you must execute the full local quality validation cycle to ensure zero compile, type, or lint regressions:
+
 ```bash
-# Backend Quality Test
+# 1. Backend Verification (Root Workspace)
 npx tsc --noEmit
 npm run lint
 
-# Frontend Console Quality Test
+# 2. Frontend Verification (savazai-console Workspace)
 cd savazai-console
 npm run lint
-next build --experimental-turbopack
+npm run build
+```
+
+Verify docker containers run cleanly:
+```bash
+# 3. Container Lifecycle Cycle (Root Workspace)
+cd ..
+docker compose down
+docker compose up --build -d
 ```
 
 ### Docker Run Commands

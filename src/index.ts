@@ -8,6 +8,7 @@ import { eventOrchestrator, OrchestratedEventSchema } from "./orchestrator/event
 import { StreamBroadcaster } from "./utils/stream-broadcaster.js";
 import { db } from "./db/index.js";
 import { systemConfigurations } from "./db/schema.js";
+import { TelemetryGateway } from "./utils/telemetry.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3055;
@@ -97,6 +98,9 @@ app.post("/api/graph/invoke/stream", async (req, res) => {
   const broadcaster = new StreamBroadcaster(res, streamMode);
   const requestId = crypto.randomUUID();
 
+  // Start telemetry trace recording, binding threadId as chatId
+  TelemetryGateway.getInstance().startTrace(requestId, "chat-stream-pass", threadId);
+
   try {
     const input: Partial<GraphState> = {
       messages: [{ role: "user" as const, content: message, timestamp: new Date().toISOString() }],
@@ -156,6 +160,8 @@ app.post("/api/graph/invoke/stream", async (req, res) => {
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error("[invoke/stream] Orchestrator exception encountered:", errMsg);
+    // End telemetry trace cleanly upon execution error
+    TelemetryGateway.getInstance().endTrace(requestId);
     broadcaster.send({
       type: "content",
       content: `An internal exception was encountered during stream execution: ${errMsg}`,

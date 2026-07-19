@@ -1,5 +1,7 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { Buffer } from "node:buffer";
+import { db } from "../db/index.js";
+import { telemetryLogs, systemConfigurations } from "../db/schema.js";
 
 export interface TelemetrySpan {
   id: string;
@@ -16,6 +18,46 @@ export interface TraceSession {
   name: string;
   spans: TelemetrySpan[];
   openSpanStack: TelemetrySpan[];
+  chatId?: string;
+  executedMcpTools?: { toolName: string; latencyMs: number; statusCode: number; estimatedToolCost?: number }[];
+}
+
+export interface ModelPricing {
+  inputRatePerMillion: number;
+  outputRatePerMillion: number;
+}
+
+export const MODEL_PRICING_REGISTRY: Record<string, ModelPricing> = {
+  "gpt-4o-mini": { inputRatePerMillion: 0.15, outputRatePerMillion: 0.60 },
+  "gpt-4o": { inputRatePerMillion: 2.50, outputRatePerMillion: 10.00 },
+  "claude-3-5-sonnet": { inputRatePerMillion: 3.00, outputRatePerMillion: 15.00 },
+  "claude-3-5-haiku": { inputRatePerMillion: 0.80, outputRatePerMillion: 4.00 },
+  "gemini-1.5-pro": { inputRatePerMillion: 1.25, outputRatePerMillion: 5.00 },
+  "gemini-2.5-pro": { inputRatePerMillion: 1.25, outputRatePerMillion: 5.00 },
+  "gemini-1.5-flash": { inputRatePerMillion: 0.075, outputRatePerMillion: 0.30 },
+  "gemini-2.5-flash": { inputRatePerMillion: 0.075, outputRatePerMillion: 0.30 },
+  "gemini-2.5-flash-lite": { inputRatePerMillion: 0.075, outputRatePerMillion: 0.30 },
+  "default": { inputRatePerMillion: 1.00, outputRatePerMillion: 3.00 }
+};
+
+export function getModelPricing(modelName: string, customPricing?: Record<string, ModelPricing>): ModelPricing {
+  const model = modelName.toLowerCase();
+  
+  if (customPricing) {
+    for (const [key, value] of Object.entries(customPricing)) {
+      if (model.includes(key.toLowerCase())) {
+        return value;
+      }
+    }
+  }
+
+  for (const [key, value] of Object.entries(MODEL_PRICING_REGISTRY)) {
+    if (key !== "default" && model.includes(key)) {
+      return value;
+    }
+  }
+
+  return MODEL_PRICING_REGISTRY["default"];
 }
 
 export class TelemetryGateway {
@@ -47,7 +89,15 @@ export class TelemetryGateway {
     return randomBytes(8).toString("hex");
   }
 
-  public startTrace(requestId: string, name: string): TraceSession {
+  public startTrace(requestId: string, name: string, chatId?: string): TraceSession {
+    const existing = this.activeTraces.get(requestId);
+    if (existing) {
+      if (chatId && !existing.chatId) {
+        existing.chatId = chatId;
+      }
+      return existing;
+    }
+
     const traceId = this.generateTraceId();
     const rootSpanId = this.generateSpanId();
 
@@ -64,10 +114,21 @@ export class TelemetryGateway {
       name,
       spans: [rootSpan],
       openSpanStack: [rootSpan],
+      chatId,
     };
 
     this.activeTraces.set(requestId, session);
     return session;
+  }
+
+  public recordMcpToolCall(requestId: string, toolName: string, latencyMs: number, statusCode: number, estimatedToolCost?: number) {
+    const session = this.activeTraces.get(requestId);
+    if (session) {
+      if (!session.executedMcpTools) {
+        session.executedMcpTools = [];
+      }
+      session.executedMcpTools.push({ toolName, latencyMs, statusCode, estimatedToolCost });
+    }
   }
 
   public startSpan(requestId: string, name: string): TelemetrySpan {
@@ -145,6 +206,95 @@ export class TelemetryGateway {
   }
 
   private async dispatchTrace(session: TraceSession, requestId: string): Promise<void> {
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+    let totalReasoningTokens = 0;
+    let primaryModel = "";
+    let primaryProvider = "";
+
+    for (const span of session.spans) {
+      if (span.name.startsWith("llm-completion")) {
+        totalInputTokens += span.attributes.promptTokens || 0;
+        totalOutputTokens += span.attributes.completionTokens || 0;
+        totalReasoningTokens += span.attributes.reasoningTokens || 0;
+        if (span.attributes.modelName) {
+          primaryModel = span.attributes.modelName;
+        }
+        if (span.attributes.providerId) {
+          primaryProvider = span.attributes.providerId;
+        }
+      }
+    }
+
+    const normalizedProvider = (primaryProvider || "").trim().toLowerCase();
+    const normalizedModel = (primaryModel || "").trim().toLowerCase();
+
+    if (
+      !normalizedProvider || normalizedProvider === "unknown" || 
+      !normalizedModel || normalizedModel === "unknown" || 
+      totalInputTokens === 0
+    ) {
+      const errorMsg = `[Telemetry Ledger Critical Error]: Missing true LLM context on write. (Provider: ${primaryProvider || "null"}, Model: ${primaryModel || "null"}, Input Tokens: ${totalInputTokens})`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    const rootSpan = session.spans[0];
+    const duration = rootSpan ? ((rootSpan.endTime || Date.now()) - rootSpan.startTime) : 0;
+    const mcpTools = session.executedMcpTools || [];
+
+    let customPricing: Record<string, ModelPricing> | undefined;
+    try {
+      const configs = await db.select().from(systemConfigurations).limit(1);
+      if (configs.length > 0 && configs[0].designTokens) {
+        const tokens = configs[0].designTokens as any;
+        if (tokens.modelPricing) {
+          customPricing = tokens.modelPricing;
+        }
+      }
+    } catch (err) {
+      console.warn("[telemetry] Failed to fetch custom model pricing from db:", err);
+    }
+
+    const pricing = getModelPricing(primaryModel, customPricing);
+    const inputCost = (totalInputTokens / 1_000_000) * pricing.inputRatePerMillion;
+    const outputCost = (totalOutputTokens / 1_000_000) * pricing.outputRatePerMillion;
+
+    let totalToolCost = 0;
+    for (const tool of mcpTools) {
+      if (tool.estimatedToolCost) {
+        totalToolCost += tool.estimatedToolCost;
+      }
+    }
+    const cost = inputCost + outputCost + totalToolCost;
+
+    try {
+      let validatedChatId: string | null = null;
+      if (session.chatId) {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidRegex.test(session.chatId)) {
+          validatedChatId = session.chatId;
+        }
+      }
+
+      const insertPayload = {
+        chatId: validatedChatId,
+        provider: primaryProvider,
+        modelName: primaryModel,
+        inputTokens: totalInputTokens,
+        outputTokens: totalOutputTokens,
+        reasoningTokens: totalReasoningTokens,
+        executionLatencyMs: duration,
+        executedMcpTools: mcpTools,
+        transactionCost: cost,
+      };
+      console.log(`[telemetry] Writing to DB: provider=${primaryProvider} model=${primaryModel} inputTokens=${totalInputTokens} outputTokens=${totalOutputTokens} reasoningTokens=${totalReasoningTokens} latencyMs=${duration}`);
+      await db.insert(telemetryLogs).values(insertPayload);
+      console.log(`[telemetry] Saved telemetry log to DB (Request ID: ${requestId}, Chat ID: ${validatedChatId})`);
+    } catch (dbErr) {
+      console.warn("[telemetry] Failed to insert trace log into DB:", dbErr);
+    }
+
     if (!this.endpoint) {
       console.log(
         `[telemetry-local-fallback] Trace ID: ${session.traceId} (Request ID: ${requestId})\n` +

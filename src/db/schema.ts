@@ -9,6 +9,7 @@ import {
   integer,
   customType,
   varchar,
+  doublePrecision,
 } from "drizzle-orm/pg-core";
 
 export const vector = customType<{ data: number[]; driverData: string }>({
@@ -80,5 +81,19 @@ export const systemConfigurations = pgTable("system_configurations", {
   appTitle: varchar("app_title", { length: 255 }).notNull(),
   brandLogoUrl: text("brand_logo_url").default("https://savazar.com/wp-content/uploads/2023/10/cropped-Transparent_Image_2-300x100.png"),
   designTokens: jsonb("design_tokens").$type<Record<string, any>>().default({}),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const telemetryLogs = pgTable("telemetry_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  chatId: uuid("chat_id"), // ties telemetry to individual chat threads
+  provider: text("provider"),
+  modelName: text("model_name"),
+  inputTokens: integer("input_tokens").default(0),
+  outputTokens: integer("output_tokens").default(0),
+  reasoningTokens: integer("reasoning_tokens").default(0),
+  executionLatencyMs: integer("execution_latency_ms").default(0),
+  executedMcpTools: jsonb("executed_mcp_tools").$type<{ toolName: string; latencyMs: number; statusCode: number; estimatedToolCost?: number }[]>().default([]),
+  transactionCost: doublePrecision("transaction_cost").default(0.0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

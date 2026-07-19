@@ -6,12 +6,12 @@ import {
   ShieldCheck,
   Bot,
   Wrench,
-  ChevronRight,
-  ChevronLeft,
   Terminal,
   ChevronDown,
   ChevronUp,
   Code,
+  PanelRightClose,
+  PanelRight,
 } from "lucide-react";
 
 export interface TraceEvent {
@@ -110,50 +110,58 @@ function PiiBadgeMatrix({ fields }: { fields: Array<{ type: string; count: numbe
 }
 
 export function SystemTrace({ events, isOpen, onToggle }: SystemTraceProps) {
-  return (
-    <div
-      className={`relative border-l border-slate-900 bg-slate-950/40 transition-all duration-300 ${
-        isOpen ? "w-72" : "w-0 overflow-hidden"
-      }`}
-    >
-      <button
-        onClick={onToggle}
-        className="absolute -left-3 top-4 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-slate-800 bg-slate-900 text-slate-400 hover:text-white transition-colors"
-        aria-label={isOpen ? "Close trace" : "Open trace"}
-      >
-        {isOpen ? (
-          <ChevronRight className="h-3 w-3" />
-        ) : (
-          <ChevronLeft className="h-3 w-3" />
-        )}
-      </button>
-
-      <div className="flex flex-col h-full">
-        <div className="flex items-center gap-2 px-4 py-4 border-b border-slate-900">
-          <Activity className="h-4 w-4 text-slate-400" />
-          <span className="text-sm font-semibold text-slate-300">
-            System Trace
+  const panelContent = (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-2 px-4 py-4 border-b border-slate-900">
+        <Activity className="h-4 w-4 text-slate-400" />
+        <span className="text-sm font-semibold text-slate-300">
+          System Trace
+        </span>
+        {events.length > 0 && (
+          <span className="ml-auto text-[10px] text-slate-500">
+            {events.length} event{events.length !== 1 ? "s" : ""}
           </span>
-          {events.length > 0 && (
-            <span className="ml-auto text-[10px] text-slate-500">
-              {events.length} event{events.length !== 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
+        )}
+      </div>
 
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
-          {events.length === 0 ? (
-            <p className="text-xs text-slate-600 text-center py-8">
-              No trace events yet. Send a message to begin.
-            </p>
-          ) : (
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+        {events.length === 0 ? (
+          <p className="text-xs text-slate-600 text-center py-8">
+            No trace events yet. Send a message to begin.
+          </p>
+        ) : (
             events.map((event) => (
               <TraceEventCard key={event.id} event={event} />
             ))
           )}
         </div>
       </div>
-    </div>
+    );
+
+  return (
+    <>
+      {/* Desktop structural column — pushes chat content, never overlays */}
+      <div
+        className={`hidden lg:block border-l border-slate-900 bg-slate-950/40 transition-all duration-300 overflow-hidden shrink-0 ${
+          isOpen ? "w-80" : "w-0"
+        }`}
+      >
+        <div className="w-80 h-full relative">
+          <button
+            onClick={onToggle}
+            className="absolute -left-3 top-4 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-slate-800 bg-slate-900 text-slate-400 hover:text-white transition-colors shadow-lg shadow-black/30"
+            aria-label={isOpen ? "Close trace" : "Open trace"}
+          >
+            {isOpen ? (
+              <PanelRightClose className="h-3.5 w-3.5" />
+            ) : (
+              <PanelRight className="h-3.5 w-3.5" />
+            )}
+          </button>
+          {panelContent}
+        </div>
+      </div>
+    </>
   );
 }
 

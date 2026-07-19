@@ -1,4 +1,6 @@
 import { TelemetryGateway } from "../utils/telemetry.js";
+import { db } from "../db/index.js";
+import { systemConfigurations } from "../db/schema.js";
 
 export interface UniversalPayload {
   messages: { role: string; content: string }[];
@@ -8,7 +10,12 @@ export interface UniversalPayload {
 
 export interface UniversalResult {
   text: string;
-  usage: { promptTokens: number; completionTokens: number; totalTokens: number };
+  usage: { 
+    promptTokens: number; 
+    completionTokens: number; 
+    totalTokens: number; 
+    reasoningTokens?: number;
+  };
   toolCalls?: Array<{ name: string; args: Record<string, any> }>;
 }
 
@@ -18,6 +25,21 @@ export interface ProviderConfig {
   baseUrl: string;
   modelName: string;
   apiKey: string;
+}
+
+const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
+  "openai": "OpenAI",
+  "openai-compatible": "OpenAI Compatible",
+  "anthropic": "Anthropic",
+  "gemini": "Google Gemini",
+  "google-vertex": "Google Vertex AI",
+  "ollama": "Ollama",
+  "lmstudio": "LM Studio",
+  "openrouter": "OpenRouter",
+};
+
+function getProviderDisplayName(type: string): string {
+  return PROVIDER_DISPLAY_NAMES[type] || type;
 }
 
 export class RetryableError extends Error {
@@ -75,7 +97,7 @@ class OpenAICompatibleDriver implements LLMDriver {
       bodyPayload.tools = this.boundTools;
     }
 
-    const res = await fetch(url, {
+    let res = await fetch(url, {
       method: "POST",
       headers,
       signal: AbortSignal.timeout(120_000),
@@ -84,13 +106,39 @@ class OpenAICompatibleDriver implements LLMDriver {
 
     if (!res.ok) {
       const body = await res.text().catch(() => "");
-      if (res.status === 504 || res.status === 429) throw new RetryableError(`${res.status} ${body}`);
-      throw new Error(`LLM ${res.status} ${body}`);
+      
+      // Fallback to json_object if json_schema is not supported by this endpoint
+      if (res.status === 400 && bodyPayload.response_format?.type === "json_schema" && 
+          (body.includes("json_schema") || body.includes("schema") || body.includes("format") || body.includes("type") || body.includes("parameter"))) {
+        console.warn("[OpenAICompatibleDriver] Endpoint does not support json_schema response format. Falling back to json_object...");
+        bodyPayload.response_format = { type: "json_object" };
+        res = await fetch(url, {
+          method: "POST",
+          headers,
+          signal: AbortSignal.timeout(120_000),
+          body: JSON.stringify(bodyPayload),
+        });
+        if (!res.ok) {
+          const secondBody = await res.text().catch(() => "");
+          if (res.status === 504 || res.status === 429) throw new RetryableError(`${res.status} ${secondBody}`);
+          throw new Error(`LLM ${res.status} ${secondBody}`);
+        }
+      } else {
+        if (res.status === 504 || res.status === 429) throw new RetryableError(`${res.status} ${body}`);
+        throw new Error(`LLM ${res.status} ${body}`);
+      }
     }
 
     const data = (await res.json()) as {
       choices?: { message?: { content?: string; tool_calls?: any[] } }[];
-      usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+      usage?: { 
+        prompt_tokens?: number; 
+        completion_tokens?: number; 
+        total_tokens?: number;
+        completion_tokens_details?: {
+          reasoning_tokens?: number;
+        }
+      };
     };
 
     const nativeToolCalls = data.choices?.[0]?.message?.tool_calls;
@@ -119,6 +167,7 @@ class OpenAICompatibleDriver implements LLMDriver {
         promptTokens: data.usage?.prompt_tokens ?? 0,
         completionTokens: data.usage?.completion_tokens ?? 0,
         totalTokens: data.usage?.total_tokens ?? 0,
+        reasoningTokens: data.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
       },
       toolCalls,
     };
@@ -256,11 +305,20 @@ class GoogleVertexDriver implements LLMDriver {
       throw new Error(`Vertex ${res.status} ${b}`);
     }
 
-    const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+    const data = (await res.json()) as {
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+      usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number };
+    };
 
+    const promptTokens = data.usageMetadata?.promptTokenCount ?? 0;
+    const completionTokens = data.usageMetadata?.candidatesTokenCount ?? 0;
     return {
       text: data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "",
-      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+      usage: {
+        promptTokens,
+        completionTokens,
+        totalTokens: data.usageMetadata?.totalTokenCount ?? (promptTokens + completionTokens),
+      },
     };
   }
 }
@@ -295,11 +353,22 @@ export class LLMSwitchboard {
     this.drivers.delete(config.providerId);
   }
 
+
+
   private getDriver(config: ProviderConfig): LLMDriver {
     const existing = this.drivers.get(config.providerId);
-    if (existing) return existing;
+    if (existing) {
+      const cachedConfig = (existing as any)._config;
+      if (cachedConfig && 
+          cachedConfig.modelName === config.modelName && 
+          cachedConfig.baseUrl === config.baseUrl && 
+          cachedConfig.apiKey === config.apiKey) {
+        return existing;
+      }
+    }
 
     const driver = this.buildDriver(config);
+    (driver as any)._config = { ...config };
     this.drivers.set(config.providerId, driver);
     return driver;
   }
@@ -312,6 +381,21 @@ export class LLMSwitchboard {
         return new GoogleVertexDriver(config);
       case "ollama":
         return new OllamaDriver(config);
+      case "gemini": {
+        let baseUrl = config.baseUrl;
+        if (baseUrl.includes("generativelanguage.googleapis.com") && !baseUrl.includes("/openai")) {
+          baseUrl = baseUrl.replace(/\/+$/, "");
+          if (!baseUrl.endsWith("/v1beta") && !baseUrl.endsWith("/v1")) {
+            baseUrl = `${baseUrl}/v1beta/openai`;
+          } else {
+            baseUrl = `${baseUrl}/openai`;
+          }
+        }
+        return new OpenAICompatibleDriver({
+          ...config,
+          baseUrl,
+        });
+      }
       case "openai-compatible":
       default:
         return new OpenAICompatibleDriver(config);
@@ -323,20 +407,54 @@ export class LLMSwitchboard {
     const primary = this.configs.get(providerId) || this.configs.get("primary");
     if (!primary) throw new Error(`No provider configured for "${providerId}"`);
 
+    const activeConfig = { ...primary };
+    let temperature = 0.5;
+    let maxTokens = 4096;
+
+    try {
+      const configs = await db.select().from(systemConfigurations).limit(1);
+      if (configs.length > 0 && configs[0].designTokens) {
+        const tokens = configs[0].designTokens as any;
+        const profile = tokens.capabilityProfile || "standard_balanced";
+
+        if (profile === "fast_creative") {
+          temperature = 0.8;
+          maxTokens = 2048;
+        } else if (profile === "strict_deterministic") {
+          temperature = 0.0;
+          maxTokens = 2048;
+        } else if (profile === "deep_reasoning") {
+          temperature = 0.2;
+          maxTokens = 8192;
+        }
+      }
+    } catch (err) {
+      console.warn("[llm-switchboard] Failed to fetch capability profile configuration:", err);
+    }
+
+    const finalOptions = {
+      temperature: payload.options?.temperature ?? temperature,
+      max_tokens: payload.options?.max_tokens ?? maxTokens,
+      ...payload.options,
+    };
+
     const requestId = (payload.options?.requestId as string) || "global";
     const telemetry = TelemetryGateway.getInstance();
     const span = telemetry.startSpan(requestId, `llm-completion:${providerId}`);
     
-    span.attributes.providerId = providerId;
-    span.attributes.modelName = primary.modelName;
+    span.attributes.providerId = activeConfig.type;
+    span.attributes.providerDisplayName = getProviderDisplayName(activeConfig.type);
+    span.attributes.modelName = activeConfig.modelName;
+    span.attributes.deploymentApp = providerId;
     span.attributes.inputMessages = JSON.stringify(payload.messages);
 
     try {
-      const result = await this.getDriver(primary).execute(payload.messages, payload.options);
+      const result = await this.getDriver(activeConfig).execute(payload.messages, finalOptions);
       telemetry.endSpan(requestId, span, {
         promptTokens: result.usage.promptTokens,
         completionTokens: result.usage.completionTokens,
         totalTokens: result.usage.totalTokens,
+        reasoningTokens: result.usage.reasoningTokens || 0,
         output: result.text,
       });
       return result;
@@ -345,11 +463,13 @@ export class LLMSwitchboard {
       if (backup && isRetryable(err)) {
         span.attributes.retryWithBackup = true;
         try {
-          const result = await this.getDriver(backup).execute(payload.messages, payload.options);
+          const activeBackup = { ...backup };
+          const result = await this.getDriver(activeBackup).execute(payload.messages, finalOptions);
           telemetry.endSpan(requestId, span, {
             promptTokens: result.usage.promptTokens,
             completionTokens: result.usage.completionTokens,
             totalTokens: result.usage.totalTokens,
+            reasoningTokens: result.usage.reasoningTokens || 0,
             output: result.text,
             usedBackup: true,
           });

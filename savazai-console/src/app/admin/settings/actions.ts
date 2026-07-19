@@ -46,6 +46,7 @@ export interface UpdateSettingsInput {
   defaultAmbientParameters?: string;
   customSkills?: string;
   agentsMd?: string;
+  capabilityProfile?: string;
 }
 
 export async function updateSystemConfig(input: UpdateSettingsInput) {
@@ -77,6 +78,8 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
       configId = selectRes.rows[0].id;
       currentTokens = selectRes.rows[0].designTokens || {};
     }
+
+    console.log("[updateSystemConfig] input.llmProviders:", JSON.stringify(input.llmProviders, null, 2));
 
     const mergedTokens: Record<string, unknown> = {
       ...currentTokens,
@@ -115,6 +118,7 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
       ...(input.defaultAmbientParameters !== undefined && { defaultAmbientParameters: input.defaultAmbientParameters }),
       ...(input.customSkills !== undefined && { customSkills: input.customSkills }),
       ...(input.agentsMd !== undefined && { agentsMd: input.agentsMd }),
+      ...(input.capabilityProfile !== undefined && { capabilityProfile: input.capabilityProfile }),
     };
 
     await pool.query(
@@ -178,6 +182,7 @@ export async function testProviderConnection(
         headers["x-api-key"] = apiKey;
         headers["anthropic-version"] = "2023-06-01";
       } else if (providerType === "gemini") {
+        headers["x-goog-api-key"] = apiKey;
       } else {
         headers["Authorization"] = `Bearer ${apiKey}`;
       }
@@ -196,6 +201,9 @@ export async function testProviderConnection(
       });
     } else if (providerType === "gemini") {
       testUrl = `${baseUrl}/v1/models/${model || "gemini-1.5-pro"}`;
+      if (apiKey) {
+        testUrl += `?key=${apiKey}`;
+      }
     } else {
       testUrl = `${baseUrl}/models`;
     }
@@ -236,7 +244,7 @@ export async function fetchProviderModels(
         headers["x-api-key"] = apiKey;
         headers["anthropic-version"] = "2023-06-01";
       } else if (providerType === "gemini") {
-        // Gemini API key is in URL
+        headers["x-goog-api-key"] = apiKey;
       } else {
         headers["Authorization"] = `Bearer ${apiKey}`;
       }
@@ -248,7 +256,7 @@ export async function fetchProviderModels(
     if (providerType === "ollama") {
       url = `${baseUrl}/api/tags`;
     } else if (providerType === "gemini") {
-      url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+      url = `${baseUrl}/v1beta/models?key=${apiKey}`;
     } else if (providerType === "anthropic") {
       return { success: true, models: ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"] };
     } else {
@@ -326,6 +334,103 @@ export async function saveAgentsMd(content: string) {
     return { success: true };
   } catch (err: unknown) {
     return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function getTelemetryAnalytics() {
+  try {
+    const statsRes = await pool.query(`
+      SELECT 
+        COALESCE(SUM(input_tokens), 0)::int as "totalInputTokens",
+        COALESCE(SUM(output_tokens), 0)::int as "totalOutputTokens",
+        COALESCE(SUM(reasoning_tokens), 0)::int as "totalReasoningTokens",
+        COALESCE(SUM(transaction_cost), 0.0)::double precision as "totalSpend",
+        COUNT(*)::int as "totalRuns"
+      FROM telemetry_logs
+    `);
+
+    const toolsRes = await pool.query(`
+      SELECT executed_mcp_tools as "executedMcpTools" FROM telemetry_logs
+    `);
+
+    const logsRes = await pool.query(`
+      SELECT 
+        created_at as "createdAt",
+        provider,
+        model_name as "modelName",
+        input_tokens as "inputTokens",
+        output_tokens as "outputTokens",
+        reasoning_tokens as "reasoningTokens",
+        execution_latency_ms as "executionLatencyMs",
+        transaction_cost as "spend"
+      FROM telemetry_logs
+      ORDER BY created_at DESC
+      LIMIT 1000
+    `);
+
+    let totalToolCalls = 0;
+    let successfulToolCalls = 0;
+    const toolCounts: Record<string, { total: number; success: number; latencySum: number }> = {};
+
+    for (const row of toolsRes.rows) {
+      const tools = row.executedMcpTools;
+      if (Array.isArray(tools)) {
+        for (const call of tools) {
+          if (!call || typeof call !== "object") continue;
+          const name = call.toolName || "unknown";
+          const status = call.statusCode || 200;
+          const latency = call.latencyMs || 0;
+          const isSuccess = status >= 200 && status < 300;
+
+          totalToolCalls++;
+          if (isSuccess) successfulToolCalls++;
+
+          if (!toolCounts[name]) {
+            toolCounts[name] = { total: 0, success: 0, latencySum: 0 };
+          }
+          toolCounts[name].total++;
+          if (isSuccess) toolCounts[name].success++;
+          toolCounts[name].latencySum += latency;
+        }
+      }
+    }
+
+    const successRate = totalToolCalls > 0 ? (successfulToolCalls / totalToolCalls) * 100 : 100;
+
+    return {
+      success: true,
+      data: {
+        totalInputTokens: statsRes.rows[0]?.totalInputTokens || 0,
+        totalOutputTokens: statsRes.rows[0]?.totalOutputTokens || 0,
+        totalReasoningTokens: statsRes.rows[0]?.totalReasoningTokens || 0,
+        totalSpend: statsRes.rows[0]?.totalSpend || 0.0,
+        totalRuns: statsRes.rows[0]?.totalRuns || 0,
+        totalToolCalls,
+        successfulToolCalls,
+        successRate: Math.round(successRate * 10) / 10,
+        toolBreakdown: Object.entries(toolCounts).map(([name, stats]) => ({
+          name,
+          total: stats.total,
+          success: stats.success,
+          rate: Math.round((stats.success / stats.total) * 1000) / 10,
+          avgLatencyMs: Math.round(stats.latencySum / stats.total),
+        })),
+        logs: logsRes.rows.map((row) => ({
+          createdAt: row.createdAt ? new Date(row.createdAt).toISOString() : new Date().toISOString(),
+          provider: row.provider || "unknown",
+          modelName: row.modelName || "unknown",
+          inputTokens: Number(row.inputTokens || 0),
+          outputTokens: Number(row.outputTokens || 0),
+          reasoningTokens: Number(row.reasoningTokens || 0),
+          executionLatencyMs: Number(row.executionLatencyMs || 0),
+          spend: Number(row.spend || 0.0),
+        })),
+      }
+    };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error("[getTelemetryAnalytics] Failed:", err);
+    return { success: false, error: errorMsg };
   }
 }
 

@@ -45,6 +45,7 @@ export interface SystemConfig {
     wabaId?: string;
     wabaPhoneNumberId?: string;
     wabaAccessToken?: string;
+    capabilityProfile?: string;
   };
 }
 

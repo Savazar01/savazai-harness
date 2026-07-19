@@ -12,6 +12,10 @@ parameters:
     required: true
   - name: bodyHtml
     type: string
-    description: HTML content for the email body
-    required: true
+    description: Pre-formatted HTML content for the email body (tables, formatting already rendered)
+    required: false
+  - name: markdownContent
+    type: string
+    description: Markdown content that will be converted to HTML for the email body
+    required: false
 ---

@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Send, PanelRightOpen, PanelRightClose, Paperclip, X, ChevronDown, Square } from "lucide-react";
+import { Send, Paperclip, X, ChevronDown, Square } from "lucide-react";
 import { ChatMessage, type ChatMessageData } from "./chat-message";
 import { SystemTrace, type TraceEvent } from "./system-trace";
 import { streamFromBackend } from "@/lib/stream-client";
 import type { SystemConfig } from "@/components/theme-provider";
-import { fetchProviderModels } from "@/app/admin/settings/actions";
+import { fetchProviderModels, updateSystemConfig } from "@/app/admin/settings/actions";
 
 const MODEL_PRESETS: Record<string, string[]> = {
   openai: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo", "o1", "o1-mini"],
@@ -24,6 +24,13 @@ const PROVIDER_LABELS: Record<string, string> = {
   openrouter: "OpenRouter",
   ollama: "Ollama",
   lmstudio: "LM Studio",
+};
+
+const CAPABILITY_PROFILES: Record<string, { label: string; temp: number; maxTokens: number }> = {
+  "fast_creative": { label: "Creative", temp: 0.8, maxTokens: 2048 },
+  "standard_balanced": { label: "Balanced", temp: 0.5, maxTokens: 4096 },
+  "strict_deterministic": { label: "Exact", temp: 0.0, maxTokens: 2048 },
+  "deep_reasoning": { label: "Deep", temp: 0.2, maxTokens: 8192 },
 };
 
 interface ChatWorkspaceProps {
@@ -73,14 +80,16 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
   const [activeModel, setActiveModel] = useState(defaultModel);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [activeTools, setActiveTools] = useState<Set<string>>(new Set());
-  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [capabilityProfile, setCapabilityProfile] = useState(
+    (initialConfig.designTokens as Record<string, unknown>)?.capabilityProfile as string || "standard_balanced"
+  );
   const abortRef = useRef<AbortController | null>(null);
   const threadRegisteredRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const modelInputRef = useRef<HTMLInputElement>(null);
   const [dynamicModels, setDynamicModels] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
@@ -93,15 +102,6 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
       });
     }
   }, [activeProvider, storedProviders]);
-
-  const modelPresets = useMemo(() => {
-    return dynamicModels[activeProvider] || MODEL_PRESETS[activeProvider] || [];
-  }, [activeProvider, dynamicModels]);
-
-  const filteredModelPresets = useMemo(() => {
-    if (!activeModel) return modelPresets;
-    return modelPresets.filter((m) => m.toLowerCase().includes(activeModel.toLowerCase()));
-  }, [modelPresets, activeModel]);
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
@@ -213,6 +213,12 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
       else next.add(tool);
       return next;
     });
+  }, []);
+
+  const handleProfileChange = useCallback(async (profile: string) => {
+    setCapabilityProfile(profile);
+    setProfileDropdownOpen(false);
+    await updateSystemConfig({ capabilityProfile: profile });
   }, []);
 
   const handleSend = useCallback(async () => {
@@ -342,8 +348,6 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
     }
   };
 
-  const modelComboboxId = "model-combobox";
-
   return (
     <div className="flex h-full">
       <div className="flex flex-col flex-1 min-w-0">
@@ -352,13 +356,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
             <h2 className="text-lg font-bold text-white">Agent Workspace</h2>
             <p className="text-xs text-slate-400">Multi-agent chat with LangGraph orchestration</p>
           </div>
-          <button
-            onClick={() => setTraceOpen(!traceOpen)}
-            className="lg:hidden p-2 rounded-xl border border-slate-800 bg-slate-900/40 text-slate-400 hover:text-white transition-colors"
-            aria-label="Toggle trace panel"
-          >
-            {traceOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
-          </button>
+          <div className="hidden lg:block" />
         </div>
 
         <div
@@ -429,7 +427,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
               }}
             />
 
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => fileInputRef.current?.click()}
@@ -478,91 +476,81 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                 )}
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <div className="relative">
                   <button
                     onClick={() => {
-                      setProviderDropdownOpen(!providerDropdownOpen);
-                      setModelDropdownOpen(false);
+                      setProfileDropdownOpen(!profileDropdownOpen);
+                      setProviderDropdownOpen(false);
                     }}
-                    className="flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-800/40 border border-slate-700/40 text-[11px] font-medium text-slate-300 hover:text-white transition-all"
+                    className="flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-800/40 border border-slate-700/40 text-[11px] font-medium text-slate-300 hover:text-white transition-all whitespace-nowrap"
+                    title={`Capability: ${CAPABILITY_PROFILES[capabilityProfile]?.label || capabilityProfile}`}
                   >
-                    {PROVIDER_LABELS[activeProvider] || activeProvider}
+                    {CAPABILITY_PROFILES[capabilityProfile]?.label || capabilityProfile}
                     <ChevronDown className="h-3 w-3 text-slate-500" />
                   </button>
-                  {providerDropdownOpen && (
+                  {profileDropdownOpen && (
                     <>
-                      <div className="fixed inset-0 z-10" onClick={() => setProviderDropdownOpen(false)} />
-                      <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[140px] rounded-xl border border-slate-700/50 bg-[#1a1a28] shadow-xl shadow-black/30 py-1">
-                        {enabledProviders.map((key) => (
+                      <div className="fixed inset-0 z-10" onClick={() => setProfileDropdownOpen(false)} />
+                      <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[160px] rounded-xl border border-slate-700/50 bg-[#1a1a28] shadow-xl shadow-black/30 py-1">
+                        {Object.entries(CAPABILITY_PROFILES).map(([key, cfg]) => (
                           <button
                             key={key}
-                            onClick={() => {
-                              setActiveProvider(key);
-                              setProviderDropdownOpen(false);
-                              if (!storedProviders[key]?.defaultModel) {
-                                const presets = MODEL_PRESETS[key];
-                                setActiveModel(presets?.[0] ?? "");
-                              } else {
-                                setActiveModel(storedProviders[key].defaultModel!);
-                              }
-                            }}
+                            onClick={() => handleProfileChange(key)}
                             className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
-                              key === activeProvider
+                              key === capabilityProfile
                                 ? "bg-indigo-500/15 text-indigo-300"
                                 : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
                             }`}
                           >
-                            {PROVIDER_LABELS[key] || key}
+                            {cfg.label}
+                            <span className="block text-[10px] text-slate-500">Temp: {cfg.temp} &middot; Max: {cfg.maxTokens}</span>
                           </button>
                         ))}
                       </div>
                     </>
                   )}
                 </div>
-
-                <div className="relative" ref={modelInputRef}>
-                  <div className="flex items-center gap-1 rounded-xl bg-slate-800/40 border border-slate-700/40 px-2 py-1 text-[11px]">
-                    <input
-                      type="text"
-                      value={activeModel}
-                      onChange={(e) => {
-                        setActiveModel(e.target.value);
-                        setModelDropdownOpen(true);
-                      }}
-                      onFocus={() => setModelDropdownOpen(true)}
-                      onBlur={() => setTimeout(() => setModelDropdownOpen(false), 200)}
-                      placeholder="model..."
-                      list={modelComboboxId}
-                      className="w-24 bg-transparent border-0 outline-none text-slate-300 placeholder-slate-600 font-medium"
-                    />
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      setProviderDropdownOpen(!providerDropdownOpen);
+                      setProfileDropdownOpen(false);
+                    }}
+                    className="flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-800/40 border border-slate-700/40 text-[11px] font-medium text-slate-300 hover:text-white transition-all max-w-[160px]"
+                    title={`${PROVIDER_LABELS[activeProvider] || activeProvider} / ${activeModel || "—"}`}
+                  >
+                    <span className="truncate">{PROVIDER_LABELS[activeProvider] || activeProvider} &gt; {activeModel || "—"}</span>
                     <ChevronDown className="h-3 w-3 text-slate-500 shrink-0" />
-                  </div>
-                  <datalist id={modelComboboxId}>
-                    {modelPresets.map((m) => (
-                      <option key={m} value={m} />
-                    ))}
-                  </datalist>
-                  {modelDropdownOpen && filteredModelPresets.length > 0 && activeModel.length > 0 && (
+                  </button>
+                  {providerDropdownOpen && (
                     <>
-                      <div className="fixed inset-0 z-10" onClick={() => setModelDropdownOpen(false)} />
-                      <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[160px] max-h-40 overflow-y-auto rounded-xl border border-slate-700/50 bg-[#1a1a28] shadow-xl shadow-black/30 py-1">
-                        {filteredModelPresets.map((m) => (
-                          <button
-                            key={m}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setActiveModel(m);
-                              setModelDropdownOpen(false);
-                            }}
-                            className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
-                              m === activeModel
-                                ? "bg-indigo-500/15 text-indigo-300"
-                                : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
-                            }`}
-                          >
-                            {m}
-                          </button>
+                      <div className="fixed inset-0 z-10" onClick={() => setProviderDropdownOpen(false)} />
+                      <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[200px] max-h-64 overflow-y-auto rounded-xl border border-slate-700/50 bg-[#1a1a28] shadow-xl shadow-black/30 py-1">
+                        {enabledProviders.map((key) => (
+                          <div key={key}>
+                            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-900/40">
+                              {PROVIDER_LABELS[key] || key}
+                            </div>
+                            {(dynamicModels[key] || MODEL_PRESETS[key] || []).map((m) => (
+                              <button
+                                key={m}
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  setActiveProvider(key);
+                                  setActiveModel(m);
+                                  setProviderDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-3 py-1 text-xs transition-colors ${
+                                  key === activeProvider && m === activeModel
+                                    ? "bg-indigo-500/15 text-indigo-300"
+                                    : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
+                                }`}
+                              >
+                                {m}
+                              </button>
+                            ))}
+                          </div>
                         ))}
                       </div>
                     </>

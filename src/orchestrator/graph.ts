@@ -1,6 +1,7 @@
 import { StateGraph, Annotation, START, END, MemorySaver } from "@langchain/langgraph";
 import { z } from "zod";
 import { PrivacyGateway } from "../utils/privacy-gateway.js";
+import { convertMarkdownToHtml } from "../utils/config-registry.js";
 import { skillTools } from "../utils/skills-loader.js";
 import { llmSwitchboard } from "../services/llm-switchboard.js";
 import { db } from "../db/index.js";
@@ -79,6 +80,7 @@ export const GraphStateSchema = z.object({
       recipients: z.array(z.string()),
       subject: z.string(),
       body: z.string(),
+      bodyHtml: z.string().optional(),
       metadata: z.record(z.any()).optional(),
     })
   ).optional(),
@@ -208,7 +210,7 @@ const StateAnnotation = Annotation.Root({
     default: () => undefined,
   }),
   pendingCommunications: Annotation<
-    Array<{ recipients: string[]; subject: string; body: string; metadata?: Record<string, any> }> | undefined
+    Array<{ recipients: string[]; subject: string; body: string; bodyHtml?: string; metadata?: Record<string, any> }> | undefined
   >({
     reducer: (x, y) => y !== undefined ? y : (x ?? []),
     default: () => [],
@@ -372,6 +374,98 @@ function buildTimestamp(): string {
   return new Date().toISOString();
 }
 
+function convertZodToJsonSchema(schema: any): any {
+  if (!schema) return {};
+
+  let current = schema;
+  while (current && current._def) {
+    if (current instanceof z.ZodDefault) {
+      current = current._def.innerType;
+    } else if (current instanceof z.ZodOptional) {
+      current = current._def.innerType;
+    } else if (current instanceof z.ZodNullable) {
+      current = current._def.innerType;
+    } else if (current instanceof z.ZodEffects) {
+      current = current._def.schema;
+    } else {
+      break;
+    }
+  }
+
+  if (current instanceof z.ZodObject) {
+    const properties: Record<string, any> = {};
+    const required: string[] = [];
+
+    for (const [key, value] of Object.entries(current.shape)) {
+      properties[key] = convertZodToJsonSchema(value);
+      
+      let isOptional = false;
+      let check = value as any;
+      while (check && check._def) {
+        if (
+          check instanceof z.ZodOptional || 
+          check instanceof z.ZodNullable || 
+          check instanceof z.ZodDefault
+        ) {
+          isOptional = true;
+          break;
+        }
+        if (check._def.innerType) {
+          check = check._def.innerType;
+        } else if (check._def.schema) {
+          check = check._def.schema;
+        } else {
+          break;
+        }
+      }
+      if (!isOptional) {
+        required.push(key);
+      }
+    }
+
+    return {
+      type: "object",
+      properties,
+      required: required.length > 0 ? required : undefined,
+    };
+  }
+
+  if (current instanceof z.ZodArray) {
+    return {
+      type: "array",
+      items: convertZodToJsonSchema(current.element),
+    };
+  }
+
+  if (current instanceof z.ZodEnum) {
+    return {
+      type: "string",
+      enum: current._def.values,
+    };
+  }
+
+  if (current instanceof z.ZodString) {
+    return { type: "string" };
+  }
+
+  if (current instanceof z.ZodNumber) {
+    return { type: "number" };
+  }
+
+  if (current instanceof z.ZodBoolean) {
+    return { type: "boolean" };
+  }
+
+  if (current instanceof z.ZodRecord) {
+    return {
+      type: "object",
+      additionalProperties: true,
+    };
+  }
+
+  return { type: "string" };
+}
+
 class StructuredModelWrapper {
   private providerId: string;
   private modelConfig: any;
@@ -396,12 +490,19 @@ class StructuredModelWrapper {
           llmSwitchboard.bindToolsToProvider(this.providerId, []);
         }
 
+        const jsonSchema = convertZodToJsonSchema(schema);
         const completion = await llmSwitchboard.executeUniversalCompletion({
           messages,
           providerId: this.providerId,
           options: {
             ...options,
-            response_format: { type: "json_object" },
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "response_schema",
+                schema: jsonSchema,
+              },
+            },
           },
         });
 
@@ -467,6 +568,35 @@ class StructuredModelWrapper {
               return tc;
             });
           }
+
+          // Normalize envelopes from flat structures returned by some models
+          if (!parsed.envelopes && (parsed.to || parsed.recipient || parsed.recipients) && parsed.subject && parsed.body) {
+            const rec = parsed.to || parsed.recipient || parsed.recipients;
+            parsed.envelopes = [
+              {
+                recipients: Array.isArray(rec) ? rec : [rec],
+                subject: parsed.subject,
+                body: parsed.body,
+                metadata: parsed.metadata,
+              }
+            ];
+          }
+
+          // Normalize each envelope structure to use standard keys
+          if (parsed.envelopes && Array.isArray(parsed.envelopes)) {
+            parsed.envelopes = parsed.envelopes.map((env: any) => {
+              if (env && typeof env === "object") {
+                const rec = env.recipients || env.to || env.recipient;
+                return {
+                  recipients: Array.isArray(rec) ? rec : rec ? [rec] : [],
+                  subject: env.subject || "",
+                  body: env.body || "",
+                  metadata: env.metadata,
+                };
+              }
+              return env;
+            });
+          }
         }
 
         try {
@@ -486,7 +616,7 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
   const requestId = config?.configurable?.requestId ?? "global";
   const telemetry = TelemetryGateway.getInstance();
 
-  telemetry.startTrace(requestId, "langgraph-run");
+  telemetry.startTrace(requestId, "langgraph-run", config?.configurable?.thread_id);
   const span = telemetry.startSpan(requestId, "supervisorNode");
 
   try {
@@ -560,12 +690,30 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
 
       let customGlobalPrompt = "";
       let customOrchestrationRules = "";
+      let profileInstructions = "";
       try {
         const configs = await db.select().from(systemConfigurations).limit(1);
         if (configs.length > 0 && configs[0].designTokens) {
           const tokens = configs[0].designTokens as any;
           customGlobalPrompt = tokens.globalSystemPrompt || "";
           customOrchestrationRules = tokens.orchestrationRules || "";
+          
+          const capabilityProfile = tokens.capabilityProfile || "standard_balanced";
+          if (capabilityProfile === "strict_deterministic") {
+            profileInstructions = `
+[CAPABILITY STUDIO CONSTRAINTS - STRICT / DETERMINISTIC]:
+- ZERO CONVERSATIONAL GATING: You must immediately delegate task routing without asking follow-up questions or inserting chat filler.
+- DIRECT TOOL TRIGGERING: Populate the delegation queue to immediately invoke the relevant backend APIs.
+- ABSOLUTE DOMAIN-AGNOSTIC LIMITS: Do not assume domain contexts or makeEvent assumptions; strictly follow the provided tool list boundaries.`;
+          } else if (capabilityProfile === "fast_creative") {
+            profileInstructions = `
+[CAPABILITY STUDIO CONSTRAINTS - FAST / CREATIVE]:
+- Prioritize rapid sequential execution and allow creative/flexible interpretations of the user's intent.`;
+          } else if (capabilityProfile === "deep_reasoning") {
+            profileInstructions = `
+[CAPABILITY STUDIO CONSTRAINTS - DEEP REASONING]:
+- Reason step-by-step about the user's implicit intent before deciding delegation. Draw logical connections between multi-step tasks.`;
+          }
         }
       } catch (e) {
         console.error("[supervisorNode] Failed to load custom configurations:", e);
@@ -576,17 +724,19 @@ Your sole responsibility is task delegation and coordination. You must NOT execu
 Instead, you must analyze the user prompt and decide which specialized sub-agents need to run to fulfill the request.
 ${customGlobalPrompt ? `Global System Instructions:\n${customGlobalPrompt}\n` : ""}
 ${customOrchestrationRules ? `Orchestration Rules:\n${customOrchestrationRules}\n` : ""}
+${profileInstructions}
 
 Available Sub-Agents:
 1. DataFetchAgent: Specialized in gathering, listing, or retrieving data. Use this if the user wants a report, summary, details, or lists of weddings, guests, tasks, ceremonies, etc.
 2. MutationAgent: Specialized in database writing, creation, updates, or deletions. Use this if the user wants to create, change, delete, or add any wedding, guest, task, ceremony, etc.
 3. CommunicationAgent: Specialized in sending emails, notifications, alerts, or messages to recipients. Use this if the user wants to send an email or message to a guest, vendor, or anyone.
+4. SynthesisAgent: Specialized in compiling data into clean Markdown tables and formatted summaries. Run BEFORE CommunicationAgent when email content needs formatted tables.
 
 Analyze the user's intent:
 - If the user wants to fetch data, delegate to 'DataFetchAgent'.
 - If the user wants to mutate data, delegate to 'MutationAgent'.
-- If the user wants to send an email, message, or notification, delegate to 'CommunicationAgent'.
-- If they want a mixture (e.g., fetch guest list details and then email it to someone), delegate in sequence: ['DataFetchAgent', 'CommunicationAgent'].
+- If the user wants to send an email, message, or notification, delegate in sequence: FIRST delegate to 'SynthesisAgent' (to compute clean formatted tables), THEN delegate to 'CommunicationAgent' (to send the email).
+- If they want a mixture (e.g., fetch guest list details and then email it to someone), delegate in sequence: ['DataFetchAgent', 'SynthesisAgent', 'CommunicationAgent'].
 
 You MUST respond with a JSON object strictly matching this schema:
 {
@@ -613,7 +763,7 @@ Return only the raw JSON.`;
           const model = new StructuredModelWrapper(currentApp, state.modelConfig);
           const structuralPlanner = model.withStructuredOutput(
             z.object({
-              delegationQueue: z.array(z.enum(["MutationAgent", "DataFetchAgent", "CommunicationAgent"])),
+              delegationQueue: z.array(z.enum(["MutationAgent", "DataFetchAgent", "CommunicationAgent", "SynthesisAgent"])).default([]),
               target_action: z.enum([
                 "sub_agent",
                 "mcp_action",
@@ -632,6 +782,7 @@ Return only the raw JSON.`;
           queue = decision.delegationQueue.map((agent: string) => {
             if (agent === "MutationAgent") return "MutationAgent";
             if (agent === "CommunicationAgent") return "CommunicationAgent";
+            if (agent === "SynthesisAgent") return "SynthesisAgent";
             return "DataFetchAgent";
           });
           
@@ -657,12 +808,17 @@ Return only the raw JSON.`;
         routingDecision = "MutationAgent";
       } else if (nextAgent === "CommunicationAgent" || nextAgent === "communicationAgent") {
         routingDecision = "CommunicationAgent";
+      } else if (nextAgent === "SynthesisAgent" || nextAgent === "synthesisAgent") {
+        routingDecision = "SynthesisAgent";
       } else {
         routingDecision = "DataFetchAgent";
       }
     } else {
-      // Queue is empty, delegation is complete -> Go to SynthesisAgent
-      if (Object.keys(delegatedTasks).length > 0) {
+      // Queue is empty, delegation is complete
+      const synthesisCompleted = state.delegatedTasks?.SynthesisAgent?.status === "completed";
+      const synthesisOutputSet = !!state.synthesisOutput;
+      const synthesisAlreadyDone = synthesisCompleted || synthesisOutputSet;
+      if (Object.keys(delegatedTasks).length > 0 && !synthesisAlreadyDone) {
         routingDecision = "SynthesisAgent";
       } else {
         routingDecision = "respond";
@@ -719,10 +875,35 @@ function isDataFetchTool(name: string): boolean {
 async function executeToolByName(
   toolName: string,
   toolArgs: Record<string, any>,
-  state: typeof StateAnnotation.State
+  state: typeof StateAnnotation.State,
+  requestId: string
 ): Promise<string> {
+  const startTime = Date.now();
+  let statusCode = 200;
   let resultText: string;
-  
+
+  let estimatedToolCost: number | undefined;
+  if (toolName.startsWith("create_") || toolName.startsWith("update_") || toolName.startsWith("delete_")) {
+    estimatedToolCost = 0.005;
+  } else if (toolName.startsWith("list_") || toolName.startsWith("get_")) {
+    estimatedToolCost = 0.001;
+  }
+
+  try {
+    const configs = await db.select().from(systemConfigurations).limit(1);
+    if (configs.length > 0 && configs[0].designTokens) {
+      const tokens = configs[0].designTokens as any;
+      if (tokens.toolPricing && typeof tokens.toolPricing === "object") {
+        const customPrice = tokens.toolPricing[toolName];
+        if (typeof customPrice === "number") {
+          estimatedToolCost = customPrice;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to load tool pricing config:", err);
+  }
+
   let customSkills: any[] = [];
   try {
     const configs = await db.select().from(systemConfigurations).limit(1);
@@ -759,9 +940,11 @@ async function executeToolByName(
       const runner = new Function("args", customSkill.executableScriptCode);
       const executionResult = await runner(toolArgs);
       resultText = typeof executionResult === "object" ? JSON.stringify(executionResult) : String(executionResult);
+      statusCode = 200;
     } catch (err: any) {
       console.error(`Custom skill execution failed for ${toolName}:`, err);
       resultText = JSON.stringify({ error: `Custom skill execution failed: ${err.message}` });
+      statusCode = 500;
     }
   } else if (localSkill) {
     const params = localSkill.parameters || [];
@@ -774,85 +957,103 @@ async function executeToolByName(
         }
       }
     }
-    const executionResult = await localSkill.execute(toolArgs);
-    resultText = JSON.stringify(executionResult);
+    try {
+      const executionResult = await localSkill.execute(toolArgs);
+      resultText = JSON.stringify(executionResult);
+      statusCode = 200;
+    } catch (err: any) {
+      console.error(`Local skill execution failed for ${toolName}:`, err);
+      resultText = JSON.stringify({ error: `Local skill execution failed: ${err.message}` });
+      statusCode = 500;
+    }
   } else {
     // Remote MCP tool
-    const configs = await db.select().from(systemConfigurations).limit(1);
-    const mcpServersValue = configs[0]?.designTokens?.mcpServers;
-    let mcpServersObj: any = {};
-    if (mcpServersValue) {
-      if (typeof mcpServersValue === "string") {
-        try {
-          const parsed = JSON.parse(mcpServersValue);
-          mcpServersObj = parsed.mcpServers || parsed;
-        } catch (e) {
-          console.error("Failed to parse mcpServers:", e);
+    try {
+      const configs = await db.select().from(systemConfigurations).limit(1);
+      const mcpServersValue = configs[0]?.designTokens?.mcpServers;
+      let mcpServersObj: any = {};
+      if (mcpServersValue) {
+        if (typeof mcpServersValue === "string") {
+          try {
+            const parsed = JSON.parse(mcpServersValue);
+            mcpServersObj = parsed.mcpServers || parsed;
+          } catch (e) {
+            console.error("Failed to parse mcpServers:", e);
+          }
+        } else {
+          mcpServersObj = mcpServersValue.mcpServers || mcpServersValue;
         }
-      } else {
-        mcpServersObj = mcpServersValue.mcpServers || mcpServersValue;
       }
-    }
 
-    let activeServerConfig: any = null;
-    let serversToScan = Object.keys(mcpServersObj);
-    if (state.activeTools) {
-      serversToScan = serversToScan.filter((s) => state.activeTools!.includes(s));
-    }
+      let activeServerConfig: any = null;
+      let serversToScan = Object.keys(mcpServersObj);
+      if (state.activeTools) {
+        serversToScan = serversToScan.filter((s) => state.activeTools!.includes(s));
+      }
 
-    for (const serverKey of serversToScan) {
-      const config = mcpServersObj[serverKey];
-      if (!config || !config.serverUrl) continue;
-      const tools = await fetchMcpTools(config.serverUrl, config.headers || {});
-      const toolObj = tools.find((t: any) => t.name === toolName);
-      if (toolObj) {
-        activeServerConfig = config;
-        const props = toolObj.inputSchema?.properties || toolObj.parameters?.properties || {};
-        for (const propName of Object.keys(props)) {
-          if (toolArgs[propName] === undefined) {
-            const ambientValue = await resolveAmbientParameter(propName);
-            if (ambientValue !== undefined) {
-              toolArgs[propName] = ambientValue;
+      for (const serverKey of serversToScan) {
+        const config = mcpServersObj[serverKey];
+        if (!config || !config.serverUrl) continue;
+        const tools = await fetchMcpTools(config.serverUrl, config.headers || {});
+        const toolObj = tools.find((t: any) => t.name === toolName);
+        if (toolObj) {
+          activeServerConfig = config;
+          const props = toolObj.inputSchema?.properties || toolObj.parameters?.properties || {};
+          for (const propName of Object.keys(props)) {
+            if (toolArgs[propName] === undefined) {
+              const ambientValue = await resolveAmbientParameter(propName);
+              if (ambientValue !== undefined) {
+                toolArgs[propName] = ambientValue;
+              }
             }
           }
+          break;
         }
-        break;
       }
-    }
 
-    if (!activeServerConfig) {
-      throw new Error(`MCP tool "${toolName}" could not be resolved on any active server.`);
-    }
+      if (!activeServerConfig) {
+        statusCode = 404;
+        throw new Error(`MCP tool "${toolName}" could not be resolved on any active server.`);
+      }
 
-    const res = await fetch(activeServerConfig.serverUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(activeServerConfig.headers || {}),
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 2,
-        method: "tools/call",
-        params: {
-          name: toolName,
-          arguments: toolArgs,
+      const res = await fetch(activeServerConfig.serverUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(activeServerConfig.headers || {}),
         },
-      }),
-      signal: AbortSignal.timeout(60000),
-    });
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 2,
+          method: "tools/call",
+          params: {
+            name: toolName,
+            arguments: toolArgs,
+          },
+        }),
+        signal: AbortSignal.timeout(60000),
+      });
 
-    if (!res.ok) {
-      throw new Error(`Remote MCP invocation failed: HTTP ${res.status}`);
-    }
+      statusCode = res.status;
+      if (!res.ok) {
+        throw new Error(`Remote MCP invocation failed: HTTP ${res.status}`);
+      }
 
-    const data = (await res.json()) as any;
-    if (data.result && Array.isArray(data.result.content)) {
-      resultText = data.result.content.map((c: any) => c.text || "").join("\n");
-    } else {
-      resultText = JSON.stringify(data.result || data);
+      const data = (await res.json()) as any;
+      if (data.result && Array.isArray(data.result.content)) {
+        resultText = data.result.content.map((c: any) => c.text || "").join("\n");
+      } else {
+        resultText = JSON.stringify(data.result || data);
+      }
+    } catch (err: any) {
+      console.error(`Remote MCP execution failed for ${toolName}:`, err);
+      if (statusCode === 200) statusCode = 500;
+      resultText = JSON.stringify({ error: err.message });
     }
   }
+
+  const latencyMs = Date.now() - startTime;
+  TelemetryGateway.getInstance().recordMcpToolCall(requestId, toolName, latencyMs, statusCode, estimatedToolCost);
 
   const { cleanText } = extractAndFormatImages(resultText);
   return cleanText;
@@ -1048,7 +1249,7 @@ You MUST output ONLY valid JSON.`
             }
           }
 
-          const cleanResultText = await executeToolByName(call.name, call.args, state);
+          const cleanResultText = await executeToolByName(call.name, call.args, state, requestId);
           const toolMsg = {
             role: "system" as const,
             content: `Tool Execution Result for ${call.name}:\n${cleanResultText}`,
@@ -1145,24 +1346,32 @@ async function communicationAgentNode(state: typeof StateAnnotation.State, confi
   console.log("[CommunicationAgent] Running communication agent lane...");
   let envelopes = state.pendingCommunications || [];
 
-  // If envelopes are empty, invoke the LLM to inspect message history and construct envelopes
+  // If envelopes are empty, extract recipients from conversation via LLM
   if (envelopes.length === 0) {
     console.log("[CommunicationAgent] No pending communications in state. Analyzing history to construct envelopes...");
     try {
       await registerAppProvider(currentApp, state.modelConfig);
       const model = new StructuredModelWrapper(currentApp, state.modelConfig);
-      
+      const hasSynthesisOutput = state.synthesisOutput && state.synthesisOutput.length > 10;
       const prompt = `You are the CommunicationAgent. Your role is to formulate email envelopes based on the user's intent and the data gathered so far in the conversation history.
 Each email envelope MUST contain:
 - recipients: string[] (The list of recipient email addresses. Look for email addresses in the user request or tool results)
 - subject: string (A concise and relevant subject line)
-- body: string (The actual HTML or plain text body of the email. Write a fully polished, professional message body satisfying the user's requirements)
+${hasSynthesisOutput ? "- body: string (Write a brief summary like 'See details above' — the full body will be injected separately)" : "- body: string (The actual HTML or plain text body of the email. Write a fully polished, professional message body satisfying the user's requirements)" }
 - metadata: Record<string, any> (Any helpful metadata keys, e.g. target_audience, app_domain)
 
-Ensure that you look at the tool outputs (such as guest lists, wedding details, or task summaries) in the recent messages to compile accurate information in the email body.
+INSTRUCTION RULES FOR COMPILING THE EMAIL BODY:
+1. EXHAUSTIVE DATA INCLUSION: Analyze the user's latest request carefully. You MUST extract and compile ALL categories of data requested (e.g., if they ask for guest list details AND vendor details, you must include BOTH datasets). Do not summarize, omit, or leave out any requested details.
+2. STRICT MARKDOWN TABLE FORMATTING: For every list of records, database table, or set of entities (such as guests, vendors, or tasks) present in the tool results, you MUST format them as a valid Markdown Table (using '| Header |' pipes and alignment lines like '|---|').
+3. NO PARAGRAPH MERGING: Do NOT merge lists or tabular datasets into a single plain text sentence or list. Each dataset must be fully expanded into its own Markdown Table.
+4. PRESERVE STRUCTURE ALWAYS: Even if the user asks for a 'brief', 'summary', or 'short' update, you MUST still format tabular datasets (guests, vendors, etc.) as Markdown Tables. Do NOT condense lists into plain paragraphs.
+5. HEADINGS & SEPARATION: Separate different datasets with descriptive headings (e.g., '### Guest List Overview' and '### Vendor Details') and double line breaks.
+6. PROFESSIONAL WRITING: Write a fully polished, professional, and beautifully structured email body.
+
 If no recipient email address is found or the user did not specify sending any message, return an empty list of envelopes.
 
 You MUST respond with a JSON object containing the "envelopes" array. The word "json" must be present in your system instructions.`;
+
 
       const responseSchema = z.object({
         envelopes: z.array(
@@ -1172,19 +1381,24 @@ You MUST respond with a JSON object containing the "envelopes" array. The word "
             body: z.string(),
             metadata: z.record(z.any()).optional(),
           })
-        )
+        ).default([])
       });
 
       const planner = model.withStructuredOutput(responseSchema);
-      // Construct message history for the LLM
       const messagesForLlm = [
         { role: "system" as const, content: prompt },
         ...state.messages.map((m) => ({ role: m.role as any, content: m.content })),
       ];
 
-      const result = await planner.invoke(messagesForLlm);
+      const precomputedBody = hasSynthesisOutput ? state.synthesisOutput : null;
+      const precomputedHtml = precomputedBody ? convertMarkdownToHtml(precomputedBody) : null;
+      const result = await planner.invoke(messagesForLlm, { requestId });
       if (result && result.envelopes) {
-        envelopes = result.envelopes;
+        envelopes = result.envelopes.map((env: { recipients: string[]; subject: string; body: string; metadata?: Record<string, any> }) => ({
+          ...env,
+          body: precomputedBody || env.body,
+          bodyHtml: precomputedHtml || convertMarkdownToHtml(env.body),
+        }));
         console.log(`[CommunicationAgent] Constructed ${envelopes.length} envelopes from LLM.`);
       }
     } catch (err) {
@@ -1193,31 +1407,47 @@ You MUST respond with a JSON object containing the "envelopes" array. The word "
   }
 
   const receipts: Array<{ recipient: string; subject: string; success: boolean; error?: string; id?: string }> = [];
+  const errorMessages: string[] = [];
 
   if (envelopes.length > 0) {
     console.log(`[CommunicationAgent] Dispatched queue has ${envelopes.length} envelopes. Refreshing credentials...`);
-    const accessToken = await getValidGmailAccessToken();
+    let accessToken: string | undefined;
+    try {
+      accessToken = await getValidGmailAccessToken();
+    } catch (err: any) {
+      const msg = err?.message || String(err);
+      console.error("[CommunicationAgent] Failed to obtain valid Gmail OAuth access token:", msg);
+      errorMessages.push(`Gmail authentication failed: ${msg}`);
+    }
 
-    if (!accessToken) {
-      console.error("[CommunicationAgent] Failed to obtain valid Gmail OAuth access token. Aborting dispatches.");
-      for (const env of envelopes) {
+    for (const env of envelopes) {
+      if (!accessToken) {
         receipts.push({
           recipient: env.recipients.join(", "),
           subject: env.subject,
           success: false,
-          error: "Missing or invalid OAuth access token",
+          error: errorMessages[0] || "Missing or invalid OAuth access token",
         });
+        continue;
       }
-    } else {
-      for (const env of envelopes) {
-        console.log(`[CommunicationAgent] Sending email to ${env.recipients.join(", ")}...`);
-        const sendResult = await sendGmailEmail(accessToken, env.recipients, env.subject, env.body);
+      console.log(`[CommunicationAgent] Sending email to ${env.recipients.join(", ")}...`);
+      try {
+        const sendResult = await sendGmailEmail(accessToken, env.recipients, env.subject, env.body, env.bodyHtml);
         receipts.push({
           recipient: env.recipients.join(", "),
           subject: env.subject,
-          success: sendResult.success,
-          error: sendResult.error,
+          success: true,
           id: sendResult.id,
+        });
+      } catch (err: any) {
+        const msg = err?.message || String(err);
+        console.error(`[CommunicationAgent] Failed to send email to ${env.recipients.join(", ")}:`, msg);
+        errorMessages.push(msg);
+        receipts.push({
+          recipient: env.recipients.join(", "),
+          subject: env.subject,
+          success: false,
+          error: msg,
         });
       }
     }
@@ -1235,16 +1465,24 @@ You MUST respond with a JSON object containing the "envelopes" array. The word "
 
   telemetry.endSpan(requestId, span);
 
-  // Append results silently directly to the hidden background thread state.
-  // We do NOT return any user-facing assistant messages containing raw email bodies.
+  // Append receipts as system message + surface any dispatch errors as user-visible messages
+  const resultMessages: Array<{ role: "system" | "assistant"; content: string; timestamp: string }> = [
+    {
+      role: "system" as const,
+      content: `[CommunicationAgent] Dispatch Receipts: ${JSON.stringify(receipts)}`,
+      timestamp: new Date().toISOString(),
+    },
+  ];
+  for (const errMsg of errorMessages) {
+    resultMessages.push({
+      role: "assistant" as const,
+      content: `Email dispatch error: ${errMsg}`,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   return {
-    messages: [
-      {
-        role: "system" as const,
-        content: `[CommunicationAgent] Dispatch Receipts: ${JSON.stringify(receipts)}`,
-        timestamp: new Date().toISOString(),
-      },
-    ],
+    messages: resultMessages,
     pendingCommunications: clearedCommunications,
     delegatedTasks: updatedTasks,
     routingDecision: "supervisor" as const,
@@ -1290,8 +1528,10 @@ async function synthesisAgentNode(state: typeof StateAnnotation.State, config?: 
   }
 
   const gateway = new PrivacyGateway();
+  const currentTurnMessages = state.messages;
+
   const formattedHistory: Array<{ role: "user" | "assistant" | "system"; content: string }> = [];
-  for (const m of state.messages) {
+  for (const m of currentTurnMessages) {
     let content = m.content;
     if (m.role === "user") {
       const { maskedText } = gateway.maskPayload(content);
@@ -1341,10 +1581,16 @@ ${customOrchestrationRules ? `Orchestration Rules:\n${customOrchestrationRules}\
 
   telemetry.endSpan(requestId, span);
 
+  const updatedSynthesisTasks = {
+    ...state.delegatedTasks,
+    SynthesisAgent: { status: "completed", timestamp: new Date().toISOString() },
+  };
+
   return {
     synthesisOutput: responseText,
-    routingDecision: "respond" as const,
-    target_action: "respond" as const,
+    delegatedTasks: updatedSynthesisTasks,
+    routingDecision: "supervisor" as const,
+    target_action: "supervisor" as const,
   };
 }
 
@@ -1431,7 +1677,7 @@ const graph = new StateGraph(StateAnnotation)
   .addEdge("DataFetchAgent", "supervisorNode")
   .addEdge("MutationAgent", "supervisorNode")
   .addEdge("CommunicationAgent", "supervisorNode")
-  .addEdge("SynthesisAgent", "respondNode")
+  .addEdge("SynthesisAgent", "supervisorNode")
   .addEdge("respondNode", END);
 
 function extractAndFormatImages(rawText: string): { cleanText: string; markdownImages: string[] } {
