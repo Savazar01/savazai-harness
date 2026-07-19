@@ -1,99 +1,122 @@
-# SavazAI Multi-Agent Operating System & Control Plane
+# SavazAI: Enterprise Multi-Agent Operating System & Control Plane
 
-An enterprise-grade, application-agnostic agentic orchestration engine driven by stateful LangGraph loops, deterministic data privacy gateways, and real-time streaming NDJSON infrastructure.
-
-## 🛠️ Project Architecture
-
-We operate under a strict separation of concerns at the folder level:
-- **Root Directory (`./`)**: The SavazAI Engine Backend (Node.js, Express, LangGraph, Drizzle ORM, pgvector) listening on host port `3055` (Internal container DNS: `http://savazai-backend:3055`).
-- **Sub-Folder Workspace (`./savazai-console`)**: The SavazAI Console Frontend (Next.js 16.2 App Router, React 19.2+, Better-Auth, Tailwind CSS, Shadcn UI) listening on host port `3056`.
-- **Database (pgvector)**: Host Port `5622` / Internal Container Port `5432`.
+An elite, application-agnostic agentic orchestration engine driven by stateful LangGraph loops, deterministic data privacy gateways, dynamic MCP client registries, and a persistent cryptographic credential vault.
 
 ---
 
-## ⚡ Key Core Features Deployed
+## 🛠️ System Architecture & Ports
 
-### 1. Proactive MCP Schema Ingestion on Session Boot
-- **Automatic Integration Ingestion**: On session initialization, the backend pre-loads all registered MCP servers (e.g., `wedplanai-prod`) directly from the system configurations database table into the graph's `activeTools` payload. This guarantees the supervisor planner has complete tool awareness on the **very first turn** without requiring prompt hints.
-- **Dynamic Tool Schema Injections**: The presentation layer (`respondNode`) dynamically ingests tool registry arrays to maintain full active capability awareness.
-
-### 2. Conversational Short-Circuit Interceptors
-- **Intent Safeguard**: If the planner LLM returns a conversational text block (`routingDecision: "respond"`) on a turn requesting mutations (like `update`, `create`, or `delete`) before the matching tool has run, the supervisor node intercepts it.
-- **Deterministic Tool Mapping**: Discards the short-circuit response, maps the user intent to the correct mutation tool (e.g., `update_wedding`), parses arguments (e.g., dates) directly from the prompt using regex, and executes the mutation.
-
-### 3. Crucial Post-Mutation Sequential Loops
-- **Data Flow Guarantee**: Ensures that after any mutation is executed (like `update_wedding` or `create_task`), the graph loops back and forces data gathering tools (like `get_wedding` or `list_tasks`) to run *before* generating a response.
-- **Flow**: `[Update Entity] -> [Gather Entities] -> [Synthesize Response]`.
-
-### 4. ISO Date Standardization
-- **Validation Guard**: Cleans ordinal day suffixes (like `st`, `nd`, `rd`, `th`) from input date parameters to prevent JavaScript `Date` parser failures, standardizing strings to ISO compliance before dispatching to the MCP client.
-- **Field Key Mapping**: Re-keys incoming `date` argument parameters to `weddingDate` to match the exact schema expected by wedding mutation tools, preventing `"No valid fields provided for update"` errors.
-
-### 5. Stream Token Bracket Purging
-- **NDJSON Stream Sanitization**: A regex tokenizer sanitizer in the SSE event loop strips out trailing braces (`}`, `}}`) or leaking JSON routing symbols from streaming chunks, delivering a clean text stream to the UI.
-
-### 6. Premium Markdown Layouts (Tables, Lists, & Images)
-- **GFM Render Engines**: Employs `react-markdown` and `remark-gfm` in the console UI.
-- **Layout Styling**: Maps pipe tables to clean, styled HTML tables with padding and borders, lists to `list-outside pl-5` alignments, and media wrappers (`![Visual Asset](url)`) to responsive `<img>` cards.
-
-### 7. Background Dynamic Communication Subsystem & Persistent Cryptographic Vault
-- **Dynamic Worker Node**: Registers a background `CommunicationAgent` node in the LangGraph loop, enabling it to asynchronously dispatch summaries and notifications.
-- **Loop Termination Guard**: Clears enqueued communication envelopes immediately after dispatch, preventing infinite dispatch loops.
-- **Ambient Token Rotation**: Automatically intercepts API calls, verifies credentials, and rotates expired OAuth access tokens, persisting fresh tokens back to the database.
-- **Cryptographic Encryption-at-Rest**: Encrypts sensitive OAuth credentials (`gmailClientId`, `gmailClientSecret`, `gmailRefreshToken`) in `system_configurations` using AES-256-CBC and `process.env.MASTER_VAULT_SECRET`. Decrypts them transparently on database load (frontend) and prior to API dispatches (backend).
-- **MIME Subject & HTML Body Refactor**: Compiles text summaries into beautiful, responsive HTML email layouts and encodes subjects using MIME encoded-words (`=?utf-8?B?...?=`) to preserve Unicode characters and formatting.
-- **Static Token Paste Paradigm**: Deprecates Authorized Redirect URIs in the settings layout in favor of a secure, direct REFRESH_TOKEN entry box.
-
-### 8. Dynamic Framework-Level Telemetry Engine & Spend Ledger
-- **Zero Context Leakage**: Logs exact prompt, completion, and reasoning token usages natively from the completion driver response metadata rather than relying on transient ambient variables.
-- **Dynamic Ledger Sorting & Model Filtering**: Renders a ledger table with sorting on dates and spends, date pickers, multi-select provider and model filters dynamically populated from database records, and a client-side CSV downloader.
-- **Null Safety Validation Gate**: Intercepts writes on trace completion. If provider, model, or input tokens are empty or zero during a valid turn, it throws a runtime exception (`[Telemetry Ledger Critical Error]: Missing true LLM context on write.`) to block database pollution.
+The project enforces a strict physical separation of concerns:
+- **Root Directory (`./`)**: The SavazAI Engine Backend (Node.js, Express, LangGraph, Drizzle ORM, pgvector) listening on primary host port **`3055`** (Internal Docker DNS: `http://savazai-backend:3055`).
+- **Console Frontend Workspace (`./savazai-console`)**: The SavazAI Console User Interface (Next.js App Router, Better-Auth, Tailwind CSS, Shadcn UI) listening on primary host port **`3056`**.
+- **Database (pgvector)**: Runs PostgreSQL 17 with vector search capabilities on host port **`5622`** (internal container port `5432`).
 
 ---
 
-## 🔐 Production Environment Variables Guide
+## 📦 Dynamic Tech Stack Profile
 
-### Backend (`.env` / Coolify Environment Variables)
-- `DATABASE_URL=postgresql://sz_harness_admin:<password>@savazai-db:5432/savazai_harness`
-- `PORT=3055`
-- `LLM_MODEL_NAME=gpt-4o-mini`
+Based on our active codebase audit, the architecture compiles under the following stack parameters:
 
-### Frontend (`savazai-console/.env.local` / Coolify Build Secrets)
-- `NEXT_PUBLIC_APP_URL=http://localhost:3056`
-- `NEXT_PUBLIC_HARNESS_API_URL=http://savazai-backend:3055` (Adjusted to internal compose DNS or public domain)
-- `BETTER_AUTH_SECRET=<generate_secure_random_key>`
-- `BETTER_AUTH_URL=http://localhost:3056`
+### Core Engine (Backend)
+- **State Orchestration**: `@langchain/langgraph` `v0.2.0` (with `@langchain/langgraph-checkpoint-postgres` `v0.0.1` for persistent graph thread checkpoints)
+- **Database Access & Schemas**: `drizzle-orm` `v0.45.2` (utilizing `drizzle-kit` `v0.30.0` for migration structures)
+- **API Server & Routing**: `express` `v4.21.0` (with `postgres` `v3.4.5` client bindings)
+- **Compilation & Linting**: `typescript` `v5.7.0` (governed by `eslint` `v10.6.0` & `typescript-eslint` `v8.63.0`)
+
+### Control Plane (Frontend Console)
+- **Application Framework**: `next` `v16.2.10` (featuring Turbopack build pipelines)
+- **Rendering Library**: `react` `v19.2.4` and `react-dom` `v19.2.4`
+- **Identity & Authentication**: `better-auth` `v1.6.23`
+- **Utility CSS Engine**: `tailwindcss` `v4.0.0` (compiled with `@tailwindcss/postcss` `v4.0.0`)
 
 ---
 
-## 🚀 local-First Validation Loop & VPS Deployment
+## 🔐 Configuration & Security Schema
 
-Before synchronizing deployment files or pushing to GitHub, you must execute the full local quality validation cycle to ensure zero compile, type, or lint regressions:
+### The Cryptographic Vault (`MASTER_VAULT_SECRET`)
+To protect PII and external access tokens, the platform embeds a zero-trust cryptographic layer. The `MASTER_VAULT_SECRET` is a **mandatory** environment variable.
+- **Algorithm**: `aes-256-cbc` symmetric block cipher encryption.
+- **Function**: Automatically encrypts sensitive API credentials and OAuth payload keys (such as `gmailClientId`, `gmailClientSecret`, and `gmailRefreshToken`) within the `system_configurations` database entity before writing them to disk.
+- **Hydration**: Dynamically decrypts secret keys only within runtime memory structures during session loops (e.g., token rotation workers or email dispatcher triggers).
 
+### Environment Configuration Files
+
+Ensure the following local variables are configured before spinning up the environment:
+
+#### Engine Backend (`./.env`)
+```ini
+DATABASE_URL=postgresql://sz_harness_admin:sz_secure_vault_pass_99@localhost:5622/savazai_harness
+POSTGRES_USER=sz_harness_admin
+POSTGRES_PASSWORD=sz_secure_vault_pass_99
+POSTGRES_DB=savazai_harness
+MASTER_VAULT_SECRET=change_this_to_a_random_32_character_secret
+LLM_PROVIDER_TYPE=openai-compatible
+LLM_BASE_URL=http://localhost:11434/v1
+LLM_MODEL_NAME=gpt-4o-mini
+LLM_API_KEY=your_llm_provider_key
+```
+
+#### Console Frontend (`./savazai-console/.env`)
+```ini
+NEXT_PUBLIC_HARNESS_API_URL=http://savazai-backend:3055
+NEXT_PUBLIC_APP_URL=http://localhost:3056
+DATABASE_URL=postgresql://sz_harness_admin:sz_secure_vault_pass_99@localhost:5622/savazai_harness
+BETTER_AUTH_SECRET=generate_a_secure_better_auth_secret_key
+BETTER_AUTH_URL=http://localhost:3056
+```
+
+---
+
+## 🚀 Installation & Local-First Startup
+
+The application stack utilizes standard, optimized production multi-stage **Dockerfiles** rather than Nixpacks blueprints to compile, cache, and launch services.
+
+### 1. Pre-requisites & Local Installation
+Clone the workspace and restore development modules:
 ```bash
-# 1. Backend Verification (Root Workspace)
+# Clean dependency installation
+npm install
+cd savazai-console && npm install && cd ..
+```
+
+### 2. Database Migrations
+Apply schemas to the target database instance:
+```bash
+# Generate and run ORM migrations
+npm run db:generate
+npm run db:migrate
+```
+
+### 3. Running Container Orchestration
+Spin up the database container, backend runtime, and frontend server locally:
+```bash
+# Spin up Docker containers
+docker compose up --build -d
+
+# Verify container status and health checks
+docker compose ps
+```
+
+### 4. Verification Checkpoints
+To confirm the integrity of the build before deploying:
+```bash
+# Run backend checks
 npx tsc --noEmit
 npm run lint
 
-# 2. Frontend Verification (savazai-console Workspace)
+# Run frontend checks
 cd savazai-console
 npm run lint
 npm run build
 ```
 
-Verify docker containers run cleanly:
-```bash
-# 3. Container Lifecycle Cycle (Root Workspace)
-cd ..
-docker compose down
-docker compose up --build -d
-```
+---
 
-### Docker Run Commands
-```bash
-# Spin up stack locally/production
-docker compose up --build -d
+## ⚡ Key Core Features Deployed
 
-# Stop stack safely
-docker compose down
-```
+1. **Proactive MCP Schema Ingestion on Session Boot**: Pre-loads tool schemas (e.g. `wedplanai-prod`) directly from the configs on boot, ensuring the LLM planner has complete capability awareness.
+2. **Conversational Short-Circuit Interceptors**: Discards pre-execution conversational text nodes if mutation commands are detected, automatically resolving parameters and invoking the correct database mutations first.
+3. **Crucial Post-Mutation Sequential Loops**: Restructures LangGraph flows to enforce post-mutation read loops (`[Update Entity] -> [Gather Entities] -> [Synthesize Response]`), preventing stale UI states.
+4. **ISO Date Standardization**: Clears day-ordinal formatting and maps field parameters to target specifications prior to tool dispatches.
+5. **Stream Token Sanitizer**: Strips trailing braces and structural JSON artifacts out of NDJSON response buffers in real time.
+6. **MIME & OAuth Credentials Daemon**: Ambiently rotates OAuth credentials, encrypts them at rest, and formats outbound notifications as standard MIME-encoded formats.

@@ -954,7 +954,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L11",
       "id": "meta_0000_snapshot_columns_session_id",
-      "community": 156,
+      "community": 204,
       "norm_label": "session_id"
     },
     {
@@ -963,7 +963,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L12",
       "id": "meta_0000_snapshot_session_id_name",
-      "community": 156,
+      "community": 204,
       "norm_label": "name"
     },
     {
@@ -972,7 +972,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L13",
       "id": "meta_0000_snapshot_session_id_type",
-      "community": 156,
+      "community": 79,
       "norm_label": "type"
     },
     {
@@ -981,7 +981,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L14",
       "id": "meta_0000_snapshot_session_id_primarykey",
-      "community": 156,
+      "community": 204,
       "norm_label": "primarykey"
     },
     {
@@ -990,7 +990,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L15",
       "id": "meta_0000_snapshot_session_id_notnull",
-      "community": 156,
+      "community": 204,
       "norm_label": "notnull"
     },
     {
@@ -999,7 +999,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L16",
       "id": "meta_0000_snapshot_session_id_default",
-      "community": 156,
+      "community": 204,
       "norm_label": "default"
     },
     {
@@ -2034,7 +2034,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L189",
       "id": "meta_0000_snapshot_public_connected_apps_uniqueconstraints",
-      "community": 79,
+      "community": 30,
       "norm_label": "uniqueconstraints"
     },
     {
@@ -2043,7 +2043,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L190",
       "id": "meta_0000_snapshot_uniqueconstraints_connected_apps_app_name_unique",
-      "community": 79,
+      "community": 30,
       "norm_label": "connected_apps_app_name_unique"
     },
     {
@@ -2052,7 +2052,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L191",
       "id": "meta_0000_snapshot_connected_apps_app_name_unique_name",
-      "community": 79,
+      "community": 30,
       "norm_label": "name"
     },
     {
@@ -2061,7 +2061,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L192",
       "id": "meta_0000_snapshot_connected_apps_app_name_unique_nullsnotdistinct",
-      "community": 79,
+      "community": 30,
       "norm_label": "nullsnotdistinct"
     },
     {
@@ -2070,7 +2070,7 @@
       "source_file": "drizzle/migrations/meta/0000_snapshot.json",
       "source_location": "L193",
       "id": "meta_0000_snapshot_connected_apps_app_name_unique_columns",
-      "community": 79,
+      "community": 30,
       "norm_label": "columns"
     },
     {
@@ -2277,7 +2277,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L10",
       "id": "meta_0001_snapshot_public_agent_session_memory_columns",
-      "community": 154,
+      "community": 156,
       "norm_label": "columns"
     },
     {
@@ -2385,7 +2385,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L24",
       "id": "meta_0001_snapshot_columns_role",
-      "community": 154,
+      "community": 156,
       "norm_label": "role"
     },
     {
@@ -2394,7 +2394,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L25",
       "id": "meta_0001_snapshot_role_name",
-      "community": 154,
+      "community": 156,
       "norm_label": "name"
     },
     {
@@ -2403,7 +2403,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L26",
       "id": "meta_0001_snapshot_role_type",
-      "community": 105,
+      "community": 156,
       "norm_label": "type"
     },
     {
@@ -2412,7 +2412,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L27",
       "id": "meta_0001_snapshot_role_primarykey",
-      "community": 154,
+      "community": 156,
       "norm_label": "primarykey"
     },
     {
@@ -2421,7 +2421,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L28",
       "id": "meta_0001_snapshot_role_notnull",
-      "community": 154,
+      "community": 156,
       "norm_label": "notnull"
     },
     {
@@ -2430,7 +2430,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L30",
       "id": "meta_0001_snapshot_columns_raw_content",
-      "community": 105,
+      "community": 156,
       "norm_label": "raw_content"
     },
     {
@@ -2448,7 +2448,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L32",
       "id": "meta_0001_snapshot_raw_content_type",
-      "community": 105,
+      "community": 156,
       "norm_label": "type"
     },
     {
@@ -2457,7 +2457,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L33",
       "id": "meta_0001_snapshot_raw_content_primarykey",
-      "community": 105,
+      "community": 156,
       "norm_label": "primarykey"
     },
     {
@@ -2466,7 +2466,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L34",
       "id": "meta_0001_snapshot_raw_content_notnull",
-      "community": 105,
+      "community": 156,
       "norm_label": "notnull"
     },
     {
@@ -2475,7 +2475,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L36",
       "id": "meta_0001_snapshot_columns_masked_content",
-      "community": 154,
+      "community": 156,
       "norm_label": "masked_content"
     },
     {
@@ -2484,7 +2484,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L37",
       "id": "meta_0001_snapshot_masked_content_name",
-      "community": 154,
+      "community": 156,
       "norm_label": "name"
     },
     {
@@ -2493,7 +2493,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L38",
       "id": "meta_0001_snapshot_masked_content_type",
-      "community": 154,
+      "community": 156,
       "norm_label": "type"
     },
     {
@@ -2502,7 +2502,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L39",
       "id": "meta_0001_snapshot_masked_content_primarykey",
-      "community": 154,
+      "community": 156,
       "norm_label": "primarykey"
     },
     {
@@ -2511,7 +2511,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L40",
       "id": "meta_0001_snapshot_masked_content_notnull",
-      "community": 154,
+      "community": 156,
       "norm_label": "notnull"
     },
     {
@@ -2601,7 +2601,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L52",
       "id": "meta_0001_snapshot_created_at_notnull",
-      "community": 154,
+      "community": 156,
       "norm_label": "notnull"
     },
     {
@@ -2853,7 +2853,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L96",
       "id": "meta_0001_snapshot_agent_name_type",
-      "community": 105,
+      "community": 156,
       "norm_label": "type"
     },
     {
@@ -5454,7 +5454,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L11",
       "id": "meta_0003_snapshot_columns_session_id",
-      "community": 174,
+      "community": 217,
       "norm_label": "session_id"
     },
     {
@@ -5463,7 +5463,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L12",
       "id": "meta_0003_snapshot_session_id_name",
-      "community": 174,
+      "community": 217,
       "norm_label": "name"
     },
     {
@@ -5472,7 +5472,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L13",
       "id": "meta_0003_snapshot_session_id_type",
-      "community": 174,
+      "community": 217,
       "norm_label": "type"
     },
     {
@@ -5481,7 +5481,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L14",
       "id": "meta_0003_snapshot_session_id_primarykey",
-      "community": 174,
+      "community": 217,
       "norm_label": "primarykey"
     },
     {
@@ -5490,7 +5490,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L15",
       "id": "meta_0003_snapshot_session_id_notnull",
-      "community": 174,
+      "community": 217,
       "norm_label": "notnull"
     },
     {
@@ -5499,7 +5499,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L16",
       "id": "meta_0003_snapshot_session_id_default",
-      "community": 174,
+      "community": 217,
       "norm_label": "default"
     },
     {
@@ -5643,7 +5643,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L36",
       "id": "meta_0003_snapshot_columns_masked_content",
-      "community": 174,
+      "community": 217,
       "norm_label": "masked_content"
     },
     {
@@ -5652,7 +5652,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L37",
       "id": "meta_0003_snapshot_masked_content_name",
-      "community": 174,
+      "community": 217,
       "norm_label": "name"
     },
     {
@@ -5661,7 +5661,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L38",
       "id": "meta_0003_snapshot_masked_content_type",
-      "community": 174,
+      "community": 217,
       "norm_label": "type"
     },
     {
@@ -5670,7 +5670,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L39",
       "id": "meta_0003_snapshot_masked_content_primarykey",
-      "community": 174,
+      "community": 217,
       "norm_label": "primarykey"
     },
     {
@@ -5679,7 +5679,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L40",
       "id": "meta_0003_snapshot_masked_content_notnull",
-      "community": 174,
+      "community": 217,
       "norm_label": "notnull"
     },
     {
@@ -5931,7 +5931,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L79",
       "id": "meta_0003_snapshot_public_autonomous_agents_name",
-      "community": 174,
+      "community": 217,
       "norm_label": "name"
     },
     {
@@ -5958,7 +5958,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L82",
       "id": "meta_0003_snapshot_columns_id",
-      "community": 217,
+      "community": 169,
       "norm_label": "id"
     },
     {
@@ -5967,7 +5967,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L83",
       "id": "meta_0003_snapshot_id_name",
-      "community": 217,
+      "community": 169,
       "norm_label": "name"
     },
     {
@@ -5976,7 +5976,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L84",
       "id": "meta_0003_snapshot_id_type",
-      "community": 217,
+      "community": 169,
       "norm_label": "type"
     },
     {
@@ -5985,7 +5985,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L85",
       "id": "meta_0003_snapshot_id_primarykey",
-      "community": 217,
+      "community": 169,
       "norm_label": "primarykey"
     },
     {
@@ -5994,7 +5994,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L86",
       "id": "meta_0003_snapshot_id_notnull",
-      "community": 217,
+      "community": 169,
       "norm_label": "notnull"
     },
     {
@@ -6021,7 +6021,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L96",
       "id": "meta_0003_snapshot_agent_name_type",
-      "community": 46,
+      "community": 169,
       "norm_label": "type"
     },
     {
@@ -6192,7 +6192,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L118",
       "id": "meta_0003_snapshot_is_core_agent_default",
-      "community": 46,
+      "community": 187,
       "norm_label": "default"
     },
     {
@@ -6363,7 +6363,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L153",
       "id": "meta_0003_snapshot_public_connected_apps_columns",
-      "community": 217,
+      "community": 169,
       "norm_label": "columns"
     },
     {
@@ -6372,7 +6372,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L160",
       "id": "meta_0003_snapshot_columns_app_name",
-      "community": 217,
+      "community": 169,
       "norm_label": "app_name"
     },
     {
@@ -6381,7 +6381,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L161",
       "id": "meta_0003_snapshot_app_name_name",
-      "community": 217,
+      "community": 169,
       "norm_label": "name"
     },
     {
@@ -6390,7 +6390,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L162",
       "id": "meta_0003_snapshot_app_name_type",
-      "community": 217,
+      "community": 169,
       "norm_label": "type"
     },
     {
@@ -6399,7 +6399,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L163",
       "id": "meta_0003_snapshot_app_name_primarykey",
-      "community": 217,
+      "community": 169,
       "norm_label": "primarykey"
     },
     {
@@ -6462,7 +6462,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L172",
       "id": "meta_0003_snapshot_columns_bearer_token_hash",
-      "community": 46,
+      "community": 169,
       "norm_label": "bearer_token_hash"
     },
     {
@@ -6471,7 +6471,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L173",
       "id": "meta_0003_snapshot_bearer_token_hash_name",
-      "community": 46,
+      "community": 169,
       "norm_label": "name"
     },
     {
@@ -6480,7 +6480,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L174",
       "id": "meta_0003_snapshot_bearer_token_hash_type",
-      "community": 46,
+      "community": 169,
       "norm_label": "type"
     },
     {
@@ -6489,7 +6489,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L175",
       "id": "meta_0003_snapshot_bearer_token_hash_primarykey",
-      "community": 46,
+      "community": 169,
       "norm_label": "primarykey"
     },
     {
@@ -6498,7 +6498,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L176",
       "id": "meta_0003_snapshot_bearer_token_hash_notnull",
-      "community": 46,
+      "community": 169,
       "norm_label": "notnull"
     },
     {
@@ -6687,7 +6687,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L212",
       "id": "meta_0003_snapshot_public_skill_embeddings_columns",
-      "community": 187,
+      "community": 174,
       "norm_label": "columns"
     },
     {
@@ -6741,7 +6741,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L225",
       "id": "meta_0003_snapshot_columns_description",
-      "community": 187,
+      "community": 174,
       "norm_label": "description"
     },
     {
@@ -6750,7 +6750,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L226",
       "id": "meta_0003_snapshot_description_name",
-      "community": 187,
+      "community": 174,
       "norm_label": "name"
     },
     {
@@ -6759,7 +6759,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L227",
       "id": "meta_0003_snapshot_description_type",
-      "community": 187,
+      "community": 174,
       "norm_label": "type"
     },
     {
@@ -6768,7 +6768,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L228",
       "id": "meta_0003_snapshot_description_primarykey",
-      "community": 187,
+      "community": 217,
       "norm_label": "primarykey"
     },
     {
@@ -6912,7 +6912,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L264",
       "id": "meta_0003_snapshot_public_system_configurations_columns",
-      "community": 187,
+      "community": 169,
       "norm_label": "columns"
     },
     {
@@ -6921,7 +6921,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L270",
       "id": "meta_0003_snapshot_id_default",
-      "community": 217,
+      "community": 169,
       "norm_label": "default"
     },
     {
@@ -6930,7 +6930,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L272",
       "id": "meta_0003_snapshot_columns_app_title",
-      "community": 187,
+      "community": 169,
       "norm_label": "app_title"
     },
     {
@@ -6939,7 +6939,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L273",
       "id": "meta_0003_snapshot_app_title_name",
-      "community": 46,
+      "community": 169,
       "norm_label": "name"
     },
     {
@@ -6948,7 +6948,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L274",
       "id": "meta_0003_snapshot_app_title_type",
-      "community": 187,
+      "community": 169,
       "norm_label": "type"
     },
     {
@@ -6957,7 +6957,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L275",
       "id": "meta_0003_snapshot_app_title_primarykey",
-      "community": 187,
+      "community": 169,
       "norm_label": "primarykey"
     },
     {
@@ -6966,7 +6966,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L276",
       "id": "meta_0003_snapshot_app_title_notnull",
-      "community": 187,
+      "community": 169,
       "norm_label": "notnull"
     },
     {
@@ -6975,7 +6975,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L278",
       "id": "meta_0003_snapshot_columns_brand_logo_url",
-      "community": 187,
+      "community": 46,
       "norm_label": "brand_logo_url"
     },
     {
@@ -6984,7 +6984,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L279",
       "id": "meta_0003_snapshot_brand_logo_url_name",
-      "community": 187,
+      "community": 46,
       "norm_label": "name"
     },
     {
@@ -6993,7 +6993,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L280",
       "id": "meta_0003_snapshot_brand_logo_url_type",
-      "community": 187,
+      "community": 46,
       "norm_label": "type"
     },
     {
@@ -7002,7 +7002,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L281",
       "id": "meta_0003_snapshot_brand_logo_url_primarykey",
-      "community": 187,
+      "community": 46,
       "norm_label": "primarykey"
     },
     {
@@ -7011,7 +7011,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L282",
       "id": "meta_0003_snapshot_brand_logo_url_notnull",
-      "community": 187,
+      "community": 46,
       "norm_label": "notnull"
     },
     {
@@ -7020,7 +7020,7 @@
       "source_file": "drizzle/migrations/meta/0003_snapshot.json",
       "source_location": "L283",
       "id": "meta_0003_snapshot_brand_logo_url_default",
-      "community": 187,
+      "community": 46,
       "norm_label": "default"
     },
     {
@@ -7326,7 +7326,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L11",
       "id": "meta_0004_snapshot_columns_session_id",
-      "community": 194,
+      "community": 291,
       "norm_label": "session_id"
     },
     {
@@ -7335,7 +7335,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L12",
       "id": "meta_0004_snapshot_session_id_name",
-      "community": 194,
+      "community": 291,
       "norm_label": "name"
     },
     {
@@ -7344,7 +7344,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L13",
       "id": "meta_0004_snapshot_session_id_type",
-      "community": 194,
+      "community": 291,
       "norm_label": "type"
     },
     {
@@ -7353,7 +7353,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L14",
       "id": "meta_0004_snapshot_session_id_primarykey",
-      "community": 194,
+      "community": 291,
       "norm_label": "primarykey"
     },
     {
@@ -7362,7 +7362,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L15",
       "id": "meta_0004_snapshot_session_id_notnull",
-      "community": 194,
+      "community": 291,
       "norm_label": "notnull"
     },
     {
@@ -7371,7 +7371,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L16",
       "id": "meta_0004_snapshot_session_id_default",
-      "community": 194,
+      "community": 291,
       "norm_label": "default"
     },
     {
@@ -7425,7 +7425,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L24",
       "id": "meta_0004_snapshot_columns_role",
-      "community": 278,
+      "community": 227,
       "norm_label": "role"
     },
     {
@@ -7434,7 +7434,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L25",
       "id": "meta_0004_snapshot_role_name",
-      "community": 278,
+      "community": 227,
       "norm_label": "name"
     },
     {
@@ -7443,7 +7443,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L26",
       "id": "meta_0004_snapshot_role_type",
-      "community": 278,
+      "community": 227,
       "norm_label": "type"
     },
     {
@@ -7452,7 +7452,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L27",
       "id": "meta_0004_snapshot_role_primarykey",
-      "community": 278,
+      "community": 227,
       "norm_label": "primarykey"
     },
     {
@@ -7461,7 +7461,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L28",
       "id": "meta_0004_snapshot_role_notnull",
-      "community": 278,
+      "community": 227,
       "norm_label": "notnull"
     },
     {
@@ -7560,7 +7560,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L42",
       "id": "meta_0004_snapshot_columns_embedding",
-      "community": 195,
+      "community": 289,
       "norm_label": "embedding"
     },
     {
@@ -7569,7 +7569,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L43",
       "id": "meta_0004_snapshot_embedding_name",
-      "community": 195,
+      "community": 289,
       "norm_label": "name"
     },
     {
@@ -7578,7 +7578,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L44",
       "id": "meta_0004_snapshot_embedding_type",
-      "community": 195,
+      "community": 289,
       "norm_label": "type"
     },
     {
@@ -7587,7 +7587,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L45",
       "id": "meta_0004_snapshot_embedding_primarykey",
-      "community": 195,
+      "community": 289,
       "norm_label": "primarykey"
     },
     {
@@ -7596,7 +7596,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L46",
       "id": "meta_0004_snapshot_embedding_notnull",
-      "community": 195,
+      "community": 289,
       "norm_label": "notnull"
     },
     {
@@ -7605,7 +7605,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L48",
       "id": "meta_0004_snapshot_columns_created_at",
-      "community": 283,
+      "community": 203,
       "norm_label": "created_at"
     },
     {
@@ -7614,7 +7614,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L49",
       "id": "meta_0004_snapshot_created_at_name",
-      "community": 283,
+      "community": 203,
       "norm_label": "name"
     },
     {
@@ -7623,7 +7623,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L50",
       "id": "meta_0004_snapshot_created_at_type",
-      "community": 283,
+      "community": 203,
       "norm_label": "type"
     },
     {
@@ -7632,7 +7632,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L51",
       "id": "meta_0004_snapshot_created_at_primarykey",
-      "community": 283,
+      "community": 203,
       "norm_label": "primarykey"
     },
     {
@@ -7641,7 +7641,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L52",
       "id": "meta_0004_snapshot_created_at_notnull",
-      "community": 283,
+      "community": 203,
       "norm_label": "notnull"
     },
     {
@@ -7650,7 +7650,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L53",
       "id": "meta_0004_snapshot_created_at_default",
-      "community": 283,
+      "community": 203,
       "norm_label": "default"
     },
     {
@@ -7965,7 +7965,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L106",
       "id": "meta_0004_snapshot_columns_allowed_mcp_tools",
-      "community": 169,
+      "community": 194,
       "norm_label": "allowed_mcp_tools"
     },
     {
@@ -7974,7 +7974,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L107",
       "id": "meta_0004_snapshot_allowed_mcp_tools_name",
-      "community": 169,
+      "community": 194,
       "norm_label": "name"
     },
     {
@@ -7983,7 +7983,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L108",
       "id": "meta_0004_snapshot_allowed_mcp_tools_type",
-      "community": 169,
+      "community": 194,
       "norm_label": "type"
     },
     {
@@ -7992,7 +7992,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L109",
       "id": "meta_0004_snapshot_allowed_mcp_tools_primarykey",
-      "community": 169,
+      "community": 194,
       "norm_label": "primarykey"
     },
     {
@@ -8001,7 +8001,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L110",
       "id": "meta_0004_snapshot_allowed_mcp_tools_notnull",
-      "community": 169,
+      "community": 194,
       "norm_label": "notnull"
     },
     {
@@ -8010,7 +8010,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L111",
       "id": "meta_0004_snapshot_allowed_mcp_tools_default",
-      "community": 169,
+      "community": 194,
       "norm_label": "default"
     },
     {
@@ -8163,7 +8163,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L144",
       "id": "meta_0004_snapshot_public_autonomous_agents_compositeprimarykeys",
-      "community": 282,
+      "community": 281,
       "norm_label": "compositeprimarykeys"
     },
     {
@@ -8334,7 +8334,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L172",
       "id": "meta_0004_snapshot_columns_bearer_token_hash",
-      "community": 195,
+      "community": 289,
       "norm_label": "bearer_token_hash"
     },
     {
@@ -8343,7 +8343,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L173",
       "id": "meta_0004_snapshot_bearer_token_hash_name",
-      "community": 195,
+      "community": 289,
       "norm_label": "name"
     },
     {
@@ -8352,7 +8352,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L174",
       "id": "meta_0004_snapshot_bearer_token_hash_type",
-      "community": 195,
+      "community": 289,
       "norm_label": "type"
     },
     {
@@ -8361,7 +8361,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L175",
       "id": "meta_0004_snapshot_bearer_token_hash_primarykey",
-      "community": 195,
+      "community": 289,
       "norm_label": "primarykey"
     },
     {
@@ -8370,7 +8370,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L176",
       "id": "meta_0004_snapshot_bearer_token_hash_notnull",
-      "community": 195,
+      "community": 289,
       "norm_label": "notnull"
     },
     {
@@ -8379,7 +8379,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L178",
       "id": "meta_0004_snapshot_columns_model_config",
-      "community": 205,
+      "community": 195,
       "norm_label": "model_config"
     },
     {
@@ -8388,7 +8388,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L179",
       "id": "meta_0004_snapshot_model_config_name",
-      "community": 205,
+      "community": 195,
       "norm_label": "name"
     },
     {
@@ -8397,7 +8397,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L180",
       "id": "meta_0004_snapshot_model_config_type",
-      "community": 205,
+      "community": 195,
       "norm_label": "type"
     },
     {
@@ -8406,7 +8406,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L181",
       "id": "meta_0004_snapshot_model_config_primarykey",
-      "community": 205,
+      "community": 195,
       "norm_label": "primarykey"
     },
     {
@@ -8415,7 +8415,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L182",
       "id": "meta_0004_snapshot_model_config_notnull",
-      "community": 205,
+      "community": 195,
       "norm_label": "notnull"
     },
     {
@@ -8424,7 +8424,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L183",
       "id": "meta_0004_snapshot_model_config_default",
-      "community": 205,
+      "community": 195,
       "norm_label": "default"
     },
     {
@@ -8523,7 +8523,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L207",
       "id": "meta_0004_snapshot_public_connected_apps_isrlsenabled",
-      "community": 281,
+      "community": 282,
       "norm_label": "isrlsenabled"
     },
     {
@@ -8568,7 +8568,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L219",
       "id": "meta_0004_snapshot_columns_skill_name",
-      "community": 180,
+      "community": 283,
       "norm_label": "skill_name"
     },
     {
@@ -8577,7 +8577,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L220",
       "id": "meta_0004_snapshot_skill_name_name",
-      "community": 180,
+      "community": 283,
       "norm_label": "name"
     },
     {
@@ -8586,7 +8586,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L221",
       "id": "meta_0004_snapshot_skill_name_type",
-      "community": 180,
+      "community": 283,
       "norm_label": "type"
     },
     {
@@ -8595,7 +8595,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L222",
       "id": "meta_0004_snapshot_skill_name_primarykey",
-      "community": 180,
+      "community": 283,
       "norm_label": "primarykey"
     },
     {
@@ -8604,7 +8604,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L223",
       "id": "meta_0004_snapshot_skill_name_notnull",
-      "community": 180,
+      "community": 283,
       "norm_label": "notnull"
     },
     {
@@ -8883,7 +8883,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L282",
       "id": "meta_0004_snapshot_brand_logo_url_notnull",
-      "community": 202,
+      "community": 278,
       "norm_label": "notnull"
     },
     {
@@ -9126,7 +9126,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L328",
       "id": "meta_0004_snapshot_provider_primarykey",
-      "community": 195,
+      "community": 289,
       "norm_label": "primarykey"
     },
     {
@@ -9135,7 +9135,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L329",
       "id": "meta_0004_snapshot_provider_notnull",
-      "community": 283,
+      "community": 203,
       "norm_label": "notnull"
     },
     {
@@ -9405,7 +9405,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L365",
       "id": "meta_0004_snapshot_columns_executed_mcp_tools",
-      "community": 203,
+      "community": 227,
       "norm_label": "executed_mcp_tools"
     },
     {
@@ -9414,7 +9414,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L366",
       "id": "meta_0004_snapshot_executed_mcp_tools_name",
-      "community": 203,
+      "community": 227,
       "norm_label": "name"
     },
     {
@@ -9423,7 +9423,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L367",
       "id": "meta_0004_snapshot_executed_mcp_tools_type",
-      "community": 203,
+      "community": 227,
       "norm_label": "type"
     },
     {
@@ -9432,7 +9432,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L368",
       "id": "meta_0004_snapshot_executed_mcp_tools_primarykey",
-      "community": 203,
+      "community": 227,
       "norm_label": "primarykey"
     },
     {
@@ -9441,7 +9441,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L369",
       "id": "meta_0004_snapshot_executed_mcp_tools_notnull",
-      "community": 203,
+      "community": 227,
       "norm_label": "notnull"
     },
     {
@@ -9450,7 +9450,7 @@
       "source_file": "drizzle/migrations/meta/0004_snapshot.json",
       "source_location": "L370",
       "id": "meta_0004_snapshot_executed_mcp_tools_default",
-      "community": 203,
+      "community": 227,
       "norm_label": "default"
     },
     {
@@ -10899,7 +10899,7 @@
       "source_file": "savazai-console/src/components/system-trace.tsx",
       "source_location": "L1",
       "id": "savazai_console_src_components_system_trace_tsx",
-      "community": 153,
+      "community": 171,
       "norm_label": "system-trace.tsx"
     },
     {
@@ -10908,7 +10908,7 @@
       "source_file": "savazai-console/src/components/system-trace.tsx",
       "source_location": "L17",
       "id": "components_system_trace_traceevent",
-      "community": 153,
+      "community": 171,
       "norm_label": "traceevent"
     },
     {
@@ -10917,7 +10917,7 @@
       "source_file": "savazai-console/src/components/system-trace.tsx",
       "source_location": "L31",
       "id": "components_system_trace_systemtraceprops",
-      "community": 153,
+      "community": 171,
       "norm_label": "systemtraceprops"
     },
     {
@@ -10926,7 +10926,7 @@
       "source_file": "savazai-console/src/components/system-trace.tsx",
       "source_location": "L37",
       "id": "components_system_trace_traceicon",
-      "community": 153,
+      "community": 171,
       "norm_label": "traceicon()"
     },
     {
@@ -10935,7 +10935,7 @@
       "source_file": "savazai-console/src/components/system-trace.tsx",
       "source_location": "L50",
       "id": "components_system_trace_tracebadge",
-      "community": 153,
+      "community": 171,
       "norm_label": "tracebadge()"
     },
     {
@@ -10944,7 +10944,7 @@
       "source_file": "savazai-console/src/components/system-trace.tsx",
       "source_location": "L68",
       "id": "components_system_trace_codeblock",
-      "community": 153,
+      "community": 171,
       "norm_label": "codeblock()"
     },
     {
@@ -10953,7 +10953,7 @@
       "source_file": "savazai-console/src/components/system-trace.tsx",
       "source_location": "L90",
       "id": "components_system_trace_piibadgematrix",
-      "community": 153,
+      "community": 171,
       "norm_label": "piibadgematrix()"
     },
     {
@@ -10962,7 +10962,7 @@
       "source_file": "savazai-console/src/components/system-trace.tsx",
       "source_location": "L112",
       "id": "components_system_trace_systemtrace",
-      "community": 153,
+      "community": 171,
       "norm_label": "systemtrace()"
     },
     {
@@ -10971,7 +10971,7 @@
       "source_file": "savazai-console/src/components/system-trace.tsx",
       "source_location": "L168",
       "id": "components_system_trace_traceeventcard",
-      "community": 153,
+      "community": 171,
       "norm_label": "traceeventcard()"
     },
     {
@@ -11007,7 +11007,7 @@
       "source_file": "savazai-console/src/components/theme-provider.tsx",
       "source_location": "L16",
       "id": "components_theme_provider_systemconfig",
-      "community": 171,
+      "community": 211,
       "norm_label": "systemconfig"
     },
     {
@@ -13252,202 +13252,175 @@
       "norm_label": "readme.md"
     },
     {
-      "label": "SavazAI: Enterprise Multi-Agent Operating System & Control Plane",
+      "label": "SavazAI Multi-Agent Operating System & Control Plane",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L1",
-      "id": "savazai_harness_readme_savazai_enterprise_multi_agent_operating_system_control_plane",
+      "id": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane",
       "community": 39,
-      "norm_label": "savazai: enterprise multi-agent operating system & control plane"
+      "norm_label": "savazai multi-agent operating system & control plane"
     },
     {
-      "label": "\ud83d\udee0\ufe0f System Architecture & Ports",
+      "label": "\ud83d\udee0\ufe0f Project Architecture",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L7",
-      "id": "savazai_harness_readme_system_architecture_ports",
+      "source_location": "L5",
+      "id": "savazai_harness_readme_project_architecture",
       "community": 39,
-      "norm_label": "\ud83d\udee0\ufe0f system architecture & ports"
-    },
-    {
-      "label": "\ud83d\udce6 Dynamic Tech Stack Profile",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L16",
-      "id": "savazai_harness_readme_dynamic_tech_stack_profile",
-      "community": 39,
-      "norm_label": "\ud83d\udce6 dynamic tech stack profile"
-    },
-    {
-      "label": "Core Engine (Backend)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L20",
-      "id": "savazai_harness_readme_core_engine_backend",
-      "community": 39,
-      "norm_label": "core engine (backend)"
-    },
-    {
-      "label": "Control Plane (Frontend Console)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L26",
-      "id": "savazai_harness_readme_control_plane_frontend_console",
-      "community": 39,
-      "norm_label": "control plane (frontend console)"
-    },
-    {
-      "label": "\ud83d\udd10 Configuration & Security Schema",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L34",
-      "id": "savazai_harness_readme_configuration_security_schema",
-      "community": 39,
-      "norm_label": "\ud83d\udd10 configuration & security schema"
-    },
-    {
-      "label": "The Cryptographic Vault (`MASTER_VAULT_SECRET`)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L36",
-      "id": "savazai_harness_readme_the_cryptographic_vault_master_vault_secret",
-      "community": 39,
-      "norm_label": "the cryptographic vault (`master_vault_secret`)"
-    },
-    {
-      "label": "Environment Configuration Files",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L42",
-      "id": "savazai_harness_readme_environment_configuration_files",
-      "community": 39,
-      "norm_label": "environment configuration files"
-    },
-    {
-      "label": "Engine Backend (`./.env`)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L46",
-      "id": "savazai_harness_readme_engine_backend_env",
-      "community": 39,
-      "norm_label": "engine backend (`./.env`)"
-    },
-    {
-      "label": "code:ini (DATABASE_URL=postgresql://sz_harness_admin:sz_secure_vault_p)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L47",
-      "id": "savazai_harness_readme_codeblock_1",
-      "community": 39,
-      "norm_label": "code:ini (database_url=postgresql://sz_harness_admin:sz_secure_vault_p)"
-    },
-    {
-      "label": "Console Frontend (`./savazai-console/.env`)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L59",
-      "id": "savazai_harness_readme_console_frontend_savazai_console_env",
-      "community": 39,
-      "norm_label": "console frontend (`./savazai-console/.env`)"
-    },
-    {
-      "label": "code:ini (NEXT_PUBLIC_HARNESS_API_URL=http://savazai-backend:3055)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L60",
-      "id": "savazai_harness_readme_codeblock_2",
-      "community": 39,
-      "norm_label": "code:ini (next_public_harness_api_url=http://savazai-backend:3055)"
-    },
-    {
-      "label": "\ud83d\ude80 Installation & Local-First Startup",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L70",
-      "id": "savazai_harness_readme_installation_local_first_startup",
-      "community": 39,
-      "norm_label": "\ud83d\ude80 installation & local-first startup"
-    },
-    {
-      "label": "1. Pre-requisites & Local Installation",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L74",
-      "id": "savazai_harness_readme_1_pre_requisites_local_installation",
-      "community": 39,
-      "norm_label": "1. pre-requisites & local installation"
-    },
-    {
-      "label": "code:bash (# Clean dependency installation)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L76",
-      "id": "savazai_harness_readme_codeblock_3",
-      "community": 39,
-      "norm_label": "code:bash (# clean dependency installation)"
-    },
-    {
-      "label": "2. Database Migrations",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L82",
-      "id": "savazai_harness_readme_2_database_migrations",
-      "community": 39,
-      "norm_label": "2. database migrations"
-    },
-    {
-      "label": "code:bash (# Generate and run ORM migrations)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L84",
-      "id": "savazai_harness_readme_codeblock_4",
-      "community": 39,
-      "norm_label": "code:bash (# generate and run orm migrations)"
-    },
-    {
-      "label": "3. Running Container Orchestration",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L90",
-      "id": "savazai_harness_readme_3_running_container_orchestration",
-      "community": 39,
-      "norm_label": "3. running container orchestration"
-    },
-    {
-      "label": "code:bash (# Spin up Docker containers)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L92",
-      "id": "savazai_harness_readme_codeblock_5",
-      "community": 39,
-      "norm_label": "code:bash (# spin up docker containers)"
-    },
-    {
-      "label": "4. Verification Checkpoints",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L100",
-      "id": "savazai_harness_readme_4_verification_checkpoints",
-      "community": 39,
-      "norm_label": "4. verification checkpoints"
-    },
-    {
-      "label": "code:bash (# Run backend checks)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L102",
-      "id": "savazai_harness_readme_codeblock_6",
-      "community": 39,
-      "norm_label": "code:bash (# run backend checks)"
+      "norm_label": "\ud83d\udee0\ufe0f project architecture"
     },
     {
       "label": "\u26a1 Key Core Features Deployed",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L115",
+      "source_location": "L14",
       "id": "savazai_harness_readme_key_core_features_deployed",
-      "community": 39,
+      "community": 205,
       "norm_label": "\u26a1 key core features deployed"
+    },
+    {
+      "label": "1. Proactive MCP Schema Ingestion on Session Boot",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L16",
+      "id": "savazai_harness_readme_1_proactive_mcp_schema_ingestion_on_session_boot",
+      "community": 205,
+      "norm_label": "1. proactive mcp schema ingestion on session boot"
+    },
+    {
+      "label": "2. Conversational Short-Circuit Interceptors",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L20",
+      "id": "savazai_harness_readme_2_conversational_short_circuit_interceptors",
+      "community": 205,
+      "norm_label": "2. conversational short-circuit interceptors"
+    },
+    {
+      "label": "3. Crucial Post-Mutation Sequential Loops",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L24",
+      "id": "savazai_harness_readme_3_crucial_post_mutation_sequential_loops",
+      "community": 205,
+      "norm_label": "3. crucial post-mutation sequential loops"
+    },
+    {
+      "label": "4. ISO Date Standardization",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L28",
+      "id": "savazai_harness_readme_4_iso_date_standardization",
+      "community": 205,
+      "norm_label": "4. iso date standardization"
+    },
+    {
+      "label": "5. Stream Token Bracket Purging",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L32",
+      "id": "savazai_harness_readme_5_stream_token_bracket_purging",
+      "community": 205,
+      "norm_label": "5. stream token bracket purging"
+    },
+    {
+      "label": "6. Premium Markdown Layouts (Tables, Lists, & Images)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L35",
+      "id": "savazai_harness_readme_6_premium_markdown_layouts_tables_lists_images",
+      "community": 205,
+      "norm_label": "6. premium markdown layouts (tables, lists, & images)"
+    },
+    {
+      "label": "7. Background Dynamic Communication Subsystem & Persistent Cryptographic Vault",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L39",
+      "id": "savazai_harness_readme_7_background_dynamic_communication_subsystem_persistent_cryptographic_vault",
+      "community": 205,
+      "norm_label": "7. background dynamic communication subsystem & persistent cryptographic vault"
+    },
+    {
+      "label": "8. Dynamic Framework-Level Telemetry Engine & Spend Ledger",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L47",
+      "id": "savazai_harness_readme_8_dynamic_framework_level_telemetry_engine_spend_ledger",
+      "community": 205,
+      "norm_label": "8. dynamic framework-level telemetry engine & spend ledger"
+    },
+    {
+      "label": "\ud83d\udd10 Production Environment Variables Guide",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L54",
+      "id": "savazai_harness_readme_production_environment_variables_guide",
+      "community": 39,
+      "norm_label": "\ud83d\udd10 production environment variables guide"
+    },
+    {
+      "label": "Backend (`.env` / Coolify Environment Variables)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L56",
+      "id": "savazai_harness_readme_backend_env_coolify_environment_variables",
+      "community": 39,
+      "norm_label": "backend (`.env` / coolify environment variables)"
+    },
+    {
+      "label": "Frontend (`savazai-console/.env.local` / Coolify Build Secrets)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L61",
+      "id": "savazai_harness_readme_frontend_savazai_console_env_local_coolify_build_secrets",
+      "community": 39,
+      "norm_label": "frontend (`savazai-console/.env.local` / coolify build secrets)"
+    },
+    {
+      "label": "\ud83d\ude80 local-First Validation Loop & VPS Deployment",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L69",
+      "id": "savazai_harness_readme_local_first_validation_loop_vps_deployment",
+      "community": 39,
+      "norm_label": "\ud83d\ude80 local-first validation loop & vps deployment"
+    },
+    {
+      "label": "code:bash (# 1. Backend Verification (Root Workspace))",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L73",
+      "id": "savazai_harness_readme_codeblock_1",
+      "community": 39,
+      "norm_label": "code:bash (# 1. backend verification (root workspace))"
+    },
+    {
+      "label": "code:bash (# 3. Container Lifecycle Cycle (Root Workspace))",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L85",
+      "id": "savazai_harness_readme_codeblock_2",
+      "community": 39,
+      "norm_label": "code:bash (# 3. container lifecycle cycle (root workspace))"
+    },
+    {
+      "label": "Docker Run Commands",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L92",
+      "id": "savazai_harness_readme_docker_run_commands",
+      "community": 39,
+      "norm_label": "docker run commands"
+    },
+    {
+      "label": "code:bash (# Spin up stack locally/production)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L93",
+      "id": "savazai_harness_readme_codeblock_3",
+      "community": 39,
+      "norm_label": "code:bash (# spin up stack locally/production)"
     },
     {
       "label": "SKILL.md",
@@ -19251,7 +19224,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L1486",
       "id": "vercel_react_best_practices_agents_4_3_use_swr_for_automatic_deduplication",
-      "community": 289,
+      "community": 59,
       "norm_label": "4.3 use swr for automatic deduplication"
     },
     {
@@ -19260,7 +19233,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L1494",
       "id": "vercel_react_best_practices_agents_codeblock_61",
-      "community": 289,
+      "community": 59,
       "norm_label": "code:tsx (function userlist() {)"
     },
     {
@@ -19269,7 +19242,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L1507",
       "id": "vercel_react_best_practices_agents_codeblock_62",
-      "community": 289,
+      "community": 59,
       "norm_label": "code:tsx (import useswr from 'swr')"
     },
     {
@@ -19278,7 +19251,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L1517",
       "id": "vercel_react_best_practices_agents_codeblock_63",
-      "community": 289,
+      "community": 59,
       "norm_label": "code:tsx (import { useimmutableswr } from '@/lib/swr')"
     },
     {
@@ -19287,7 +19260,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L1527",
       "id": "vercel_react_best_practices_agents_codeblock_64",
-      "community": 289,
+      "community": 59,
       "norm_label": "code:tsx (import { useswrmutation } from 'swr/mutation')"
     },
     {
@@ -19782,7 +19755,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2337",
       "id": "vercel_react_best_practices_agents_6_1_animate_svg_wrapper_instead_of_svg_element",
-      "community": 299,
+      "community": 9,
       "norm_label": "6.1 animate svg wrapper instead of svg element"
     },
     {
@@ -19791,7 +19764,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2345",
       "id": "vercel_react_best_practices_agents_codeblock_101",
-      "community": 299,
+      "community": 9,
       "norm_label": "code:tsx (function loadingspinner() {)"
     },
     {
@@ -19800,7 +19773,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2362",
       "id": "vercel_react_best_practices_agents_codeblock_102",
-      "community": 299,
+      "community": 9,
       "norm_label": "code:tsx (function loadingspinner() {)"
     },
     {
@@ -19836,7 +19809,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2414",
       "id": "vercel_react_best_practices_agents_6_3_hoist_static_jsx_elements",
-      "community": 300,
+      "community": 9,
       "norm_label": "6.3 hoist static jsx elements"
     },
     {
@@ -19845,7 +19818,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2422",
       "id": "vercel_react_best_practices_agents_codeblock_105",
-      "community": 300,
+      "community": 9,
       "norm_label": "code:tsx (function loadingskeleton() {)"
     },
     {
@@ -19854,7 +19827,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2438",
       "id": "vercel_react_best_practices_agents_codeblock_106",
-      "community": 300,
+      "community": 9,
       "norm_label": "code:tsx (const loadingskeleton = ()"
     },
     {
@@ -19863,7 +19836,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2456",
       "id": "vercel_react_best_practices_agents_6_4_optimize_svg_precision",
-      "community": 297,
+      "community": 9,
       "norm_label": "6.4 optimize svg precision"
     },
     {
@@ -19872,7 +19845,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2464",
       "id": "vercel_react_best_practices_agents_codeblock_107",
-      "community": 297,
+      "community": 9,
       "norm_label": "code:svg (<path d=\"m 10.293847 20.847362 l 30.938472 40.192837\" />)"
     },
     {
@@ -19881,7 +19854,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2470",
       "id": "vercel_react_best_practices_agents_codeblock_108",
-      "community": 297,
+      "community": 9,
       "norm_label": "code:svg (<path d=\"m 10.3 20.8 l 30.9 40.2\" />)"
     },
     {
@@ -19890,7 +19863,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2476",
       "id": "vercel_react_best_practices_agents_codeblock_109",
-      "community": 297,
+      "community": 9,
       "norm_label": "code:bash (npx svgo --precision=1 --multipass icon.svg)"
     },
     {
@@ -20034,7 +20007,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2689",
       "id": "vercel_react_best_practices_agents_6_10_use_react_dom_resource_hints",
-      "community": 296,
+      "community": 9,
       "norm_label": "6.10 use react dom resource hints"
     },
     {
@@ -20043,7 +20016,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2709",
       "id": "vercel_react_best_practices_agents_codeblock_120",
-      "community": 296,
+      "community": 9,
       "norm_label": "code:tsx (import { preconnect, prefetchdns } from 'react-dom')"
     },
     {
@@ -20052,7 +20025,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2722",
       "id": "vercel_react_best_practices_agents_codeblock_121",
-      "community": 296,
+      "community": 9,
       "norm_label": "code:tsx (import { preload, preinit } from 'react-dom')"
     },
     {
@@ -20061,7 +20034,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2742",
       "id": "vercel_react_best_practices_agents_codeblock_122",
-      "community": 296,
+      "community": 9,
       "norm_label": "code:tsx (import { preloadmodule, preinitmodule } from 'react-dom')"
     },
     {
@@ -20070,7 +20043,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2780",
       "id": "vercel_react_best_practices_agents_6_11_use_usetransition_over_manual_loading_states",
-      "community": 298,
+      "community": 9,
       "norm_label": "6.11 use usetransition over manual loading states"
     },
     {
@@ -20079,7 +20052,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2788",
       "id": "vercel_react_best_practices_agents_codeblock_123",
-      "community": 298,
+      "community": 9,
       "norm_label": "code:tsx (function searchresults() {)"
     },
     {
@@ -20088,7 +20061,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L2814",
       "id": "vercel_react_best_practices_agents_codeblock_124",
-      "community": 298,
+      "community": 9,
       "norm_label": "code:tsx (import { usetransition, usestate } from 'react')"
     },
     {
@@ -23598,7 +23571,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/rules/server-cache-react.md",
       "source_location": "L46",
       "id": "rules_server_cache_react_codeblock_3",
-      "community": 287,
+      "community": 178,
       "norm_label": "code:typescript (const getuser = cache(async (uid: number) => {)"
     },
     {
@@ -24111,7 +24084,7 @@
       "source_file": ".claude/skills/graphify/SKILL.md",
       "source_location": "L129",
       "id": "graphify_skill_step_2_detect_files",
-      "community": 157,
+      "community": 168,
       "norm_label": "step 2 - detect files"
     },
     {
@@ -24129,7 +24102,7 @@
       "source_file": ".claude/skills/graphify/SKILL.md",
       "source_location": "L143",
       "id": "graphify_skill_codeblock_4",
-      "community": 157,
+      "community": 168,
       "norm_label": "code:block4 (corpus: x files \u00b7 ~y words)"
     },
     {
@@ -25056,7 +25029,7 @@
       "source_file": "savazai-console/AGENTS.md",
       "source_location": "L1",
       "id": "savazai_console_agents_md",
-      "community": 21,
+      "community": 153,
       "norm_label": "agents.md"
     },
     {
@@ -25065,7 +25038,7 @@
       "source_file": "savazai-console/AGENTS.md",
       "source_location": "L2",
       "id": "savazai_console_agents_this_is_not_the_next_js_you_know",
-      "community": 21,
+      "community": 153,
       "norm_label": "this is not the next.js you know"
     },
     {
@@ -25083,7 +25056,7 @@
       "source_file": "savazai-console/README.md",
       "source_location": "L1",
       "id": "savazai_console_readme_md",
-      "community": 227,
+      "community": 55,
       "norm_label": "readme.md"
     },
     {
@@ -25110,7 +25083,7 @@
       "source_file": "savazai-console/README.md",
       "source_location": "L23",
       "id": "savazai_console_readme_learn_more",
-      "community": 227,
+      "community": 55,
       "norm_label": "learn more"
     },
     {
@@ -25119,7 +25092,7 @@
       "source_file": "savazai-console/README.md",
       "source_location": "L32",
       "id": "savazai_console_readme_deploy_on_vercel",
-      "community": 227,
+      "community": 55,
       "norm_label": "deploy on vercel"
     },
     {
@@ -25479,7 +25452,7 @@
       "source_file": "skills/security-audit/README.md",
       "source_location": "L55",
       "id": "security_audit_readme_usage",
-      "community": 291,
+      "community": 196,
       "norm_label": "usage"
     },
     {
@@ -25488,7 +25461,7 @@
       "source_file": "skills/security-audit/README.md",
       "source_location": "L59",
       "id": "security_audit_readme_codeblock_3",
-      "community": 291,
+      "community": 196,
       "norm_label": "code:block3 (security audit this codebase)"
     },
     {
@@ -25497,7 +25470,7 @@
       "source_file": "skills/security-audit/README.md",
       "source_location": "L63",
       "id": "security_audit_readme_codeblock_4",
-      "community": 291,
+      "community": 196,
       "norm_label": "code:block4 (find security vulnerabilities in ./src)"
     },
     {
@@ -25506,7 +25479,7 @@
       "source_file": "skills/security-audit/README.md",
       "source_location": "L67",
       "id": "security_audit_readme_codeblock_5",
-      "community": 291,
+      "community": 196,
       "norm_label": "code:block5 (do a security review, output to ~/audits/my-project)"
     },
     {
@@ -26239,141 +26212,6 @@
       "norm_label": "send-email.md"
     },
     {
-      "label": "SavazAI Multi-Agent Operating System & Control Plane",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L1",
-      "community": 39,
-      "norm_label": "savazai multi-agent operating system & control plane",
-      "id": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane"
-    },
-    {
-      "label": "\ud83d\udee0\ufe0f Project Architecture",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L5",
-      "community": 39,
-      "norm_label": "\ud83d\udee0\ufe0f project architecture",
-      "id": "savazai_harness_readme_project_architecture"
-    },
-    {
-      "label": "1. Proactive MCP Schema Ingestion on Session Boot",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L16",
-      "community": 39,
-      "norm_label": "1. proactive mcp schema ingestion on session boot",
-      "id": "savazai_harness_readme_1_proactive_mcp_schema_ingestion_on_session_boot"
-    },
-    {
-      "label": "2. Conversational Short-Circuit Interceptors",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L20",
-      "community": 39,
-      "norm_label": "2. conversational short-circuit interceptors",
-      "id": "savazai_harness_readme_2_conversational_short_circuit_interceptors"
-    },
-    {
-      "label": "3. Crucial Post-Mutation Sequential Loops",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L24",
-      "community": 39,
-      "norm_label": "3. crucial post-mutation sequential loops",
-      "id": "savazai_harness_readme_3_crucial_post_mutation_sequential_loops"
-    },
-    {
-      "label": "4. ISO Date Standardization",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L28",
-      "community": 39,
-      "norm_label": "4. iso date standardization",
-      "id": "savazai_harness_readme_4_iso_date_standardization"
-    },
-    {
-      "label": "5. Stream Token Bracket Purging",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L32",
-      "community": 39,
-      "norm_label": "5. stream token bracket purging",
-      "id": "savazai_harness_readme_5_stream_token_bracket_purging"
-    },
-    {
-      "label": "6. Premium Markdown Layouts (Tables, Lists, & Images)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L35",
-      "community": 39,
-      "norm_label": "6. premium markdown layouts (tables, lists, & images)",
-      "id": "savazai_harness_readme_6_premium_markdown_layouts_tables_lists_images"
-    },
-    {
-      "label": "7. Background Dynamic Communication Subsystem & Persistent Cryptographic Vault",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L39",
-      "community": 39,
-      "norm_label": "7. background dynamic communication subsystem & persistent cryptographic vault",
-      "id": "savazai_harness_readme_7_background_dynamic_communication_subsystem_persistent_cryptographic_vault"
-    },
-    {
-      "label": "8. Dynamic Framework-Level Telemetry Engine & Spend Ledger",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L47",
-      "community": 39,
-      "norm_label": "8. dynamic framework-level telemetry engine & spend ledger",
-      "id": "savazai_harness_readme_8_dynamic_framework_level_telemetry_engine_spend_ledger"
-    },
-    {
-      "label": "\ud83d\udd10 Production Environment Variables Guide",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L54",
-      "community": 39,
-      "norm_label": "\ud83d\udd10 production environment variables guide",
-      "id": "savazai_harness_readme_production_environment_variables_guide"
-    },
-    {
-      "label": "Backend (`.env` / Coolify Environment Variables)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L56",
-      "community": 39,
-      "norm_label": "backend (`.env` / coolify environment variables)",
-      "id": "savazai_harness_readme_backend_env_coolify_environment_variables"
-    },
-    {
-      "label": "Frontend (`savazai-console/.env.local` / Coolify Build Secrets)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L61",
-      "community": 39,
-      "norm_label": "frontend (`savazai-console/.env.local` / coolify build secrets)",
-      "id": "savazai_harness_readme_frontend_savazai_console_env_local_coolify_build_secrets"
-    },
-    {
-      "label": "\ud83d\ude80 local-First Validation Loop & VPS Deployment",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L69",
-      "community": 39,
-      "norm_label": "\ud83d\ude80 local-first validation loop & vps deployment",
-      "id": "savazai_harness_readme_local_first_validation_loop_vps_deployment"
-    },
-    {
-      "label": "Docker Run Commands",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L92",
-      "community": 39,
-      "norm_label": "docker run commands",
-      "id": "savazai_harness_readme_docker_run_commands"
-    },
-    {
       "label": "\ud83d\ude80 VPS Docker Deployment Validation",
       "file_type": "document",
       "source_file": "README.md",
@@ -27048,7 +26886,7 @@
       "source_file": "savazai-console/src/components/system-trace.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 153,
+      "community": 171,
       "norm_label": "system-trace.tsx",
       "id": "components_system_trace"
     },
@@ -28548,7 +28386,7 @@
       "source_file": "AGENTS.md",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 21,
+      "community": 153,
       "norm_label": "agents.md",
       "id": "agents"
     },
@@ -28698,7 +28536,7 @@
       "source_file": "AGENTS.md",
       "source_location": "L124",
       "_origin": "ast",
-      "community": 21,
+      "community": 153,
       "norm_label": "run both apps and db locally (root directory)",
       "id": "agents_run_both_apps_and_db_locally_root_directory"
     },
@@ -28708,7 +28546,7 @@
       "source_file": "AGENTS.md",
       "source_location": "L127",
       "_origin": "ast",
-      "community": 21,
+      "community": 153,
       "norm_label": "complete code quality testing loops",
       "id": "agents_complete_code_quality_testing_loops"
     },
@@ -28718,7 +28556,7 @@
       "source_file": "AGENTS.md",
       "source_location": "L128",
       "_origin": "ast",
-      "community": 21,
+      "community": 153,
       "norm_label": "backend execution verification (root workspace)",
       "id": "agents_backend_execution_verification_root_workspace"
     },
@@ -28728,7 +28566,7 @@
       "source_file": "AGENTS.md",
       "source_location": "L132",
       "_origin": "ast",
-      "community": 21,
+      "community": 153,
       "norm_label": "frontend compilation verification (./savazai-console folder)",
       "id": "agents_frontend_compilation_verification_savazai_console_folder"
     },
@@ -28738,7 +28576,7 @@
       "source_file": "AGENTS.md",
       "source_location": "L137",
       "_origin": "ast",
-      "community": 21,
+      "community": 153,
       "norm_label": "generate and apply database migrations",
       "id": "agents_generate_and_apply_database_migrations"
     },
@@ -28758,7 +28596,7 @@
       "source_file": "README.md",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 227,
+      "community": 55,
       "norm_label": "readme.md",
       "id": "readme"
     },
@@ -28918,7 +28756,7 @@
       "source_file": "savazai-console/AGENTS.md",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 21,
+      "community": 153,
       "norm_label": "agents.md",
       "id": "savazai_console_agents"
     },
@@ -28938,7 +28776,7 @@
       "source_file": "savazai-console/README.md",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 227,
+      "community": 55,
       "norm_label": "readme.md",
       "id": "savazai_console_readme"
     },
@@ -50193,9 +50031,9 @@
       "source_file": "src/db/index.ts",
       "source_location": "L18",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "src_db_index_ts",
-      "target": "db_index_matches"
+      "target": "db_index_matches",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -51169,9 +51007,9 @@
       "source_file": "src/db/wait-for-db.ts",
       "source_location": "L16",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "src_db_wait_for_db_ts",
-      "target": "db_wait_for_db_matches"
+      "target": "db_wait_for_db_matches",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -55425,16 +55263,6 @@
       "source_file": "README.md",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "readme_md",
-      "target": "savazai_harness_readme_savazai_enterprise_multi_agent_operating_system_control_plane",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L1",
-      "weight": 1.0,
       "confidence_score": 1.0,
       "source": "readme_md",
       "target": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane"
@@ -55443,281 +55271,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L7",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_savazai_enterprise_multi_agent_operating_system_control_plane",
-      "target": "savazai_harness_readme_system_architecture_ports",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L16",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_savazai_enterprise_multi_agent_operating_system_control_plane",
-      "target": "savazai_harness_readme_dynamic_tech_stack_profile",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L34",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_savazai_enterprise_multi_agent_operating_system_control_plane",
-      "target": "savazai_harness_readme_configuration_security_schema",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L70",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_savazai_enterprise_multi_agent_operating_system_control_plane",
-      "target": "savazai_harness_readme_installation_local_first_startup",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L115",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_savazai_enterprise_multi_agent_operating_system_control_plane",
-      "target": "savazai_harness_readme_key_core_features_deployed",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L20",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_dynamic_tech_stack_profile",
-      "target": "savazai_harness_readme_core_engine_backend",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L26",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_dynamic_tech_stack_profile",
-      "target": "savazai_harness_readme_control_plane_frontend_console",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L36",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_configuration_security_schema",
-      "target": "savazai_harness_readme_the_cryptographic_vault_master_vault_secret",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L42",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_configuration_security_schema",
-      "target": "savazai_harness_readme_environment_configuration_files",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L46",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_environment_configuration_files",
-      "target": "savazai_harness_readme_engine_backend_env",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L59",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_environment_configuration_files",
-      "target": "savazai_harness_readme_console_frontend_savazai_console_env",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L47",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_engine_backend_env",
-      "target": "savazai_harness_readme_codeblock_1",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L73",
+      "source_location": "L5",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "savazai_harness_readme_local_first_validation_loop_vps_deployment",
-      "target": "savazai_harness_readme_codeblock_1"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L67",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "savazai_harness_readme_vps_docker_deployment_validation",
-      "target": "savazai_harness_readme_codeblock_1"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L59",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_vps_docker_deployment_validation",
-      "target": "savazai_harness_readme_codeblock_1"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L60",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_console_frontend_savazai_console_env",
-      "target": "savazai_harness_readme_codeblock_2",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L85",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "savazai_harness_readme_local_first_validation_loop_vps_deployment",
-      "target": "savazai_harness_readme_codeblock_2"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L79",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "savazai_harness_readme_docker_run_commands",
-      "target": "savazai_harness_readme_codeblock_2"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L71",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_docker_run_commands",
-      "target": "savazai_harness_readme_codeblock_2"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L74",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_installation_local_first_startup",
-      "target": "savazai_harness_readme_1_pre_requisites_local_installation",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L82",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_installation_local_first_startup",
-      "target": "savazai_harness_readme_2_database_migrations",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L90",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_installation_local_first_startup",
-      "target": "savazai_harness_readme_3_running_container_orchestration",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L100",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_installation_local_first_startup",
-      "target": "savazai_harness_readme_4_verification_checkpoints",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L76",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_1_pre_requisites_local_installation",
-      "target": "savazai_harness_readme_codeblock_3",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L93",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "savazai_harness_readme_docker_run_commands",
-      "target": "savazai_harness_readme_codeblock_3"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L84",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_2_database_migrations",
-      "target": "savazai_harness_readme_codeblock_4",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L92",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_3_running_container_orchestration",
-      "target": "savazai_harness_readme_codeblock_5",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L102",
-      "weight": 1.0,
-      "source": "savazai_harness_readme_4_verification_checkpoints",
-      "target": "savazai_harness_readme_codeblock_6",
-      "confidence_score": 1.0
+      "source": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane",
+      "target": "savazai_harness_readme_project_architecture"
     },
     {
       "relation": "contains",
@@ -55728,6 +55286,36 @@
       "confidence_score": 1.0,
       "source": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane",
       "target": "savazai_harness_readme_key_core_features_deployed"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L49",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane",
+      "target": "savazai_harness_readme_production_environment_variables_guide"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L69",
+      "weight": 1.0,
+      "source": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane",
+      "target": "savazai_harness_readme_local_first_validation_loop_vps_deployment",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L64",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane",
+      "target": "savazai_harness_readme_vps_docker_deployment_validation"
     },
     {
       "relation": "contains",
@@ -55805,9 +55393,119 @@
       "source_file": "README.md",
       "source_location": "L47",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "savazai_harness_readme_key_core_features_deployed",
-      "target": "savazai_harness_readme_8_dynamic_framework_level_telemetry_engine_spend_ledger"
+      "target": "savazai_harness_readme_8_dynamic_framework_level_telemetry_engine_spend_ledger",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L51",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_production_environment_variables_guide",
+      "target": "savazai_harness_readme_backend_env_coolify_environment_variables"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L56",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_production_environment_variables_guide",
+      "target": "savazai_harness_readme_frontend_savazai_console_env_local_coolify_build_secrets"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L73",
+      "weight": 1.0,
+      "source": "savazai_harness_readme_local_first_validation_loop_vps_deployment",
+      "target": "savazai_harness_readme_codeblock_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L85",
+      "weight": 1.0,
+      "source": "savazai_harness_readme_local_first_validation_loop_vps_deployment",
+      "target": "savazai_harness_readme_codeblock_2",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L92",
+      "weight": 1.0,
+      "source": "savazai_harness_readme_local_first_validation_loop_vps_deployment",
+      "target": "savazai_harness_readme_docker_run_commands",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L67",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_vps_docker_deployment_validation",
+      "target": "savazai_harness_readme_codeblock_1"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L59",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_vps_docker_deployment_validation",
+      "target": "savazai_harness_readme_codeblock_1"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L79",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_docker_run_commands",
+      "target": "savazai_harness_readme_codeblock_2"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L71",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_docker_run_commands",
+      "target": "savazai_harness_readme_codeblock_2"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L93",
+      "weight": 1.0,
+      "source": "savazai_harness_readme_docker_run_commands",
+      "target": "savazai_harness_readme_codeblock_3",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L78",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_harness_readme_vps_docker_deployment_validation",
+      "target": "savazai_harness_readme_docker_run_commands"
     },
     {
       "relation": "contains",
@@ -71038,86 +70736,6 @@
       "confidence_score": 1.0,
       "source": "security_audit_web_protocol_and_auth_core_discipline_include_in_every_agent_prompt_for_this_domain",
       "target": "security_audit_web_protocol_and_auth_codeblock_1"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L5",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane",
-      "target": "savazai_harness_readme_project_architecture"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L49",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane",
-      "target": "savazai_harness_readme_production_environment_variables_guide"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L69",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane",
-      "target": "savazai_harness_readme_local_first_validation_loop_vps_deployment"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L64",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "savazai_harness_readme_savazai_multi_agent_operating_system_control_plane",
-      "target": "savazai_harness_readme_vps_docker_deployment_validation"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L51",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "savazai_harness_readme_production_environment_variables_guide",
-      "target": "savazai_harness_readme_backend_env_coolify_environment_variables"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L56",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "savazai_harness_readme_production_environment_variables_guide",
-      "target": "savazai_harness_readme_frontend_savazai_console_env_local_coolify_build_secrets"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L92",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "savazai_harness_readme_local_first_validation_loop_vps_deployment",
-      "target": "savazai_harness_readme_docker_run_commands"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L78",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "savazai_harness_readme_vps_docker_deployment_validation",
-      "target": "savazai_harness_readme_docker_run_commands"
     },
     {
       "relation": "contains",
