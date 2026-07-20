@@ -1,0 +1,27 @@
+﻿savazai-backend  | [db-wait] Checking database connection readiness...
+savazai-backend  | [db-wait] Database connection verified successfully!
+savazai-backend  | No config path provided, using default 'drizzle.config.ts'
+savazai-backend  | Reading config file '/app/drizzle.config.ts'
+savazai-backend  | Using 'pg' driver for database querying
+savazai-backend  | npm notice
+savazai-backend  | npm notice New major version of npm available! 10.9.8 -> 12.0.1
+savazai-backend  | npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.1
+savazai-backend  | npm notice To update run: npm install -g npm@12.0.1
+savazai-backend  | npm notice
+savazai-backend  | [Γú╖] applying migrations...[2K[1G[Γ£ô] migrations applied successfully![seed] App "WedPlanAI-Local" already exists (id=1). Skipping config override to protect admin settings.
+savazai-backend  | [seed] Core Supervisor agent already exists
+savazai-backend  | [seed] Document Automation agent already exists
+savazai-backend  | [vector-matcher] Embedding already exists for "brave-search-transformer"
+savazai-backend  | [vector-matcher] Embedding already exists for "generate-pdf"
+savazai-backend  | [vector-matcher] Embedding already exists for "send-email"
+savazai-backend  | [seed] System configuration already exists. Skipping config override to protect admin settings.
+savazai-backend  | [seed] Baseline configuration complete
+savazai-backend  | [savazai-harness] Service initialized
+savazai-backend  | [savazai-harness] Listening on port 3055
+savazai-backend  | [supervisorNode] Structured Planner Decided next: FinderAgent reasoning: The user is requesting to search for wedding event planners in a specific location, which requires external web search capabilities provided by the FinderAgent.
+savazai-backend  | [finderNode] Entering Finder sub-agent execution lane...
+savazai-backend  | [finderNode] Inspecting last user prompt: "Finding Wedding Event planners in Chennai, India"
+savazai-backend  | [FINDER AGENT] Executing crawler payload target: https://html.duckduckgo.com/html/?q=Finding%20Wedding%20Event%20planners%20in%20Chennai%2C%20India
+savazai-backend  | [finderNode] Querying stateless HTTP list of tools...
+savazai-backend  | [McpHttpClient] Requesting tools list from stateful SSE http://savazai-crawler-mcp:11235/mcp/sse...
+savazai-backend  | [McpHttpClient] Establishing SSE connection to: http://savazai-crawler-mcp:11235/mcp/sse

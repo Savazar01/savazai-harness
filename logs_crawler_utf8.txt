@@ -1,0 +1,63 @@
+﻿savazai-crawler-mcp  | entrypoint: no REDIS_PASSWORD provided; generated an ephemeral one.
+savazai-crawler-mcp  | 2026-07-19 18:24:14,820 INFO supervisord started with pid 1
+savazai-crawler-mcp  | 2026-07-19 18:24:15,823 INFO spawned: 'redis' with pid 8
+savazai-crawler-mcp  | 2026-07-19 18:24:15,824 INFO spawned: 'gunicorn' with pid 9
+savazai-crawler-mcp  | 8:C 19 Jul 2026 18:24:15.837 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+savazai-crawler-mcp  | 8:C 19 Jul 2026 18:24:15.837 * Redis version=8.8.0, bits=64, commit=00000000, modified=1, pid=8, just started
+savazai-crawler-mcp  | 8:C 19 Jul 2026 18:24:15.837 * Configuration loaded
+savazai-crawler-mcp  | 8:M 19 Jul 2026 18:24:15.837 * monotonic clock: POSIX clock_gettime
+savazai-crawler-mcp  | 8:M 19 Jul 2026 18:24:15.839 * Running mode=standalone, port=6379.
+savazai-crawler-mcp  | 8:M 19 Jul 2026 18:24:15.839 * Server initialized
+savazai-crawler-mcp  | 8:M 19 Jul 2026 18:24:15.840 * Ready to accept connections tcp
+savazai-crawler-mcp  | [2026-07-19 18:24:16 +0000] [9] [INFO] Starting gunicorn 26.0.0
+savazai-crawler-mcp  | [2026-07-19 18:24:16 +0000] [9] [INFO] Listening at: http://[::]:11235 (9)
+savazai-crawler-mcp  | [2026-07-19 18:24:16 +0000] [9] [INFO] Using worker: uvicorn.workers.UvicornWorker
+savazai-crawler-mcp  | [2026-07-19 18:24:16 +0000] [15] [INFO] Booting worker with pid: 15
+savazai-crawler-mcp  | [2026-07-19 18:24:16 +0000] [9] [INFO] Control socket listening at /home/appuser/.gunicorn/gunicorn.ctl
+savazai-crawler-mcp  | 2026-07-19 18:24:17,459 INFO success: redis entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+savazai-crawler-mcp  | 2026-07-19 18:24:17,459 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+savazai-crawler-mcp  | No SECRET_KEY set. Auto-generated an ephemeral key (changes on restart, invalidating issued tokens). Set SECRET_KEY for any real deployment.
+savazai-crawler-mcp  | /app/job.py:49: UserWarning: Field name "schema" in "LlmJobPayload" shadows an attribute in parent "BaseModel"
+savazai-crawler-mcp  |   class LlmJobPayload(BaseModel):
+savazai-crawler-mcp  | /app/server.py:1010: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+savazai-crawler-mcp  |   context_type: str = Query("all", regex="^(code|doc|all)$"),
+savazai-crawler-mcp  | MCP server running on 127.0.0.1:11235
+savazai-crawler-mcp  | [2026-07-19 18:24:18 +0000] [15] [INFO] Started server process [15]
+savazai-crawler-mcp  | [2026-07-19 18:24:18 +0000] [15] [INFO] Waiting for application startup.
+savazai-crawler-mcp  | 2026-07-19 18:24:18,697 - server - INFO - Auth gate active (credential configured).
+savazai-crawler-mcp  | 2026-07-19 18:24:18,705 - crawl4ai.egress - INFO - egress pinning proxy listening on http://127.0.0.1:43561
+savazai-crawler-mcp  | 2026-07-19 18:24:18,707 - crawl4ai.workqueue - INFO - work queue started (maxsize=1000, workers=4, per_principal=unlimited)
+savazai-crawler-mcp  | 2026-07-19 18:24:18,712 - monitor - INFO - Started persistence worker
+savazai-crawler-mcp  | 2026-07-19 18:24:18,770 - crawler_pool - INFO - ≡ƒöÑ Creating permanent default browser
+savazai-crawler-mcp  | [INIT].... ΓåÆ Crawl4AI 0.9.2 
+savazai-crawler-mcp  | [2026-07-19 18:24:19 +0000] [15] [INFO] Application startup complete.
+savazai-crawler-mcp  | 2026-07-19 18:27:20,591 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+savazai-crawler-mcp  | 2026-07-19 18:27:20,617 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+savazai-crawler-mcp  | 2026-07-19 18:34:25,521 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+savazai-crawler-mcp  | 2026-07-19 18:34:25,544 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+savazai-crawler-mcp  | 2026-07-19 18:40:36,083 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+savazai-crawler-mcp  | 2026-07-19 18:40:36,102 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+savazai-crawler-mcp  | 2026-07-19 18:44:15,105 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+savazai-crawler-mcp  | 2026-07-19 18:44:15,130 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+savazai-crawler-mcp  | 2026-07-19 18:49:31,834 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+savazai-crawler-mcp  | 2026-07-19 18:49:31,854 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+savazai-crawler-mcp  | 2026-07-19 18:50:27,545 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+savazai-crawler-mcp  | 2026-07-19 18:50:27,567 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+savazai-crawler-mcp  | 2026-07-19 18:55:57,145 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+savazai-crawler-mcp  | 2026-07-19 18:55:57,171 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+savazai-crawler-mcp  | 2026-07-19 19:03:36,541 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+savazai-crawler-mcp  | 2026-07-19 19:03:36,566 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+savazai-crawler-mcp  | 2026-07-19 19:09:40,796 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+savazai-crawler-mcp  | 2026-07-19 19:09:40,822 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+savazai-crawler-mcp  | 2026-07-19 19:15:03,218 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+savazai-crawler-mcp  | 2026-07-19 19:15:03,243 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+savazai-crawler-mcp  | 2026-07-19 19:15:03,648 - crawler_pool - INFO - ≡ƒåò Creating new browser in cold pool (sig=85c4c360, mem=1.6%)
+savazai-crawler-mcp  | [INIT].... ΓåÆ Crawl4AI 0.9.2 
+savazai-crawler-mcp  | [FETCH]... Γåô https://html.duckduckgo.com/html/?q=Find wedding venues in Lucknow, India                            | Γ£ô | ΓÅ▒: 1.32s 
+savazai-crawler-mcp  | [SCRAPE].. Γùå https://html.duckduckgo.com/html/?q=Find wedding venues in Lucknow, India                            | Γ£ô | ΓÅ▒: 0.03s 
+savazai-crawler-mcp  | [COMPLETE] ΓùÅ https://html.duckduckgo.com/html/?q=Find wedding venues in Lucknow, India                            | Γ£ô | ΓÅ▒: 1.37s 
+savazai-crawler-mcp  | 2026-07-19 19:15:05,647 - api - INFO - Memory usage: Start: 147.03125 MB, End: 150.66015625 MB, Delta: 3.62890625 MB, Peak: 150.66015625 MB
+savazai-crawler-mcp  | 2026-07-19 19:15:05,651 - httpx - INFO - HTTP Request: POST http://127.0.0.1:11235/crawl "HTTP/1.1 200 OK"
+savazai-crawler-mcp  | 2026-07-19 19:20:19,363 - crawler_pool - INFO - ≡ƒº╣ Closing cold browser (sig=85c4c360, idle=315s)
+savazai-crawler-mcp  | 2026-07-19 19:20:20,366 INFO reaped unknown pid 1327 (exit status 0)
+savazai-crawler-mcp  | 2026-07-19 19:20:20,367 INFO reaped unknown pid 1328 (exit status 0)

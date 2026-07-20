@@ -1,0 +1,18 @@
+﻿HTTP/1.1 200 OK
+date: Sun, 19 Jul 2026 19:23:51 GMT
+server: uvicorn
+cache-control: no-store
+connection: keep-alive
+x-accel-buffering: no
+content-type: text/event-stream; charset=utf-8
+x-content-type-options: nosniff
+x-frame-options: DENY
+referrer-policy: no-referrer
+cross-origin-opener-policy: same-origin
+cross-origin-resource-policy: same-origin
+content-security-policy: default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
+Transfer-Encoding: chunked
+
+event: endpoint
+data: /mcp/messages/?session_id=52a6a913861c4dc892f5e5b57ec25eab
+
