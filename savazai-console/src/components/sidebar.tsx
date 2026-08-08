@@ -13,11 +13,17 @@ import {
   Plus,
   Trash2,
   MessageSquare,
+  BrainCircuit,
+  Library,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 const navItems = [
   { href: "/dashboard", label: "Agent Workspace", icon: LayoutDashboard },
+  { href: "/studio", label: "Capability Studio", icon: BrainCircuit },
+  { href: "/business", label: "Business Center", icon: Library },
   { href: "/admin/settings", label: "Command Center", icon: Settings },
 ];
 
@@ -50,7 +56,31 @@ export function Sidebar() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [threads, setThreads] = useState<ChatThread[]>(() => loadThreads());
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const isDashboard = pathname === "/dashboard";
+
+  // Persistent sidebar state & window resize listener
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const persisted = localStorage.getItem("savazai_sidebar_collapsed");
+      // Default to collapsed on tablet resolutions, read localStorage on desktop
+      const handleResize = () => {
+        const width = window.innerWidth;
+        if (width >= 768 && width <= 1024) {
+          setIsCollapsed(true);
+        } else if (width > 1024) {
+          setIsCollapsed(persisted === "true");
+        } else {
+          // Mobile state uses full drawer model
+          setIsCollapsed(false);
+        }
+      };
+
+      handleResize();
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, []);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -102,16 +132,36 @@ export function Sidebar() {
     });
   }, []);
 
+  // Determine if full labels and chat components are rendered
+  const showFullContent = !isCollapsed || mobileOpen;
+
   const sidebarContent = (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 px-4 py-6 border-b border-slate-900">
-        <Bot className="h-7 w-7 text-primary" />
-        <span className="text-lg font-bold text-white tracking-tight">
-          SavazAI
-        </span>
+    <div className="flex flex-col h-full overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-900 select-none">
+      <div className="flex items-center justify-between px-4 py-6 border-b border-slate-900">
+        <div className="flex items-center gap-3">
+          <Bot className="h-7 w-7 text-primary shrink-0" />
+          {showFullContent && (
+            <span className="text-lg font-bold text-white tracking-tight animate-in fade-in duration-200">
+              SavazAI
+            </span>
+          )}
+        </div>
+        {!mobileOpen && (
+          <button
+            onClick={() => {
+              const nextVal = !isCollapsed;
+              setIsCollapsed(nextVal);
+              localStorage.setItem("savazai_sidebar_collapsed", String(nextVal));
+            }}
+            className="hidden md:flex p-1 rounded hover:bg-slate-900 text-slate-400 hover:text-white transition-colors"
+            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </button>
+        )}
       </div>
 
-      <nav className="px-3 pt-4 pb-2 space-y-1">
+      <nav className="px-2 pt-4 pb-2 space-y-1">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -119,22 +169,27 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+              className={`flex items-center gap-3 rounded-xl text-sm font-semibold transition-all ${
+                !showFullContent ? "justify-center p-2.5 mx-2" : "px-3 py-2.5"
+              } ${
                 isActive
                   ? "bg-primary text-white shadow-lg shadow-primary/20"
                   : "text-slate-400 hover:text-white hover:bg-slate-900/40"
               }`}
+              title={!showFullContent ? item.label : undefined}
             >
               <item.icon className="h-4 w-4 shrink-0" />
-              {item.label}
+              {showFullContent && (
+                <span className="animate-in fade-in duration-200">{item.label}</span>
+              )}
             </Link>
           );
         })}
       </nav>
 
-      {isDashboard && (
+      {isDashboard && showFullContent && (
         <div className="flex flex-col flex-1 min-h-0 border-t border-slate-900 pt-3">
-          <div className="flex items-center justify-between px-3 mb-2">
+          <div className="flex items-center justify-between px-3 mb-2 shrink-0">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               Chat Conversations
             </span>
@@ -146,7 +201,7 @@ export function Sidebar() {
               <Plus className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto px-2 space-y-1">
+          <div className="flex-1 overflow-y-auto px-2 space-y-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-900">
             {threads.length === 0 ? (
               <p className="text-[11px] text-slate-600 text-center py-6">
                 No conversations yet
@@ -180,7 +235,10 @@ export function Sidebar() {
         </div>
       )}
 
-      <div className="px-3 py-4 border-t border-slate-900">
+      {/* Spacer to push signout down if dashboard is not active */}
+      {!isDashboard && <div className="flex-1" />}
+
+      <div className="px-2 py-4 border-t border-slate-900 shrink-0">
         <button
           onClick={async () => {
             try {
@@ -193,10 +251,15 @@ export function Sidebar() {
               console.error("[sidebar] Sign out failed:", err);
             }
           }}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-semibold text-red-400 hover:bg-red-500/10 transition-all"
+          className={`flex items-center gap-3 rounded-xl text-sm font-semibold text-red-400 hover:bg-red-500/10 transition-all ${
+            !showFullContent ? "justify-center p-2.5 mx-2" : "w-full px-3 py-2.5"
+          }`}
+          title={!showFullContent ? "Sign Out" : undefined}
         >
           <LogOut className="h-4 w-4 shrink-0" />
-          Sign Out
+          {showFullContent && (
+            <span className="animate-in fade-in duration-200">Sign Out</span>
+          )}
         </button>
       </div>
     </div>
@@ -204,25 +267,32 @@ export function Sidebar() {
 
   return (
     <>
+      {/* Mobile Menu trigger */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-350 hover:text-white shadow-lg shadow-black/40"
         aria-label="Toggle sidebar"
       >
         {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
-      <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-slate-900 bg-slate-950/60">
+      {/* Desktop Sidebar */}
+      <aside
+        className={`hidden md:flex flex-col border-r border-slate-900 bg-slate-950/60 transition-all duration-300 ${
+          isCollapsed ? "w-16" : "w-60"
+        }`}
+      >
         {sidebarContent}
       </aside>
 
+      {/* Mobile Drawer Overlay */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 flex">
+        <div className="md:hidden fixed inset-0 z-40 flex animate-in fade-in duration-200">
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="relative w-60 max-w-[75vw] bg-slate-950 border-r border-slate-900 shadow-2xl">
+          <aside className="relative w-60 max-w-[75vw] bg-slate-950 border-r border-slate-900 shadow-2xl flex flex-col h-full animate-in slide-in-from-left duration-250">
             {sidebarContent}
           </aside>
         </div>

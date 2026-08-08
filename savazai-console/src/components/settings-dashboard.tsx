@@ -5,7 +5,6 @@ import {
   updateSystemConfig,
   testProviderConnection,
   fetchProviderModels,
-  readAgentsMd,
   saveAgentsMd,
   getTelemetryAnalytics,
 } from "@/app/admin/settings/actions";
@@ -28,20 +27,42 @@ import {
   Mail,
   Send,
   MessageSquare,
-  BrainCircuit,
-  FileText,
+  BarChart3,
+  ExternalLink,
+  Database,
   Plus,
   Trash2,
-  HelpCircle,
-  BarChart3,
-
+  Edit,
+  Share2,
 } from "lucide-react";
+import { HelpTooltip } from "@/components/shared/help-tooltip";
 
 interface CustomSkill {
   name: string;
   description: string;
   inputSchema: string;
   executableScriptCode: string;
+}
+
+interface DbConnection {
+  alias: string;
+  engine: "postgres" | "mysql" | "mariadb" | "mongodb" | "sqlite" | "oracle";
+  hostUri: string;
+  port: string;
+  database: string;
+  user: string;
+  passwordKey: string;
+  active: boolean;
+}
+
+interface SocialConnection {
+  name: string;
+  preset: string;
+  appId: string;
+  tokenOrKey: string;
+  baseEndpoint: string;
+  scopes: string;
+  active: boolean;
 }
 
 interface TelemetryLog {
@@ -78,12 +99,15 @@ interface SettingsDashboardProps {
   initialConfig: SystemConfig;
 }
 
-type TabType = "appearance" | "branding" | "llm" | "mcp" | "api" | "capability" | "analytics";
+type TabType = "appearance" | "branding" | "llm" | "mcp" | "database" | "api" | "capability" | "analytics" | "social";
 
 const DEFAULT_LLM_PROVIDERS: Record<string, LLMProviderConfig> = {
   openai: { apiKey: "", endpoint: "https://api.openai.com/v1", defaultModel: "gpt-4o", active: false },
   anthropic: { apiKey: "", endpoint: "https://api.anthropic.com", defaultModel: "claude-3-5-sonnet", active: false },
   gemini: { apiKey: "", endpoint: "https://generativelanguage.googleapis.com", defaultModel: "gemini-1.5-pro", active: false },
+  groq: { apiKey: "", endpoint: "https://api.groq.com/openai/v1", defaultModel: "llama-3.3-70b-versatile", active: false },
+  xai: { apiKey: "", endpoint: "https://api.x.ai/v1", defaultModel: "grok-2-1212", active: false },
+  omniroute: { apiKey: "", endpoint: "http://localhost:20128/v1", defaultModel: "omniroute-default", active: false },
   openrouter: { apiKey: "", endpoint: "https://openrouter.ai/api/v1", defaultModel: "openai/gpt-4o", active: false },
   ollama: { apiKey: "", endpoint: "http://localhost:11434", defaultModel: "llama3", active: false },
   lmstudio: { apiKey: "", endpoint: "http://localhost:1234", defaultModel: "qwen2.5-7b", active: false },
@@ -93,18 +117,90 @@ const PROVIDER_LABELS: Record<string, string> = {
   openai: "OpenAI",
   anthropic: "Anthropic",
   gemini: "Google Gemini",
+  groq: "Groq",
+  xai: "xAI (Grok)",
+  omniroute: "OmniRoute AI Gateway",
   openrouter: "OpenRouter",
   ollama: "Ollama (Local)",
   lmstudio: "LM Studio (Local)",
+};
+
+const PROVIDER_SETUP_LINKS: Record<string, string> = {
+  openai: "https://platform.openai.com/api-keys",
+  anthropic: "https://console.anthropic.com/settings/keys",
+  gemini: "https://aistudio.google.com/app/apikey",
+  groq: "https://console.groq.com/keys",
+  xai: "https://console.x.ai",
+  omniroute: "http://localhost:20128/v1",
+  openrouter: "https://openrouter.ai/keys",
+  ollama: "https://ollama.com/download",
+  lmstudio: "https://lmstudio.ai/docs/api/server",
 };
 
 const PROVIDER_MODELS: Record<string, string[]> = {
   openai: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
   anthropic: ["claude-3-5-sonnet", "claude-3-5-haiku", "claude-3-opus"],
   gemini: ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"],
+  groq: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "gemma2-9b-it"],
+  xai: ["grok-2", "grok-2-vision", "grok-beta"],
+  omniroute: ["omniroute-default", "meta-llama-3-8b", "gpt-4o-mini"],
   openrouter: ["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "google/gemini-1.5-pro", "meta-llama/llama-3-70b"],
   ollama: ["llama3", "mistral", "qwen2.5", "codellama", "mixtral"],
   lmstudio: ["qwen2.5-7b", "qwen2.5-14b", "llama-3.2-3b", "mistral-nemo"],
+};
+
+const MCP_PRESETS: Record<string, { command: string; args: string[]; env: Record<string, string> }> = {
+  sap: {
+    command: "npx",
+    args: ["@savazai/mcp-sap"],
+    env: {
+      SAP_CLIENT: "100",
+      SAP_URL: "https://sap.enterprise.com"
+    }
+  },
+  salesforce: {
+    command: "npx",
+    args: ["@salesforce/mcp-server"],
+    env: {
+      SF_USERNAME: "salesforce-integration@company.com",
+      SF_PASSWORD: "securePassword123",
+      SF_LOGIN_URL: "https://login.salesforce.com"
+    }
+  },
+  servicenow: {
+    command: "npx",
+    args: ["@servicenow/mcp-connector"],
+    env: {
+      SNOW_INSTANCE: "companyinstance",
+      SNOW_USERNAME: "snow-agent",
+      SNOW_PASSWORD: "securePassword123"
+    }
+  },
+  jira: {
+    command: "npx",
+    args: ["@jira/mcp-bridge"],
+    env: {
+      JIRA_HOST: "https://company.atlassian.net",
+      JIRA_EMAIL: "jira-bot@company.com",
+      JIRA_API_TOKEN: "jiraToken"
+    }
+  },
+  slack: {
+    command: "npx",
+    args: ["@slack/mcp-server"],
+    env: {
+      SLACK_BOT_TOKEN: "xoxb-slack-bot-token",
+      SLACK_APP_TOKEN: "xapp-slack-app-token"
+    }
+  },
+  workday: {
+    command: "npx",
+    args: ["@workday/mcp-connector"],
+    env: {
+      WORKDAY_TENANT: "company_tenant",
+      WORKDAY_REST_URL: "https://wd3-impl.workday.com"
+    }
+  }
 };
 
 function TabButton({ tab, icon: Icon, activeTab, setActiveTab, label }: {
@@ -135,8 +231,6 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<Record<string, { success: boolean; detail?: string; error?: string } | undefined>>({});
-  const [dynamicModels, setDynamicModels] = useState<Record<string, string[]>>({});
-
   const tokens = initialConfig.designTokens || {};
   const storedProviders = React.useMemo(() => tokens.llmProviders || {}, [tokens.llmProviders]);
   const mergedProviders = React.useMemo(() => {
@@ -147,17 +241,6 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
     return res;
   }, [storedProviders]);
 
-  React.useEffect(() => {
-    Object.entries(mergedProviders).forEach(async ([key, prov]) => {
-      if (prov.active && prov.endpoint && prov.apiKey) {
-        const res = await fetchProviderModels(key, prov.endpoint, prov.apiKey);
-        if (res.success && res.models) {
-          setDynamicModels((prev) => ({ ...prev, [key]: res.models }));
-        }
-      }
-    });
-  }, [mergedProviders]);
-
   const [appTitle, setAppTitle] = useState(initialConfig.appTitle);
   const [brandLogoUrl, setBrandLogoUrl] = useState(initialConfig.brandLogoUrl);
   const [primaryColor, setPrimaryColor] = useState(tokens.primaryColor || "#4f46e5");
@@ -166,13 +249,76 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
   const [fontSans, setFontSans] = useState(tokens.fontSans || "Geist");
 
   const [llmProviders, setLlmProviders] = useState<Record<string, LLMProviderConfig>>(mergedProviders);
+  const [discoveredModels, setDiscoveredModels] = useState<Record<string, string[]>>(() => {
+    const initialDiscovered: Record<string, string[]> = {};
+    for (const [key, prov] of Object.entries(mergedProviders)) {
+      if (prov.discoveredModels) {
+        initialDiscovered[key] = prov.discoveredModels;
+      }
+    }
+    return initialDiscovered;
+  });
+
+  useEffect(() => {
+    const loadAllModelsOnMount = async () => {
+      for (const [key, prov] of Object.entries(mergedProviders)) {
+        if (prov.active && prov.apiKey) {
+          try {
+            const res = await fetchProviderModels(key, prov.endpoint, prov.apiKey);
+            if (res.success && res.models) {
+              setDiscoveredModels((prev) => ({ ...prev, [key]: res.models! }));
+              setLlmProviders((prev) => {
+                const p = prev[key];
+                if (p) {
+                  return { ...prev, [key]: { ...p, discoveredModels: res.models! } };
+                }
+                return prev;
+              });
+            }
+          } catch (e) {
+            console.error(`Failed to pre-fetch models for ${key}:`, e);
+          }
+        }
+      }
+    };
+    loadAllModelsOnMount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const getDiscoveredOrFallbackModels = useCallback((key: string): string[] => {
+    const live = discoveredModels[key];
+    if (live && live.length > 0) {
+      return live;
+    }
+    return PROVIDER_MODELS[key] || [];
+  }, [discoveredModels]);
+
+  const [modelInputs, setModelInputs] = useState<Record<string, string>>({});
 
   const [mcpServers, setMcpServers] = useState<string>(tokens.mcpServers || "{}");
 
+  const injectMcpPreset = useCallback((key: string, presetConfig: Record<string, unknown>) => {
+    try {
+      let current: Record<string, unknown> = {};
+      try {
+        current = JSON.parse(mcpServers) as Record<string, unknown>;
+      } catch {
+        // Start fresh
+      }
+      if (!current.mcpServers || typeof current.mcpServers !== "object") {
+        current.mcpServers = {};
+      }
+      const mcpMap = current.mcpServers as Record<string, unknown>;
+      mcpMap[key] = presetConfig;
+      setMcpServers(JSON.stringify(current, null, 2));
+      setStatus({ type: "success", message: `Injected preset for ${key}. Save changes to apply.` });
+    } catch (err) {
+      setStatus({ type: "error", message: `Failed to inject preset: ${String(err)}` });
+    }
+  }, [mcpServers]);
+
   const [tavilyApiKey, setTavilyApiKey] = useState(tokens.tavilyApiKey || "");
   const [serperApiKey, setSerperApiKey] = useState(tokens.serperApiKey || "");
-  const [piiRegex, setPiiRegex] = useState(tokens.piiRegex || "");
-
   const [googlePlacesApiKey, setGooglePlacesApiKey] = useState(tokens.googlePlacesApiKey || "");
   const [googlePlacesRadius, setGooglePlacesRadius] = useState(tokens.googlePlacesRadius || "5000");
   const [yelpClientId, setYelpClientId] = useState(tokens.yelpClientId || "");
@@ -186,9 +332,9 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
   const [wabaPhoneNumberId, setWabaPhoneNumberId] = useState(tokens.wabaPhoneNumberId || "");
   const [wabaAccessToken, setWabaAccessToken] = useState(tokens.wabaAccessToken || "");
 
-  const [globalSystemPrompt, setGlobalSystemPrompt] = useState(tokens.globalSystemPrompt || "");
-  const [orchestrationRules, setOrchestrationRules] = useState(tokens.orchestrationRules || "");
-  const [defaultAmbientParameters, setDefaultAmbientParameters] = useState(tokens.defaultAmbientParameters || "");
+  const globalSystemPrompt = tokens.globalSystemPrompt || "";
+  const orchestrationRules = tokens.orchestrationRules || "";
+  const defaultAmbientParameters = tokens.defaultAmbientParameters || "";
 
   const [customSkills, setCustomSkills] = useState<CustomSkill[]>(() => {
     if (tokens.customSkills) {
@@ -204,8 +350,70 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
     return [];
   });
 
-  const [agentsMd, setAgentsMd] = useState(tokens.agentsMd || "");
-  const [loadingAgentsMd, setLoadingAgentsMd] = useState(false);
+  const [dbConnections, setDbConnections] = useState<DbConnection[]>(() => {
+    if (tokens.dbConnections) {
+      if (typeof tokens.dbConnections === "string") {
+        try {
+          return JSON.parse(tokens.dbConnections) as DbConnection[];
+        } catch {
+          return [];
+        }
+      }
+      return tokens.dbConnections as DbConnection[];
+    }
+    return [];
+  });
+
+  const [socialConnections, setSocialConnections] = useState<SocialConnection[]>(() => {
+    if (tokens.socialConnections) {
+      if (typeof tokens.socialConnections === "string") {
+        try {
+          return JSON.parse(tokens.socialConnections) as SocialConnection[];
+        } catch {
+          return [];
+        }
+      }
+      return tokens.socialConnections as SocialConnection[];
+    }
+    return [];
+  });
+
+  // Modal and Form States
+  const [isAddSocialOpen, setIsAddSocialOpen] = useState(false);
+  const [editingSocialIndex, setEditingSocialIndex] = useState<number | null>(null);
+  const [newSocialName, setNewSocialName] = useState("");
+  const [newSocialPreset, setNewSocialPreset] = useState("youtube");
+  const [newSocialAppId, setNewSocialAppId] = useState("");
+  const [newSocialTokenOrKey, setNewSocialTokenOrKey] = useState("");
+  const [newSocialBaseEndpoint, setNewSocialBaseEndpoint] = useState("");
+  const [newSocialScopes, setNewSocialScopes] = useState("");
+  const [newSocialActive, setNewSocialActive] = useState(true);
+  const [isAddCustomApiOpen, setIsAddCustomApiOpen] = useState(false);
+  const [editingApiIndex, setEditingApiIndex] = useState<number | null>(null);
+  const [newApiName, setNewApiName] = useState("");
+  const [newApiDesc, setNewApiDesc] = useState("");
+  const [newApiSchema, setNewApiSchema] = useState("");
+  const [newApiCode, setNewApiCode] = useState("");
+
+  const [isAddDbOpen, setIsAddDbOpen] = useState(false);
+  const [editingDbIndex, setEditingDbIndex] = useState<number | null>(null);
+  const [newDbAlias, setNewDbAlias] = useState("");
+  const [newDbEngine, setNewDbEngine] = useState<"postgres" | "mysql" | "mariadb" | "mongodb" | "sqlite" | "oracle">("postgres");
+  const [newDbHostUri, setNewDbHostUri] = useState("");
+  const [newDbPort, setNewDbPort] = useState("");
+  const [newDbDatabase, setNewDbDatabase] = useState("");
+  const [newDbUser, setNewDbUser] = useState("");
+  const [newDbPasswordKey, setNewDbPasswordKey] = useState("");
+  const [newDbActive, setNewDbActive] = useState(true);
+
+  // MCP management
+  const [isEditMcpOpen, setIsEditMcpOpen] = useState(false);
+  const [editingMcpKey, setEditingMcpKey] = useState<string | null>(null); // null means adding a new server
+  const [mcpServerNameInput, setMcpServerNameInput] = useState("");
+  const [mcpServerUrlInput, setMcpServerUrlInput] = useState("");
+  const [mcpServerActiveInput, setMcpServerActiveInput] = useState(true);
+
+  const agentsMd = tokens.agentsMd || "";
   const [analyticsData, setAnalyticsData] = useState<TelemetryStats | null>(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   const [startDate, setStartDate] = useState("");
@@ -237,16 +445,25 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
   }, [activeTab]);
 
   useEffect(() => {
-    const fetchAgentsMd = async () => {
-      setLoadingAgentsMd(true);
-      const res = await readAgentsMd();
-      if (res.success && res.content !== undefined) {
-        setAgentsMd(res.content);
-      }
-      setLoadingAgentsMd(false);
-    };
-    fetchAgentsMd();
-  }, []);
+    if (editingSocialIndex === null) {
+      const timer = setTimeout(() => {
+        if (newSocialPreset === "youtube") {
+          setNewSocialBaseEndpoint("https://www.googleapis.com/youtube/v3");
+          setNewSocialScopes("https://www.googleapis.com/auth/youtube.upload");
+        } else if (newSocialPreset === "instagram") {
+          setNewSocialBaseEndpoint("https://graph.instagram.com");
+          setNewSocialScopes("instagram_basic,instagram_content_publish");
+        } else if (newSocialPreset === "facebook") {
+          setNewSocialBaseEndpoint("https://graph.facebook.com");
+          setNewSocialScopes("pages_manage_posts,publish_to_groups");
+        } else if (newSocialPreset === "linkedin") {
+          setNewSocialBaseEndpoint("https://api.linkedin.com/v2");
+          setNewSocialScopes("w_member_social,r_liteprofile");
+        }
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [newSocialPreset, editingSocialIndex]);
 
   const uniqueProviders = useMemo(() => {
     if (!analyticsData?.logs) return [];
@@ -368,7 +585,6 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
       mcpServers,
       tavilyApiKey,
       serperApiKey,
-      piiRegex,
       googlePlacesApiKey,
       googlePlacesRadius,
       yelpClientId,
@@ -385,6 +601,8 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
       orchestrationRules,
       defaultAmbientParameters,
       customSkills: JSON.stringify(customSkills),
+      dbConnections: JSON.stringify(dbConnections),
+      socialConnections: JSON.stringify(socialConnections),
       agentsMd,
     });
 
@@ -397,7 +615,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
   };
 
   const updateProvider = useCallback(
-    (key: string, field: keyof LLMProviderConfig, value: string | boolean) => {
+    (key: string, field: keyof LLMProviderConfig, value: string | boolean | string[]) => {
       setLlmProviders((prev) => ({
         ...prev,
         [key]: { ...prev[key], [field]: value },
@@ -405,6 +623,45 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
     },
     [],
   );
+
+  const addModel = useCallback((key: string, model: string) => {
+    const trimmed = model.trim();
+    if (!trimmed) return;
+    setLlmProviders((prev) => {
+      const prov = prev[key];
+      const current = prov.models || [];
+      if (current.includes(trimmed)) return prev;
+      return {
+        ...prev,
+        [key]: { ...prov, models: [...current, trimmed] },
+      };
+    });
+    setModelInputs((prev) => ({ ...prev, [key]: "" }));
+  }, []);
+
+  const removeModel = useCallback((key: string, model: string) => {
+    setLlmProviders((prev) => {
+      const prov = prev[key];
+      const current = (prov.models || []).filter((m: string) => m !== model);
+      return {
+        ...prev,
+        [key]: { ...prov, models: current.length > 0 ? current : undefined },
+      };
+    });
+  }, []);
+
+  const toggleModel = useCallback((key: string, model: string, checked: boolean) => {
+    setLlmProviders((prev) => {
+      const prov = prev[key];
+      const current = prov.models || [];
+      if (checked) {
+        if (current.includes(model)) return prev;
+        return { ...prev, [key]: { ...prov, models: [...current, model] } };
+      }
+      const next = current.filter((m: string) => m !== model);
+      return { ...prev, [key]: { ...prov, models: next.length > 0 ? next : undefined } };
+    });
+  }, []);
 
   const handleTestConnection = useCallback(
     async (key: string) => {
@@ -427,7 +684,11 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
       if (result.success) {
         const modelsRes = await fetchProviderModels(key, provider.endpoint, provider.apiKey);
         if (modelsRes.success && modelsRes.models) {
-          setDynamicModels((prev) => ({ ...prev, [key]: modelsRes.models }));
+          setDiscoveredModels((prev) => ({ ...prev, [key]: modelsRes.models! }));
+          setLlmProviders((prev) => {
+            const prov = prev[key];
+            return { ...prev, [key]: { ...prov, discoveredModels: modelsRes.models! } };
+          });
         }
       }
     },
@@ -436,10 +697,280 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
 
   const parseMcp = (): Record<string, Record<string, unknown>> => {
     try {
-      return JSON.parse(mcpServers) as Record<string, Record<string, unknown>>;
-    } catch {
-      return {};
+      const parsed = JSON.parse(mcpServers);
+      if (parsed && typeof parsed === "object") {
+        if (parsed.mcpServers && typeof parsed.mcpServers === "object") {
+          return parsed.mcpServers as Record<string, Record<string, unknown>>;
+        }
+        return parsed as Record<string, Record<string, unknown>>;
+      }
+    } catch {}
+    return {};
+  };
+
+  const toggleMcpActive = (key: string) => {
+    try {
+      const parsed = parseMcp();
+      const server = parsed[key];
+      if (server) {
+        const currentActive = !(server.active === false || server.disabled === true);
+        server.active = !currentActive;
+        server.disabled = currentActive;
+        const newMcp = { mcpServers: parsed };
+        setMcpServers(JSON.stringify(newMcp, null, 2));
+        setStatus({ type: "success", message: `Toggled active status for ${key}. Save changes to apply.` });
+      }
+    } catch (err) {
+      setStatus({ type: "error", message: `Failed to toggle status: ${String(err)}` });
     }
+  };
+
+  const deleteMcpServer = (key: string) => {
+    try {
+      const parsed = parseMcp();
+      delete parsed[key];
+      const newMcp = { mcpServers: parsed };
+      setMcpServers(JSON.stringify(newMcp, null, 2));
+      setStatus({ type: "success", message: `Removed MCP server ${key}. Save changes to apply.` });
+    } catch (err) {
+      setStatus({ type: "error", message: `Failed to delete server: ${String(err)}` });
+    }
+  };
+
+  const openEditMcpModal = (key: string | null) => {
+    if (key) {
+      const parsed = parseMcp();
+      const server = parsed[key];
+      if (server) {
+        setEditingMcpKey(key);
+        setMcpServerNameInput(key);
+        const restConfig = { ...server };
+        delete restConfig.active;
+        delete restConfig.disabled;
+        setMcpServerUrlInput(JSON.stringify(restConfig, null, 2));
+        setMcpServerActiveInput(!(server.active === false || server.disabled === true));
+        setIsEditMcpOpen(true);
+      }
+    } else {
+      setEditingMcpKey(null);
+      setMcpServerNameInput("");
+      setMcpServerUrlInput(JSON.stringify({
+        command: "npx",
+        args: ["@modelcontextprotocol/server-everything"],
+        env: {}
+      }, null, 2));
+      setMcpServerActiveInput(true);
+      setIsEditMcpOpen(true);
+    }
+  };
+
+  const handleSaveMcpModal = () => {
+    if (!mcpServerNameInput.trim()) {
+      setStatus({ type: "error", message: "Server key name is required." });
+      return;
+    }
+    let parsedConfig: Record<string, unknown> = {};
+    try {
+      parsedConfig = JSON.parse(mcpServerUrlInput);
+    } catch {
+      setStatus({ type: "error", message: "Configuration must be valid JSON." });
+      return;
+    }
+
+    parsedConfig.active = mcpServerActiveInput;
+    parsedConfig.disabled = !mcpServerActiveInput;
+
+    const parsedMcpObj = parseMcp();
+    
+    if (editingMcpKey && editingMcpKey !== mcpServerNameInput.trim()) {
+      delete parsedMcpObj[editingMcpKey];
+    }
+
+    parsedMcpObj[mcpServerNameInput.trim()] = parsedConfig;
+
+    const newMcp = { mcpServers: parsedMcpObj };
+    setMcpServers(JSON.stringify(newMcp, null, 2));
+    setIsEditMcpOpen(false);
+    setStatus({ type: "success", message: `MCP server config updated. Save changes to apply.` });
+  };
+
+  const handleSaveDbConnection = () => {
+    if (!newDbAlias.trim()) {
+      setStatus({ type: "error", message: "Alias is required." });
+      return;
+    }
+    const newConn: DbConnection = {
+      alias: newDbAlias.trim(),
+      engine: newDbEngine,
+      hostUri: newDbHostUri.trim(),
+      port: newDbPort.trim(),
+      database: newDbDatabase.trim(),
+      user: newDbUser.trim(),
+      passwordKey: newDbPasswordKey.trim(),
+      active: newDbActive,
+    };
+    if (editingDbIndex !== null) {
+      setDbConnections((prev) => prev.map((c, i) => i === editingDbIndex ? newConn : c));
+      setStatus({ type: "success", message: `Updated connection for ${newDbAlias}. Save changes to apply.` });
+    } else {
+      setDbConnections((prev) => [...prev, newConn]);
+      setStatus({ type: "success", message: `Added connection for ${newDbAlias}. Save changes to apply.` });
+    }
+    setIsAddDbOpen(false);
+    setEditingDbIndex(null);
+    setNewDbAlias("");
+    setNewDbHostUri("");
+    setNewDbPort("");
+    setNewDbDatabase("");
+    setNewDbUser("");
+    setNewDbPasswordKey("");
+    setNewDbActive(true);
+  };
+
+  const handleEditDbConnection = (index: number) => {
+    const conn = dbConnections[index];
+    if (conn) {
+      setEditingDbIndex(index);
+      setNewDbAlias(conn.alias);
+      setNewDbEngine(conn.engine);
+      setNewDbHostUri(conn.hostUri);
+      setNewDbPort(conn.port);
+      setNewDbDatabase(conn.database);
+      setNewDbUser(conn.user);
+      setNewDbPasswordKey(conn.passwordKey);
+      setNewDbActive(conn.active);
+      setIsAddDbOpen(true);
+    }
+  };
+
+  const handleDeleteDbConnection = (index: number) => {
+    setDbConnections((prev) => prev.filter((_, i) => i !== index));
+    setStatus({ type: "success", message: "Database connection removed. Save changes to apply." });
+  };
+
+  const handleToggleDbActive = (index: number) => {
+    setDbConnections((prev) => prev.map((c, i) => i === index ? { ...c, active: !c.active } : c));
+    setStatus({ type: "success", message: "Database connection status toggled. Save changes to apply." });
+  };
+
+  const handleSaveSocialConnection = () => {
+    if (!newSocialName.trim()) {
+      setStatus({ type: "error", message: "Connection name is required." });
+      return;
+    }
+    if (!newSocialTokenOrKey.trim()) {
+      setStatus({ type: "error", message: "OAuth Token / API Key is required." });
+      return;
+    }
+
+    const newConn: SocialConnection = {
+      name: newSocialName.trim(),
+      preset: newSocialPreset,
+      appId: newSocialAppId.trim(),
+      tokenOrKey: newSocialTokenOrKey.trim(),
+      baseEndpoint: newSocialBaseEndpoint.trim(),
+      scopes: newSocialScopes.trim(),
+      active: newSocialActive,
+    };
+
+    if (editingSocialIndex !== null) {
+      setSocialConnections((prev) => prev.map((c, i) => i === editingSocialIndex ? newConn : c));
+      setStatus({ type: "success", message: `Updated social connection for ${newSocialName}. Save changes to apply.` });
+    } else {
+      setSocialConnections((prev) => [...prev, newConn]);
+      setStatus({ type: "success", message: `Added social connection for ${newSocialName}. Save changes to apply.` });
+    }
+
+    setIsAddSocialOpen(false);
+    setEditingSocialIndex(null);
+    setNewSocialName("");
+    setNewSocialPreset("youtube");
+    setNewSocialAppId("");
+    setNewSocialTokenOrKey("");
+    setNewSocialBaseEndpoint("");
+    setNewSocialScopes("");
+    setNewSocialActive(true);
+  };
+
+  const handleEditSocialConnection = (index: number) => {
+    const conn = socialConnections[index];
+    if (conn) {
+      setEditingSocialIndex(index);
+      setNewSocialName(conn.name);
+      setNewSocialPreset(conn.preset);
+      setNewSocialAppId(conn.appId || "");
+      setNewSocialTokenOrKey(conn.tokenOrKey);
+      setNewSocialBaseEndpoint(conn.baseEndpoint || "");
+      setNewSocialScopes(conn.scopes || "");
+      setNewSocialActive(conn.active);
+      setIsAddSocialOpen(true);
+    }
+  };
+
+  const handleDeleteSocialConnection = (index: number) => {
+    setSocialConnections((prev) => prev.filter((_, i) => i !== index));
+    setStatus({ type: "success", message: "Social connection removed. Save changes to apply." });
+  };
+
+  const handleToggleSocialActive = (index: number) => {
+    setSocialConnections((prev) => prev.map((c, i) => i === index ? { ...c, active: !c.active } : c));
+  };
+
+  const handleSaveCustomApi = () => {
+    if (!newApiName.trim()) {
+      setStatus({ type: "error", message: "API Name is required." });
+      return;
+    }
+    let parsedSchema = "";
+    try {
+      if (newApiSchema.trim()) {
+        JSON.parse(newApiSchema);
+        parsedSchema = newApiSchema;
+      } else {
+        parsedSchema = JSON.stringify({ type: "object", properties: {} });
+      }
+    } catch {
+      setStatus({ type: "error", message: "Input Schema must be valid JSON." });
+      return;
+    }
+
+    const newSkill: CustomSkill = {
+      name: newApiName.trim().toLowerCase().replace(/\s+/g, "-"),
+      description: newApiDesc.trim(),
+      inputSchema: parsedSchema,
+      executableScriptCode: newApiCode.trim() || "return { status: 'executed' };"
+    };
+
+    if (editingApiIndex !== null) {
+      setCustomSkills((prev) => prev.map((s, i) => i === editingApiIndex ? newSkill : s));
+      setStatus({ type: "success", message: "Dynamic API updated. Save changes to apply." });
+    } else {
+      setCustomSkills((prev) => [...prev, newSkill]);
+      setStatus({ type: "success", message: "Dynamic API added. Save changes to apply." });
+    }
+    setIsAddCustomApiOpen(false);
+    setEditingApiIndex(null);
+    setNewApiName("");
+    setNewApiDesc("");
+    setNewApiSchema("");
+    setNewApiCode("");
+  };
+
+  const handleEditCustomApi = (index: number) => {
+    const skill = customSkills[index];
+    if (skill) {
+      setEditingApiIndex(index);
+      setNewApiName(skill.name);
+      setNewApiDesc(skill.description);
+      setNewApiSchema(skill.inputSchema);
+      setNewApiCode(skill.executableScriptCode);
+      setIsAddCustomApiOpen(true);
+    }
+  };
+
+  const handleDeleteCustomApi = (index: number) => {
+    setCustomSkills((prev) => prev.filter((_, i) => i !== index));
+    setStatus({ type: "success", message: "Dynamic API removed. Save changes to apply." });
   };
 
   const isValidJson = (str: string) => {
@@ -477,9 +1008,10 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
           <TabButton tab="branding" icon={ImageIcon} activeTab={activeTab} setActiveTab={setActiveTab} label="Branding" />
           <TabButton tab="llm" icon={Cpu} activeTab={activeTab} setActiveTab={setActiveTab} label="LLM Providers" />
           <TabButton tab="mcp" icon={Wrench} activeTab={activeTab} setActiveTab={setActiveTab} label="MCP Integration" />
+          <TabButton tab="database" icon={Database} activeTab={activeTab} setActiveTab={setActiveTab} label="Database Hub" />
           <TabButton tab="api" icon={Globe} activeTab={activeTab} setActiveTab={setActiveTab} label="API Services" />
-          <TabButton tab="capability" icon={BrainCircuit} activeTab={activeTab} setActiveTab={setActiveTab} label="Capability Studio" />
           <TabButton tab="analytics" icon={BarChart3} activeTab={activeTab} setActiveTab={setActiveTab} label="Usage & Spend" />
+          <TabButton tab="social" icon={Share2} activeTab={activeTab} setActiveTab={setActiveTab} label="Social Media Hub" />
         </div>
 
         <form onSubmit={handleSave} className="lg:col-span-3 rounded-3xl border border-slate-900 bg-slate-950/40 p-6 relative flex flex-col min-h-0">
@@ -487,7 +1019,10 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
             {activeTab === "appearance" && (
               <div className="space-y-5">
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1">Appearance Overrides</h3>
+                  <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                    Appearance Overrides
+                    <HelpTooltip content="Customize the platform look and feel — title, font pairing, and accent colors. Changes apply immediately after saving." side="right" />
+                  </h3>
                   <p className="text-slate-400 text-xs">Custom hex CSS properties, font pairings, and app title banners</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -552,6 +1087,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   </button>
                   {brandLogoUrl && (
                     <div className="rounded-xl border border-slate-900 bg-slate-950 p-2 ml-auto">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={brandLogoUrl} alt="Brand preview" className="h-10 max-w-[240px] object-contain brightness-115"
                         onError={(e) => { e.currentTarget.style.display = "none"; }} />
                     </div>
@@ -563,8 +1099,21 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
             {activeTab === "llm" && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1">LLM Providers</h3>
+                  <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                    LLM Providers
+                    <HelpTooltip content="Configure API keys, endpoints, and default models for each LLM provider. At least one provider must be active with a valid API key for AI features to work." side="right" />
+                  </h3>
                   <p className="text-slate-400 text-xs">Configure API keys, endpoints, and default models per provider</p>
+                  <div className="mt-3 rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3 text-[10px] text-indigo-300 leading-relaxed space-y-1">
+                    <p><strong className="text-indigo-200">How to set up a provider:</strong></p>
+                    <ol className="list-decimal list-inside space-y-0.5 text-indigo-300/80">
+                      <li>Click the <strong className="text-indigo-200">Setup Guide &amp; Get API Key</strong> link to open the provider&apos;s API key page in a new tab.</li>
+                      <li>Sign in / create an account, generate a new API key, and copy it.</li>
+                      <li>Paste the key into the <strong className="text-indigo-200">API Key</strong> field below.</li>
+                      <li>Toggle <strong className="text-indigo-200">Enabled</strong> on, then click <strong className="text-indigo-200">Test Connection</strong> to verify the key works.</li>
+                      <li>Select your preferred <strong className="text-indigo-200">Default Model</strong> and check allowed models for agent workflows.</li>
+                    </ol>
+                  </div>
                 </div>
 
 
@@ -590,11 +1139,24 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                             )}
                           </div>
                         </div>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <span className="text-xs text-slate-500">Enabled</span>
-                          <input type="checkbox" checked={prov.active} onChange={(e) => updateProvider(key, "active", e.target.checked)}
-                            className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-primary focus:ring-primary/30 accent-primary" />
-                        </label>
+                        <div className="flex items-center gap-3">
+                          {PROVIDER_SETUP_LINKS[key] && (
+                            <a
+                              href={PROVIDER_SETUP_LINKS[key]}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold transition-all"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              Setup Guide &amp; Get API Key
+                            </a>
+                          )}
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <span className="text-xs text-slate-500">Enabled</span>
+                            <input type="checkbox" checked={prov.active} onChange={(e) => updateProvider(key, "active", e.target.checked)}
+                              className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-primary focus:ring-primary/30 accent-primary" />
+                          </label>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -612,25 +1174,125 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                         </div>
                         <div>
                           <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Default Model</label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={prov.defaultModel}
-                              onChange={(e) => updateProvider(key, "defaultModel", e.target.value)}
-                              placeholder="model..."
-                              list={`models-list-${key}`}
-                              className="w-full rounded-lg border border-slate-800 bg-slate-900/50 py-2 px-3 text-xs text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono"
-                            />
-                            <datalist id={`models-list-${key}`}>
-                              {((dynamicModels[key] && dynamicModels[key].length > 0)
-                                ? dynamicModels[key]
-                                : (PROVIDER_MODELS[key] || [prov.defaultModel])
-                              ).map((m) => (
-                                <option key={m} value={m} />
-                              ))}
-                            </datalist>
+                          <select
+                            value={prov.defaultModel}
+                            onChange={(e) => updateProvider(key, "defaultModel", e.target.value)}
+                            className="w-full rounded-lg border border-slate-800 bg-slate-900/50 py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                          >
+                            {getDiscoveredOrFallbackModels(key).map((m: string) => (
+                              <option key={m} value={m}>{m}</option>
+                            ))}
+                            {prov.defaultModel && !getDiscoveredOrFallbackModels(key).includes(prov.defaultModel) && (
+                              <option value={prov.defaultModel}>{prov.defaultModel} (current)</option>
+                            )}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-slate-900 pt-3 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Allowed Models for Agent Workflows</label>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const allModels = getDiscoveredOrFallbackModels(key);
+                                setLlmProviders((prev) => {
+                                  const p = prev[key];
+                                  return { ...prev, [key]: { ...p, models: allModels } };
+                                });
+                              }}
+                              className="text-[9px] text-indigo-400 hover:text-indigo-300 font-semibold cursor-pointer"
+                            >
+                              Select All
+                            </button>
+                            <span className="text-[9px] text-slate-700">|</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLlmProviders((prev) => {
+                                  const p = prev[key];
+                                  return { ...prev, [key]: { ...p, models: [] } };
+                                });
+                              }}
+                              className="text-[9px] text-indigo-400 hover:text-indigo-300 font-semibold cursor-pointer"
+                            >
+                              Deselect All
+                            </button>
                           </div>
                         </div>
+                        <p className="text-[9px] text-slate-600 -mt-1">Check the models you want available in Studio Agent Inspector. Unchecked models are hidden from the dropdown.</p>
+
+                        {/* Catalog checkboxes */}
+                        {getDiscoveredOrFallbackModels(key).length > 0 && (
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 max-h-48 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+                            {getDiscoveredOrFallbackModels(key).map((m: string) => {
+                              const checked = prov.models ? prov.models.includes(m) : false;
+                              return (
+                                <label
+                                  key={m}
+                                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all text-[10px] ${
+                                    checked
+                                      ? "border-indigo-500/40 bg-indigo-500/10 text-indigo-200"
+                                      : "border-slate-800 bg-slate-900/30 text-slate-400 hover:border-slate-700"
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={(e) => toggleModel(key, m, e.target.checked)}
+                                    className="h-3.5 w-3.5 rounded border-slate-700 bg-slate-800 text-indigo-500 focus:ring-indigo-500/30 accent-indigo-500 shrink-0"
+                                  />
+                                  <span className="font-mono truncate">{m}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Custom models added that are NOT in the catalog */}
+                        {prov.models && prov.models.filter((m: string) => !getDiscoveredOrFallbackModels(key).includes(m)).length > 0 && (
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-semibold text-slate-500 uppercase">Custom Models</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {prov.models.filter((m: string) => !getDiscoveredOrFallbackModels(key).includes(m)).map((m: string) => (
+                                <span key={m} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-950/30 border border-amber-500/20 text-[10px] font-mono text-amber-300 group">
+                                  {m}
+                                  <button
+                                    type="button"
+                                    onClick={() => removeModel(key, m)}
+                                    className="text-amber-500/60 hover:text-red-400 transition-colors"
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Add custom model */}
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={modelInputs[key] || ""}
+                            onChange={(e) => setModelInputs((prev) => ({ ...prev, [key]: e.target.value }))}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addModel(key, modelInputs[key] || ""); } }}
+                            placeholder="+ Add custom model ID"
+                            className="flex-1 rounded-lg border border-slate-800 bg-slate-900/50 py-1.5 px-3 text-[10px] text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => addModel(key, modelInputs[key] || "")}
+                            className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold transition-all"
+                          >
+                            Add
+                          </button>
+                        </div>
+
+                        {(!prov.models || prov.models.length === 0) && (
+                          <p className="text-[10px] text-slate-600 italic">No models selected. All catalog models will be available in Agent Inspector.</p>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-3">
@@ -654,45 +1316,223 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
 
             {activeTab === "mcp" && (
               <div className="space-y-5">
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-1">MCP Integration</h3>
-                  <p className="text-slate-400 text-xs">JSON-RPC 2.0 MCP server configurations for tool orchestration</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                      MCP Integration
+                      <HelpTooltip content="Model Context Protocol (MCP) servers provide external tools and capabilities to agents. Each server is configured with a command, arguments, and optional environment variables." side="right" />
+                    </h3>
+                    <p className="text-slate-400 text-xs">JSON-RPC 2.0 MCP server configurations for tool orchestration</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openEditMcpModal(null)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary/80 transition-all cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add Server Instance
+                  </button>
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">MCP Servers (JSON)</label>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Raw JSON Configuration Editor</label>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
                       isValidJson(mcpServers) ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
                     }`}>
                       {isValidJson(mcpServers) ? "Valid JSON" : "Invalid JSON"}
                     </span>
                   </div>
-                  <textarea rows={6} value={mcpServers} onChange={(e) => setMcpServers(e.target.value)}
+                  <textarea rows={4} value={mcpServers} onChange={(e) => setMcpServers(e.target.value)}
                     placeholder='{"mcpServers":{"playwright":{"command":"npx","args":["@playwright/mcp"],"env":{"KEY":"val"}}}}'
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white font-mono placeholder-slate-600 outline-none focus:border-primary/50" />
+                    className="w-full rounded-xl border border-slate-800 bg-[#0c0c16] py-2.5 px-3 text-xs text-white font-mono placeholder-slate-600 outline-none focus:border-primary/50" />
                 </div>
 
-                <div className="rounded-xl border border-slate-900 bg-slate-900/10 p-4">
-                  <h4 className="text-xs font-bold text-slate-300 mb-3 uppercase tracking-wider">Configured Tool Servers</h4>
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Configured Tool Servers</h4>
                   {(() => {
                     const parsed = parseMcp();
-                    const items: [string, Record<string, unknown>][] = parsed.mcpServers
-                      ? Object.entries(parsed.mcpServers as Record<string, Record<string, unknown>>)
-                      : Object.entries(parsed);
+                    const items = Object.entries(parsed);
                     if (items.length === 0) return <p className="text-xs text-slate-600">No MCP servers configured yet</p>;
-                    return items.map(([name, cfg]) => (
-                      <div key={name} className="flex items-center justify-between py-2 border-b border-slate-900 last:border-0">
-                        <div>
-                          <span className="text-sm font-semibold text-slate-200">{name}</span>
-                          <span className="ml-2 text-[10px] text-slate-500 font-mono">
-                            {String(cfg.command || "npx")} {Array.isArray(cfg.args) ? (cfg.args as string[]).join(" ") : ""}
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">Active</span>
+                    return (
+                      <div className="grid grid-cols-1 gap-3">
+                        {items.map(([name, cfg]) => {
+                          const isActive = !(cfg.active === false || cfg.disabled === true);
+                          const envCount = cfg.env ? Object.keys(cfg.env as Record<string, unknown>).length : 0;
+                          return (
+                            <div key={name} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-slate-900 bg-[#0c0c1b]/60 gap-3 hover:border-slate-800 transition-all">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-semibold text-white">{name}</span>
+                                  <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ${
+                                    isActive ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-800 text-slate-400"
+                                  }`}>
+                                    {isActive ? "Active" : "Disabled"}
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-slate-400 font-mono">
+                                  <span className="text-indigo-400 font-bold">{String(cfg.command || "npx")}</span>
+                                  {" "}{Array.isArray(cfg.args) ? (cfg.args as string[]).join(" ") : ""}
+                                </div>
+                                {envCount > 0 && (
+                                  <div className="text-[10px] text-slate-500 font-mono">
+                                    Environment variables: <span className="text-cyan-400">{envCount} configured</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <label className="relative inline-flex items-center cursor-pointer select-none">
+                                  <input
+                                    type="checkbox"
+                                    checked={isActive}
+                                    onChange={() => toggleMcpActive(name)}
+                                    className="sr-only peer"
+                                  />
+                                  <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600 peer-checked:after:bg-white"></div>
+                                </label>
+
+                                <button
+                                  type="button"
+                                  onClick={() => openEditMcpModal(name)}
+                                  className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all cursor-pointer"
+                                  title="Edit Server"
+                                >
+                                  <Edit className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => deleteMcpServer(name)}
+                                  className="p-2 rounded-lg bg-red-950/20 border border-red-900/30 text-red-400 hover:bg-red-950/40 hover:text-red-300 transition-all cursor-pointer"
+                                  title="Delete Server"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    ));
+                    );
                   })()}
+                </div>
+
+                <div className="rounded-xl border border-slate-900 bg-slate-900/10 p-4 space-y-3">
+                  <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Enterprise System Presets</h4>
+                  <p className="text-[10px] text-slate-500 leading-normal">
+                    Click a preset profile below to inject its preconfigured JSON definition directly into your MCP Servers configuration.
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {Object.entries(MCP_PRESETS).map(([key, config]) => (
+                      <button
+                        type="button"
+                        key={key}
+                        onClick={() => injectMcpPreset(key, config)}
+                        className="flex flex-col items-start gap-1 p-3 rounded-xl border border-slate-800 bg-[#0c0c16] text-left hover:border-indigo-500/50 hover:bg-[#0f0f1d] transition-all cursor-pointer"
+                      >
+                        <span className="text-xs font-bold text-white capitalize">{key}</span>
+                        <span className="text-[9px] text-slate-500 font-mono block truncate w-full">
+                          {config.args[0]}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "database" && (
+              <div className="space-y-5">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                      Database Connections Hub
+                      <HelpTooltip content="Register external database servers. These databases can be accessed dynamically by agent query tools." side="right" />
+                    </h3>
+                    <p className="text-slate-400 text-xs">Manage active connections to external database services</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingDbIndex(null);
+                      setNewDbAlias("");
+                      setNewDbEngine("postgres");
+                      setNewDbHostUri("");
+                      setNewDbPort("5432");
+                      setNewDbDatabase("");
+                      setNewDbUser("");
+                      setNewDbPasswordKey("");
+                      setNewDbActive(true);
+                      setIsAddDbOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary/80 transition-all cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add Database Connection
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Configured Connections</h4>
+                  {dbConnections.length === 0 ? (
+                    <div className="text-center py-8 rounded-xl border border-slate-900 bg-slate-950/20 text-slate-500 text-xs">
+                      No external database connections registered yet. Click the button above to add one.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3">
+                      {dbConnections.map((conn, index) => (
+                        <div key={index} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-slate-900 bg-[#0c0c1b]/60 gap-3 hover:border-slate-800 transition-all">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold text-white">{conn.alias}</span>
+                              <span className={`text-[9px] px-2 py-0.5 rounded-full font-mono capitalize ${
+                                conn.active ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-800 text-slate-400"
+                              }`}>
+                                {conn.engine}
+                              </span>
+                              <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ${
+                                conn.active ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-800 text-slate-400"
+                              }`}>
+                                {conn.active ? "Active" : "Inactive"}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-400 font-mono">
+                              Host: <span className="text-slate-300">{conn.hostUri}</span>
+                              {conn.port && <>:{conn.port}</>}
+                              {conn.database && <>{` (DB: ${conn.database})`}</>}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <label className="relative inline-flex items-center cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={conn.active}
+                                onChange={() => handleToggleDbActive(index)}
+                                className="sr-only peer"
+                              />
+                              <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600 peer-checked:after:bg-white"></div>
+                            </label>
+
+                            <button
+                              type="button"
+                              onClick={() => handleEditDbConnection(index)}
+                              className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all cursor-pointer"
+                              title="Edit Connection"
+                            >
+                              <Edit className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteDbConnection(index)}
+                              className="p-2 rounded-lg bg-red-950/20 border border-red-900/30 text-red-400 hover:bg-red-950/40 hover:text-red-300 transition-all cursor-pointer"
+                              title="Delete Connection"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -700,7 +1540,10 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
             {activeTab === "api" && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1">API Services</h3>
+                  <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                    API Services
+                    <HelpTooltip content="Configure third-party API services for web search, local business lookup, email (Gmail / SendGrid), WhatsApp messaging, and compliance PII governance." side="right" />
+                  </h3>
                   <p className="text-slate-400 text-xs">Search indexing, local lookup, communication gateways, and PII regex</p>
                 </div>
 
@@ -816,149 +1659,69 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   </div>
                 </div>
 
+
+
                 <div className="border-t border-slate-900 pt-5">
-                  <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                    PII Masking Regex Dictionary
-                  </h4>
-                  <textarea rows={4} value={piiRegex} onChange={(e) => setPiiRegex(e.target.value)}
-                    placeholder={`# Email\n[\\w.-]+@[\\w.-]+\\.\\w+\n# Phone\n\\+?\\d{1,3}[-.\\s]?\\(?\\d{1,4}?\\)?[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}`}
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white font-mono placeholder-slate-600 outline-none focus:border-primary/50" />
-                  <p className="mt-1 text-[10px] text-slate-600">
-                    Applied by the Privacy Gateway before any data reaches external LLMs
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "capability" && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-1">Capability Studio</h3>
-                  <p className="text-slate-400 text-xs">Expose dynamic skills registry, Plan-Act loop parameters, and system capability boundaries.</p>
-                </div>
-
-                <div className="border-t border-slate-900 pt-5 space-y-4">
-                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                    <BrainCircuit className="h-4 w-4 text-indigo-400" />
-                    System Prompt &amp; OKF Matrix Configuration
-                  </h4>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Global System Instructions</label>
-                    <textarea rows={4} value={globalSystemPrompt} onChange={(e) => setGlobalSystemPrompt(e.target.value)}
-                      placeholder="Enter global supervisor system prompts here..."
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Orchestration Rules (Plan-Act Loop)</label>
-                    <textarea rows={4} value={orchestrationRules} onChange={(e) => setOrchestrationRules(e.target.value)}
-                      placeholder="Configure thought-plan-execute loop parameters..."
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Default Ambient Parameters</label>
-                    <textarea rows={3} value={defaultAmbientParameters} onChange={(e) => setDefaultAmbientParameters(e.target.value)}
-                      placeholder="e.g. weddingId: be5badd9-0cb2-4d5d-9acf-2412406b9cae (one parameter per line or JSON format)"
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
-                  </div>
-                </div>
-
-                <div className="border-t border-slate-900 pt-5 space-y-4">
-                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-cyan-400" />
-                    AGENTS.md Blueprint Workspace
-                  </h4>
-                  <p className="text-slate-400 text-xs">Edit your holistic agent capability boundaries and system rule sets below:</p>
-                  {loadingAgentsMd ? (
-                    <div className="flex items-center gap-2 text-slate-500 text-xs py-2">
-                      <Loader2 className="h-4 w-4 animate-spin" /> Loading AGENTS.md content...
-                    </div>
-                  ) : (
-                    <textarea rows={10} value={agentsMd} onChange={(e) => setAgentsMd(e.target.value)}
-                      placeholder="# CRITICAL RULES..."
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white font-mono placeholder-slate-600 outline-none focus:border-primary/50" />
-                  )}
-                </div>
-
-                <div className="border-t border-slate-900 pt-5 space-y-4">
-                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                    <Wrench className="h-4 w-4 text-emerald-400" />
-                    Custom Skills Registry
-                  </h4>
-                  <p className="text-slate-400 text-xs">Register custom Javascript snippets to run executable task logic locally inside the harness.</p>
-
-                  <div className="space-y-4">
-                    {customSkills.map((skill, idx) => (
-                      <div key={idx} className="border border-slate-900 bg-slate-900/20 rounded-2xl p-4 space-y-3 relative">
-                        <button type="button" onClick={() => {
-                          const updated = [...customSkills];
-                          updated.splice(idx, 1);
-                          setCustomSkills(updated);
-                        }} className="absolute top-4 right-4 text-red-400 hover:text-red-300 transition-colors p-1" title="Delete custom skill">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Skill Name</label>
-                            <input type="text" value={skill.name} onChange={(e) => {
-                              const updated = [...customSkills];
-                              updated[idx].name = e.target.value;
-                              setCustomSkills(updated);
-                            }} placeholder="my_custom_skill" className="w-full rounded-xl border border-slate-800 bg-slate-900/40 py-2 px-3 text-xs text-white" />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Description</label>
-                            <input type="text" value={skill.description} onChange={(e) => {
-                              const updated = [...customSkills];
-                              updated[idx].description = e.target.value;
-                              setCustomSkills(updated);
-                            }} placeholder="Performs a custom action..." className="w-full rounded-xl border border-slate-800 bg-slate-900/40 py-2 px-3 text-xs text-white" />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Input Schema (JSON)</label>
-                          <textarea rows={3} value={skill.inputSchema} onChange={(e) => {
-                            const updated = [...customSkills];
-                            updated[idx].inputSchema = e.target.value;
-                            setCustomSkills(updated);
-                          }} placeholder='{ "type": "object", "properties": { "arg1": { "type": "string" } } }'
-                            className="w-full rounded-xl border border-slate-800 bg-slate-900/40 py-2 px-3 text-xs text-white font-mono" />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Executable Script Code (Javascript)</label>
-                          <textarea rows={5} value={skill.executableScriptCode} onChange={(e) => {
-                            const updated = [...customSkills];
-                            updated[idx].executableScriptCode = e.target.value;
-                            setCustomSkills(updated);
-                          }} placeholder='// Access tool arguments via "args" parameter\nconsole.log(args.arg1);\nreturn { success: true, message: `Hello ${args.arg1}` };'
-                            className="w-full rounded-xl border border-slate-800 bg-slate-900/40 py-2 px-3 text-xs text-white font-mono" />
-                        </div>
-                      </div>
-                    ))}
-
-                    <button type="button" onClick={() => {
-                      setCustomSkills([...customSkills, { name: "", description: "", inputSchema: '{\n  "type": "object",\n  "properties": {}\n}', executableScriptCode: "return { success: true };" }]);
-                    }} className="flex items-center gap-1.5 px-4 py-2 border border-dashed border-slate-800 hover:border-slate-700 rounded-xl text-xs text-slate-400 hover:text-slate-200 transition-all bg-slate-950/20">
-                      <Plus className="h-3.5 w-3.5" /> Add Custom Skill
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Plus className="h-4 w-4 text-primary" />
+                      Dynamic Integrations &amp; Custom APIs
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingApiIndex(null);
+                        setNewApiName("");
+                        setNewApiDesc("");
+                        setNewApiSchema(JSON.stringify({ type: "object", properties: { to: { type: "string" }, body: { type: "string" } }, required: ["to", "body"] }, null, 2));
+                        setNewApiCode(`// Custom API Script execution\n// Receive arguments in \`toolArgs\` variable\nconsole.log("Custom executing with args:", toolArgs);\nreturn { status: "success", received: toolArgs };`);
+                        setIsAddCustomApiOpen(true);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs font-semibold hover:bg-slate-800 transition-all cursor-pointer"
+                    >
+                      <Plus className="h-3.5 w-3.5 text-primary" />
+                      Add Custom API
                     </button>
                   </div>
-                </div>
-
-                <div className="border-t border-slate-900 pt-5">
-                  <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-4 space-y-3">
-                    <h4 className="text-xs font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
-                      <HelpCircle className="h-4 w-4 text-indigo-400" />
-                      Capability Studio Documentation
-                    </h4>
-                    <ul className="list-disc list-inside text-xs text-slate-500 space-y-1.5 leading-relaxed pl-1">
-                      <li><strong>Plan-Act Loop Optimization:</strong> Define rules inside Orchestration Rules to constrain the thought cycles and prevent agent wandering or infinite recursion loops.</li>
-                      <li><strong>Declaring Tools:</strong> Document any registered custom skills directly inside the `AGENTS.md` blueprint so that planning sub-agents can reason about and invoke them.</li>
-                      <li><strong>Parameter Auto-injection:</strong> Key-value fallback settings defined in Default Ambient Parameters (e.g. `weddingId: your-id`) will be resolved and merged dynamically before any tool executes.</li>
-                    </ul>
-                  </div>
+                  <p className="text-[10px] text-slate-500 leading-relaxed mb-4">
+                    Register custom API handlers, webhook connectors, and custom JS tasks. Once registered, these endpoints are automatically discovered by orchestrator agents under custom capability nodes.
+                  </p>
+                  
+                  {customSkills.length === 0 ? (
+                    <p className="text-xs text-slate-600">No dynamic custom APIs configured yet.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-2">
+                      {customSkills.map((skill, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 rounded-xl border border-slate-900 bg-[#070710]/40">
+                          <div>
+                            <div className="text-xs font-semibold text-slate-200">{skill.name}</div>
+                            <div className="text-[10px] text-slate-500">{skill.description || "No description provided."}</div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleEditCustomApi(index)}
+                              className="p-1.5 rounded bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCustomApi(index)}
+                              className="p-1.5 rounded bg-red-950/10 border border-red-900/20 text-red-400 hover:bg-red-950/20 transition-all cursor-pointer"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
+
+
 
             {activeTab === "analytics" && (
               <div className="space-y-6">
@@ -1233,6 +1996,124 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               </div>
             )}
 
+            {activeTab === "social" && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                    <Share2 className="h-5 w-5 text-indigo-400" />
+                    Social Media Integration Hub
+                  </h3>
+                  <p className="text-slate-400 text-xs">
+                    Link social media accounts and configure dynamic API connectors for automated posting and feed sync.
+                  </p>
+                </div>
+
+                <div className="flex justify-between items-center bg-slate-900/10 border border-slate-900 rounded-2xl p-4">
+                  <div className="text-xs text-slate-400">
+                    <span className="font-bold text-slate-200 block mb-0.5">Active Social Channels</span>
+                    Manage connection credentials and API hooks used by autonomous agents.
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingSocialIndex(null);
+                      setNewSocialName("");
+                      setNewSocialPreset("youtube");
+                      setNewSocialAppId("");
+                      setNewSocialTokenOrKey("");
+                      setNewSocialBaseEndpoint("");
+                      setNewSocialScopes("");
+                      setNewSocialActive(true);
+                      setIsAddSocialOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 shadow-md shadow-indigo-600/10 transition-all hover:scale-[1.01]"
+                  >
+                    <Plus className="h-4 w-4" /> Add Social Channel
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {socialConnections.length === 0 ? (
+                    <div className="col-span-2 rounded-2xl border border-dashed border-slate-800 bg-slate-950/20 p-8 text-center text-slate-500 text-xs space-y-2">
+                      <p>No social media integrations connected yet.</p>
+                      <p className="text-[10px] text-slate-600">Connect a channel to expose tools like posting and analytics to agent graph workflows.</p>
+                    </div>
+                  ) : (
+                    socialConnections.map((conn, idx) => (
+                      <div
+                        key={idx}
+                        className={`rounded-2xl border bg-slate-950/20 p-4 space-y-3 transition-all ${
+                          conn.active ? "border-slate-800" : "border-slate-950 opacity-60"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-white">{conn.name}</span>
+                              <span className="bg-slate-900 border border-slate-800 px-2 py-0.5 rounded text-[8px] uppercase font-bold text-slate-400">
+                                {conn.preset}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-slate-500 font-mono mt-0.5 block truncate max-w-[200px]">
+                              API endpoint: {conn.baseEndpoint || "None"}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleSocialActive(idx)}
+                              className={`px-2 py-1 rounded-lg border text-[10px] font-bold uppercase transition-all ${
+                                conn.active
+                                  ? "border-emerald-500/20 text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10"
+                                  : "border-slate-800 text-slate-400 bg-slate-900/40 hover:bg-slate-800"
+                              }`}
+                            >
+                              {conn.active ? "Active" : "Disabled"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleEditSocialConnection(idx)}
+                              className="text-slate-400 hover:text-white p-1.5 hover:bg-slate-900 rounded-lg transition-all"
+                              title="Edit Credentials"
+                            >
+                              <Edit className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSocialConnection(idx)}
+                              className="text-red-400 hover:text-red-300 p-1.5 hover:bg-red-500/5 rounded-lg transition-all"
+                              title="Delete Integration"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-900 text-[10px]">
+                          <div>
+                            <span className="text-slate-500 block">App ID / Client Key</span>
+                            <span className="text-slate-300 font-mono truncate block">{conn.appId || "—"}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block">API Secret / OAuth Token</span>
+                            <span className="text-slate-300 font-mono block">••••••••••••••••</span>
+                          </div>
+                        </div>
+
+                        {conn.scopes && (
+                          <div className="bg-slate-900/40 border border-slate-900 rounded-lg p-2 text-[9px] font-mono text-slate-400">
+                            <span className="font-bold text-slate-500 block uppercase tracking-wider mb-0.5">Granted Scopes</span>
+                            {conn.scopes}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
           {activeTab !== "analytics" && (
             <div className="sticky bottom-0 z-10 bg-[#0c0c12]/95 py-4 border-t border-[#1f1f2e] mt-4 -mx-6 px-6 rounded-b-3xl">
               <div className="flex justify-end">
@@ -1247,6 +2128,402 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
           </div>
         </form>
       </div>
+
+      {/* ── Modal: Add / Edit MCP Server Instance ── */}
+      {isEditMcpOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-[#0f0f1d] border border-slate-800 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1">
+                {editingMcpKey ? "Edit MCP Server" : "Add MCP Server Instance"}
+              </h3>
+              <p className="text-slate-400 text-xs">Configure a dynamic Model Context Protocol connector profile.</p>
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Server Key Name</label>
+                <input
+                  type="text"
+                  value={mcpServerNameInput}
+                  onChange={(e) => setMcpServerNameInput(e.target.value)}
+                  placeholder="e.g. sap-prod"
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-sm text-white outline-none focus:border-primary/50 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">JSON Configuration Settings</label>
+                <textarea
+                  rows={6}
+                  value={mcpServerUrlInput}
+                  onChange={(e) => setMcpServerUrlInput(e.target.value)}
+                  placeholder={`{\n  "command": "npx",\n  "args": ["@modelcontextprotocol/server-postgres"],\n  "env": {\n    "DATABASE_URL": "postgresql://..."\n  }\n}`}
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2.5 px-3 text-xs text-white font-mono outline-none focus:border-primary/50"
+                />
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-t border-slate-800">
+                <span className="text-xs font-semibold text-slate-300">Active Status Enabled</span>
+                <label className="relative inline-flex items-center cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={mcpServerActiveInput}
+                    onChange={(e) => setMcpServerActiveInput(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600 peer-checked:after:bg-white"></div>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsEditMcpOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveMcpModal}
+                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/95 text-white text-xs font-semibold transition-all cursor-pointer"
+              >
+                Apply Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Add / Edit Database Connection ── */}
+      {isAddDbOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-[#0f0f1d] border border-slate-800 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1">
+                {editingDbIndex !== null ? "Edit Database Connection" : "Add Database Connection"}
+              </h3>
+              <p className="text-slate-400 text-xs">Configure connection variables to register an external database.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Connection Alias</label>
+                <input
+                  type="text"
+                  value={newDbAlias}
+                  onChange={(e) => setNewDbAlias(e.target.value)}
+                  placeholder="e.g. sap-db-dev"
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Engine Type</label>
+                <select
+                  value={newDbEngine}
+                  onChange={(e) => setNewDbEngine(e.target.value as "postgres" | "mysql" | "mariadb" | "mongodb" | "sqlite" | "oracle")}
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                >
+                  <option value="postgres">PostgreSQL</option>
+                  <option value="mysql">MySQL</option>
+                  <option value="mariadb">MariaDB</option>
+                  <option value="mongodb">MongoDB</option>
+                  <option value="sqlite">SQLite</option>
+                  <option value="oracle">Oracle</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Host / Connection URI</label>
+                <input
+                  type="text"
+                  value={newDbHostUri}
+                  onChange={(e) => setNewDbHostUri(e.target.value)}
+                  placeholder={newDbEngine === "sqlite" ? "/path/to/database.sqlite" : "mongodb://... or host ip"}
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                />
+              </div>
+
+              {newDbEngine !== "sqlite" && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Port</label>
+                    <input
+                      type="text"
+                      value={newDbPort}
+                      onChange={(e) => setNewDbPort(e.target.value)}
+                      placeholder="e.g. 5432"
+                      className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Database Name</label>
+                    <input
+                      type="text"
+                      value={newDbDatabase}
+                      onChange={(e) => setNewDbDatabase(e.target.value)}
+                      placeholder="e.g. users_db"
+                      className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">User / Role</label>
+                    <input
+                      type="text"
+                      value={newDbUser}
+                      onChange={(e) => setNewDbUser(e.target.value)}
+                      placeholder="username"
+                      className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Password / Key</label>
+                    <input
+                      type="password"
+                      value={newDbPasswordKey}
+                      onChange={(e) => setNewDbPasswordKey(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="md:col-span-2 flex items-center justify-between py-2 border-t border-slate-800">
+                <span className="text-xs font-semibold text-slate-300">Active Connection Switch</span>
+                <label className="relative inline-flex items-center cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={newDbActive}
+                    onChange={(e) => setNewDbActive(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600 peer-checked:after:bg-white"></div>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsAddDbOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveDbConnection}
+                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/95 text-white text-xs font-semibold transition-all cursor-pointer"
+              >
+                Apply Connection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Add / Edit Dynamic Custom API ── */}
+      {isAddCustomApiOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-[#0f0f1d] border border-slate-800 rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1">
+                {editingApiIndex !== null ? "Edit Custom API" : "Add Dynamic Custom API"}
+              </h3>
+              <p className="text-slate-400 text-xs">Define a custom JavaScript script execution block to register a dynamic native tool.</p>
+            </div>
+
+            <div className="space-y-3 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">API Name (hyphenated-only)</label>
+                <input
+                  type="text"
+                  value={newApiName}
+                  onChange={(e) => setNewApiName(e.target.value)}
+                  placeholder="e.g. send-customer-sms"
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Description</label>
+                <input
+                  type="text"
+                  value={newApiDesc}
+                  onChange={(e) => setNewApiDesc(e.target.value)}
+                  placeholder="Explain what this dynamic integration accomplishes"
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Arguments JSON Schema</label>
+                <textarea
+                  rows={4}
+                  value={newApiSchema}
+                  onChange={(e) => setNewApiSchema(e.target.value)}
+                  placeholder={`{\n  "type": "object",\n  "properties": {\n    "param1": { "type": "string" }\n  },\n  "required": ["param1"]\n}`}
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white font-mono outline-none focus:border-primary/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">JavaScript Execution Script Code</label>
+                <textarea
+                  rows={6}
+                  value={newApiCode}
+                  onChange={(e) => setNewApiCode(e.target.value)}
+                  placeholder={`// Execute custom API tasks\n// Received parameters: toolArgs\nconsole.log(toolArgs);\nreturn { status: "completed" };`}
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2.5 px-3 text-xs text-white font-mono outline-none focus:border-primary/50"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsAddCustomApiOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveCustomApi}
+                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/95 text-white text-xs font-semibold transition-all cursor-pointer"
+              >
+                Apply Integration
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── Modal: Add / Edit Social Connection ── */}
+      {isAddSocialOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-[#0f0f1d] border border-slate-800 rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                <Share2 className="h-5 w-5 text-indigo-400" />
+                {editingSocialIndex !== null ? "Edit Social Connection" : "Add Social Connection"}
+              </h3>
+              <p className="text-slate-400 text-xs">Configure OAuth or API keys for a dynamic social media publisher channel.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Connection Name</label>
+                <input
+                  type="text"
+                  value={newSocialName}
+                  onChange={(e) => setNewSocialName(e.target.value)}
+                  placeholder="e.g. My Marketing Channel"
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Channel Type / Preset</label>
+                <select
+                  value={newSocialPreset}
+                  onChange={(e) => setNewSocialPreset(e.target.value)}
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                >
+                  <option value="youtube">YouTube preset</option>
+                  <option value="instagram">Instagram preset</option>
+                  <option value="facebook">Facebook preset</option>
+                  <option value="linkedin">LinkedIn preset</option>
+                  <option value="tiktok">TikTok preset</option>
+                  <option value="x">X (Twitter) preset</option>
+                  <option value="pinterest">Pinterest preset</option>
+                  <option value="custom">Custom integration</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">App ID / Client ID (Optional)</label>
+                <input
+                  type="text"
+                  value={newSocialAppId}
+                  onChange={(e) => setNewSocialAppId(e.target.value)}
+                  placeholder="e.g. cli-928374928"
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">OAuth Token / API Key</label>
+                <input
+                  type="password"
+                  value={newSocialTokenOrKey}
+                  onChange={(e) => setNewSocialTokenOrKey(e.target.value)}
+                  placeholder="••••••••••••••••"
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Base Endpoint URL</label>
+                <input
+                  type="text"
+                  value={newSocialBaseEndpoint}
+                  onChange={(e) => setNewSocialBaseEndpoint(e.target.value)}
+                  placeholder="e.g. https://api.twitter.com/2"
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">OAuth Scopes (Comma or space separated)</label>
+                <input
+                  type="text"
+                  value={newSocialScopes}
+                  onChange={(e) => setNewSocialScopes(e.target.value)}
+                  placeholder="e.g. tweet.read, tweet.write"
+                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                />
+              </div>
+
+              <div className="md:col-span-2 flex items-center justify-between py-2 border-t border-slate-800">
+                <span className="text-xs font-semibold text-slate-300">Active Toggle Switch</span>
+                <label className="relative inline-flex items-center cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={newSocialActive}
+                    onChange={(e) => setNewSocialActive(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600 peer-checked:after:bg-white"></div>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsAddSocialOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveSocialConnection}
+                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/95 text-white text-xs font-semibold transition-all cursor-pointer"
+              >
+                Apply Integration
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

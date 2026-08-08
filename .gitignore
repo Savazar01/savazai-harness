@@ -20,10 +20,16 @@ venv/
 .env.production
 /savazai-console/.env*
 
-# Logs
+# Logs & Temp dumps
 *.log
 npm-debug.log*
 yarn-debug.log*
+/logs/
+logs*.txt
+sse*.txt
+scratch/
+graphify-out/
+/savazai-console/graphify-out/
 
 # System files
 .DS_Store

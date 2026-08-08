@@ -84,6 +84,17 @@ export const systemConfigurations = pgTable("system_configurations", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const agentflows = pgTable("agentflows", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  workspaceMode: text("workspace_mode").default("interactive").notNull(),
+  status: text("status").default("draft").notNull(),
+  canvasDefinition: jsonb("canvas_definition").$type<Record<string, any>>().default({}),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const telemetryLogs = pgTable("telemetry_logs", {
   id: uuid("id").defaultRandom().primaryKey(),
   chatId: uuid("chat_id"), // ties telemetry to individual chat threads

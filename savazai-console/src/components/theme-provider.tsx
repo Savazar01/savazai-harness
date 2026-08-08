@@ -11,6 +11,8 @@ export interface LLMProviderConfig {
   endpoint: string;
   defaultModel: string;
   active: boolean;
+  models?: string[];
+  discoveredModels?: string[];
 }
 
 export interface SystemConfig {
@@ -46,6 +48,13 @@ export interface SystemConfig {
     wabaPhoneNumberId?: string;
     wabaAccessToken?: string;
     capabilityProfile?: string;
+    globalSystemPrompt?: string;
+    orchestrationRules?: string;
+    defaultAmbientParameters?: string;
+    customSkills?: string | unknown[];
+    dbConnections?: string | unknown[];
+    socialConnections?: string | unknown[];
+    agentsMd?: string;
   };
 }
 

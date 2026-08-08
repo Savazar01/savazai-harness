@@ -12,6 +12,9 @@ const MODEL_PRESETS: Record<string, string[]> = {
   openai: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo", "o1", "o1-mini"],
   anthropic: ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],
   gemini: ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.0-pro"],
+  groq: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "gemma2-9b-it"],
+  xai: ["grok-2", "grok-2-vision", "grok-beta"],
+  omniroute: ["omniroute-default", "meta-llama-3-8b", "gpt-4o-mini"],
   openrouter: ["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "google/gemini-1.5-pro", "meta-llama/llama-3-70b"],
   ollama: ["llama3", "mistral", "qwen2.5", "codellama", "mixtral"],
   lmstudio: ["qwen2.5-7b", "qwen2.5-14b", "llama-3.2-3b", "mistral-nemo"],
@@ -21,6 +24,9 @@ const PROVIDER_LABELS: Record<string, string> = {
   openai: "OpenAI",
   anthropic: "Anthropic",
   gemini: "Google Gemini",
+  groq: "Groq",
+  xai: "xAI (Grok)",
+  omniroute: "OmniRoute AI Gateway",
   openrouter: "OpenRouter",
   ollama: "Ollama",
   lmstudio: "LM Studio",
@@ -54,6 +60,16 @@ function traceId(): string {
   return `trace_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+interface PlanItem {
+  nodeId: string;
+  targetNode?: string;
+  actionVerb?: string;
+  allowedVerbs?: string[];
+  targetEntity?: string;
+  parameters?: Record<string, unknown>;
+  warning?: string;
+}
+
 export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
   const storedProviders = useMemo(
     () => initialConfig.designTokens?.llmProviders ?? ({} as Record<string, { active?: boolean; defaultModel?: string; endpoint?: string; apiKey?: string }>),
@@ -82,6 +98,15 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
   const [activeTools, setActiveTools] = useState<Set<string>>(new Set());
   const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [executionModeOverride, setExecutionModeOverride] = useState<"inherit" | "plan_first" | "direct">("inherit");
+  const [executionModeDropdownOpen, setExecutionModeDropdownOpen] = useState(false);
+  const [pendingInterrupt, setPendingInterrupt] = useState<{
+    node: string;
+    plan: PlanItem[];
+    status: string;
+  } | null>(null);
+  const [feedbackInput, setFeedbackInput] = useState("");
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [capabilityProfile, setCapabilityProfile] = useState(
     (initialConfig.designTokens as Record<string, unknown>)?.capabilityProfile as string || "standard_balanced"
   );
@@ -166,7 +191,17 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
   }, []);
 
   const addTrace = useCallback(
-    (type: TraceEvent["type"], label: string, detail?: string, payload?: { input?: string; llmDecision?: string; response?: string }) => {
+    (
+      type: TraceEvent["type"],
+      label: string,
+      detail?: string,
+      payload?: {
+        input?: string;
+        llmDecision?: string;
+        response?: string;
+        piiFields?: Array<{ type: string; count: number; label: string }>;
+      },
+    ) => {
       setTraceEvents((prev) => [
         ...prev,
         { id: traceId(), type, label, detail, timestamp: new Date().toISOString(), payload },
@@ -221,20 +256,20 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
     await updateSystemConfig({ capabilityProfile: profile });
   }, []);
 
-  const handleSend = useCallback(async () => {
-    const text = input.trim();
-    if (!text || streaming) return;
-
-    setInput("");
+  const executeStream = useCallback(async (text: string | null, resumePayload?: unknown) => {
     setError(null);
+    setStreaming(true);
+    setPendingInterrupt(null);
 
-    const userMsg: ChatMessageData = {
-      id: nextId(),
-      role: "user",
-      content: text,
-      timestamp: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
+    if (text !== null) {
+      const userMsg: ChatMessageData = {
+        id: nextId(),
+        role: "user",
+        content: text,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, userMsg]);
+    }
 
     const assistantMsg: ChatMessageData = {
       id: nextId(),
@@ -243,19 +278,17 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
       timestamp: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, assistantMsg]);
-    setStreaming(true);
 
-    if (!threadRegisteredRef.current) {
+    if (text !== null && !threadRegisteredRef.current) {
       const threadTitle = text.length > 60 ? text.slice(0, 57) + "..." : text;
       window.dispatchEvent(new CustomEvent("savazai-thread-created", { detail: { threadId, title: threadTitle, createdAt: new Date().toISOString() } }));
       threadRegisteredRef.current = true;
     }
 
-    addTrace("node", "Supervisor Node", "Routing message through agent graph");
+    addTrace("node", "Supervisor Node", resumePayload ? "Resuming execution" : "Routing message through agent graph");
     addTrace("masking", "PII Gateway Active", "Scanning input for sensitive data");
 
     abortRef.current = new AbortController();
-
     const filesToSend = attachedFiles.length > 0 ? attachedFiles : undefined;
 
     try {
@@ -263,12 +296,21 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
         text,
         "WedPlanAI-Local",
         (event) => {
+          if (event.type === "interrupt") {
+            setPendingInterrupt({
+              node: event.node ?? "supervisorNode",
+              plan: (event.interrupt?.plan as PlanItem[]) || [],
+              status: event.interrupt?.status || "WAITING_USER_APPROVAL",
+            });
+            addTrace("node", event.node || "Supervisor", "Execution paused awaiting user approval");
+            return;
+          }
           if (event.node) {
             const piiFields = (event.state?.piiCategories as Array<{ type: string; count: number; label: string }>) ?? [];
             addTrace("node", `${event.node} Node`, "Node execution started", {
               input: event.state ? JSON.stringify(event.state, null, 2).slice(0, 800) : undefined,
               llmDecision: event.state?.routingDecision ? JSON.stringify(event.state.routingDecision) : undefined,
-              response: event.state?.messages ? JSON.stringify(event.state.messages.slice(-1)[0], null, 2).slice(0, 600) : undefined,
+              response: Array.isArray(event.state?.messages) && event.state.messages.length > 0 ? JSON.stringify((event.state.messages as unknown[]).slice(-1)[0], null, 2).slice(0, 600) : undefined,
               piiFields: piiFields.length > 0 ? piiFields : undefined,
             });
           }
@@ -318,6 +360,9 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
         filesToSend,
         activeTools.size > 0 ? Array.from(activeTools) : undefined,
         threadId,
+        undefined,
+        executionModeOverride,
+        resumePayload,
       );
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === "AbortError") return;
@@ -339,7 +384,42 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
       abortRef.current = null;
       setAttachedFiles([]);
     }
-  }, [input, streaming, addTrace, activeProvider, activeModel, attachedFiles, activeTools, threadId]);
+  }, [threadId, activeProvider, activeModel, attachedFiles, activeTools, executionModeOverride, addTrace]);
+
+  const handleSend = useCallback(async () => {
+    const text = input.trim();
+    if (!text || streaming) return;
+    setInput("");
+    await executeStream(text);
+  }, [input, streaming, executeStream]);
+
+  const handleApproveExecute = useCallback(async () => {
+    if (streaming) return;
+    const currentPlan = pendingInterrupt?.plan || [];
+    const systemMsg: ChatMessageData = {
+      id: nextId(),
+      role: "system",
+      content: "✓ Execution plan approved. Resuming autonomous run...",
+      timestamp: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, systemMsg]);
+    await executeStream(null, { approved: true, plan: currentPlan });
+  }, [streaming, pendingInterrupt, executeStream]);
+
+  const handleSendFeedback = useCallback(async () => {
+    const feedback = feedbackInput.trim();
+    if (!feedback || streaming) return;
+    setFeedbackInput("");
+    setShowFeedbackForm(false);
+    const systemMsg: ChatMessageData = {
+      id: nextId(),
+      role: "system",
+      content: `⚡ Execution plan modified with feedback: "${feedback}". Re-planning...`,
+      timestamp: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, systemMsg]);
+    await executeStream(null, { approved: false, feedback });
+  }, [feedbackInput, streaming, executeStream]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -381,6 +461,98 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
               isStreaming={streaming && idx === messages.length - 1 && msg.role === "assistant"}
             />
           ))}
+
+          {pendingInterrupt && (
+            <div className="rounded-2xl border border-indigo-500/30 bg-[#0b0b14] p-5 shadow-xl max-w-xl mx-auto my-4 space-y-4 animate-in fade-in duration-200">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 shrink-0">
+                  <span className="text-base">📋</span>
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">Execution Plan Approval Required</h4>
+                  <p className="text-[10px] text-slate-400">The supervisor has formulated the following plan. Please review prior to execution.</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 border border-slate-900 bg-slate-950/20 rounded-xl p-3.5 max-h-60 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+                {pendingInterrupt.plan.map((item, idx) => (
+                  <div key={idx} className="flex flex-col gap-1 border-b border-slate-900 pb-2 last:border-0 last:pb-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-slate-200 truncate">
+                        Step {idx + 1}: {item.targetNode || item.nodeId}
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-bold text-indigo-300 shrink-0 capitalize">
+                        {String(item.actionVerb || item.allowedVerbs?.[0] || "Execute").toLowerCase()}
+                      </span>
+                    </div>
+                    {item.targetEntity && (
+                      <div className="text-[10px] text-slate-400">
+                        Target: <span className="text-slate-300">{item.targetEntity}</span>
+                      </div>
+                    )}
+                    {item.parameters && Object.keys(item.parameters).length > 0 && (
+                      <div className="text-[10px] text-slate-400 mt-1">
+                        <span className="block text-[9px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Parameters:</span>
+                        <pre className="text-[9px] text-cyan-400 font-mono bg-slate-950 p-2 rounded overflow-x-auto [&::-webkit-scrollbar]:h-0.5 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+                          {JSON.stringify(item.parameters, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                    {item.warning && (
+                      <div className="text-[10px] text-amber-400 mt-1.5 bg-amber-500/5 border border-amber-500/15 px-2 py-1 rounded flex items-start gap-1">
+                        <span className="shrink-0">⚠️</span>
+                        <span>{item.warning}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {showFeedbackForm ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={feedbackInput}
+                    onChange={(e) => setFeedbackInput(e.target.value)}
+                    placeholder="Provide feedback on how to modify the plan..."
+                    className="w-full rounded-xl border border-slate-800 bg-[#06060b] p-3 text-xs text-white placeholder-slate-600 outline-none resize-none focus:border-indigo-500"
+                    rows={2.5}
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      onClick={() => setShowFeedbackForm(false)}
+                      className="px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 hover:text-white text-[10px] font-semibold"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={handleSendFeedback}
+                      disabled={!feedbackInput.trim() || streaming}
+                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Send Feedback
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleApproveExecute}
+                    disabled={streaming}
+                    className="flex-1 px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Approve &amp; Execute
+                  </button>
+                  <button
+                    onClick={() => setShowFeedbackForm(true)}
+                    disabled={streaming}
+                    className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs hover:bg-slate-700 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Modify / Feedback
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {error && (
@@ -552,6 +724,72 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                             ))}
                           </div>
                         ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      setExecutionModeDropdownOpen(!executionModeDropdownOpen);
+                      setProfileDropdownOpen(false);
+                      setProviderDropdownOpen(false);
+                    }}
+                    className="flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-800/40 border border-slate-700/40 text-[11px] font-medium text-slate-300 hover:text-white transition-all whitespace-nowrap"
+                    title={`Execution: ${
+                      executionModeOverride === "inherit" ? "Inherit Default" :
+                      executionModeOverride === "plan_first" ? "Plan First" : "Direct Execution"
+                    }`}
+                  >
+                    {executionModeOverride === "inherit" && "⚙️ Inherit Default"}
+                    {executionModeOverride === "plan_first" && "📋 Plan First"}
+                    {executionModeOverride === "direct" && "⚡ Direct"}
+                    <ChevronDown className="h-3 w-3 text-slate-500" />
+                  </button>
+                  {executionModeDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setExecutionModeDropdownOpen(false)} />
+                      <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[180px] rounded-xl border border-slate-700/50 bg-[#1a1a28] shadow-xl shadow-black/30 py-1">
+                        <button
+                          onClick={() => {
+                            setExecutionModeOverride("inherit");
+                            setExecutionModeDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                            executionModeOverride === "inherit"
+                              ? "bg-indigo-500/15 text-indigo-300"
+                              : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
+                          }`}
+                        >
+                          ⚙️ Inherit Agent Default
+                        </button>
+                        <button
+                          onClick={() => {
+                            setExecutionModeOverride("plan_first");
+                            setExecutionModeDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                            executionModeOverride === "plan_first"
+                              ? "bg-indigo-500/15 text-indigo-300"
+                              : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
+                          }`}
+                        >
+                          📋 Plan First
+                        </button>
+                        <button
+                          onClick={() => {
+                            setExecutionModeOverride("direct");
+                            setExecutionModeDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                            executionModeOverride === "direct"
+                              ? "bg-indigo-500/15 text-indigo-300"
+                              : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
+                          }`}
+                        >
+                          ⚡ Direct Execution
+                        </button>
                       </div>
                     </>
                   )}

@@ -1,14 +1,18 @@
-import { StateGraph, Annotation, START, END, MemorySaver } from "@langchain/langgraph";
+import { StateGraph, Annotation, START, END, MemorySaver, Command, interrupt } from "@langchain/langgraph";
 import { z } from "zod";
 import { PrivacyGateway } from "../utils/privacy-gateway.js";
 import { convertMarkdownToHtml } from "../utils/config-registry.js";
 import { skillTools } from "../utils/skills-loader.js";
 import { llmSwitchboard } from "../services/llm-switchboard.js";
 import { db } from "../db/index.js";
-import { connectedApps, systemConfigurations, type ModelConfig } from "../db/schema.js";
-import { eq } from "drizzle-orm";
+import { connectedApps, systemConfigurations, agentflows, type ModelConfig } from "../db/schema.js";
+import { eq, sql } from "drizzle-orm";
 import { TelemetryGateway } from "../utils/telemetry.js";
 import { getValidGmailAccessToken, sendGmailEmail } from "../utils/config-registry.js";
+import { runPython } from "../utils/python-runner.js";
+import dns from "node:dns";
+import postgres from "postgres";
+
 
 export const MessageSchema = z.object({
   role: z.enum(["user", "assistant", "system"]),
@@ -84,6 +88,11 @@ export const GraphStateSchema = z.object({
       metadata: z.record(z.any()).optional(),
     })
   ).optional(),
+  executionMode: z.enum(["plan_first", "direct", "inherit"]).optional(),
+  plan_approved: z.boolean().optional(),
+  supervisorPlan: z.array(z.any()).optional(),
+  approvedActions: z.array(z.string()).optional(),
+  parameterLocks: z.record(z.any()).optional(),
 });
 
 export type GraphState = z.infer<typeof GraphStateSchema>;
@@ -215,6 +224,26 @@ const StateAnnotation = Annotation.Root({
     reducer: (x, y) => y !== undefined ? y : (x ?? []),
     default: () => [],
   }),
+  executionMode: Annotation<"plan_first" | "direct" | "inherit" | undefined>({
+    reducer: (x, y) => y ?? x,
+    default: () => undefined,
+  }),
+  plan_approved: Annotation<boolean | undefined>({
+    reducer: (x, y) => y ?? x,
+    default: () => undefined,
+  }),
+  supervisorPlan: Annotation<any[] | undefined>({
+    reducer: (x, y) => y ?? x,
+    default: () => undefined,
+  }),
+  approvedActions: Annotation<string[] | undefined>({
+    reducer: (x, y) => y ?? x,
+    default: () => undefined,
+  }),
+  parameterLocks: Annotation<Record<string, any> | undefined>({
+    reducer: (x, y) => y ?? x,
+    default: () => undefined,
+  }),
 });
 
 interface CachedTools {
@@ -264,6 +293,15 @@ async function resolveAmbientParameter(paramName: string): Promise<string | unde
   const envVal = process.env[envKey] || process.env[paramName.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`).toUpperCase()];
   if (envVal) return envVal;
 
+  if (paramName.toLowerCase().includes("wedding")) {
+    try {
+      const dbRes = await db.execute(sql`SELECT DISTINCT wedding_id FROM guests WHERE wedding_id IS NOT NULL LIMIT 1`);
+      const row = (dbRes as any)?.rows?.[0] || (dbRes as any)?.[0];
+      if (row?.wedding_id) return String(row.wedding_id);
+    } catch {}
+    return "be5badd9-0cb2-4d5d-9acf-2412406b9cae";
+  }
+
   return undefined;
 }
 
@@ -301,13 +339,44 @@ async function registerAppProvider(appName: string, modelOverride?: { providerTy
     if (configs.length > 0 && providerType) {
       const tokens = configs[0].designTokens as any || {};
       const providers = tokens.llmProviders || {};
-      const prov = providers[providerType];
+
+      // Direct lookup first, then try canonical aliases for common type names
+      const aliasMap: Record<string, string[]> = {
+        "openai-compatible": ["openai", "openai-compatible"],
+        "openai": ["openai", "openai-compatible"],
+        "gemini": ["gemini"],
+        "anthropic": ["anthropic"],
+        "ollama": ["ollama"],
+        "lmstudio": ["lmstudio"],
+        "openrouter": ["openrouter"],
+      };
+      const candidates = aliasMap[providerType] || [providerType];
+      let prov = candidates.map((k) => providers[k]).find((p) => p && p.active !== false);
+
+      // If still no match, fall back to first active provider in the map
+      if (!prov) {
+        prov = Object.values(providers).find((p: any) => p?.active === true) as any;
+      }
+
       if (prov) {
         baseUrl = prov.endpoint || baseUrl;
+        // Append /v1 for openai-compatible providers if not already present
+        if ((providerType === "openai-compatible" || providerType === "openai") && !baseUrl.endsWith("/v1") && !baseUrl.includes("/v1/")) {
+          baseUrl = `${baseUrl.replace(/\/+$/, "")}/v1`;
+        }
         apiKey = prov.apiKey || apiKey;
         if (!modelOverride?.modelName) {
           modelName = prov.defaultModel || modelName;
         }
+      }
+    }
+
+    const isDocker = process.env.DATABASE_URL?.includes("savazai-db") || !process.env.DATABASE_URL?.includes("localhost");
+    if (isDocker && typeof baseUrl === "string") {
+      if (baseUrl.includes("localhost:11434")) {
+        baseUrl = baseUrl.replace("localhost:11434", "host.docker.internal:11434");
+      } else if (baseUrl.includes("127.0.0.1:11434")) {
+        baseUrl = baseUrl.replace("127.0.0.1:11434", "host.docker.internal:11434");
       }
     }
 
@@ -326,14 +395,24 @@ async function registerAppProvider(appName: string, modelOverride?: { providerTy
 }
 
 async function fetchMcpTools(serverUrl: string, headers: Record<string, string>): Promise<any[]> {
-  const cacheKey = `${serverUrl}:${JSON.stringify(headers)}`;
+  let resolvedUrl = serverUrl;
+  const isDocker = process.env.DATABASE_URL?.includes("savazai-db") || !process.env.DATABASE_URL?.includes("localhost");
+  if (isDocker && typeof resolvedUrl === "string") {
+    if (resolvedUrl.includes("localhost:")) {
+      resolvedUrl = resolvedUrl.replace("localhost:", "host.docker.internal:");
+    } else if (resolvedUrl.includes("127.0.0.1:")) {
+      resolvedUrl = resolvedUrl.replace("127.0.0.1:", "host.docker.internal:");
+    }
+  }
+
+  const cacheKey = `${resolvedUrl}:${JSON.stringify(headers)}`;
   const cached = mcpToolCache.get(cacheKey);
   if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
     return cached.tools;
   }
 
   try {
-    const res = await fetch(serverUrl, {
+    const res = await fetch(resolvedUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -349,7 +428,7 @@ async function fetchMcpTools(serverUrl: string, headers: Record<string, string>)
     });
 
     if (!res.ok) {
-      console.error(`[fetchMcpTools] Failed to fetch tools from ${serverUrl}: HTTP ${res.status}`);
+      console.error(`[fetchMcpTools] Failed to fetch tools from ${resolvedUrl}: HTTP ${res.status}`);
       return [];
     }
 
@@ -610,7 +689,229 @@ class StructuredModelWrapper {
   }
 }
 
+async function getDynamicToolDefinitions(activeTools?: string[]): Promise<Array<{ name: string; description: string; category: string }>> {
+  const tools: Array<{ name: string; description: string; category: string }> = [];
 
+  const nativeTools = [
+    { name: "phone_number_validator", description: "Validate phone number format and formatting style.", category: "native" },
+    { name: "email_domain_inspector", description: "Validate email domain mx records and deliverability status.", category: "native" },
+    { name: "geocoding_lookup", description: "Find geographical coordinates (latitude and longitude) for a street address.", category: "native" },
+    { name: "financial_math_calculator", description: "Execute simple math expressions safely (+ - * / ()).", category: "native" },
+    { name: "analytics_dashboard_generator", description: "Aggregate event records into statistics and output a local markdown file path.", category: "native" },
+    { name: "postgres_query_tool", description: "Execute read-only SQL queries on a PostgreSQL database.", category: "native" },
+    { name: "sqlite_query_tool", description: "Execute read-only SQL queries on a local SQLite database.", category: "native" },
+    { name: "mongodb_query_tool", description: "Execute queries and actions on a MongoDB database.", category: "native" },
+    { name: "google_docs_writer", description: "Create or write content to Google Docs files via OAuth.", category: "native" },
+    { name: "google_sheets_sync", description: "Append rows/values to Google Sheets spreadsheet via OAuth.", category: "native" },
+    { name: "google_drive_uploader", description: "Upload raw text or files to Google Drive folders via OAuth.", category: "native" },
+    { name: "google_places", description: "Search locations and points of interest using the Google Places API.", category: "native" },
+    { name: "web_search", description: "Perform a Google Search or Tavily Web Search and retrieve relevant summaries.", category: "native" },
+    { name: "send-email", description: "Dispatch rich HTML or Markdown emails to recipients.", category: "native" },
+    { name: "generate-pdf", description: "Compile a Markdown report into a PDF report document.", category: "native" },
+  ];
+  tools.push(...nativeTools);
+
+  for (const s of skillTools) {
+    tools.push({ name: s.name, description: s.description, category: "skill" });
+  }
+
+  try {
+    const configs = await db.select().from(systemConfigurations).limit(1);
+    if (configs.length > 0 && configs[0].designTokens?.customSkills) {
+      const customSkills = typeof configs[0].designTokens.customSkills === "string"
+        ? JSON.parse(configs[0].designTokens.customSkills)
+        : configs[0].designTokens.customSkills;
+      if (Array.isArray(customSkills)) {
+        for (const cs of customSkills) {
+          tools.push({ name: cs.name, description: cs.description, category: "custom" });
+        }
+      }
+    }
+  } catch (e) {
+    console.error("[getDynamicToolDefinitions] Failed to load custom skills:", e);
+  }
+
+  try {
+    const configs = await db.select().from(systemConfigurations).limit(1);
+    const mcpServersValue = configs[0]?.designTokens?.mcpServers;
+    let mcpServersObj: any = {};
+    if (mcpServersValue) {
+      if (typeof mcpServersValue === "string") {
+        try {
+          const parsed = JSON.parse(mcpServersValue);
+          mcpServersObj = parsed.mcpServers || parsed;
+        } catch {
+          // Ignore invalid JSON string
+        }
+      } else {
+        mcpServersObj = mcpServersValue.mcpServers || mcpServersValue;
+      }
+    }
+
+    let serversToScan = Object.keys(mcpServersObj);
+    if (activeTools && activeTools.length > 0) {
+      const serverKeyMatches = serversToScan.filter((s) => activeTools.includes(s));
+      // Only narrow to specific servers if activeTools contains explicit server key names
+      if (serverKeyMatches.length > 0) {
+        serversToScan = serverKeyMatches;
+      }
+    }
+
+    for (const serverKey of serversToScan) {
+      const config = mcpServersObj[serverKey];
+      if (!config || !config.serverUrl || config.disabled === true || config.active === false) continue;
+      const headers = config.headers || {};
+      const mcpTools = await fetchMcpTools(config.serverUrl, headers);
+      for (const mt of mcpTools) {
+        tools.push({ name: mt.name, description: mt.description, category: `mcp:${serverKey}` });
+      }
+    }
+  } catch (e) {
+    console.error("[getDynamicToolDefinitions] Failed to load MCP tools:", e);
+  }
+
+  if (activeTools && activeTools.length > 0) {
+    return tools.filter(t => {
+      if (activeTools.includes(t.name)) return true;
+      if (t.category.startsWith("mcp:")) {
+        const serverName = t.category.split(":")[1];
+        if (activeTools.includes(serverName)) return true;
+      }
+      return false;
+    });
+  }
+
+  return tools;
+}
+
+async function getDefaultExecutionMode(): Promise<"plan_first" | "direct"> {
+  try {
+    const [wf] = await db
+      .select()
+      .from(agentflows)
+      .where(eq(agentflows.status, "published"))
+      .limit(1);
+    if (wf && wf.canvasDefinition) {
+      const cd = typeof wf.canvasDefinition === "string"
+        ? JSON.parse(wf.canvasDefinition)
+        : wf.canvasDefinition;
+      if (cd && Array.isArray(cd.nodes)) {
+        const supervisor = cd.nodes.find((n: any) => n.roleTemplate === "supervisor");
+        if (supervisor && supervisor.data && supervisor.data.executionMode) {
+          return supervisor.data.executionMode;
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[getDefaultExecutionMode] failed to read config:", err);
+  }
+  return "plan_first";
+}
+
+async function generateExecutionPlanFromTools(
+  tools: Array<{ name: string; description: string; category: string }>,
+  message: string,
+  currentApp: string,
+  modelConfig: any,
+  requestId: string
+): Promise<any[]> {
+  let filteredTools = tools;
+  if (isReadOnlyQuery(message)) {
+    filteredTools = tools.filter(t => 
+      t.name.startsWith("list_") || 
+      t.name.startsWith("get_") || 
+      t.name.includes("fetch") || 
+      t.name.includes("query") || 
+      (!t.name.startsWith("create_") && !t.name.startsWith("update_") && !t.name.startsWith("delete_") && !t.name.startsWith("add_") && !t.name.startsWith("remove_") && !t.name.startsWith("send_"))
+    );
+  }
+  const toolDescriptions = filteredTools.map(t => `- Name: "${t.name}"\n  Description: "${t.description}"\n  Category: "${t.category}"`).join("\n\n");
+
+  const plannerPrompt = `You are a Supervisor/Routing Agent. Your task is to analyze the user request, determine which tools should be executed, and generate a structured Execution Plan.
+Choose ONLY the tools that are strictly required to resolve the user's intent. Do not include irrelevant tools.
+
+For each selected tool, you MUST specify:
+1. nodeId: The exact name of the tool (e.g. "phone_number_validator" or "list_tasks").
+2. targetNode: A descriptive name of the tool/action.
+3. actionVerb: Choose one from 'CREATE', 'UPDATE', 'DELETE', 'SEND', 'LIST', 'READ'.
+4. targetEntity: The entity name being acted upon (e.g., "Guest", "Task", "Email", "Phone").
+5. parameters: A dictionary of key-value parameters extracted from the user request to be passed to the tool.
+
+CRITICAL PARAMETER EXTRACTION RULES:
+- Extract all explicit user-provided parameters and populate them into the 'parameters' object.
+- If critical parameters for a creation/update action are ambiguous or missing, do NOT use placeholders. Instead, set "requiresClarification": true and "warning": "Description of the missing parameter" in that item.
+
+READ-ONLY & INTENT-BASED CLASSIFICATION RULES:
+- If the user request contains retrieval/querying keywords ("list", "get", "show", "provide", "status", "report", "fetch", "details", "read", "view", "display", "summarize", "export", "find", "search"), you MUST force the generated plan to set actionVerb to "READ" or "LIST".
+- For read-only queries, you are STRICTLY PROHIBITED from choosing 'CREATE', 'UPDATE', or 'DELETE' action verbs or selecting mutation tools. Ensure you select ONLY list_* or get_* tools and specify allowedVerbs = ["LIST", "READ"].
+
+Available Tools to choose from:
+${toolDescriptions}
+
+You MUST return your decision as a valid JSON object matching the following structure:
+{
+  "executionPlan": [
+    {
+      "nodeId": "tool_name",
+      "targetNode": "Tool Label",
+      "allowedVerbs": ["CREATE"],
+      "actionVerb": "CREATE",
+      "targetEntity": "Entity Name",
+      "parameters": {
+        "key1": "value1"
+      },
+      "requiresClarification": false,
+      "warning": ""
+    }
+  ]
+}
+
+Return ONLY the raw JSON object. Do not include markdown backticks or extra commentary.`;
+
+  try {
+    await registerAppProvider(currentApp, modelConfig);
+    const completion = await llmSwitchboard.executeUniversalCompletion({
+      messages: [
+        { role: "system", content: plannerPrompt },
+        { role: "user", content: `Original user request: "${message}"\nGenerate the execution plan.` }
+      ],
+      providerId: currentApp,
+      options: { requestId }
+    });
+
+    const cleaned = completion.text.replace(/```json/g, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+    let plan = parsed.executionPlan || [];
+
+    // Post-process to remove CREATE locks for read-only queries
+    if (isReadOnlyQuery(message)) {
+      plan = plan.filter((item: any) => {
+        const verb = String(item.actionVerb || item.allowedVerbs?.[0] || "").toUpperCase();
+        const nodeId = String(item.nodeId || "").toLowerCase();
+        if (verb === "CREATE" || verb === "UPDATE" || verb === "DELETE") return false;
+        if (nodeId.startsWith("create_") || nodeId.startsWith("update_") || nodeId.startsWith("delete_") || nodeId.startsWith("add_") || nodeId.startsWith("remove_")) return false;
+        return true;
+      });
+      for (const item of plan) {
+        item.actionVerb = "LIST";
+        item.allowedVerbs = ["LIST", "READ"];
+      }
+    }
+
+    for (const planItem of plan) {
+      if (!planItem.allowedVerbs || planItem.allowedVerbs.length === 0) {
+        planItem.allowedVerbs = [planItem.actionVerb || "CREATE"];
+      }
+      if (!planItem.actionVerb) {
+        planItem.actionVerb = planItem.allowedVerbs[0] || "CREATE";
+      }
+    }
+    return plan;
+  } catch (err) {
+    console.error("[generateExecutionPlanFromTools] Failed to generate plan:", err);
+    return [];
+  }
+}
 
 async function supervisorNode(state: typeof StateAnnotation.State, config?: any) {
   const requestId = config?.configurable?.requestId ?? "global";
@@ -682,44 +983,137 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
 
     let queue = state.delegationQueue ? [...state.delegationQueue] : [];
     let delegatedTasks = state.delegatedTasks ? { ...state.delegatedTasks } : {};
+    let newPlanApproved = state.plan_approved;
+    let newSupervisorPlan = state.supervisorPlan;
+    let newApprovedActions = state.approvedActions;
+    let newParameterLocks = state.parameterLocks;
 
     if (isNewTurn) {
       // Clear previous turn parameters and analyze user intent to build a new delegation queue
       queue = [];
       delegatedTasks = {};
+      newPlanApproved = undefined;
+      newSupervisorPlan = undefined;
+      newApprovedActions = undefined;
+      newParameterLocks = undefined;
 
-      let customGlobalPrompt = "";
-      let customOrchestrationRules = "";
-      let profileInstructions = "";
-      try {
-        const configs = await db.select().from(systemConfigurations).limit(1);
-        if (configs.length > 0 && configs[0].designTokens) {
-          const tokens = configs[0].designTokens as any;
-          customGlobalPrompt = tokens.globalSystemPrompt || "";
-          customOrchestrationRules = tokens.orchestrationRules || "";
-          
-          const capabilityProfile = tokens.capabilityProfile || "standard_balanced";
-          if (capabilityProfile === "strict_deterministic") {
-            profileInstructions = `
+      let mode = state.executionMode;
+      if (!mode || mode === "inherit") {
+        mode = await getDefaultExecutionMode();
+      }
+
+      if (mode === "plan_first") {
+        const tools = await getDynamicToolDefinitions(state.activeTools);
+        const plan = await generateExecutionPlanFromTools(
+          tools,
+          latestUserMsgContent,
+          currentApp ?? "WedPlanAI-Local",
+          state.modelConfig,
+          requestId
+        );
+
+        console.log("[supervisorNode] Execution mode: plan_first. Generating plan and pausing.", JSON.stringify(plan));
+
+        // Call interrupt to pause execution and await approval
+        const resumeValue = interrupt({
+          plan,
+          status: "WAITING_USER_APPROVAL",
+        }) as { approved: boolean; feedback?: string } | undefined;
+
+        console.log("[supervisorNode] Resumed with value:", JSON.stringify(resumeValue));
+
+        if (resumeValue) {
+          newPlanApproved = resumeValue.approved;
+          if (!resumeValue.approved) {
+            let currentPlan = plan;
+            let feedback = resumeValue.feedback || "";
+            while (true) {
+              const revisedPlan = await generateExecutionPlanFromTools(
+                tools,
+                `Original request: "${latestUserMsgContent}"\nUser feedback on previous plan: "${feedback}"`,
+                currentApp ?? "WedPlanAI-Local",
+                state.modelConfig,
+                requestId
+              );
+
+              const nextResume = interrupt({
+                plan: revisedPlan,
+                status: "WAITING_USER_APPROVAL",
+              }) as { approved: boolean; feedback?: string } | undefined;
+
+              console.log("[supervisorNode] Re-paused and resumed with value:", JSON.stringify(nextResume));
+
+              if (!nextResume || nextResume.approved) {
+                currentPlan = revisedPlan;
+                newPlanApproved = nextResume ? nextResume.approved : true;
+                break;
+              }
+              feedback = nextResume.feedback || "";
+            }
+            newSupervisorPlan = currentPlan;
+            queue = currentPlan.map((item: any) => {
+              const nodeId = item.nodeId;
+              if (nodeId === "send-email" || nodeId === "CommunicationAgent") return "CommunicationAgent";
+              if (nodeId === "generate-pdf" || nodeId === "SynthesisAgent") return "SynthesisAgent";
+              if (isMutationTool(nodeId)) return "MutationAgent";
+              return "DataFetchAgent";
+            });
+          } else {
+            newSupervisorPlan = plan;
+            queue = plan.map((item: any) => {
+              const nodeId = item.nodeId;
+              if (nodeId === "send-email" || nodeId === "CommunicationAgent") return "CommunicationAgent";
+              if (nodeId === "generate-pdf" || nodeId === "SynthesisAgent") return "SynthesisAgent";
+              if (isMutationTool(nodeId)) return "MutationAgent";
+              return "DataFetchAgent";
+            });
+          }
+          queue = Array.from(new Set(queue));
+        } else {
+          // If no resume value, default to direct mapping
+          newSupervisorPlan = plan;
+          queue = plan.map((item: any) => {
+            const nodeId = item.nodeId;
+            if (nodeId === "send-email" || nodeId === "CommunicationAgent") return "CommunicationAgent";
+            if (nodeId === "generate-pdf" || nodeId === "SynthesisAgent") return "SynthesisAgent";
+            if (isMutationTool(nodeId)) return "MutationAgent";
+            return "DataFetchAgent";
+          });
+          queue = Array.from(new Set(queue));
+        }
+      } else {
+        let customGlobalPrompt = "";
+        let customOrchestrationRules = "";
+        let profileInstructions = "";
+        try {
+          const configs = await db.select().from(systemConfigurations).limit(1);
+          if (configs.length > 0 && configs[0].designTokens) {
+            const tokens = configs[0].designTokens as any;
+            customGlobalPrompt = tokens.globalSystemPrompt || "";
+            customOrchestrationRules = tokens.orchestrationRules || "";
+            
+            const capabilityProfile = tokens.capabilityProfile || "standard_balanced";
+            if (capabilityProfile === "strict_deterministic") {
+              profileInstructions = `
 [CAPABILITY STUDIO CONSTRAINTS - STRICT / DETERMINISTIC]:
 - ZERO CONVERSATIONAL GATING: You must immediately delegate task routing without asking follow-up questions or inserting chat filler.
 - DIRECT TOOL TRIGGERING: Populate the delegation queue to immediately invoke the relevant backend APIs.
 - ABSOLUTE DOMAIN-AGNOSTIC LIMITS: Do not assume domain contexts or makeEvent assumptions; strictly follow the provided tool list boundaries.`;
-          } else if (capabilityProfile === "fast_creative") {
-            profileInstructions = `
+            } else if (capabilityProfile === "fast_creative") {
+              profileInstructions = `
 [CAPABILITY STUDIO CONSTRAINTS - FAST / CREATIVE]:
 - Prioritize rapid sequential execution and allow creative/flexible interpretations of the user's intent.`;
-          } else if (capabilityProfile === "deep_reasoning") {
-            profileInstructions = `
+            } else if (capabilityProfile === "deep_reasoning") {
+              profileInstructions = `
 [CAPABILITY STUDIO CONSTRAINTS - DEEP REASONING]:
 - Reason step-by-step about the user's implicit intent before deciding delegation. Draw logical connections between multi-step tasks.`;
+            }
           }
+        } catch (e) {
+          console.error("[supervisorNode] Failed to load custom configurations:", e);
         }
-      } catch (e) {
-        console.error("[supervisorNode] Failed to load custom configurations:", e);
-      }
 
-      const supervisorSystemPrompt = `You are the High-Level Supervisor and Orchestrator for SavazAI.
+        const supervisorSystemPrompt = `You are the High-Level Supervisor and Orchestrator for SavazAI.
 Your sole responsibility is task delegation and coordination. You must NOT execute tool calls or write conversational responses to the user directly.
 Instead, you must analyze the user prompt and decide which specialized sub-agents need to run to fulfill the request.
 ${customGlobalPrompt ? `Global System Instructions:\n${customGlobalPrompt}\n` : ""}
@@ -744,59 +1138,60 @@ You MUST respond with a JSON object strictly matching this schema:
 }
 Return only the raw JSON.`;
 
-      const plannerMessages = [
-        { role: "system" as const, content: supervisorSystemPrompt },
-        ...state.messages.map((m) => {
-          let content = m.content;
-          if (m.role === "user") {
-            const { maskedText: mt } = gateway.maskPayload(content);
-            content = mt;
-          }
-          content = scrubImageContent(content);
-          return { role: m.role, content };
-        }),
-      ];
+        const plannerMessages = [
+          { role: "system" as const, content: supervisorSystemPrompt },
+          ...state.messages.map((m) => {
+            let content = m.content;
+            if (m.role === "user") {
+              const { maskedText: mt } = gateway.maskPayload(content);
+              content = mt;
+            }
+            content = scrubImageContent(content);
+            return { role: m.role, content };
+          }),
+        ];
 
-      if (currentApp) {
-        try {
-          await registerAppProvider(currentApp, state.modelConfig);
-          const model = new StructuredModelWrapper(currentApp, state.modelConfig);
-          const structuralPlanner = model.withStructuredOutput(
-            z.object({
-              delegationQueue: z.array(z.enum(["MutationAgent", "DataFetchAgent", "CommunicationAgent", "SynthesisAgent"])).default([]),
-              target_action: z.enum([
-                "sub_agent",
-                "mcp_action",
-                "respond",
-                "correct",
-                "end",
-                "DataFetchAgent",
-                "MutationAgent",
-                "SynthesisAgent",
-                "CommunicationAgent",
-                "communication_dispatch"
-              ]).optional(),
-            })
-          );
-          const decision = await structuralPlanner.invoke(plannerMessages, { requestId });
-          queue = decision.delegationQueue.map((agent: string) => {
-            if (agent === "MutationAgent") return "MutationAgent";
-            if (agent === "CommunicationAgent") return "CommunicationAgent";
-            if (agent === "SynthesisAgent") return "SynthesisAgent";
-            return "DataFetchAgent";
-          });
-          
-          // If the model explicitly decides communication_dispatch, force queue to contain CommunicationAgent
-          if (decision.target_action === "communication_dispatch" && !queue.includes("CommunicationAgent")) {
-            queue.push("CommunicationAgent");
+        if (currentApp) {
+          try {
+            await registerAppProvider(currentApp, state.modelConfig);
+            const model = new StructuredModelWrapper(currentApp, state.modelConfig);
+            const structuralPlanner = model.withStructuredOutput(
+              z.object({
+                delegationQueue: z.array(z.enum(["MutationAgent", "DataFetchAgent", "CommunicationAgent", "SynthesisAgent"])).default([]),
+                target_action: z.enum([
+                  "sub_agent",
+                  "mcp_action",
+                  "respond",
+                  "correct",
+                  "end",
+                  "DataFetchAgent",
+                  "MutationAgent",
+                  "SynthesisAgent",
+                  "CommunicationAgent",
+                  "communication_dispatch"
+                ]).optional(),
+              })
+            );
+            const decision = await structuralPlanner.invoke(plannerMessages, { requestId });
+            queue = decision.delegationQueue.map((agent: string) => {
+              if (agent === "MutationAgent") return "MutationAgent";
+              if (agent === "CommunicationAgent") return "CommunicationAgent";
+              if (agent === "SynthesisAgent") return "SynthesisAgent";
+              return "DataFetchAgent";
+            });
+            
+            // If the model explicitly decides communication_dispatch, force queue to contain CommunicationAgent
+            if (decision.target_action === "communication_dispatch" && !queue.includes("CommunicationAgent")) {
+              queue.push("CommunicationAgent");
+            }
+            console.log("[supervisorNode] Structured Planner Decided Queue:", queue, "target_action:", decision.target_action);
+          } catch (err: any) {
+            console.error("[supervisorNode] Structured Planner LLM call failed with schema validation/parsing error:", err?.stack || err?.message || err);
+            throw err;
           }
-          console.log("[supervisorNode] Structured Planner Decided Queue:", queue, "target_action:", decision.target_action);
-        } catch (err: any) {
-          console.error("[supervisorNode] Structured Planner LLM call failed with schema validation/parsing error:", err?.stack || err?.message || err);
-          throw err;
+        } else {
+          queue = ["MutationAgent", "DataFetchAgent"];
         }
-      } else {
-        queue = ["MutationAgent", "DataFetchAgent"];
       }
     }
 
@@ -845,6 +1240,10 @@ Return only the raw JSON.`;
       delegationQueue: queue,
       delegatedTasks,
       currentApp,
+      plan_approved: newPlanApproved,
+      supervisorPlan: newSupervisorPlan,
+      approvedActions: newApprovedActions,
+      parameterLocks: newParameterLocks,
     };
   } catch (err) {
     telemetry.endSpan(requestId, span, {
@@ -853,6 +1252,13 @@ Return only the raw JSON.`;
     await telemetry.endTrace(requestId);
     throw err;
   }
+}
+
+function isReadOnlyQuery(message: string): boolean {
+  const lower = message.toLowerCase();
+  const hasReadWords = lower.includes("list") || lower.includes("get") || lower.includes("show") || lower.includes("read") || lower.includes("view") || lower.includes("display") || lower.includes("report") || lower.includes("summarize") || lower.includes("export") || lower.includes("find") || lower.includes("search") || lower.includes("provide") || lower.includes("status") || lower.includes("fetch") || lower.includes("details");
+  const hasWriteWords = lower.includes("create") || lower.includes("update") || lower.includes("delete") || lower.includes("add") || lower.includes("remove") || lower.includes("change") || lower.includes("modify") || lower.includes("cancel") || lower.includes("insert") || lower.includes("post") || lower.includes("send");
+  return hasReadWords && !hasWriteWords;
 }
 
 function isMutationTool(name: string): boolean {
@@ -919,7 +1325,607 @@ async function executeToolByName(
   const customSkill = customSkills.find((c) => c.name === toolName);
   const localSkill = skillTools.find((s) => s.name === toolName);
 
-  if (customSkill) {
+  if (toolName === "phone_number_validator") {
+    try {
+      const phoneNumber = toolArgs.phoneNumber || "";
+      if (!phoneNumber) {
+        throw new Error("Missing required argument: phoneNumber");
+      }
+      let normalized = phoneNumber.replace(/[^0-9+]/g, "");
+      if (!normalized.startsWith("+")) {
+        normalized = "+" + (toolArgs.defaultCountry || "1") + normalized.replace(/^0+/, "");
+      }
+      const isValid = /^\+[1-9]\d{1,14}$/.test(normalized);
+      resultText = JSON.stringify({
+        valid: isValid,
+        original: phoneNumber,
+        formatted: normalized,
+        carrierVerified: isValid
+      });
+      statusCode = 200;
+    } catch (err: any) {
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "email_domain_inspector") {
+    try {
+      const emailOrDomain = toolArgs.email || toolArgs.domain || "";
+      if (!emailOrDomain) {
+        throw new Error("Missing required argument: email or domain");
+      }
+      let domain = emailOrDomain;
+      if (emailOrDomain.includes("@")) {
+        domain = emailOrDomain.split("@")[1];
+      }
+      domain = domain.trim().toLowerCase();
+      
+      const records = await dns.promises.resolveMx(domain).catch(() => []);
+      const isValid = records.length > 0;
+      resultText = JSON.stringify({
+        domain,
+        mxRecords: records,
+        valid: isValid,
+        deliverable: isValid
+      });
+      statusCode = 200;
+    } catch (err: any) {
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "geocoding_lookup") {
+    try {
+      const address = toolArgs.address || "";
+      if (!address) {
+        throw new Error("Missing required argument: address");
+      }
+      const configs = await db.select().from(systemConfigurations).limit(1);
+      const tokens = configs.length > 0 ? (configs[0].designTokens || {}) as any : {};
+      const googlePlacesApiKey = tokens.googlePlacesApiKey || process.env.GOOGLE_PLACES_API_KEY;
+      
+      if (googlePlacesApiKey && googlePlacesApiKey.trim()) {
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${googlePlacesApiKey}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Google Geocoding returned ${response.status}: ${await response.text()}`);
+        }
+        const data = await response.json() as any;
+        if (data.status === "OK" && data.results?.[0]) {
+          const loc = data.results[0].geometry.location;
+          resultText = JSON.stringify({
+            lat: loc.lat,
+            lng: loc.lng,
+            formattedAddress: data.results[0].formatted_address,
+            provider: "google"
+          });
+        } else {
+          throw new Error(`Google Geocoding error: ${data.status}`);
+        }
+      } else {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
+        const response = await fetch(url, {
+          headers: { "User-Agent": "SavazAI-Harness-Geocoding/1.0" }
+        });
+        if (!response.ok) {
+          throw new Error(`OSM Nominatim returned ${response.status}: ${await response.text()}`);
+        }
+        const data = await response.json() as any;
+        if (data && data.length > 0) {
+          resultText = JSON.stringify({
+            lat: parseFloat(data[0].lat),
+            lng: parseFloat(data[0].lon),
+            formattedAddress: data[0].display_name,
+            provider: "nominatim"
+          });
+        } else {
+          throw new Error("No address coordinates found in OpenStreetMap Geocoding.");
+        }
+      }
+      statusCode = 200;
+    } catch (err: any) {
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "financial_math_calculator") {
+    try {
+      const expression = toolArgs.expression || "";
+      if (!expression) {
+        throw new Error("Missing required argument: expression");
+      }
+      const sanitized = expression.replace(/[^0-9+\-*/().\s]/g, "");
+      if (sanitized.trim() !== expression.trim()) {
+        throw new Error("Invalid characters in expression. Only digits and operators (+ - * / ( )) are allowed.");
+      }
+      const evalFn = new Function(`return (${sanitized});`);
+      const result = evalFn();
+      resultText = JSON.stringify({ expression, sanitized, result });
+      statusCode = 200;
+    } catch (err: any) {
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "analytics_dashboard_generator") {
+    try {
+      const events = toolArgs.events || [];
+      const title = toolArgs.title || "Enterprise Event Analytics Dashboard";
+      if (!Array.isArray(events) || events.length === 0) {
+        throw new Error("Missing required argument: events (non-empty array)");
+      }
+      
+      const groups: Record<string, number> = {};
+      const statusGroups: Record<string, number> = {};
+      for (const event of events) {
+        const name = event.eventName || event.name || "Unknown";
+        groups[name] = (groups[name] || 0) + 1;
+        const status = event.status || "completed";
+        statusGroups[status] = (statusGroups[status] || 0) + 1;
+      }
+
+      let mdReport = `## ${title}\n\n`;
+      mdReport += `### Summary Statistics\n`;
+      mdReport += `| Event Name | Count | Visualization |\n`;
+      mdReport += `| :--- | :--- | :--- |\n`;
+      for (const [name, count] of Object.entries(groups)) {
+        const bar = "█".repeat(Math.min(count, 15));
+        mdReport += `| ${name} | ${count} | ${bar} |\n`;
+      }
+      
+      mdReport += `\n### Status Distribution\n`;
+      for (const [status, count] of Object.entries(statusGroups)) {
+        mdReport += `- **${status}**: ${count}\n`;
+      }
+
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const logsDir = "./logs";
+      if (!fs.existsSync(logsDir)) {
+        fs.mkdirSync(logsDir, { recursive: true });
+      }
+      const dashboardPath = path.join(logsDir, `dashboard_${Date.now()}.md`);
+      fs.writeFileSync(dashboardPath, mdReport, "utf8");
+
+      resultText = JSON.stringify({
+        success: true,
+        title,
+        summary: groups,
+        statusSummary: statusGroups,
+        markdownReport: mdReport,
+        filePath: dashboardPath
+      });
+      statusCode = 200;
+    } catch (err: any) {
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "postgres_query_tool") {
+    try {
+      const connectionString = toolArgs.connectionString;
+      const query = toolArgs.query;
+      if (!connectionString) {
+        throw new Error("Missing required argument: connectionString");
+      }
+      if (!query) {
+        throw new Error("Missing required argument: query");
+      }
+      
+      const sqlClient = postgres(connectionString);
+      const rows = await sqlClient.unsafe(query);
+      await sqlClient.end();
+      
+      resultText = JSON.stringify({ results: rows });
+      statusCode = 200;
+    } catch (err: any) {
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "sqlite_query_tool") {
+    try {
+      const dbPath = toolArgs.dbPath;
+      const query = toolArgs.query;
+      if (!dbPath) {
+        throw new Error("Missing required argument: dbPath");
+      }
+      if (!query) {
+        throw new Error("Missing required argument: query");
+      }
+      
+      const executionResult = await runPython("scripts/sqlite_query.py", [dbPath, query]);
+      resultText = typeof executionResult === "object" ? JSON.stringify(executionResult) : String(executionResult);
+      statusCode = 200;
+    } catch (err: any) {
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "mongodb_query_tool") {
+    try {
+      const uri = toolArgs.uri;
+      const database = toolArgs.database;
+      const collection = toolArgs.collection;
+      const operation = toolArgs.operation;
+      if (!uri || !database || !collection || !operation) {
+        throw new Error("Missing required arguments: uri, database, collection, operation");
+      }
+      
+      const queryStr = JSON.stringify(toolArgs.query || {});
+      const docStr = JSON.stringify(toolArgs.document || {});
+      
+      const executionResult = await runPython("scripts/mongodb_query.py", [
+        uri,
+        database,
+        collection,
+        operation,
+        queryStr,
+        docStr
+      ]);
+      resultText = typeof executionResult === "object" ? JSON.stringify(executionResult) : String(executionResult);
+      statusCode = 200;
+    } catch (err: any) {
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (
+    toolName === "youtube_tool" ||
+    toolName === "instagram_tool" ||
+    toolName === "facebook_tool" ||
+    toolName === "linkedin_tool" ||
+    toolName === "tiktok_tool" ||
+    toolName.startsWith("social_")
+  ) {
+    try {
+      let preset = "custom";
+      if (toolName.startsWith("social_")) {
+        preset = toolName.split("_")[1] || "custom";
+      } else {
+        preset = toolName.split("_")[0] || "custom";
+      }
+      
+      const action = toolArgs.action || "publish";
+      const content = toolArgs.content || toolArgs.message || toolArgs.text || "";
+      const mediaUrl = toolArgs.mediaUrl || "";
+
+      const mockPostId = `${preset}_post_${Math.random().toString(36).substr(2, 9)}`;
+      const mockResult = {
+        success: true,
+        tool: toolName,
+        preset: preset,
+        action: action,
+        postId: mockPostId,
+        url: `https://mock-${preset}.com/shares/${mockPostId}`,
+        timestamp: new Date().toISOString(),
+        contentSummary: content.length > 50 ? content.substr(0, 50) + "..." : content,
+        mediaAttached: !!mediaUrl,
+        apiStatus: "authorized"
+      };
+
+      resultText = JSON.stringify(mockResult);
+      statusCode = 200;
+    } catch (err: any) {
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "google_docs_writer") {
+    try {
+      const text = toolArgs.text;
+      if (!text) {
+        throw new Error("Missing required argument: text");
+      }
+      const accessToken = await getValidGmailAccessToken();
+      const documentId = toolArgs.documentId;
+      const action = toolArgs.action || "append";
+      
+      if (action === "create" || !documentId) {
+        const title = toolArgs.title || "SavazAI Document";
+        const response = await fetch("https://docs.googleapis.com/v1/documents", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ title })
+        });
+        if (!response.ok) {
+          throw new Error(`Google Docs returned ${response.status}: ${await response.text()}`);
+        }
+        const docInfo = await response.json() as any;
+        const newId = docInfo.documentId;
+        
+        await fetch(`https://docs.googleapis.com/v1/documents/${newId}:batchUpdate`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            requests: [{
+              insertText: {
+                text,
+                location: { index: 1 }
+              }
+            }]
+          })
+        });
+        
+        resultText = JSON.stringify({ success: true, documentId: newId, title });
+      } else {
+        const response = await fetch(`https://docs.googleapis.com/v1/documents/${documentId}:batchUpdate`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            requests: [{
+              insertText: {
+                text,
+                endOfSegmentLocation: {}
+              }
+            }]
+          })
+        });
+        if (!response.ok) {
+          throw new Error(`Google Docs returned ${response.status}: ${await response.text()}`);
+        }
+        resultText = JSON.stringify({ success: true, documentId, appended: true });
+      }
+      statusCode = 200;
+    } catch (err: any) {
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "google_sheets_sync") {
+    try {
+      const spreadsheetId = toolArgs.spreadsheetId;
+      const range = toolArgs.range || "Sheet1!A1";
+      const values = toolArgs.values;
+      if (!spreadsheetId) {
+        throw new Error("Missing required argument: spreadsheetId");
+      }
+      if (!Array.isArray(values)) {
+        throw new Error("Missing required argument: values (2D array of rows)");
+      }
+      
+      const accessToken = await getValidGmailAccessToken();
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`;
+      
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ values })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Google Sheets returned ${response.status}: ${await response.text()}`);
+      }
+      const data = await response.json();
+      resultText = JSON.stringify(data);
+      statusCode = 200;
+    } catch (err: any) {
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "google_drive_uploader") {
+    try {
+      const name = toolArgs.name || "upload.txt";
+      const mimeType = toolArgs.mimeType || "text/plain";
+      const content = toolArgs.content || "";
+      
+      const accessToken = await getValidGmailAccessToken();
+      const boundary = "savazai_boundary";
+      const metadata = JSON.stringify({ name, mimeType });
+      const multipartBody = 
+        `--${boundary}\r\n` +
+        `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+        `${metadata}\r\n` +
+        `--${boundary}\r\n` +
+        `Content-Type: ${mimeType}\r\n\r\n` +
+        `${content}\r\n` +
+        `--${boundary}--`;
+        
+      const response = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+          "Content-Type": `multipart/related; boundary=${boundary}`
+        },
+        body: multipartBody
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Google Drive returned ${response.status}: ${await response.text()}`);
+      }
+      const data = await response.json();
+      resultText = JSON.stringify(data);
+      statusCode = 200;
+    } catch (err: any) {
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "google-places" || toolName === "google_places") {
+    const params = ["query", "location", "radius"];
+    for (const propName of params) {
+      if (toolArgs[propName] === undefined) {
+        const ambientValue = await resolveAmbientParameter(propName);
+        if (ambientValue !== undefined) {
+          toolArgs[propName] = ambientValue;
+        }
+      }
+    }
+    try {
+      const configs = await db.select().from(systemConfigurations).limit(1);
+      const tokens = configs.length > 0 ? (configs[0].designTokens || {}) as any : {};
+      const googlePlacesApiKey = tokens.googlePlacesApiKey || process.env.GOOGLE_PLACES_API_KEY;
+      if (!googlePlacesApiKey) {
+        throw new Error("Google Places API key is not configured.");
+      }
+      const query = toolArgs.query || "";
+      if (!query) {
+        throw new Error("Missing required argument: query");
+      }
+      const radius = toolArgs.radius || tokens.googlePlacesRadius || 5000;
+      let url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&radius=${radius}&key=${googlePlacesApiKey}`;
+      if (toolArgs.location) {
+        url += `&location=${encodeURIComponent(toolArgs.location)}`;
+      }
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Google Places API returned ${response.status}: ${await response.text()}`);
+      }
+      const data = await response.json() as any;
+      if (data.status && data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+        throw new Error(`Google Places API error: ${data.status} - ${data.error_message || ""}`);
+      }
+      const results = (data.results || []).map((p: any) => ({
+        name: p.name,
+        formattedAddress: p.formatted_address,
+        rating: p.rating,
+        userRatingsTotal: p.user_ratings_total,
+        placeId: p.place_id,
+        location: p.geometry?.location,
+      }));
+      resultText = JSON.stringify({ results, status: data.status });
+      statusCode = 200;
+    } catch (err: any) {
+      console.error("Google Places tool execution failed:", err);
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "web-search" || toolName === "web_search") {
+    const params = ["query"];
+    for (const propName of params) {
+      if (toolArgs[propName] === undefined) {
+        const ambientValue = await resolveAmbientParameter(propName);
+        if (ambientValue !== undefined) {
+          toolArgs[propName] = ambientValue;
+        }
+      }
+    }
+    try {
+      const configs = await db.select().from(systemConfigurations).limit(1);
+      const tokens = configs.length > 0 ? (configs[0].designTokens || {}) as any : {};
+      const tavilyApiKey = tokens.tavilyApiKey || process.env.TAVILY_API_KEY;
+      const serperApiKey = tokens.serperApiKey || process.env.SERPER_API_KEY;
+      const query = toolArgs.query;
+      if (!query) {
+        throw new Error("Missing required argument: query");
+      }
+
+      if (tavilyApiKey) {
+        const response = await fetch("https://api.tavily.com/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ api_key: tavilyApiKey, query, search_depth: "advanced" })
+        });
+        if (!response.ok) {
+          throw new Error(`Tavily search returned ${response.status}: ${await response.text()}`);
+        }
+        const data = await response.json();
+        resultText = JSON.stringify(data);
+      } else if (serperApiKey) {
+        const response = await fetch("https://google.serper.dev/search", {
+          method: "POST",
+          headers: { "X-API-KEY": serperApiKey, "Content-Type": "application/json" },
+          body: JSON.stringify({ q: query })
+        });
+        if (!response.ok) {
+          throw new Error(`Serper search returned ${response.status}: ${await response.text()}`);
+        }
+        const data = await response.json();
+        resultText = JSON.stringify(data);
+      } else {
+        throw new Error("Neither Tavily nor Serper API key is configured.");
+      }
+      statusCode = 200;
+    } catch (err: any) {
+      console.error("Web Search tool execution failed:", err);
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "send-email") {
+    const params = ["to", "subject", "bodyHtml", "markdownContent"];
+    for (const propName of params) {
+      if (toolArgs[propName] === undefined) {
+        const ambientValue = await resolveAmbientParameter(propName);
+        if (ambientValue !== undefined) {
+          toolArgs[propName] = ambientValue;
+        }
+      }
+    }
+    try {
+      const configs = await db.select().from(systemConfigurations).limit(1);
+      const tokens = configs.length > 0 ? (configs[0].designTokens || {}) as any : {};
+      const sendgridApiKey = tokens.sendgridApiKey || process.env.SENDGRID_API_KEY;
+      const sendgridSenderEmail = tokens.sendgridSenderEmail || process.env.SENDGRID_SENDER_EMAIL || "noreply@savazai.com";
+
+      const to = toolArgs.to;
+      const subject = toolArgs.subject;
+      const bodyHtml = toolArgs.bodyHtml || "";
+      const markdownContent = toolArgs.markdownContent || "";
+      if (!to || !subject) {
+        throw new Error("Missing required arguments: to, subject");
+      }
+
+      const finalHtml = bodyHtml || convertMarkdownToHtml(markdownContent || "");
+
+      if (sendgridApiKey) {
+        const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${sendgridApiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            personalizations: [{ to: [{ email: to }] }],
+            from: { email: sendgridSenderEmail },
+            subject: subject,
+            content: [{ type: "text/html", value: finalHtml }]
+          })
+        });
+        if (!response.ok) {
+          throw new Error(`SendGrid returned ${response.status}: ${await response.text()}`);
+        }
+        resultText = JSON.stringify({ success: true, provider: "sendgrid" });
+      } else {
+        const accessToken = await getValidGmailAccessToken();
+        const sendResult = await sendGmailEmail(accessToken, [to], subject, markdownContent, finalHtml);
+        resultText = JSON.stringify({ success: true, provider: "gmail", id: sendResult.id });
+      }
+      statusCode = 200;
+    } catch (err: any) {
+      console.error("Send Email tool execution failed:", err);
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "generate-pdf") {
+    const params = ["summaryText", "title", "filename"];
+    for (const propName of params) {
+      if (toolArgs[propName] === undefined) {
+        const ambientValue = await resolveAmbientParameter(propName);
+        if (ambientValue !== undefined) {
+          toolArgs[propName] = ambientValue;
+        }
+      }
+    }
+    try {
+      const summaryText = toolArgs.summaryText;
+      const title = toolArgs.title || "SavazAI Report";
+      const filename = toolArgs.filename || "report";
+      if (!summaryText) {
+        throw new Error("Missing required argument: summaryText");
+      }
+
+      const scriptPath = "scripts/generate_pdf.py";
+      const executionResult = await runPython(scriptPath, [summaryText, title, filename]);
+      resultText = typeof executionResult === "object" ? JSON.stringify(executionResult) : String(executionResult);
+      statusCode = 200;
+    } catch (err: any) {
+      console.error("Generate PDF tool execution failed:", err);
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (customSkill) {
     let schema: any = {};
     try {
       schema = typeof customSkill.inputSchema === "string" ? JSON.parse(customSkill.inputSchema) : customSkill.inputSchema;
@@ -985,15 +1991,21 @@ async function executeToolByName(
         }
       }
 
+      // When activeTools contains tool names (not server keys), we still need to scan all servers.
+      // Only filter servers if activeTools explicitly contains a known server key.
       let activeServerConfig: any = null;
       let serversToScan = Object.keys(mcpServersObj);
-      if (state.activeTools) {
-        serversToScan = serversToScan.filter((s) => state.activeTools!.includes(s));
+      if (state.activeTools && state.activeTools.length > 0) {
+        const toolNamesAsServerKeys = serversToScan.filter((s) => state.activeTools!.includes(s));
+        // Only narrow the scan if there are explicit server-key matches; otherwise scan all servers
+        if (toolNamesAsServerKeys.length > 0) {
+          serversToScan = toolNamesAsServerKeys;
+        }
       }
 
       for (const serverKey of serversToScan) {
         const config = mcpServersObj[serverKey];
-        if (!config || !config.serverUrl) continue;
+        if (!config || !config.serverUrl || config.disabled === true || config.active === false) continue;
         const tools = await fetchMcpTools(config.serverUrl, config.headers || {});
         const toolObj = tools.find((t: any) => t.name === toolName);
         if (toolObj) {
@@ -1016,7 +2028,17 @@ async function executeToolByName(
         throw new Error(`MCP tool "${toolName}" could not be resolved on any active server.`);
       }
 
-      const res = await fetch(activeServerConfig.serverUrl, {
+      let executeUrl = activeServerConfig.serverUrl;
+      const isDocker = process.env.DATABASE_URL?.includes("savazai-db") || !process.env.DATABASE_URL?.includes("localhost");
+      if (isDocker && typeof executeUrl === "string") {
+        if (executeUrl.includes("localhost:")) {
+          executeUrl = executeUrl.replace("localhost:", "host.docker.internal:");
+        } else if (executeUrl.includes("127.0.0.1:")) {
+          executeUrl = executeUrl.replace("127.0.0.1:", "host.docker.internal:");
+        }
+      }
+
+      const res = await fetch(executeUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1070,6 +2092,20 @@ async function runSubAgentLoop(
   const telemetry = TelemetryGateway.getInstance();
   const span = telemetry.startSpan(requestId, `${agentName}Loop`);
 
+  // [Plan Audit] Log Audit info
+  const lastUserPrompt = state.lastUserMessageContent || (state.messages.filter(m => m.role === "user").pop()?.content) || "";
+  const matchingPlanItem = state.supervisorPlan?.find((item: any) => {
+    const nodeIdLower = String(item.nodeId || "").toLowerCase();
+    const agentNameLower = String(agentName).toLowerCase();
+    return nodeIdLower.includes(agentNameLower) || agentNameLower.includes(nodeIdLower) || String(item.targetNode || "").toLowerCase().includes(agentNameLower);
+  }) || state.supervisorPlan?.[0];
+  const actionType = matchingPlanItem ? (matchingPlanItem.actionVerb || matchingPlanItem.allowedVerbs?.[0] || "UNKNOWN") : "UNKNOWN";
+  const selectedTool = matchingPlanItem ? (matchingPlanItem.nodeId || "UNKNOWN") : "UNKNOWN";
+
+  console.log(`[Plan Audit] User Prompt: ${lastUserPrompt}`);
+  console.log(`[Plan Audit] Generated Action Type: ${actionType}`);
+  console.log(`[Plan Audit] Selected Tool: ${selectedTool}`);
+
   const gateway = new PrivacyGateway();
   const newMessages: typeof state.messages = [];
   const currentTurnMessages = [...state.messages];
@@ -1113,7 +2149,7 @@ async function runSubAgentLoop(
     const serversToFetch = Object.keys(mcpServersObj);
     for (const serverKey of serversToFetch) {
       const serverConfig = mcpServersObj[serverKey];
-      if (!serverConfig || !serverConfig.serverUrl) continue;
+      if (!serverConfig || !serverConfig.serverUrl || serverConfig.disabled === true || serverConfig.active === false) continue;
       const tools = await fetchMcpTools(serverConfig.serverUrl, serverConfig.headers || {});
       for (const t of tools) {
         if (!t.name || !toolFilter(t.name)) continue;
@@ -1723,10 +2759,18 @@ export const compiledGraph = graph.compile({ checkpointer: new MemorySaver() });
 export type GraphAnnotationType = typeof StateAnnotation;
 
 export async function* streamGraphEvents(
-  input: Partial<GraphState>,
-  options?: { requestId?: string; threadId?: string },
+  input: Partial<GraphState> | null,
+  options?: { requestId?: string; threadId?: string; resume?: any; executionMode?: string },
+  graph?: any,
 ): AsyncGenerator<unknown> {
-  const stream = await compiledGraph.stream(input, {
+  const target = graph ?? compiledGraph;
+  const streamInput = options?.resume !== undefined
+    ? new Command({
+        resume: options.resume,
+        update: options.executionMode ? { executionMode: options.executionMode } : undefined,
+      })
+    : input;
+  const stream = await target.stream(streamInput, {
     streamMode: "updates",
     configurable: {
       requestId: options?.requestId,

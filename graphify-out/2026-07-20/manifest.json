@@ -1360,8 +1360,8 @@
     "semantic_hash": "4d7655cf9c1f57ba247ff813764c832c"
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\orchestrator\\graph.ts": {
-    "mtime": 1784485232.8273933,
-    "ast_hash": "a86303d0b867b94e39f8be55c9c1557a",
+    "mtime": 1784448891.0321555,
+    "ast_hash": "5c87c59a74707e79e742f5a8731c5ab6",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\orchestrator\\okf-verifier.ts": {
@@ -1990,8 +1990,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\docker-compose.yml": {
-    "mtime": 1784482325.79539,
-    "ast_hash": "ad55b383dfe2b037a3f6cf3f9d6ac377",
+    "mtime": 1784465024.1357224,
+    "ast_hash": "05918fa9ae0ec559aaeee517dfb55f25",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\requirements.txt": {
@@ -2128,25 +2128,5 @@
     "mtime": 1783500754.3610501,
     "ast_hash": "a2760511c65806022ad20adf74370ff3",
     "semantic_hash": "a2760511c65806022ad20adf74370ff3"
-  },
-  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\agents\\finder-agent.ts": {
-    "mtime": 1784484052.2442021,
-    "ast_hash": "5cb978005054c9f6f0015e3008c9bc3c",
-    "semantic_hash": ""
-  },
-  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\mcp\\client.ts": {
-    "mtime": 1784482355.5051851,
-    "ast_hash": "11fd2c2cdebfd18c983a27c5dffc7248",
-    "semantic_hash": ""
-  },
-  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\scripts\\probe-mcp.js": {
-    "mtime": 1784482059.9695885,
-    "ast_hash": "b659933e77af78f514439032b89fca55",
-    "semantic_hash": ""
-  },
-  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\scripts\\probe-mcp.ts": {
-    "mtime": 1784480177.4365358,
-    "ast_hash": "14034e89f7056ed278e3c85872c7818e",
-    "semantic_hash": ""
   }
 }

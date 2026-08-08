@@ -13,7 +13,17 @@ import {
   Heart, 
   DollarSign, 
   Building2, 
-  Scale 
+  Scale,
+  Bot,
+  BookOpen,
+  Database,
+  Share2,
+  Lock,
+  Sliders,
+  PlaySquare,
+  FileCode2,
+  Compass,
+  Server
 } from "lucide-react";
 import { getSystemConfig } from "@/components/theme-provider";
 
@@ -49,9 +59,10 @@ export default async function Home() {
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Main Content */}
       <main className="flex-1">
-        <section className="relative overflow-hidden pt-20 pb-24 md:pt-32">
+        {/* Hero Section */}
+        <section className="relative overflow-hidden pt-20 pb-24 md:pt-28 md:pb-32">
           {/* Subtle background glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] pointer-events-none opacity-30">
             <div className="absolute top-[-10%] left-[20%] w-[35%] h-[60%] rounded-full bg-primary/20 blur-[120px]" />
@@ -59,7 +70,7 @@ export default async function Home() {
           </div>
 
           <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/25 bg-indigo-500/5 px-3 py-1 text-xs text-indigo-300 backdrop-blur-sm mb-6">
+            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/25 bg-indigo-500/5 px-3.5 py-1.5 text-xs font-medium text-indigo-300 backdrop-blur-sm mb-8">
               <span className="flex h-2 w-2 rounded-full bg-indigo-400 animate-pulse" />
               SavazAI Multi-Agent Harness v1.0
             </div>
@@ -71,10 +82,31 @@ export default async function Home() {
               </span>
             </h1>
 
-            <p className="mt-6 text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-              Empower your enterprise with a production-ready, multi-model agentic ecosystem. Seamlessly switch between Google Gemini, OpenAI, and other LLMs with absolute stability, dynamic token pricing ledger tracing, and privacy-first data masking.
+            <p className="mt-6 text-lg text-slate-400 max-w-3xl mx-auto leading-relaxed">
+              Sovereign, privacy-first, multi-model agentic ecosystem. Build, test, and deploy enterprise Agentflows across Frontier and Open-Source LLMs with zero data leakage and total governance.
             </p>
 
+            {/* Value Badges */}
+            <div className="mt-8 flex flex-wrap justify-center items-center gap-3 max-w-3xl mx-auto">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-800 bg-slate-900/60 px-3.5 py-1 text-xs text-slate-300">
+                <Lock className="h-3.5 w-3.5 text-emerald-400" />
+                Sovereign & Self-Hosted
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-800 bg-slate-900/60 px-3.5 py-1 text-xs text-slate-300">
+                <Server className="h-3.5 w-3.5 text-cyan-400" />
+                Dynamic MCP Protocol
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-800 bg-slate-900/60 px-3.5 py-1 text-xs text-slate-300">
+                <PlaySquare className="h-3.5 w-3.5 text-indigo-400" />
+                Human-in-the-Loop Planning
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-800 bg-slate-900/60 px-3.5 py-1 text-xs text-slate-300">
+                <ShieldCheck className="h-3.5 w-3.5 text-purple-400" />
+                PII Masking & Privacy
+              </span>
+            </div>
+
+            {/* CTA Buttons - Preserved */}
             <div className="mt-10 flex justify-center items-center">
               <Link
                 href="/signin"
@@ -87,7 +119,164 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Industry Solutions Section */}
+        {/* SHOWCASE SECTION B: Capability Studio & Agentflow Engine */}
+        <section className="py-20 border-t border-slate-900/60 bg-slate-950/60 relative">
+          <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 mb-4">
+                <Workflow className="h-5 w-5" />
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                Visual Agentflow Builder & Runtime Execution Engine
+              </h2>
+              <p className="mt-4 text-slate-400 leading-relaxed text-sm md:text-base">
+                Design pure agent-to-agent graphs, schedule autonomous workflows, and compile to LangGraph pipelines with complete execution control.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="rounded-3xl border border-slate-900 bg-slate-900/20 p-8 hover:border-slate-800 transition-all">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 mb-5">
+                  <Bot className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Role-Based Node Orchestration</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Decoupled node roles: <strong>Supervisor</strong> (Plan formulation & worker routing), <strong>Specialist/Worker</strong> (Tool executions), <strong>Synthesizer</strong> (Receipt aggregation & final reports), and <strong>Scheduled Cron Nodes</strong>.
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-slate-900 bg-slate-900/20 p-8 hover:border-slate-800 transition-all">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 mb-5">
+                  <Sliders className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Full Canvas Control</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Interactive drag-and-drop node editing, instant graph duplication, export/import JSON topology definitions, and real-time step-by-step Test Playground trace inspection.
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-slate-900 bg-slate-900/20 p-8 hover:border-slate-800 transition-all">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 mb-5">
+                  <PlaySquare className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Dual Execution Strategies</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Seamlessly toggle between <strong>Plan First</strong> (Human-in-the-Loop plan approval cards with Reject, Adjust, or Execute options) and <strong>Direct Execution</strong> (Autonomous fast-path).
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SHOWCASE SECTION C: Business Policy & Library Center */}
+        <section className="py-20 border-t border-slate-900/60 bg-slate-950/30">
+          <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 mb-4">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                Enterprise Operational Knowledge & Governance
+              </h2>
+              <p className="mt-4 text-slate-400 leading-relaxed text-sm md:text-base">
+                Centralize procedural SOPs, business rules, and PII masking policies to ensure agents operate within strict corporate boundaries.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="rounded-3xl border border-slate-900 bg-slate-900/20 p-8 hover:border-slate-800 transition-all">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 mb-5">
+                  <FileCode2 className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Universal Skills Registry</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Import, ingest, and author modular <code>SKILL.md</code> markdown files with YAML frontmatter to equip agents with domain-specific procedural capabilities without code edits.
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-slate-900 bg-slate-900/20 p-8 hover:border-slate-800 transition-all">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 mb-5">
+                  <Compass className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">OKF Concepts Matrix</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Operational Knowledge Framework namespaces guide agent reasoning and task context without bloating system prompts or causing token drift.
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-slate-900 bg-slate-900/20 p-8 hover:border-slate-800 transition-all">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-400 mb-5">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Compliance & PII Governance</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Automated Data Masking Gateway replaces PII/SPI fields with unique hashed tokens before sending queries to non-local external LLMs, rehydrating only in protected DB boundaries.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SHOWCASE SECTION D: Command Center & Integrations */}
+        <section className="py-20 border-t border-slate-900/60 bg-slate-950/70">
+          <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 mb-4">
+                <Settings className="h-5 w-5" />
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                Unified Infrastructure Control & System Connectors
+              </h2>
+              <p className="mt-4 text-slate-400 leading-relaxed text-sm md:text-base">
+                Manage branding, model providers, Model Context Protocol (MCP) servers, databases, and social media gateways in a single console.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-6 hover:border-slate-800 transition-all">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 mb-4">
+                  <Sliders className="h-5 w-5" />
+                </div>
+                <h3 className="text-base font-bold text-white mb-2">Appearance & Branding</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Custom hex CSS token mapping, typography pairings, dynamic app title banners, and theme hydration persisted directly in system configurations.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-6 hover:border-slate-800 transition-all">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 mb-4">
+                  <Cpu className="h-5 w-5" />
+                </div>
+                <h3 className="text-base font-bold text-white mb-2">LLM Switchboard</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Multi-provider management covering Frontier models (Google Gemini, OpenAI), Open-Source LLMs, Groq, xAI, and OmniRoute local gateway endpoints.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-6 hover:border-slate-800 transition-all">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 mb-4">
+                  <Database className="h-5 w-5" />
+                </div>
+                <h3 className="text-base font-bold text-white mb-2">MCP & Database Hub</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  1-click preset MCP injection (SAP, JIRA, Salesforce, ServiceNow) and multi-alias external DB connectors (PostgreSQL, MySQL, MongoDB, SQLite).
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-6 hover:border-slate-800 transition-all">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-400 mb-4">
+                  <Share2 className="h-5 w-5" />
+                </div>
+                <h3 className="text-base font-bold text-white mb-2">Social Media Hub</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Managed connections for YouTube, Instagram, LinkedIn, TikTok, X (Twitter), and custom REST webhooks for automated content dispatch.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Industry Solutions Section - Preserved */}
         <section className="py-20 bg-slate-950/20 border-t border-slate-900/40">
           <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16">
@@ -107,7 +296,7 @@ export default async function Home() {
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2">Healthcare</h3>
                 <p className="text-slate-400 text-xs leading-relaxed">
-                  HIPAA-compliant workflows with automatic PII data masking gateways ensuring patient medical records never leak to external LLM providers.
+                  HIPAA-compliant agentflows with automatic PII data masking gateways ensuring patient medical records never leak to external LLM providers.
                 </p>
               </div>
 
@@ -147,7 +336,7 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Feature Grid */}
+        {/* Feature Grid - Preserved & Enhanced */}
         <section className="py-20 border-t border-slate-900/60 bg-slate-950/40">
           <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16">
@@ -212,7 +401,7 @@ export default async function Home() {
                   Plan-Act-Loop Orchestration
                 </h3>
                 <p className="text-slate-400 text-sm leading-relaxed">
-                  Define complex, multi-agent orchestrator workflows using stateful LangGraph structures. Automatically unwrap parallel tool executions and route mutation approvals.
+                  Define complex, multi-agent orchestrator agentflows using stateful LangGraph structures. Automatically unwrap parallel tool executions and route mutation approvals.
                 </p>
               </div>
 
@@ -247,7 +436,7 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Self-Deploy Section */}
+        {/* Self-Deploy Section - Preserved */}
         <section className="py-20 border-t border-slate-900/60 bg-slate-950/10">
           <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="rounded-3xl border border-slate-900 bg-slate-900/5 p-8 md:p-12 backdrop-blur-sm relative overflow-hidden">
@@ -258,7 +447,7 @@ export default async function Home() {
                   <Terminal className="h-6 w-6" />
                 </div>
                 <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                  Easy Deployment Workflow
+                  Easy Deployment Agentflow
                 </h2>
                 <p className="mt-4 text-slate-400 leading-relaxed">
                   SavazAI can be easily deployed in your preferred local or private cloud environment through a streamlined process.
@@ -295,7 +484,7 @@ export default async function Home() {
                   </div>
                   <h3 className="text-lg font-bold text-white mb-2">Connect & Orchestrate</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">
-                    Dynamically bind your Model Context Protocol (MCP) servers, custom skills, databases, and LLM providers to run workflows.
+                    Dynamically bind your Model Context Protocol (MCP) servers, custom skills, databases, and LLM providers to run agentflows.
                   </p>
                 </div>
               </div>
@@ -303,7 +492,7 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* CTA section */}
+        {/* CTA section - Preserved */}
         <section className="py-24 relative overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] pointer-events-none opacity-20">
             <div className="absolute inset-0 rounded-full bg-primary/20 blur-[100px]" />

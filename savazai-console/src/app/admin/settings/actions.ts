@@ -45,6 +45,8 @@ export interface UpdateSettingsInput {
   orchestrationRules?: string;
   defaultAmbientParameters?: string;
   customSkills?: string;
+  dbConnections?: string;
+  socialConnections?: string;
   agentsMd?: string;
   capabilityProfile?: string;
 }
@@ -117,6 +119,8 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
       ...(input.orchestrationRules !== undefined && { orchestrationRules: input.orchestrationRules }),
       ...(input.defaultAmbientParameters !== undefined && { defaultAmbientParameters: input.defaultAmbientParameters }),
       ...(input.customSkills !== undefined && { customSkills: input.customSkills }),
+      ...(input.dbConnections !== undefined && { dbConnections: input.dbConnections }),
+      ...(input.socialConnections !== undefined && { socialConnections: input.socialConnections }),
       ...(input.agentsMd !== undefined && { agentsMd: input.agentsMd }),
       ...(input.capabilityProfile !== undefined && { capabilityProfile: input.capabilityProfile }),
     };

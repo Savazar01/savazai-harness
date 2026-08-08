@@ -329,10 +329,19 @@ export class LLMSwitchboard {
 
   constructor() {
     const primaryType = process.env.LLM_PROVIDER_TYPE || "openai-compatible";
+    let primaryBaseUrl = process.env.LLM_BASE_URL || "http://localhost:11434/v1";
+    const isDocker = process.env.DATABASE_URL?.includes("savazai-db") || !process.env.DATABASE_URL?.includes("localhost");
+    if (isDocker && typeof primaryBaseUrl === "string") {
+      if (primaryBaseUrl.includes("localhost:11434")) {
+        primaryBaseUrl = primaryBaseUrl.replace("localhost:11434", "host.docker.internal:11434");
+      } else if (primaryBaseUrl.includes("127.0.0.1:11434")) {
+        primaryBaseUrl = primaryBaseUrl.replace("127.0.0.1:11434", "host.docker.internal:11434");
+      }
+    }
     this.configs.set("primary", {
       providerId: "primary",
       type: primaryType,
-      baseUrl: process.env.LLM_BASE_URL || "http://localhost:11434/v1",
+      baseUrl: primaryBaseUrl,
       modelName: process.env.LLM_MODEL_NAME || "gpt-4o-mini",
       apiKey: process.env.LLM_API_KEY || "",
     });
@@ -353,7 +362,9 @@ export class LLMSwitchboard {
     this.drivers.delete(config.providerId);
   }
 
-
+  getProviderConfig(providerId: string): ProviderConfig | undefined {
+    return this.configs.get(providerId);
+  }
 
   private getDriver(config: ProviderConfig): LLMDriver {
     const existing = this.drivers.get(config.providerId);

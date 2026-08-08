@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" ADD COLUMN "status" text DEFAULT 'draft' NOT NULL;

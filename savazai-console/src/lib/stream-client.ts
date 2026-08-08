@@ -4,12 +4,13 @@ export interface StreamEvent {
   state?: Record<string, unknown>;
   content?: string;
   metadata?: Record<string, unknown>;
+  interrupt?: { plan?: unknown[]; status?: string; message?: string };
 }
 
 export type StreamCallback = (event: StreamEvent) => void;
 
 export async function streamFromBackend(
-  message: string,
+  message: string | null,
   currentApp: string,
   onEvent: StreamCallback,
   signal?: AbortSignal,
@@ -18,11 +19,14 @@ export async function streamFromBackend(
   files?: Array<{ name: string; size: number; data: string; mime: string }>,
   activeTools?: string[],
   threadId?: string,
+  workflowId?: string,
+  executionMode?: string,
+  resume?: unknown,
 ): Promise<void> {
   const response = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, currentApp, provider, model, files, activeTools, threadId }),
+    body: JSON.stringify({ message, currentApp, provider, model, files, activeTools, threadId, workflowId, executionMode, resume }),
     signal,
   });
 
