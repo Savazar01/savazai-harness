@@ -1,7 +1,7 @@
 # Graph Report - savazai-harness  (2026-08-23)
 
 ## Corpus Check
-- 252 files · ~220,678 words
+- 252 files · ~221,108 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `10cf639d`
+- Built from commit: `ed04d63c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -626,8 +626,8 @@ Cohesion: 0.11
 Nodes (22): CLI Commands, Environment Variables, File Location, Quick Reference, 1. Eliminating Waterfalls (async), 2. Bundle Size Optimization (bundle), 3. Server-Side Performance (server), 4. Client-Side Data Fetching (client) (+14 more)
 
 ### Community 61 - "Community 61"
-Cohesion: 0.08
-Nodes (29): type, name, notNull, primaryKey, type, name, notNull, primaryKey (+21 more)
+Cohesion: 0.11
+Nodes (22): description, masked_content, role, skill_name, name, notNull, name, notNull (+14 more)
 
 ### Community 62 - "Community 62"
 Cohesion: 0.22
@@ -715,7 +715,7 @@ Nodes (22): default, name, notNull, primaryKey, type, allowed_mcp_tools, created
 
 ### Community 83 - "Community 83"
 Cohesion: 0.20
-Nodes (10): 7.13 Use Set/Map for O(1) Lookups, 7.2 Build Index Maps for Repeated Lookups, 7.8 Early Length Check for Array Comparisons, 7. JavaScript Performance, code:typescript (function processOrders(orders: Order[], users: User[]) {), code:typescript (function processOrders(orders: Order[], users: User[]) {), code:typescript (function hasChanges(current: string[], original: string[]) {), code:typescript (function hasChanges(current: string[], original: string[]) {) (+2 more)
+Nodes (10): 7.13 Use Set/Map for O(1) Lookups, 7.2 Build Index Maps for Repeated Lookups, 7.9 Early Return from Functions, 7. JavaScript Performance, code:typescript (function processOrders(orders: Order[], users: User[]) {), code:typescript (function processOrders(orders: Order[], users: User[]) {), code:typescript (function validateUsers(users: User[]) {), code:typescript (function validateUsers(users: User[]) {) (+2 more)
 
 ### Community 84 - "Community 84"
 Cohesion: 0.33
@@ -802,16 +802,16 @@ Cohesion: 0.13
 Nodes (16): dialect, enums, id, _meta, columns, schemas, tables, policies (+8 more)
 
 ### Community 105 - "Community 105"
-Cohesion: 0.13
-Nodes (17): name, notNull, primaryKey, default, name, notNull, primaryKey, type (+9 more)
+Cohesion: 0.12
+Nodes (18): name, notNull, primaryKey, type, default, name, notNull, primaryKey (+10 more)
 
 ### Community 106 - "Community 106"
 Cohesion: 0.33
 Nodes (7): Advanced: Multiple Cookies or Custom Options, code:bash (playwright-cli run-code "async page => {), code:bash (playwright-cli run-code "async page => {), code:bash (playwright-cli run-code "async page => {), Delete Database, IndexedDB, List Databases
 
 ### Community 107 - "Community 107"
-Cohesion: 0.11
-Nodes (22): created_at, is_core_agent, mcp_endpoint_url, session_id, default, primaryKey, type, default (+14 more)
+Cohesion: 0.08
+Nodes (32): name, notNull, primaryKey, type, name, notNull, primaryKey, type (+24 more)
 
 ### Community 108 - "Community 108"
 Cohesion: 0.40
@@ -990,8 +990,8 @@ Cohesion: 0.13
 Nodes (23): created_at, description, id, default, name, notNull, primaryKey, type (+15 more)
 
 ### Community 154 - "Community 154"
-Cohesion: 0.09
-Nodes (25): description, embedding, id, skill_name, system_prompt, name, name, notNull (+17 more)
+Cohesion: 0.10
+Nodes (21): name, primaryKey, type, app_id, embedding, id, system_prompt, name (+13 more)
 
 ### Community 156 - "Community 156"
 Cohesion: 0.27
@@ -1062,8 +1062,8 @@ Cohesion: 0.14
 Nodes (19): code:diff (-    "drizzle-orm": "^0.38.0",), code:diff (savazai-db:), Exploitation Prerequisites, Exploitation Prerequisites, Exploitation Prerequisites, Exploitation Prerequisites, Findings Detail: SavazAI Harness Audit, Remediation Code Changes (+11 more)
 
 ### Community 178 - "Community 178"
-Cohesion: 0.20
-Nodes (9): code:typescript (const getUser = cache(async (uid: number) => {), 3.4 Cross-Request LRU Caching, 3.8 Parallel Nested Data Fetching, 3.9 Per-Request Deduplication with React.cache(), 3. Server-Side Performance, code:typescript (import { LRUCache } from 'lru-cache'), code:typescript (import { cache } from 'react'), code:typescript (const getUser = cache(async (params: { uid: number }) => {) (+1 more)
+Cohesion: 0.22
+Nodes (8): 3.4 Cross-Request LRU Caching, 3.8 Parallel Nested Data Fetching, 3.9 Per-Request Deduplication with React.cache(), 3. Server-Side Performance, code:typescript (import { LRUCache } from 'lru-cache'), code:typescript (import { cache } from 'react'), code:typescript (const getUser = cache(async (params: { uid: number }) => {), code:typescript (const params = { uid: 1 })
 
 ### Community 179 - "Community 179"
 Cohesion: 0.22
@@ -1418,8 +1418,8 @@ Cohesion: 0.67
 Nodes (3): code:bash (npx shadcn@latest docs <components...> [options]), code:block8 (base  radix), `docs` — Get component documentation URLs
 
 ### Community 284 - "Community 284"
-Cohesion: 0.20
-Nodes (10): checkConstraints, compositePrimaryKeys, indexes, isRLSEnabled, name, policies, schema, uniqueConstraints (+2 more)
+Cohesion: 0.22
+Nodes (9): checkConstraints, compositePrimaryKeys, indexes, isRLSEnabled, name, policies, schema, uniqueConstraints (+1 more)
 
 ### Community 285 - "Community 285"
 Cohesion: 0.15
@@ -1642,8 +1642,8 @@ Cohesion: 0.18
 Nodes (11): 1. Capability Studio (`/studio`), 2. Business Policy & Governance Center (`/policy`), 3. Command Center (`/command`), 🌟 Capability Breakdown, 🛠️ Configuration & MCP Guide, 📄 License, Model Context Protocol (MCP) Integration, Prerequisites (+3 more)
 
 ### Community 357 - "Community 357"
-Cohesion: 0.22
-Nodes (9): checkConstraints, compositePrimaryKeys, indexes, isRLSEnabled, name, policies, schema, uniqueConstraints (+1 more)
+Cohesion: 0.20
+Nodes (10): checkConstraints, compositePrimaryKeys, indexes, isRLSEnabled, name, policies, schema, uniqueConstraints (+2 more)
 
 ### Community 358 - "Community 358"
 Cohesion: 0.22
@@ -1671,7 +1671,7 @@ Nodes (17): ChatMessage(), ChatMessageData, ChatMessageProps, ChatReportToolbar(
 
 ### Community 364 - "Community 364"
 Cohesion: 0.67
-Nodes (3): 7.9 Early Return from Functions, code:typescript (function validateUsers(users: User[]) {), code:typescript (function validateUsers(users: User[]) {)
+Nodes (3): 7.8 Early Length Check for Array Comparisons, code:typescript (function hasChanges(current: string[], original: string[]) {), code:typescript (function hasChanges(current: string[], original: string[]) {)
 
 ### Community 365 - "Community 365"
 Cohesion: 0.20
@@ -1726,8 +1726,8 @@ Cohesion: 0.33
 Nodes (6): updated_at, default, name, notNull, primaryKey, type
 
 ### Community 383 - "Community 383"
-Cohesion: 0.33
-Nodes (4): code:typescript (import { cache } from 'react'), code:typescript (const getUser = cache(async (params: { uid: number }) => {), code:typescript (const params = { uid: 1 }), Per-Request Deduplication with React.cache()
+Cohesion: 0.29
+Nodes (5): code:typescript (import { cache } from 'react'), code:typescript (const getUser = cache(async (params: { uid: number }) => {), code:typescript (const getUser = cache(async (uid: number) => {), code:typescript (const params = { uid: 1 }), Per-Request Deduplication with React.cache()
 
 ### Community 385 - "Community 385"
 Cohesion: 0.33

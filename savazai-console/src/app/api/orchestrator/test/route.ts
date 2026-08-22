@@ -3851,8 +3851,9 @@ CRITICAL INSTRUCTIONS:
   * In your final markdown report, you MUST ALWAYS output the comprehensive Markdown table containing ALL discovered items, caterers, vendors, or businesses with columns:
     | Business Name | ⭐ Rating | Review Count | Address | 📞 Contact / Email | 🌐 Website / Maps |
   * NEVER output only an "Executive Summary" or brief status note without displaying the complete table matrix of records!
-  * When 'generate-csv' has executed, you MUST copy the exact markdown link (e.g. '[ 📥 Download CSV Export (filename.csv) ](data:text/csv;charset=utf-8;base64,...)') returned in the tool output into your final response under a dedicated '### 📥 Download CSV Export' section so the user can download the file!
+  * When 'generate-csv' has executed, you MUST copy the exact markdown link (e.g. '[ 📥 Download CSV Export: filename.csv ](data:text/csv;charset=utf-8;base64,...)') returned in the tool output into your final response under a dedicated '### 📥 Download CSV Export' section so the user can download the file!
   * When 'send-email' is executed, confirm the recipient email address under a dedicated '### 📧 Email Dispatch Confirmation' section.
+  * CRITICAL RULE: NEVER omit the Markdown table from your final response, even if you sent an email or exported a CSV! The user MUST ALWAYS see the complete data table directly in the chat interface!
 - EXECUTIVE SUMMARY & STRATEGIC RECOMMENDATIONS: When the user requests an "Executive Summary", "Overview", or "Report with Recommendations", DO NOT output only raw data tables! You MUST provide: 1) Executive Summary Overview & Key Highlights, 2) Key Metrics Summary, 3) Strategic Recommendations & Action Items, followed by 4) Formatted Entity Data Tables.
 - COMPLETE DATA RENDERING MANDATE: Include ALL items returned in worker tool payloads. DO NOT truncate, omit, or skip items from the dataset!
 - STRICT MULTI-NODE DATA ISOLATION & ENTITY SEPARATION: By default, present each active worker node's dataset under its own dedicated section with a clear Markdown heading (e.g. "### Entity A List" and "### Entity B List"). DO NOT mix rows or columns between different worker node datasets unless the user explicitly requests a combined/unified overview or single table.
@@ -3864,6 +3865,9 @@ You have action tools available [${synthToolsListStr}].
 * If the user requested an email (e.g., provided an email address such as "${emailAddressMatch ? emailAddressMatch[0] : "recipient email"}" or asked to send/email the report): You MUST invoke the 'send-email' tool with the recipient email ('to'), subject, and formatted HTML/Markdown body based on CURRENT TURN data.
 * When BOTH CSV download and email dispatch are requested, you MUST invoke BOTH tools across sequential turns before writing your final synthesis markdown report. Do NOT stop after invoking only one tool!
 ` : ""}`;
+
+          // Turn-scoped idempotency lock set to prevent duplicate tool execution
+          const executedSynthActions = new Set<string>();
 
           async function executeSynthToolCalls(synthHistory: ChatMessage[], toolCalls: { name: string; arguments: Record<string, unknown> }[]): Promise<void> {
             for (const tc of toolCalls) {
@@ -3879,11 +3883,26 @@ You have action tools available [${synthToolsListStr}].
                 const dynamicTitle = nodeLabels ? `${nodeLabels} Report` : "SavazAI Summary Report";
                 const dynamicFilename = nodeLabels ? nodeLabels.toLowerCase().replace(/[^a-z0-9]+/g, "_") : "export";
 
-                if (toolName === "send-email") {
+                if (toolName === "send-email" || toolName === "send_email") {
                   let to = String(tc.arguments?.to || tc.arguments?.recipient || tc.arguments?.email || "").trim();
                   if (!to || !isValidEmail(to)) {
                     to = fallbackRecipientEmail;
                   }
+                  if (!to || !isValidEmail(to)) {
+                    sendEvent({ type: "trace", content: `[Synthesizer Tool: send-email] Skipping email dispatch - no valid recipient email provided.` });
+                    synthHistory.push({ role: "tool", name: toolName, content: JSON.stringify({ error: "No valid recipient email provided." }) });
+                    continue;
+                  }
+
+                  const emailKey = `send-email:${to.toLowerCase()}`;
+                  if (executedSynthActions.has("send-email") || executedSynthActions.has(emailKey)) {
+                    sendEvent({ type: "trace", content: `[Synthesizer Tool: send-email] Idempotency lock: Skipping duplicate email dispatch to ${to}.` });
+                    synthHistory.push({ role: "tool", name: toolName, content: JSON.stringify({ status: "sent", to, note: "Already dispatched in this turn." }) });
+                    continue;
+                  }
+                  executedSynthActions.add("send-email");
+                  executedSynthActions.add(emailKey);
+
                   const subject = String(tc.arguments?.subject || dynamicTitle);
                   
                   // Ground the email body strictly to the current turn's worker results
@@ -3902,6 +3921,18 @@ You have action tools available [${synthToolsListStr}].
                   const emailRes = await sendEmailReal(to, subject, html || rawBody, providerConfigs, pool);
                   result = typeof emailRes === "string" ? emailRes : JSON.stringify(emailRes);
                 } else if (toolName === "generate-pdf" || toolName === "generate_pdf" || toolName === "pdf_export") {
+                  const pdfKey = `generate-pdf:${dynamicFilename}`;
+                  if (executedSynthActions.has("generate-pdf") || executedSynthActions.has(pdfKey)) {
+                    sendEvent({ type: "trace", content: `[Synthesizer Tool: generate-pdf] Idempotency lock: PDF export already generated.` });
+                    const previousPdf = synthHistory.find(m => m.role === "tool" && (m.name === "generate-pdf" || m.name === "generate_pdf"));
+                    if (previousPdf) {
+                      synthHistory.push({ role: "tool", name: toolName, content: previousPdf.content });
+                      continue;
+                    }
+                  }
+                  executedSynthActions.add("generate-pdf");
+                  executedSynthActions.add(pdfKey);
+
                   const pdfTitle = String(tc.arguments?.title || dynamicTitle);
                   const currentWorkerOutput = workerResults.map(r => r.output).join("\n\n");
                   let pdfContent = String(tc.arguments?.content || tc.arguments?.body || "").trim();
@@ -3914,6 +3945,18 @@ You have action tools available [${synthToolsListStr}].
                   const pdfRes = await executeNativeTool("generate-pdf", { title: pdfTitle, content: pdfContent, filename: pdfFilename }, designTokens);
                   result = typeof pdfRes === "string" ? pdfRes : JSON.stringify(pdfRes);
                 } else if (toolName === "generate-csv" || toolName === "generate_csv" || toolName === "csv_export") {
+                  const csvKey = `generate-csv:${dynamicFilename}`;
+                  if (executedSynthActions.has("generate-csv") || executedSynthActions.has(csvKey)) {
+                    sendEvent({ type: "trace", content: `[Synthesizer Tool: generate-csv] Idempotency lock: CSV export already generated.` });
+                    const previousCsv = synthHistory.find(m => m.role === "tool" && (m.name === "generate-csv" || m.name === "generate_csv"));
+                    if (previousCsv) {
+                      synthHistory.push({ role: "tool", name: toolName, content: previousCsv.content });
+                      continue;
+                    }
+                  }
+                  executedSynthActions.add("generate-csv");
+                  executedSynthActions.add(csvKey);
+
                   const csvTitle = String(tc.arguments?.title || (nodeLabels ? `${nodeLabels} Export` : "Export"));
                   const currentWorkerOutput = workerResults.map(r => r.output).join("\n\n");
                   let csvContent = String(tc.arguments?.content || tc.arguments?.body || tc.arguments?.data || "").trim();
@@ -3953,9 +3996,9 @@ You have action tools available [${synthToolsListStr}].
               { role: "user", content: aggregationContext }
             ];
             while (synthTurn < 5) {
-              const pendingEmail = userRequestsEmail && !synthHistory.some(m => m.role === "tool" && (m.name === "send-email" || m.name === "send_email"));
-              const pendingCsv = userRequestsCsv && !synthHistory.some(m => m.role === "tool" && (m.name === "generate-csv" || m.name === "generate_csv"));
-              const pendingPdf = userRequestsPdf && !synthHistory.some(m => m.role === "tool" && (m.name === "generate-pdf" || m.name === "generate_pdf"));
+              const pendingEmail = userRequestsEmail && !executedSynthActions.has("send-email") && !synthHistory.some(m => m.role === "tool" && (m.name === "send-email" || m.name === "send_email"));
+              const pendingCsv = userRequestsCsv && !executedSynthActions.has("generate-csv") && !synthHistory.some(m => m.role === "tool" && (m.name === "generate-csv" || m.name === "generate_csv"));
+              const pendingPdf = userRequestsPdf && !executedSynthActions.has("generate-pdf") && !synthHistory.some(m => m.role === "tool" && (m.name === "generate-pdf" || m.name === "generate_pdf"));
               const hasPendingRequestedTool = pendingEmail || pendingCsv || pendingPdf;
               const forceTools = (synthTurn < 3 && hasPendingRequestedTool) ? "required" : undefined;
               const response = await queryLLMWithHistory(
@@ -3979,21 +4022,24 @@ You have action tools available [${synthToolsListStr}].
             }
 
             // Guaranteed Fallback Execution Guard: If user explicitly requested email or CSV and tool wasn't called, invoke now!
-            const emailExecuted = synthHistory.some(m => m.role === "tool" && (m.name === "send-email" || m.name === "send_email"));
+            const emailExecuted = executedSynthActions.has("send-email") || synthHistory.some(m => m.role === "tool" && (m.name === "send-email" || m.name === "send_email"));
             if (userRequestsEmail && !emailExecuted && synthTools.some(t => t.name === "send-email" || t.name === "send_email")) {
-              const nodeLabels = workerResults.map(r => r.nodeLabel).join(" & ");
-              const dynamicTitle = nodeLabels ? `${nodeLabels} Report` : "SavazAI Summary Report";
-              await executeSynthToolCalls(synthHistory, [{
-                name: "send-email",
-                arguments: {
-                  to: emailAddressMatch ? emailAddressMatch[0] : fallbackRecipientEmail,
-                  subject: dynamicTitle,
-                  body: workerResults.map(r => r.output).join("\n\n") || aggregationContext
-                }
-              }]);
+              const dynamicTargetEmail = emailAddressMatch ? emailAddressMatch[0] : fallbackRecipientEmail;
+              if (dynamicTargetEmail && isValidEmail(dynamicTargetEmail)) {
+                const nodeLabels = workerResults.map(r => r.nodeLabel).join(" & ");
+                const dynamicTitle = nodeLabels ? `${nodeLabels} Report` : "SavazAI Summary Report";
+                await executeSynthToolCalls(synthHistory, [{
+                  name: "send-email",
+                  arguments: {
+                    to: dynamicTargetEmail,
+                    subject: dynamicTitle,
+                    body: workerResults.map(r => r.output).join("\n\n") || aggregationContext
+                  }
+                }]);
+              }
             }
 
-            const csvExecuted = synthHistory.some(m => m.role === "tool" && (m.name === "generate-csv" || m.name === "generate_csv"));
+            const csvExecuted = executedSynthActions.has("generate-csv") || synthHistory.some(m => m.role === "tool" && (m.name === "generate-csv" || m.name === "generate_csv"));
             if (userRequestsCsv && !csvExecuted && synthTools.some(t => t.name === "generate-csv" || t.name === "generate_csv")) {
               const nodeLabels = workerResults.map(r => r.nodeLabel).join(" & ");
               const dynamicFilename = nodeLabels ? nodeLabels.toLowerCase().replace(/[^a-z0-9]+/g, "_") : "export";
@@ -4058,38 +4104,49 @@ You have action tools available [${synthToolsListStr}].
             }
 
             // Post-processing guard 2: Ensure Markdown table is ALWAYS present in finalResult if worker provided records or JSON
-            if (!finalResult.includes("|")) {
-              if (aggregationContext.includes("|")) {
+            const tableDataRowsCount = (finalResult.match(/\n\|[^\n]+\|/g) || []).length;
+            if (tableDataRowsCount < 3) {
+              const workerOutputCombined = workerResults.map(r => r.output).join("\n\n");
+              const extracted = extractRecordsFromPayload(workerOutputCombined) || extractRecordsFromPayload(aggregationContext);
+              if (extracted && extracted.length > 0) {
+                const tableHeader = "| Business Name | ⭐ Rating | Review Count | Address | 📞 Contact | 🌐 Website / Maps |\n| --- | --- | --- | --- | --- | --- |";
+                const tableRows = extracted.map(r => {
+                  const name = sanitizeTableCell(r.name || r.title || r.businessName || "Unnamed");
+                  const rating = r.rating != null ? String(r.rating) : "N/A";
+                  const reviewCount = r.review_count ?? r.userRatingCount ?? r.reviews_count ?? "N/A";
+                  const address = sanitizeTableCell(r.address || r.formattedAddress || "");
+                  const phone = sanitizeTableCell(r.phone || "Not listed");
+                  const webUrl = r.website || r.websiteUri || r.website_or_map_link;
+                  const mapsUrl = r.googleMapsUri || r.map_link;
+                  let links = [];
+                  if (webUrl && String(webUrl).includes("http")) {
+                    const wLink = String(webUrl).split(/[\s|/]+/).find(s => s.startsWith("http"));
+                    if (wLink) links.push(`[🌐 Website](${wLink})`);
+                  }
+                  if (mapsUrl && String(mapsUrl).includes("http")) {
+                    const mLink = String(mapsUrl).split(/[\s|/]+/).find(s => s.startsWith("http"));
+                    if (mLink) links.push(`[🗺️ Maps](${mLink})`);
+                  }
+                  const linkCol = links.length > 0 ? links.join(" ") : "-";
+                  return `| ${name} | ${rating} | ${reviewCount} | ${address} | ${phone} | ${linkCol} |`;
+                }).join("\n");
+                const nodeLabels = workerResults.map(r => r.nodeLabel).join(" & ") || "Discovered Records";
+                
+                if (finalResult.includes("### 📧 Email Dispatch Confirmation")) {
+                  finalResult = finalResult.replace("### 📧 Email Dispatch Confirmation", `### 📋 ${nodeLabels}\n\n${tableHeader}\n${tableRows}\n\n### 📧 Email Dispatch Confirmation`);
+                } else if (finalResult.includes("### 📥 Download CSV Export")) {
+                  finalResult = finalResult.replace("### 📥 Download CSV Export", `### 📋 ${nodeLabels}\n\n${tableHeader}\n${tableRows}\n\n### 📥 Download CSV Export`);
+                } else {
+                  finalResult = `### 📋 ${nodeLabels}\n\n${tableHeader}\n${tableRows}\n\n${finalResult}`;
+                }
+              } else if (aggregationContext.includes("|")) {
                 const tableLines = aggregationContext.split("\n").filter(l => l.trim().startsWith("|") && l.includes("|"));
                 if (tableLines.length >= 3) {
-                  finalResult = `### 📋 Discovered Records\n\n${tableLines.join("\n")}\n\n${finalResult}`;
-                }
-              } else {
-                const extracted = extractRecordsFromPayload(aggregationContext);
-                if (extracted && extracted.length > 0) {
-                  const tableHeader = "| Business Name | ⭐ Rating | Review Count | Address | 📞 Contact | 🌐 Website / Maps |\n| --- | --- | --- | --- | --- | --- |";
-                  const tableRows = extracted.map(r => {
-                    const name = sanitizeTableCell(r.name || r.title || r.businessName || "Unnamed");
-                    const rating = r.rating != null ? String(r.rating) : "N/A";
-                    const reviewCount = r.review_count ?? r.userRatingCount ?? r.reviews_count ?? "N/A";
-                    const address = sanitizeTableCell(r.address || r.formattedAddress || "");
-                    const phone = sanitizeTableCell(r.phone || "Not listed");
-                    const webUrl = r.website || r.websiteUri || r.website_or_map_link;
-                    const mapsUrl = r.googleMapsUri || r.map_link;
-                    let links = [];
-                    if (webUrl && String(webUrl).includes("http")) {
-                      const wLink = String(webUrl).split(/[\s|/]+/).find(s => s.startsWith("http"));
-                      if (wLink) links.push(`[🌐 Website](${wLink})`);
-                    }
-                    if (mapsUrl && String(mapsUrl).includes("http")) {
-                      const mLink = String(mapsUrl).split(/[\s|/]+/).find(s => s.startsWith("http"));
-                      if (mLink) links.push(`[🗺️ Maps](${mLink})`);
-                    }
-                    const linkCol = links.length > 0 ? links.join(" ") : "-";
-                    return `| ${name} | ${rating} | ${reviewCount} | ${address} | ${phone} | ${linkCol} |`;
-                  }).join("\n");
-                  const nodeLabels = workerResults.map(r => r.nodeLabel).join(" & ") || "Discovered Records";
-                  finalResult = `### 📋 ${nodeLabels}\n\n${tableHeader}\n${tableRows}\n\n${finalResult}`;
+                  if (finalResult.includes("### 📧 Email Dispatch Confirmation")) {
+                    finalResult = finalResult.replace("### 📧 Email Dispatch Confirmation", `### 📋 Discovered Records\n\n${tableLines.join("\n")}\n\n### 📧 Email Dispatch Confirmation`);
+                  } else {
+                    finalResult = `### 📋 Discovered Records\n\n${tableLines.join("\n")}\n\n${finalResult}`;
+                  }
                 }
               }
             }

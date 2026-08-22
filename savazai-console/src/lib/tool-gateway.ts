@@ -370,7 +370,7 @@ export function extractRecordsFromPayload(raw: unknown): Record<string, unknown>
   }
   if (typeof raw === "object" && raw !== null) {
     const obj = raw as Record<string, unknown>;
-    const candidateKeys = ["results", "items", "records", "data", "places", "rows", "caterers", "vendors", "guests", "tasks", "ceremonies"];
+    const candidateKeys = ["results", "items", "records", "data", "places", "rows", "caterers", "vendors", "guests", "tasks", "ceremonies", "businesses"];
     for (const key of candidateKeys) {
       if (Array.isArray(obj[key])) {
         const valid = (obj[key] as unknown[]).filter(r => isEntityRecord(r));
@@ -379,22 +379,38 @@ export function extractRecordsFromPayload(raw: unknown): Record<string, unknown>
     }
   }
   if (typeof raw === "string") {
+    const cleanRaw = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
     // 1. Try direct parse
     try {
-      const parsed = JSON.parse(raw.trim());
+      const parsed = JSON.parse(cleanRaw);
       const res = extractRecordsFromPayload(parsed);
       if (res && res.length > 0) return res;
     } catch {}
 
     // 2. Scan for JSON blocks matching { "results": [...] }
-    const jsonBlockRegex = /\{[\s\S]*?"(?:results|places|items|records|data|rows|caterers|vendors)"\s*:\s*\[[\s\S]*?\][\s\S]*?\}/g;
-    const matches = raw.match(jsonBlockRegex);
+    const jsonBlockRegex = /\{[\s\S]*?"(?:results|places|items|records|data|rows|caterers|vendors|businesses)"\s*:\s*\[[\s\S]*?\][\s\S]*?\}/g;
+    const matches = cleanRaw.match(jsonBlockRegex);
     if (matches) {
       for (const block of matches) {
         try {
           const parsed = JSON.parse(block);
           const res = extractRecordsFromPayload(parsed);
           if (res && res.length > 0) return res;
+        } catch {}
+      }
+    }
+
+    // 3. Scan for standalone JSON array of objects [ { ... }, { ... } ]
+    const arrayRegex = /\[\s*\{[\s\S]*?\}\s*\]/g;
+    const arrayMatches = cleanRaw.match(arrayRegex);
+    if (arrayMatches) {
+      for (const arrBlock of arrayMatches) {
+        try {
+          const parsed = JSON.parse(arrBlock);
+          if (Array.isArray(parsed)) {
+            const valid = parsed.filter(r => isEntityRecord(r));
+            if (valid.length > 0) return valid as Record<string, unknown>[];
+          }
         } catch {}
       }
     }

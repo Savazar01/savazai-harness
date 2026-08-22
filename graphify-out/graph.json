@@ -2313,7 +2313,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L14",
       "id": "meta_0001_snapshot_session_id_primarykey",
-      "community": 107,
+      "community": 154,
       "norm_label": "primarykey"
     },
     {
@@ -2340,7 +2340,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L18",
       "id": "meta_0001_snapshot_columns_app_id",
-      "community": 105,
+      "community": 154,
       "norm_label": "app_id"
     },
     {
@@ -2349,7 +2349,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L19",
       "id": "meta_0001_snapshot_app_id_name",
-      "community": 105,
+      "community": 154,
       "norm_label": "name"
     },
     {
@@ -2358,7 +2358,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L20",
       "id": "meta_0001_snapshot_app_id_type",
-      "community": 105,
+      "community": 154,
       "norm_label": "type"
     },
     {
@@ -2367,7 +2367,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L21",
       "id": "meta_0001_snapshot_app_id_primarykey",
-      "community": 105,
+      "community": 154,
       "norm_label": "primarykey"
     },
     {
@@ -2430,7 +2430,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L30",
       "id": "meta_0001_snapshot_columns_raw_content",
-      "community": 61,
+      "community": 105,
       "norm_label": "raw_content"
     },
     {
@@ -2439,7 +2439,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L31",
       "id": "meta_0001_snapshot_raw_content_name",
-      "community": 61,
+      "community": 105,
       "norm_label": "name"
     },
     {
@@ -2448,7 +2448,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L32",
       "id": "meta_0001_snapshot_raw_content_type",
-      "community": 61,
+      "community": 105,
       "norm_label": "type"
     },
     {
@@ -2457,7 +2457,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L33",
       "id": "meta_0001_snapshot_raw_content_primarykey",
-      "community": 61,
+      "community": 105,
       "norm_label": "primarykey"
     },
     {
@@ -2466,7 +2466,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L34",
       "id": "meta_0001_snapshot_raw_content_notnull",
-      "community": 61,
+      "community": 105,
       "norm_label": "notnull"
     },
     {
@@ -2574,7 +2574,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L49",
       "id": "meta_0001_snapshot_created_at_name",
-      "community": 154,
+      "community": 61,
       "norm_label": "name"
     },
     {
@@ -2781,7 +2781,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L81",
       "id": "meta_0001_snapshot_public_autonomous_agents_columns",
-      "community": 105,
+      "community": 154,
       "norm_label": "columns"
     },
     {
@@ -2853,7 +2853,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L96",
       "id": "meta_0001_snapshot_agent_name_type",
-      "community": 61,
+      "community": 105,
       "norm_label": "type"
     },
     {
@@ -3195,7 +3195,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L153",
       "id": "meta_0001_snapshot_public_connected_apps_columns",
-      "community": 61,
+      "community": 107,
       "norm_label": "columns"
     },
     {
@@ -3204,7 +3204,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L160",
       "id": "meta_0001_snapshot_columns_app_name",
-      "community": 61,
+      "community": 107,
       "norm_label": "app_name"
     },
     {
@@ -3213,7 +3213,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L161",
       "id": "meta_0001_snapshot_app_name_name",
-      "community": 61,
+      "community": 107,
       "norm_label": "name"
     },
     {
@@ -3222,7 +3222,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L162",
       "id": "meta_0001_snapshot_app_name_type",
-      "community": 61,
+      "community": 107,
       "norm_label": "type"
     },
     {
@@ -3231,7 +3231,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L163",
       "id": "meta_0001_snapshot_app_name_primarykey",
-      "community": 61,
+      "community": 107,
       "norm_label": "primarykey"
     },
     {
@@ -3240,7 +3240,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L164",
       "id": "meta_0001_snapshot_app_name_notnull",
-      "community": 61,
+      "community": 107,
       "norm_label": "notnull"
     },
     {
@@ -3294,7 +3294,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L172",
       "id": "meta_0001_snapshot_columns_bearer_token_hash",
-      "community": 61,
+      "community": 107,
       "norm_label": "bearer_token_hash"
     },
     {
@@ -3303,7 +3303,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L173",
       "id": "meta_0001_snapshot_bearer_token_hash_name",
-      "community": 61,
+      "community": 107,
       "norm_label": "name"
     },
     {
@@ -3312,7 +3312,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L174",
       "id": "meta_0001_snapshot_bearer_token_hash_type",
-      "community": 61,
+      "community": 107,
       "norm_label": "type"
     },
     {
@@ -3321,7 +3321,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L175",
       "id": "meta_0001_snapshot_bearer_token_hash_primarykey",
-      "community": 61,
+      "community": 107,
       "norm_label": "primarykey"
     },
     {
@@ -3330,7 +3330,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L176",
       "id": "meta_0001_snapshot_bearer_token_hash_notnull",
-      "community": 61,
+      "community": 107,
       "norm_label": "notnull"
     },
     {
@@ -3465,7 +3465,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L205",
       "id": "meta_0001_snapshot_public_skill_embeddings_columns",
-      "community": 154,
+      "community": 61,
       "norm_label": "columns"
     },
     {
@@ -3474,7 +3474,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L212",
       "id": "meta_0001_snapshot_columns_skill_name",
-      "community": 154,
+      "community": 61,
       "norm_label": "skill_name"
     },
     {
@@ -3483,7 +3483,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L213",
       "id": "meta_0001_snapshot_skill_name_name",
-      "community": 154,
+      "community": 61,
       "norm_label": "name"
     },
     {
@@ -3501,7 +3501,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L215",
       "id": "meta_0001_snapshot_skill_name_primarykey",
-      "community": 154,
+      "community": 61,
       "norm_label": "primarykey"
     },
     {
@@ -3510,7 +3510,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L216",
       "id": "meta_0001_snapshot_skill_name_notnull",
-      "community": 154,
+      "community": 61,
       "norm_label": "notnull"
     },
     {
@@ -3519,7 +3519,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L218",
       "id": "meta_0001_snapshot_columns_description",
-      "community": 154,
+      "community": 61,
       "norm_label": "description"
     },
     {
@@ -3528,7 +3528,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L219",
       "id": "meta_0001_snapshot_description_name",
-      "community": 154,
+      "community": 61,
       "norm_label": "name"
     },
     {
@@ -3546,7 +3546,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L221",
       "id": "meta_0001_snapshot_description_primarykey",
-      "community": 154,
+      "community": 61,
       "norm_label": "primarykey"
     },
     {
@@ -3555,7 +3555,7 @@
       "source_file": "drizzle/migrations/meta/0001_snapshot.json",
       "source_location": "L222",
       "id": "meta_0001_snapshot_description_notnull",
-      "community": 154,
+      "community": 61,
       "norm_label": "notnull"
     },
     {
@@ -9711,7 +9711,7 @@
       "source_file": "drizzle/migrations/meta/0005_snapshot.json",
       "source_location": "L6",
       "id": "meta_0005_snapshot_tables",
-      "community": 284,
+      "community": 357,
       "norm_label": "tables"
     },
     {
@@ -21337,7 +21337,7 @@
       "label": "generateCsv()",
       "file_type": "code",
       "source_file": "savazai-console/src/lib/tool-gateway.ts",
-      "source_location": "L405",
+      "source_location": "L421",
       "id": "lib_tool_gateway_generatecsv",
       "community": 317,
       "norm_label": "generatecsv()"
@@ -21346,7 +21346,7 @@
       "label": "formatHtmlEmailBody()",
       "file_type": "code",
       "source_file": "savazai-console/src/lib/tool-gateway.ts",
-      "source_location": "L468",
+      "source_location": "L484",
       "id": "lib_tool_gateway_formathtmlemailbody",
       "community": 317,
       "norm_label": "formathtmlemailbody()"
@@ -21355,7 +21355,7 @@
       "label": "geocodeAddress()",
       "file_type": "code",
       "source_file": "savazai-console/src/lib/tool-gateway.ts",
-      "source_location": "L618",
+      "source_location": "L634",
       "id": "lib_tool_gateway_geocodeaddress",
       "community": 317,
       "norm_label": "geocodeaddress()"
@@ -21364,7 +21364,7 @@
       "label": "executeDbQuery()",
       "file_type": "code",
       "source_file": "savazai-console/src/lib/tool-gateway.ts",
-      "source_location": "L638",
+      "source_location": "L654",
       "id": "lib_tool_gateway_executedbquery",
       "community": 317,
       "norm_label": "executedbquery()"
@@ -21373,7 +21373,7 @@
       "label": "callCustomWebhook()",
       "file_type": "code",
       "source_file": "savazai-console/src/lib/tool-gateway.ts",
-      "source_location": "L680",
+      "source_location": "L696",
       "id": "lib_tool_gateway_callcustomwebhook",
       "community": 317,
       "norm_label": "callcustomwebhook()"
@@ -21382,7 +21382,7 @@
       "label": "executeNativeTool()",
       "file_type": "code",
       "source_file": "savazai-console/src/lib/tool-gateway.ts",
-      "source_location": "L707",
+      "source_location": "L723",
       "id": "lib_tool_gateway_executenativetool",
       "community": 317,
       "norm_label": "executenativetool()"
@@ -31887,7 +31887,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3283",
       "id": "vercel_react_best_practices_agents_7_8_early_length_check_for_array_comparisons",
-      "community": 83,
+      "community": 364,
       "norm_label": "7.8 early length check for array comparisons"
     },
     {
@@ -31896,7 +31896,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3293",
       "id": "vercel_react_best_practices_agents_codeblock_148",
-      "community": 83,
+      "community": 364,
       "norm_label": "code:typescript (function haschanges(current: string[], original: string[]) {)"
     },
     {
@@ -31905,7 +31905,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3304",
       "id": "vercel_react_best_practices_agents_codeblock_149",
-      "community": 83,
+      "community": 364,
       "norm_label": "code:typescript (function haschanges(current: string[], original: string[]) {)"
     },
     {
@@ -31914,7 +31914,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3332",
       "id": "vercel_react_best_practices_agents_7_9_early_return_from_functions",
-      "community": 364,
+      "community": 83,
       "norm_label": "7.9 early return from functions"
     },
     {
@@ -31923,7 +31923,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3340",
       "id": "vercel_react_best_practices_agents_codeblock_150",
-      "community": 364,
+      "community": 83,
       "norm_label": "code:typescript (function validateusers(users: user[]) {)"
     },
     {
@@ -31932,7 +31932,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3363",
       "id": "vercel_react_best_practices_agents_codeblock_151",
-      "community": 364,
+      "community": 83,
       "norm_label": "code:typescript (function validateusers(users: user[]) {)"
     },
     {
@@ -35109,7 +35109,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/rules/server-cache-react.md",
       "source_location": "L46",
       "id": "rules_server_cache_react_codeblock_3",
-      "community": 178,
+      "community": 383,
       "norm_label": "code:typescript (const getuser = cache(async (uid: number) => {)"
     },
     {
@@ -70266,9 +70266,9 @@
       "source_file": "savazai-console/src/app/api/orchestrator/test/route.ts",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "savazai_console_src_app_api_orchestrator_test_route_ts",
-      "target": "lib_tool_gateway_sanitizetablecell",
-      "confidence_score": 1.0
+      "target": "lib_tool_gateway_sanitizetablecell"
     },
     {
       "relation": "contains",
@@ -71998,9 +71998,9 @@
       "source_file": "savazai-console/src/components/chat-message.tsx",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "savazai_console_src_components_chat_message_tsx",
-      "target": "savazai_console_src_components_studio_test_sandbox_tsx",
-      "confidence_score": 1.0
+      "target": "savazai_console_src_components_studio_test_sandbox_tsx"
     },
     {
       "relation": "imports",
@@ -72009,9 +72009,9 @@
       "source_file": "savazai-console/src/components/chat-message.tsx",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "savazai_console_src_components_chat_message_tsx",
-      "target": "studio_test_sandbox_triggercsvdownload",
-      "confidence_score": 1.0
+      "target": "studio_test_sandbox_triggercsvdownload"
     },
     {
       "relation": "imports",
@@ -72020,9 +72020,9 @@
       "source_file": "savazai-console/src/components/chat-message.tsx",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "savazai_console_src_components_chat_message_tsx",
-      "target": "studio_test_sandbox_extractmarkdowntabletocsv",
-      "confidence_score": 1.0
+      "target": "studio_test_sandbox_extractmarkdowntabletocsv"
     },
     {
       "relation": "contains",
@@ -72050,9 +72050,9 @@
       "source_file": "savazai-console/src/components/chat-message.tsx",
       "source_location": "L21",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "savazai_console_src_components_chat_message_tsx",
-      "target": "components_chat_message_chatreporttoolbar",
-      "confidence_score": 1.0
+      "target": "components_chat_message_chatreporttoolbar"
     },
     {
       "relation": "contains",
@@ -72144,9 +72144,9 @@
       "source_file": "savazai-console/src/components/chat-message.tsx",
       "source_location": "L24",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_chat_message_chatreporttoolbar",
-      "target": "studio_test_sandbox_extractmarkdowntabletocsv",
-      "confidence_score": 1.0
+      "target": "studio_test_sandbox_extractmarkdowntabletocsv"
     },
     {
       "relation": "calls",
@@ -72155,9 +72155,9 @@
       "source_file": "savazai-console/src/components/chat-message.tsx",
       "source_location": "L37",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_chat_message_chatreporttoolbar",
-      "target": "studio_test_sandbox_triggercsvdownload",
-      "confidence_score": 1.0
+      "target": "studio_test_sandbox_triggercsvdownload"
     },
     {
       "relation": "contains",
@@ -74565,9 +74565,9 @@
       "source_file": "savazai-console/src/components/studio/test-sandbox.tsx",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "savazai_console_src_components_studio_test_sandbox_tsx",
-      "target": "studio_test_sandbox_triggercsvdownload",
-      "confidence_score": 1.0
+      "target": "studio_test_sandbox_triggercsvdownload"
     },
     {
       "relation": "contains",
@@ -74575,9 +74575,9 @@
       "source_file": "savazai-console/src/components/studio/test-sandbox.tsx",
       "source_location": "L84",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "savazai_console_src_components_studio_test_sandbox_tsx",
-      "target": "studio_test_sandbox_extractmarkdowntabletocsv",
-      "confidence_score": 1.0
+      "target": "studio_test_sandbox_extractmarkdowntabletocsv"
     },
     {
       "relation": "contains",
@@ -74585,9 +74585,9 @@
       "source_file": "savazai-console/src/components/studio/test-sandbox.tsx",
       "source_location": "L105",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "savazai_console_src_components_studio_test_sandbox_tsx",
-      "target": "studio_test_sandbox_reportactiontoolbar",
-      "confidence_score": 1.0
+      "target": "studio_test_sandbox_reportactiontoolbar"
     },
     {
       "relation": "contains",
@@ -74666,9 +74666,9 @@
       "source_file": "savazai-console/src/components/studio/test-sandbox.tsx",
       "source_location": "L108",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "studio_test_sandbox_reportactiontoolbar",
-      "target": "studio_test_sandbox_extractmarkdowntabletocsv",
-      "confidence_score": 1.0
+      "target": "studio_test_sandbox_extractmarkdowntabletocsv"
     },
     {
       "relation": "contains",
@@ -75122,9 +75122,9 @@
       "source_file": "savazai-console/src/lib/tool-gateway.ts",
       "source_location": "L336",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "savazai_console_src_lib_tool_gateway_ts",
-      "target": "lib_tool_gateway_sanitizetablecell",
-      "confidence_score": 1.0
+      "target": "lib_tool_gateway_sanitizetablecell"
     },
     {
       "relation": "contains",
@@ -102225,5 +102225,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "10cf639d011f1b68dd8c78214e0d820bbf503b35"
+  "built_at_commit": "ed04d63c23d48d4a5bb4d6c8c52252b86b032f21"
 }
