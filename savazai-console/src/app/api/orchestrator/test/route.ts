@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { Pool } from "pg";
 import { decrypt } from "@/lib/crypto";
-import { executeNativeTool } from "@/lib/tool-gateway";
+import { executeNativeTool, formatHtmlEmailBody, extractRecordsFromPayload, sanitizeTableCell } from "@/lib/tool-gateway";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -1175,6 +1175,7 @@ async function runMcpToolWithResilience(
 function formatText(text: string): string {
   if (!text) return "";
   return text
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #4f46e5; text-decoration: none; font-weight: 500;">$1</a>')
     .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #0f172a;">$1</strong>')
     .replace(/__(.*?)__/g, '<strong style="color: #0f172a;">$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -1185,9 +1186,6 @@ function formatText(text: string): string {
 function parseMarkdownToHtml(body: string, appTitle: string): string {
   const lines = body.split(/\r?\n/);
   const htmlParts: string[] = [];
-  let inTable = false;
-  let tableHeaders: string[] = [];
-  let tableRows: string[][] = [];
   let inList = false;
   let listType: 'ul' | 'ol' | null = null;
 
@@ -1199,101 +1197,98 @@ function parseMarkdownToHtml(body: string, appTitle: string): string {
     }
   };
 
-  const closeTable = () => {
-    if (inTable) {
+  let idx = 0;
+  while (idx < lines.length) {
+    const rawLine = lines[idx];
+    const line = rawLine.trim();
+
+    // Check for start of a table (line with pipes)
+    if (line.includes('|')) {
+      closeList();
+      const tableLines: string[] = [];
+      while (idx < lines.length && lines[idx].trim().includes('|')) {
+        tableLines.push(lines[idx].trim());
+        idx++;
+      }
+
+      // Process gathered table lines
+      let headers: string[] = [];
+      const rows: string[][] = [];
+
+      const delimiterIdx = tableLines.findIndex(l => {
+        const cells = l.split('|').map(c => c.trim()).filter(c => c.length > 0);
+        return cells.length > 0 && cells.every(c => /^[ \t:-]+$/.test(c) && c.includes('-'));
+      });
+
+      if (delimiterIdx > 0) {
+        const headerLine = tableLines[delimiterIdx - 1];
+        headers = headerLine.split('|').map(c => c.trim());
+        if (headerLine.startsWith('|')) headers.shift();
+        if (headerLine.endsWith('|') && headers.length > 0) headers.pop();
+
+        for (let r = 0; r < tableLines.length; r++) {
+          if (r === delimiterIdx || r === delimiterIdx - 1) continue;
+          const rLine = tableLines[r];
+          const cells = rLine.split('|').map(c => c.trim());
+          if (rLine.startsWith('|')) cells.shift();
+          if (rLine.endsWith('|') && cells.length > 0) cells.pop();
+          if (cells.length > 0) rows.push(cells);
+        }
+      } else {
+        const firstLine = tableLines[0];
+        const firstCells = firstLine.split('|').map(c => c.trim());
+        if (firstLine.startsWith('|')) firstCells.shift();
+        if (firstLine.endsWith('|') && firstCells.length > 0) firstCells.pop();
+
+        const isExplicitHeader = firstCells.some(c => /^(name|business|rating|review|address|phone|contact|website|email|status|title|item|details)$/i.test(c.replace(/[^a-zA-Z]/g, '')));
+        if (isExplicitHeader && tableLines.length > 1) {
+          headers = firstCells;
+          for (let r = 1; r < tableLines.length; r++) {
+            const rLine = tableLines[r];
+            const cells = rLine.split('|').map(c => c.trim());
+            if (rLine.startsWith('|')) cells.shift();
+            if (rLine.endsWith('|') && cells.length > 0) cells.pop();
+            if (cells.length > 0) rows.push(cells);
+          }
+        } else {
+          const defaultHeaderNames = ["Business Name", "⭐ Rating", "Review Count", "Address", "📞 Contact", "🌐 Website / Maps"];
+          headers = defaultHeaderNames.slice(0, firstCells.length);
+          for (let r = 0; r < tableLines.length; r++) {
+            const rLine = tableLines[r];
+            const cells = rLine.split('|').map(c => c.trim());
+            if (rLine.startsWith('|')) cells.shift();
+            if (rLine.endsWith('|') && cells.length > 0) cells.pop();
+            if (cells.length > 0) rows.push(cells);
+          }
+        }
+      }
+
       let tableHtml = '<div style="overflow-x: auto; margin: 16px 0; border-radius: 8px; border: 1px solid #e2e8f0;">';
-      tableHtml += '<table style="width: 100%; border-collapse: collapse; text-align: left; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; font-size: 14px; color: #334155;">';
-      
-      if (tableHeaders.length > 0) {
+      tableHtml += '<table style="width: 100%; border-collapse: collapse; text-align: left; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; font-size: 13px; color: #334155;">';
+
+      if (headers.length > 0) {
         tableHtml += '<thead style="background-color: #f1f5f9;"><tr>';
-        for (const header of tableHeaders) {
-          tableHtml += `<th style="padding: 10px 12px; font-weight: bold; color: #1e293b; border: 1px solid #e2e8f0; font-family: inherit;">${header}</th>`;
+        for (const header of headers) {
+          tableHtml += `<th style="padding: 10px 12px; font-weight: bold; color: #1e293b; border: 1px solid #e2e8f0; font-family: inherit; text-align: left;">${formatText(header)}</th>`;
         }
         tableHtml += '</tr></thead>';
       }
 
-      tableHtml += '<tbody>';
-      tableRows.forEach((row, rowIndex) => {
+      tableHtml += '<tbody style="background-color: #ffffff;">';
+      rows.forEach((row, rowIndex) => {
         const bg = rowIndex % 2 === 0 ? '#ffffff' : '#f8fafc';
         tableHtml += `<tr style="background-color: ${bg};">`;
-        const cellCount = Math.max(tableHeaders.length, row.length);
+        const cellCount = Math.max(headers.length, row.length);
         for (let i = 0; i < cellCount; i++) {
           const cellContent = row[i] || '';
-          tableHtml += `<td style="padding: 10px 12px; border: 1px solid #e2e8f0; color: #475569; font-family: inherit;">${cellContent}</td>`;
+          tableHtml += `<td style="padding: 10px 12px; border: 1px solid #e2e8f0; color: #475569; font-family: inherit; vertical-align: top;">${formatText(cellContent)}</td>`;
         }
         tableHtml += '</tr>';
       });
       tableHtml += '</tbody></table></div>';
       htmlParts.push(tableHtml);
-      
-      inTable = false;
-      tableHeaders = [];
-      tableRows = [];
-    }
-  };
-
-  for (let idx = 0; idx < lines.length; idx++) {
-    const line = lines[idx].trim();
-    const isTableRow = line.includes('|');
-
-    if (isTableRow) {
-      closeList();
-      const cells = line.split('|').map(c => c.trim());
-      if (line.startsWith('|')) {
-        cells.shift();
-      }
-      if (line.endsWith('|') && cells.length > 0) {
-        cells.pop();
-      }
-
-      const isDelimiter = cells.length > 0 && cells.every(c => {
-        const trimmed = c.trim();
-        return trimmed.length > 0 && /^[ \t:-]+$/.test(trimmed) && trimmed.includes('-');
-      });
-
-      if (isDelimiter) {
-        if (!inTable && htmlParts.length > 0) {
-          htmlParts.pop();
-          const prevLine = lines[idx - 1] ? lines[idx - 1].trim() : '';
-          if (prevLine.includes('|')) {
-            const prevCells = prevLine.split('|').map(c => c.trim());
-            if (prevLine.startsWith('|')) prevCells.shift();
-            if (prevLine.endsWith('|') && prevCells.length > 0) prevCells.pop();
-            tableHeaders = prevCells.map(h => formatText(h));
-            inTable = true;
-          } else {
-            inTable = true;
-          }
-        } else {
-          inTable = true;
-        }
-      } else {
-        if (inTable) {
-          tableRows.push(cells.map(c => formatText(c)));
-        } else {
-          const nextLine = lines[idx + 1] ? lines[idx + 1].trim() : '';
-          const nextCells = nextLine.split('|').map(c => c.trim());
-          if (nextLine.startsWith('|')) nextCells.shift();
-          if (nextLine.endsWith('|') && nextCells.length > 0) nextCells.pop();
-
-          const isNextDelimiter = nextCells.length > 0 && nextCells.every(c => {
-            const trimmed = c.trim();
-            return trimmed.length > 0 && /^[ \t:-]+$/.test(trimmed) && trimmed.includes('-');
-          });
-
-          if (isNextDelimiter) {
-            tableHeaders = cells.map(c => formatText(c));
-            inTable = true;
-            idx++;
-          } else {
-            htmlParts.push(`<p style="margin: 8px 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #475569;">${formatText(line)}</p>`);
-          }
-        }
-      }
       continue;
     }
-
-    closeTable();
 
     const isUnorderedList = line.startsWith('- ') || line.startsWith('* ') || line.startsWith('• ');
     const isOrderedList = /^\d+\.\s+/.test(line);
@@ -1307,6 +1302,7 @@ function parseMarkdownToHtml(body: string, appTitle: string): string {
       }
       const itemText = line.replace(/^[-*•]\s+/, '');
       htmlParts.push(`<li style="margin: 4px 0; color: #475569;">${formatText(itemText)}</li>`);
+      idx++;
       continue;
     }
 
@@ -1319,44 +1315,48 @@ function parseMarkdownToHtml(body: string, appTitle: string): string {
       }
       const itemText = line.replace(/^\d+\.\s+/, '');
       htmlParts.push(`<li style="margin: 4px 0; color: #475569;">${formatText(itemText)}</li>`);
+      idx++;
       continue;
     }
 
     closeList();
 
     if (line === '') {
+      idx++;
       continue;
     }
 
     if (line.startsWith('#')) {
       const hashCount = (line.match(/^#+/) || [''])[0].length;
       const headerText = line.replace(/^#+\s*/, '');
-      const sizes: Record<number, string> = { 1: '24px', 2: '20px', 3: '18px', 4: '16px' };
-      const size = sizes[hashCount] || '16px';
+      const sizes: Record<number, string> = { 1: '22px', 2: '18px', 3: '16px', 4: '14px' };
+      const size = sizes[hashCount] || '14px';
       htmlParts.push(`<h${hashCount} style="margin: 16px 0 8px 0; font-size: ${size}; font-weight: 600; color: #1e293b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${formatText(headerText)}</h${hashCount}>`);
+      idx++;
       continue;
     }
 
     if (line === '---' || line === '***' || line === '___') {
       htmlParts.push('<hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />');
+      idx++;
       continue;
     }
 
-    htmlParts.push(`<p style="margin: 8px 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #475569;">${formatText(line)}</p>`);
+    htmlParts.push(`<p style="margin: 8px 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #475569; font-size: 14px; line-height: 1.6;">${formatText(line)}</p>`);
+    idx++;
   }
 
   closeList();
-  closeTable();
 
   const htmlContent = htmlParts.join('\n');
 
   return `
 <div style="background-color: #f3f4f6; padding: 30px 15px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; min-height: 100%;">
-  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #e5e7eb;">
+  <div style="max-width: 750px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #e5e7eb;">
     <div style="background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%); padding: 24px 32px; text-align: left;">
       <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: bold; font-family: inherit;">${appTitle}</h1>
     </div>
-    <div style="padding: 32px; line-height: 1.6; font-size: 15px; color: #374151; font-family: inherit;">
+    <div style="padding: 32px; line-height: 1.6; font-size: 14px; color: #374151; font-family: inherit;">
       ${htmlContent}
     </div>
     <div style="padding: 16px 32px; background-color: #f9fafb; border-top: 1px solid #f3f4f6; text-align: center;">
@@ -1579,7 +1579,7 @@ async function logTelemetryEvent(params: {
   }
 }
 
-// Direct HTTP request helper for OpenAI / Anthropic / Gemini
+// Direct HTTP request helper for OpenAI / Anthropic / Gemini with retry resilience
 async function queryLLMDirectly(
   provider: string,
   modelName: string,
@@ -1595,83 +1595,94 @@ async function queryLLMDirectly(
   const decryptedKey = decrypt(prov.apiKey);
   const startTime = Date.now();
   
-  try {
-    if (provider === "openai" || provider === "openai-compatible") {
-      const url = prov.baseUrl || "https://api.openai.com/v1/chat/completions";
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${decryptedKey}`
-        },
-        body: JSON.stringify({
-          model: modelName,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userMessage }
-          ]
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const content = data.choices?.[0]?.message?.content || "";
-        const inTok = data.usage?.prompt_tokens || Math.ceil((systemPrompt.length + userMessage.length) / 4);
-        const outTok = data.usage?.completion_tokens || Math.ceil(content.length / 4);
-        logTelemetryEvent({
-          provider,
-          modelName,
-          inputTokens: inTok,
-          outputTokens: outTok,
-          executionLatencyMs: Date.now() - startTime
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      if (provider === "openai" || provider === "openai-compatible") {
+        const url = prov.baseUrl || "https://api.openai.com/v1/chat/completions";
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${decryptedKey}`
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userMessage }
+            ]
+          })
         });
-        return content;
+        if (res.ok) {
+          const data = await res.json();
+          const content = data.choices?.[0]?.message?.content || "";
+          const inTok = data.usage?.prompt_tokens || Math.ceil((systemPrompt.length + userMessage.length) / 4);
+          const outTok = data.usage?.completion_tokens || Math.ceil(content.length / 4);
+          logTelemetryEvent({
+            provider,
+            modelName,
+            inputTokens: inTok,
+            outputTokens: outTok,
+            executionLatencyMs: Date.now() - startTime
+          });
+          return content;
+        }
+        const errText = await res.text();
+        throw new Error(`OpenAI API status ${res.status}: ${errText}`);
+      } 
+      
+      if (provider === "anthropic") {
+        const url = prov.baseUrl || "https://api.anthropic.com/v1/messages";
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": decryptedKey,
+            "anthropic-version": "2023-06-01"
+          },
+          body: JSON.stringify({
+            model: modelName,
+            max_tokens: 2048,
+            system: systemPrompt,
+            messages: [{ role: "user", content: userMessage }]
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return data.content?.[0]?.text || "";
+        }
+        const errText = await res.text();
+        throw new Error(`Anthropic API status ${res.status}: ${errText}`);
       }
-      throw new Error(`OpenAI API status ${res.status}: ${await res.text()}`);
-    } 
-    
-    if (provider === "anthropic") {
-      const url = prov.baseUrl || "https://api.anthropic.com/v1/messages";
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": decryptedKey,
-          "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify({
-          model: modelName,
-          max_tokens: 2048,
-          system: systemPrompt,
-          messages: [{ role: "user", content: userMessage }]
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return data.content?.[0]?.text || "";
-      }
-      throw new Error(`Anthropic API status ${res.status}: ${await res.text()}`);
-    }
 
-    if (provider === "gemini") {
-      const url = prov.baseUrl || `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${decryptedKey}`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            { role: "user", parts: [{ text: `System Instructions: ${systemPrompt}\n\nUser Message: ${userMessage}` }] }
-          ]
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      if (provider === "gemini") {
+        const url = prov.baseUrl || `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${decryptedKey}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              { role: "user", parts: [{ text: `System Instructions: ${systemPrompt}\n\nUser Message: ${userMessage}` }] }
+            ]
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        }
+        const errText = await res.text();
+        throw new Error(`Gemini API status ${res.status}: ${errText}`);
       }
-      throw new Error(`Gemini API status ${res.status}: ${await res.text()}`);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const isTransient = errMsg.includes("500") || errMsg.includes("502") || errMsg.includes("503") || errMsg.includes("429") || errMsg.includes("fetch failed");
+      if (attempt < 3 && isTransient) {
+        console.warn(`[LLM Direct Retry] Attempt ${attempt} failed for ${provider}/${modelName} (${errMsg}). Retrying in ${attempt * 1000}ms...`);
+        await new Promise(r => setTimeout(r, attempt * 1000));
+        continue;
+      }
+      console.error(`LLM Query Failure for ${provider}/${modelName} (attempt ${attempt}):`, errMsg);
     }
-  } catch (err: unknown) {
-    const errMsg = err instanceof Error ? err.message : String(err);
-    console.error(`LLM Query Failure for ${provider}/${modelName}:`, errMsg);
   }
 
   // Resilient mock fallback in case of direct API connection timeouts / failures
@@ -1801,32 +1812,201 @@ async function queryLLMWithHistory(
   const decryptedKey = decrypt(prov.apiKey);
   const startTime = Date.now();
   
-  try {
-    if (provider === "openai" || provider === "openai-compatible") {
-      const url = prov.baseUrl || "https://api.openai.com/v1/chat/completions";
-      
-      const apiMessages = [
-        { role: "system", content: systemPrompt },
-        ...messages.map(m => {
-          if (m.role === "tool") {
-            return { role: "user", content: `[Tool Output for ${m.name || "tool"}]: ${m.content}` };
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      if (provider === "openai" || provider === "openai-compatible") {
+        const url = prov.baseUrl || "https://api.openai.com/v1/chat/completions";
+        
+        const apiMessages = [
+          { role: "system", content: systemPrompt },
+          ...messages.map(m => {
+            if (m.role === "tool") {
+              return { role: "user", content: `[Tool Output for ${m.name || "tool"}]: ${m.content}` };
+            }
+            return { role: m.role, content: m.content };
+          })
+        ];
+
+        const requestBody: Record<string, unknown> = {
+          model: modelName,
+          messages: apiMessages
+        };
+
+        if (tools && tools.length > 0) {
+          requestBody.tools = tools.map(t => {
+            const tName = t.name || "";
+            const tDesc = t.description || "Execute tool call.";
+            const schema = t.inputSchema;
+            const params: Record<string, unknown> = {
+              type: "object",
+              properties: {} as Record<string, unknown>,
+            };
+            if (schema && schema.properties) {
+              params.properties = schema.properties;
+            }
+            if (schema && schema.required && schema.required.length > 0) {
+              params.required = schema.required;
+            } else {
+              params.additionalProperties = true;
+            }
+            return {
+              type: "function",
+              function: {
+                name: tName,
+                description: tDesc,
+                parameters: params
+              }
+            };
+          });
+          if (toolChoice === "required") {
+            requestBody.tool_choice = "required";
           }
-          return { role: m.role, content: m.content };
-        })
-      ];
+        }
 
-      const requestBody: Record<string, unknown> = {
-        model: modelName,
-        messages: apiMessages
-      };
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${decryptedKey}`
+          },
+          body: JSON.stringify(requestBody)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const inTok = data.usage?.prompt_tokens || 0;
+          const outTok = data.usage?.completion_tokens || 0;
+          logTelemetryEvent({
+            provider,
+            modelName,
+            inputTokens: inTok,
+            outputTokens: outTok,
+            executionLatencyMs: Date.now() - startTime
+          });
+          const choice = data.choices?.[0] as {
+            message?: {
+              content?: string;
+              tool_calls?: {
+                function: {
+                  name: string;
+                  arguments: string;
+                };
+              }[];
+            };
+          } | undefined;
+          if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
+            const formattedCalls = choice.message.tool_calls.map((tc) => {
+              let args = {};
+              try {
+                args = typeof tc.function.arguments === "string" ? JSON.parse(tc.function.arguments) : tc.function.arguments;
+              } catch {}
+              return {
+                name: tc.function.name,
+                arguments: args
+              };
+            });
+            return "```json\n" + JSON.stringify({ tool_calls: formattedCalls }, null, 2) + "\n```";
+          }
+          return choice?.message?.content || "";
+        }
+        const errText = await res.text();
+        throw new Error(`OpenAI API status ${res.status}: ${errText}`);
+      } 
+      
+      if (provider === "anthropic") {
+        const url = prov.baseUrl || "https://api.anthropic.com/v1/messages";
+        
+        const apiMessages: { role: "user" | "assistant"; content: string }[] = [];
+        for (const m of messages) {
+          const role = (m.role === "tool" || m.role === "system") ? "user" : m.role;
+          const content = m.role === "tool" ? `[Tool Output for ${m.name || "tool"}]: ${m.content}` : m.content;
+          
+          const last = apiMessages[apiMessages.length - 1];
+          if (last && last.role === role) {
+            last.content += `\n\n${content}`;
+          } else {
+            apiMessages.push({ role, content });
+          }
+        }
 
-      if (tools && tools.length > 0) {
-        requestBody.tools = tools.map(t => {
+        const apiTools = (tools || []).map(t => {
+          const tName = t.name || "";
+          const tDesc = t.description || "Execute tool call.";
+          const schema = t.inputSchema;
+          return {
+            name: tName,
+            description: tDesc,
+            input_schema: {
+              type: "object",
+              properties: schema?.properties || {},
+              required: schema?.required || []
+            }
+          };
+        });
+
+        const requestBody: Record<string, unknown> = {
+          model: modelName,
+          max_tokens: 2048,
+          system: systemPrompt,
+          messages: apiMessages
+        };
+        if (apiTools.length > 0) {
+          requestBody.tools = apiTools;
+          if (toolChoice === "required") {
+            requestBody.tool_choice = { type: "any" };
+          }
+        }
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": decryptedKey,
+            "anthropic-version": "2023-06-01"
+          },
+          body: JSON.stringify(requestBody)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const toolUseBlocks = (data.content || []).filter((b: { type: string }) => b.type === "tool_use");
+          const textBlocks = (data.content || []).filter((b: { type: string }) => b.type === "text").map((b: { text: string }) => b.text).join("\n");
+
+          if (toolUseBlocks.length > 0) {
+            const formattedCalls = toolUseBlocks.map((tc: { name: string; input: Record<string, unknown> }) => ({
+              name: tc.name,
+              arguments: tc.input || {}
+            }));
+            return "```json\n" + JSON.stringify({ tool_calls: formattedCalls }, null, 2) + "\n```";
+          }
+          return textBlocks;
+        }
+        const errText = await res.text();
+        throw new Error(`Anthropic API status ${res.status}: ${errText}`);
+      }
+
+      if (provider === "google" || provider === "gemini") {
+        const url = prov.baseUrl || `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${decryptedKey}`;
+        
+        const contents: { role: string; parts: { text?: string; functionResponse?: { name: string; response: Record<string, unknown> } }[] }[] = [];
+        for (const m of messages) {
+          if (m.role === "tool") {
+            contents.push({
+              role: "user",
+              parts: [{ text: `[Tool Output for ${m.name || "tool"}]: ${m.content}` }]
+            });
+          } else {
+            contents.push({
+              role: m.role === "assistant" ? "model" : "user",
+              parts: [{ text: m.content }]
+            });
+          }
+        }
+
+        const geminiTools = (tools || []).map(t => {
           const tName = t.name || "";
           const tDesc = t.description || "Execute tool call.";
           const schema = t.inputSchema;
           const params: Record<string, unknown> = {
-            type: "object",
+            type: "OBJECT",
             properties: {} as Record<string, unknown>,
           };
           if (schema && schema.properties) {
@@ -1834,229 +2014,63 @@ async function queryLLMWithHistory(
           }
           if (schema && schema.required && schema.required.length > 0) {
             params.required = schema.required;
-          } else {
-            params.additionalProperties = true;
           }
           return {
-            type: "function",
-            function: {
-              name: tName,
-              description: tDesc,
-              parameters: params
-            }
+            name: tName,
+            description: tDesc,
+            parameters: params
           };
         });
-        if (toolChoice === "required") {
-          requestBody.tool_choice = "required";
-        }
-      }
 
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${decryptedKey}`
-        },
-        body: JSON.stringify(requestBody)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const inTok = data.usage?.prompt_tokens || 0;
-        const outTok = data.usage?.completion_tokens || 0;
-        logTelemetryEvent({
-          provider,
-          modelName,
-          inputTokens: inTok,
-          outputTokens: outTok,
-          executionLatencyMs: Date.now() - startTime
-        });
-        const choice = data.choices?.[0] as {
-          message?: {
-            content?: string;
-            tool_calls?: {
-              function: {
-                name: string;
-                arguments: string;
-              };
-            }[];
-          };
-        } | undefined;
-        if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
-          const formattedCalls = choice.message.tool_calls.map((tc) => {
-            let args = {};
-            try {
-              args = typeof tc.function.arguments === "string" ? JSON.parse(tc.function.arguments) : tc.function.arguments;
-            } catch {}
-            return {
-              name: tc.function.name,
-              arguments: args
+        const requestBody: Record<string, unknown> = {
+          contents,
+          systemInstruction: { parts: [{ text: systemPrompt }] }
+        };
+
+        if (geminiTools.length > 0) {
+          requestBody.tools = [{ functionDeclarations: geminiTools }];
+          if (toolChoice === "required") {
+            requestBody.toolConfig = {
+              functionCallingConfig: {
+                mode: "ANY"
+              }
             };
-          });
-          return "```json\n" + JSON.stringify({ tool_calls: formattedCalls }, null, 2) + "\n```";
+          }
         }
-        return choice?.message?.content || "";
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const parts = (data.candidates?.[0]?.content?.parts || []) as { text?: string; functionCall?: { name: string; args?: Record<string, unknown> } }[];
+          const functionCalls = parts.filter(p => p.functionCall);
+          const textParts = parts.filter(p => p.text).map(p => p.text || "").join("\n");
+
+          if (functionCalls.length > 0) {
+            const formattedCalls = functionCalls.map((fc) => ({
+              name: fc.functionCall?.name || "",
+              arguments: fc.functionCall?.args || {}
+            }));
+            return "```json\n" + JSON.stringify({ tool_calls: formattedCalls }, null, 2) + "\n```";
+          }
+          return textParts;
+        }
+        const errText = await res.text();
+        throw new Error(`Gemini API status ${res.status}: ${errText}`);
       }
-      throw new Error(`OpenAI API status ${res.status}: ${await res.text()}`);
-    } 
-    
-    if (provider === "anthropic") {
-      const url = prov.baseUrl || "https://api.anthropic.com/v1/messages";
-      
-      const apiMessages: { role: "user" | "assistant"; content: string }[] = [];
-      for (const m of messages) {
-        const role = (m.role === "tool" || m.role === "system") ? "user" : m.role;
-        const content = m.role === "tool" ? `[Tool Output for ${m.name || "tool"}]: ${m.content}` : m.content;
-        
-        const last = apiMessages[apiMessages.length - 1];
-        if (last && last.role === role) {
-          last.content += `\n\n${content}`;
-        } else {
-          apiMessages.push({ role, content });
-        }
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const isTransient = errMsg.includes("500") || errMsg.includes("502") || errMsg.includes("503") || errMsg.includes("429") || errMsg.includes("fetch failed");
+      if (attempt < 3 && isTransient) {
+        console.warn(`[LLM History Retry] Attempt ${attempt} failed for ${provider}/${modelName} (${errMsg}). Retrying in ${attempt * 1000}ms...`);
+        await new Promise(r => setTimeout(r, attempt * 1000));
+        continue;
       }
-
-      const apiTools = (tools || []).map(t => {
-        const tName = t.name || "";
-        const tDesc = t.description || "Execute tool call.";
-        const schema = t.inputSchema;
-        const inputSchema: Record<string, unknown> = {
-          type: "object",
-          properties: {} as Record<string, unknown>,
-        };
-        if (schema && schema.properties) {
-          inputSchema.properties = schema.properties;
-        }
-        if (schema && schema.required && schema.required.length > 0) {
-          inputSchema.required = schema.required;
-        } else {
-          inputSchema.additionalProperties = true;
-        }
-        return {
-          name: tName,
-          description: tDesc,
-          input_schema: inputSchema
-        };
-      });
-
-      const requestBody: Record<string, unknown> = {
-        model: modelName,
-        max_tokens: 2048,
-        system: systemPrompt,
-        messages: apiMessages
-      };
-
-      if (apiTools.length > 0) {
-        requestBody.tools = apiTools;
-        if (toolChoice === "required") {
-          requestBody.tool_choice = { type: "any" };
-        }
-      }
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": decryptedKey,
-          "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify(requestBody)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const contentBlocks = (data.content || []) as { type: string; text?: string; name?: string; input?: Record<string, unknown> }[];
-        const toolUseBlocks = contentBlocks.filter(b => b.type === "tool_use");
-        const textBlocks = contentBlocks.filter(b => b.type === "text").map(b => b.text || "").join("\n");
-
-        if (toolUseBlocks.length > 0) {
-          const formattedCalls = toolUseBlocks.map((tu) => ({
-            name: tu.name || "",
-            arguments: tu.input || {}
-          }));
-          return "```json\n" + JSON.stringify({ tool_calls: formattedCalls }, null, 2) + "\n```";
-        }
-        return textBlocks;
-      }
-      throw new Error(`Anthropic API status ${res.status}: ${await res.text()}`);
+      console.error(`LLM Query Failure for ${provider}/${modelName} (attempt ${attempt}):`, errMsg);
     }
-
-    if (provider === "gemini") {
-      const url = prov.baseUrl || `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${decryptedKey}`;
-      
-      const contents: { role: "user" | "model"; parts: { text: string }[] }[] = [];
-      for (const m of messages) {
-        const role = (m.role === "assistant") ? "model" : "user";
-        const text = m.role === "tool" ? `[Tool Output for ${m.name || "tool"}]: ${m.content}` : m.content;
-        
-        const last = contents[contents.length - 1];
-        if (last && last.role === role) {
-          last.parts[0].text += `\n\n${text}`;
-        } else {
-          contents.push({ role, parts: [{ text }] });
-        }
-      }
-
-      const geminiTools = (tools || []).map(t => {
-        const tName = t.name || "";
-        const tDesc = t.description || "Execute tool call.";
-        const schema = t.inputSchema;
-        const params: Record<string, unknown> = {
-          type: "OBJECT",
-          properties: {} as Record<string, unknown>,
-        };
-        if (schema && schema.properties) {
-          params.properties = schema.properties;
-        }
-        if (schema && schema.required && schema.required.length > 0) {
-          params.required = schema.required;
-        }
-        return {
-          name: tName,
-          description: tDesc,
-          parameters: params
-        };
-      });
-
-      const requestBody: Record<string, unknown> = {
-        contents,
-        systemInstruction: { parts: [{ text: systemPrompt }] }
-      };
-
-      if (geminiTools.length > 0) {
-        requestBody.tools = [{ functionDeclarations: geminiTools }];
-        if (toolChoice === "required") {
-          requestBody.toolConfig = {
-            functionCallingConfig: {
-              mode: "ANY"
-            }
-          };
-        }
-      }
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const parts = (data.candidates?.[0]?.content?.parts || []) as { text?: string; functionCall?: { name: string; args?: Record<string, unknown> } }[];
-        const functionCalls = parts.filter(p => p.functionCall);
-        const textParts = parts.filter(p => p.text).map(p => p.text || "").join("\n");
-
-        if (functionCalls.length > 0) {
-          const formattedCalls = functionCalls.map((fc) => ({
-            name: fc.functionCall?.name || "",
-            arguments: fc.functionCall?.args || {}
-          }));
-          return "```json\n" + JSON.stringify({ tool_calls: formattedCalls }, null, 2) + "\n```";
-        }
-        return textParts;
-      }
-      throw new Error(`Gemini API status ${res.status}: ${await res.text()}`);
-    }
-  } catch (err: unknown) {
-    const errMsg = err instanceof Error ? err.message : String(err);
-    console.error(`LLM Query Failure for ${provider}/${modelName}:`, errMsg);
   }
 
   return `[Resilient Mock Mode] Response from ${provider}/${modelName}:\nProcessing history complete.`;
@@ -2136,16 +2150,18 @@ async function generateSupervisorPlan(
 ): Promise<{ selectedIds: string[]; executionPlan: ExecutionPlanItem[]; planSummary?: string; clarificationPrompt?: string; outOfScopeReason?: string }> {
   const schemas = mcpSchemaCache || await hydrateMcpSchemas();
 
-  // Fast-track: Email Forwarding / Report Sending from Conversation History
+  // Fast-track: Email Forwarding ONLY if the user prompt does NOT contain active data retrieval or search requests
   const msgLower = message.toLowerCase();
   const emailMatch = message.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
-  const isEmailForward = emailMatch && (
+  const hasDataRetrievalIntent = /\b(find|search|lookup|get|list|show|fetch|query|discover|recommend|venues|decorators|vendors|caterers|photographers|guests|tasks|ceremonies|items)\b/i.test(message);
+  const isEmailForward = !hasDataRetrievalIntent && emailMatch && (
     msgLower.includes("send the above") ||
-    msgLower.includes("send report") ||
-    msgLower.includes("send this report") ||
-    msgLower.includes("email the report") ||
-    msgLower.includes("email this") ||
-    msgLower.includes("forward")
+    msgLower.includes("forward the above") ||
+    msgLower.includes("email the above") ||
+    msgLower.startsWith("send this report to") ||
+    msgLower.startsWith("email this report to") ||
+    msgLower.startsWith("send report to") ||
+    msgLower.startsWith("forward to")
   );
 
   if (isEmailForward && emailMatch) {
@@ -2163,15 +2179,25 @@ async function generateSupervisorPlan(
     return { selectedIds: [], executionPlan, planSummary };
   }
 
+  // Rich tool descriptions map for native tools
+  const nativeToolDescMap: Record<string, string> = {
+    "google-places": "Search for external businesses, venues, decorators, florists, and local services in a geographic city or location via Google Places (New) API with ratings, reviews, contact numbers, and maps.",
+    "web-search": "Search the live web for contact details, emails, websites, and business info via Serper/Tavily.",
+    "send-email": "Send automated emails to recipients.",
+    "generate-pdf": "Generate structured PDF reports.",
+    "generate-csv": "Generate downloadable RFC 4180 CSV spreadsheet exports.",
+    "yelp-business-search": "Search for local businesses, reviews, and ratings via Yelp Fusion API."
+  };
+
   // Compact tool descriptions to keep Supervisor input tokens small (~1k tokens)
   const targetNodeDescriptions = targetNodes.map(n => {
     const toolDetails = (n.tools || []).map(t => {
       const toolObj = typeof t === "string" ? { name: t } : t;
       const tName = toolObj?.name || String(t);
       const schema = (toolObj?.inputSchema || schemas[tName]) as McpToolInputSchema | undefined;
-      const desc = toolObj?.description || (schemas[`__desc__${tName}`] as { desc: string })?.desc || "Execute tool call.";
+      const desc = toolObj?.description || nativeToolDescMap[tName] || (schemas[`__desc__${tName}`] as { desc: string })?.desc || "Execute tool call.";
       const req = (schema?.required || []).join(", ");
-      return `  - Tool: "${tName}" (${desc.slice(0, 100)}) [Required: ${req || "None"}]`;
+      return `  - Tool: "${tName}" — ${desc}${req ? ` [Required: ${req}]` : ""}`;
     }).filter(Boolean).join("\n");
 
     return `- Node ID: "${n.id}" | Name: "${n.label}"\n  Assigned Tools:\n${toolDetails || "  (No tools assigned)"}`;
@@ -2191,28 +2217,38 @@ async function generateSupervisorPlan(
 
   const supervisorPrompt = `${systemPromptContext}
 
-You are a Supervisor/Routing Agent. Your task is to analyze the user request against the explicit Downstream Worker Nodes, Bound Skills, and System Prompt Scope below.
+You are a Supervisor/Routing Agent. Your task is to analyze the user request against the explicit Downstream Worker Nodes and their Assigned Tools below.
 
-CLASSIFICATION & DOMAIN SCOPE RULES:
-1. CONVERSATIONAL & CAPABILITY INQUIRIES:
+CLASSIFICATION & ROUTING RULES:
+1. EXTERNAL SEARCH & GEOGRAPHIC DISCOVERY VS INTERNAL DATABASE:
+   - When the user asks to find, search, or discover external businesses, services, vendors, decorators, venues, caterers, etc. in a geographic city/region/location (e.g. "in Secunderabad, India", "in Tirupati", "in Chicago"):
+     * Select ONLY the worker node equipped with external search tools (e.g. "google-places", "web-search").
+     * DO NOT select internal database worker nodes (like "list_vendors", "list_guests", "list_ceremonies", "list_tasks", "get_wedding") for external geographic business discovery queries!
+   - When the user asks to view, list, create, update, or delete existing workspace database records (e.g. "show our guests", "add a task", "update vendor budget"):
+     * Select the corresponding internal database worker node.
+2. CONVERSATIONAL & CAPABILITY INQUIRIES:
    - If the user request is a greeting ("Hi", "Hello") or capability inquiry ("What can you do?"):
    - Return \`"selectedNodeIds": []\` and \`"executionPlan": []\`.
    - Set \`"planSummary": "Direct Response: Answer greeting and explain workspace capabilities."\`
-2. OUT-OF-SCOPE INQUIRIES:
+3. OUT-OF-SCOPE INQUIRIES:
    - ONLY flag out-of-scope if the user request asks for something completely unrelated to any available downstream worker tools.
    - If ANY downstream worker node tools match the request, DO NOT set outOfScopeReason and DO NOT output out-of-scope messages! Formulate a step-by-step execution plan for the target nodes.
-3. CRITICAL PARAMETER DUE DILIGENCE & CLARIFICATION RULES:
+4. CRITICAL PARAMETER DUE DILIGENCE & CLARIFICATION RULES:
    - For any action (CREATE, ADD, UPDATE, DELETE) across ANY entity type managed by the downstream worker tools:
      * Compare the user prompt against the Required Fields array of the target tool's schema.
      * If the user explicitly asks what information is needed (e.g. "what are the details you need?"), OR if mandatory required primary human domain parameters (name, title, email, date, etc.) are missing from the user request or conversation history:
        1. Set \`"requiresClarification": true\` on that step.
        2. Set \`"actionVerb": "CLARIFY"\`.
        3. Formulate a specific, helpful, professional \`"clarificationPrompt"\` listing each missing required parameter with its description and examples.
-       4. Example clarificationPrompt: "To complete this action, please provide the required details:\n1. **[Field 1]** (required): [description]\n2. **[Field 2]** (required): [description]\n3. **[Field 3]** (optional): [description]\n\nPlease fill in these details below."
    - NO FABRICATION MANDATE: NEVER invent, guess, or fabricate fake placeholder values (e.g. "New Item", "example@email.com", "Dummy Record"). If required fields are missing, set \`"requiresClarification": true\`.
-   - NO SYSTEM/FOREIGN-KEY WARNINGS: Primary record identifiers ("id") and foreign keys ending with "Id" are system UUIDs that are resolved automatically by downstream worker list tools — DO NOT flag system IDs or UUIDs as missing parameters from the user! Users specify target items by human display name (e.g. "Item" target, "Entity" name). NEVER ask the user to provide an "ID", "UUID", "id", or system key!
-4. DOMAIN DATA & TOOL EXECUTIONS:
-   - If all required parameters are present, select the relevant worker node IDs and formulate a step-by-step execution plan.
+   - NO SYSTEM/FOREIGN-KEY WARNINGS: Primary record identifiers ("id") and foreign keys ending with "Id" are system UUIDs that are resolved automatically by downstream worker list tools — DO NOT flag system IDs or UUIDs as missing parameters from the user! NEVER ask the user to provide an "ID", "UUID", "id", or system key!
+5. MANDATORY MULTI-STEP COMPOUND REQUEST DECOMPOSITION:
+   - When a user prompt combines data retrieval or discovery with downstream actions (e.g. finding places/vendors/records AND generating a downloadable CSV/PDF file AND/OR sending an email report):
+     * Step 1 (Data Retrieval): Select the relevant search/retrieval worker node (e.g. Web & Places Specialist Agent) with actionVerb "LIST" or "READ" to fetch real data. Extract the exact search query and location into parameters: { "query": "<search query and location from user prompt e.g. wedding caterers in Tirupati, India>" }.
+     * Step 2 (Downstream Actions & Export): The downstream file export (CSV/PDF) and email dispatch will be handled by the specialized action/synthesizer tools. Do NOT add unnecessary worker nodes that have no relevant tools for the request.
+   - Only select worker nodes whose tools are directly relevant to the user request. NEVER select unrelated worker nodes!
+   - NEVER skip data retrieval worker nodes when the user query asks to find, search, list, or discover items!
+   - NEVER return empty selectedNodeIds or route directly to Synthesizer Agent alone if data retrieval or tool execution is needed!
 
 Available Downstream Worker Nodes & Tools:
 ${targetNodeDescriptions}
@@ -2277,6 +2313,22 @@ Return ONLY the JSON object, no extra commentary, no markdown backticks, no text
       for (const item of executionPlan) {
         item.actionVerb = "LIST";
         item.allowedVerbs = ["LIST", "READ"];
+      }
+    }
+
+    // Auto-populate query parameter for discovery/search worker nodes if missing or empty
+    for (const item of executionPlan) {
+      if (!item.parameters) item.parameters = {};
+      if (!item.parameters.query && !item.parameters.textQuery && !item.parameters.search_query) {
+        const targetN = typedNodes.find(n => n.id === item.nodeId);
+        const hasSearchTool = targetN?.tools?.some(t => {
+          const tn = (typeof t === "string" ? t : (t as AgentflowTool)?.name || "").toLowerCase();
+          return tn.includes("places") || tn.includes("search") || tn.includes("yelp");
+        });
+        if (hasSearchTool) {
+          item.parameters.query = message;
+          item.parameters.textQuery = message;
+        }
       }
     }
   } catch {
@@ -2373,38 +2425,12 @@ function buildClarificationFromSchema(
   return `To complete your request for ${entityName}, please enter the details in the box below to execute.`;
 }
 
-  // Generic target node selector: score nodes by prompt keyword overlap
-  let domainMatchNode: GraphNode | null = null;
-  const promptTokens = msgLower.split(/[^a-z0-9]/).filter(t => t.length > 2 && !["the", "and", "for", "with", "would", "like", "add", "create", "new", "update", "delete", "remove", "report", "detailed", "list", "show", "get", "fetch", "my", "our", "all", "please", "recommend", "recommendations", "action", "actions", "insights", "summary", "overview", "breakdown"].includes(t));
-  const matchedNodeScores: { node: GraphNode; score: number }[] = [];
-
-  for (const n of targetNodes) {
-    const rawDesc = (n as unknown as Record<string, unknown>).description;
-    const nodeDesc = typeof rawDesc === "string" ? rawDesc : "";
-    const nodeText = `${n.label} ${nodeDesc} ${(n.tools || []).map(t => typeof t === "string" ? t : (t.name || "") + " " + (t.description || "")).join(" ")}`.toLowerCase();
-    let score = 0;
-    for (const token of promptTokens) {
-      if (nodeText.includes(token)) score += 1;
-    }
-    if (score > 0) {
-      matchedNodeScores.push({ node: n, score });
-    }
-  }
-
-  if (matchedNodeScores.length > 0) {
-    selectedIds = matchedNodeScores.map(m => m.node.id);
-    domainMatchNode = matchedNodeScores[0].node;
-  }
-
   const isUpdateIntent = /\b(update|modify|change|edit|set|adjust|rename)\b/i.test(message);
   const isCreateIntent = /\b(create|add|new|insert|invite)\b/i.test(message);
   const isDeleteIntent = /\b(delete|remove|cancel|destroy|drop|erase|clear)\b/i.test(message);
 
   // Auto-generate detailed schema parameter checklist for write operations if missing.
-  // A message "has provided details" when it contains at least one "Key: Value" pair,
-  // OR when it is a natural language update or delete request specifying target details,
-  // OR when it was submitted via the feedback form (prefixed token or plain multi-line field list).
-  const KEY_VALUE_RE = /^[A-Za-z0-9 _]+:\s*\S/m;  // matches "Field Name: value" anywhere in text
+  const KEY_VALUE_RE = /^[A-Za-z0-9 _]+:\s*\S/m;
   const hasNaturalUpdateDetails = isUpdateIntent && (
     /\bto\b|\bfor\b|\bset\b|\bas\b/i.test(message) ||
     /\d+/.test(message) ||
@@ -2419,16 +2445,15 @@ function buildClarificationFromSchema(
     message.includes("[USER PROVIDED") ||
     message.includes("Submit Details");
 
-  if (!isReadOnlyQuery(message) && targetNodes.length > 0 && !hasProvidedDetails) {
-    const isWriteIntent = isCreateIntent || isUpdateIntent || isDeleteIntent || (domainMatchNode !== null);
-    if (isWriteIntent) {
-      const primaryTargetNode = domainMatchNode || (selectedIds.length > 0 ? targetNodes.find(n => n.id === selectedIds[0]) || targetNodes[0] : targetNodes[0]);
-      const targetIntent = isDeleteIntent ? "DELETE" : (isUpdateIntent ? "UPDATE" : "CREATE");
-      clarificationPrompt = buildClarificationFromSchema(primaryTargetNode, schemas, targetIntent);
+  const isWriteIntent = isCreateIntent || isUpdateIntent || isDeleteIntent;
+  if (!isReadOnlyQuery(message) && targetNodes.length > 0 && !hasProvidedDetails && isWriteIntent) {
+    const primaryTargetNode = selectedIds.length > 0 ? (targetNodes.find(n => n.id === selectedIds[0]) || targetNodes[0]) : targetNodes[0];
+    const targetIntent = isDeleteIntent ? "DELETE" : (isUpdateIntent ? "UPDATE" : "CREATE");
+    clarificationPrompt = buildClarificationFromSchema(primaryTargetNode, schemas, targetIntent);
+    if (selectedIds.length === 0) {
       selectedIds = [primaryTargetNode.id];
     }
   } else if (hasProvidedDetails) {
-    // User already provided parameter details — clear clarificationPrompt so execution proceeds!
     clarificationPrompt = undefined;
   }
 
@@ -2838,11 +2863,18 @@ INSTRUCTIONS FOR DIRECT RESPONSE:
               const childNode = typedNodes.find(n => n.id === childId);
               if (childNode) {
                 sendEvent({ type: "trace", content: `[Graph Traversal] Supervisor dispatching to child: ${childNode.label}` });
-                const nodePlan = executionPlan.find((p: ExecutionPlanItem) => p.nodeId === childId) || { actionVerb: "READ", allowedVerbs: ["READ", "LIST"], targetEntity: "General", parameters: {} };
+                const nodePlan = executionPlan.find((p: ExecutionPlanItem) => p.nodeId === childId) || { actionVerb: "READ", allowedVerbs: ["READ", "LIST"], targetEntity: childNode.label, parameters: {} };
+                const queryParam = nodePlan.parameters?.query || nodePlan.parameters?.search_query || nodePlan.parameters?.textQuery || message;
+                if (!nodePlan.parameters) nodePlan.parameters = {};
+                if (!nodePlan.parameters.query && !nodePlan.parameters.textQuery) {
+                  nodePlan.parameters.query = queryParam;
+                  nodePlan.parameters.textQuery = queryParam;
+                }
+                const taskInstruction = `CURRENT USER REQUEST: "${message}"\n\nSUPERVISOR PLAN FOR WORKER "${childNode.label}":\n- Action: ${nodePlan.actionVerb || "LIST"}\n- Target Entity: ${nodePlan.targetEntity || childNode.label}\n- Search Query / Keywords: "${queryParam}"\n- Parameters: ${JSON.stringify(nodePlan.parameters)}\n\nInstruction: Execute your assigned tools to discover or manage records for this request.`;
                 // Each child gets a fresh clone of the pre-dispatch context — sibling outputs stay isolated
                 let output = "";
                 try {
-                  output = await runAgentNode(childId, JSON.stringify(nodePlan), [...contextBranch]);
+                  output = await runAgentNode(childId, taskInstruction, [...contextBranch]);
                 } catch (childErr) {
                   const errMsg = childErr instanceof Error ? childErr.message : String(childErr);
                   sendEvent({ type: "trace", content: `[Worker Failure: ${childNode.label}] Unhandled error: ${errMsg}` });
@@ -2854,6 +2886,16 @@ INSTRUCTIONS FOR DIRECT RESPONSE:
                   continue;
                 }
                 childOutputs.push(`--- [Agent: ${childNode.label}] ---\n${output}`);
+                if (output) {
+                  contextBranch.push({
+                    role: "assistant",
+                    content: `[Worker Output: ${childNode.label}]\n${output}`
+                  });
+                  sharedContextMessages.push({
+                    role: "assistant",
+                    content: `[Worker Output: ${childNode.label}]\n${output}`
+                  });
+                }
               }
             }
 
@@ -3009,7 +3051,8 @@ function parseParametersFromText(text: string, schemaProps?: Record<string, unkn
                     nodePlanParams = parsed.parameters;
                   }
                   const verbStr = allowedVerbs.length > 0 ? allowedVerbs.join("/") : "EXECUTE";
-                  instructionContent = `Execute action "${verbStr}" on entity "${parsed.targetEntity}" with parameters: ${JSON.stringify(parsed.parameters)}`;
+                  const targetQuery = parsed.parameters?.query || parsed.parameters?.search_query || parsed.parameters?.textQuery || message;
+                  instructionContent = `CURRENT USER REQUEST: "${message}"\nSUPERVISOR DIRECTIVES: Execute action "${verbStr}" on entity "${parsed.targetEntity || node.label}" for query: "${targetQuery}" with parameters: ${JSON.stringify(parsed.parameters || {})}`;
                 }
               }
             } catch {
@@ -3110,30 +3153,65 @@ function parseParametersFromText(text: string, schemaProps?: Record<string, unkn
                     } catch { /* skip unreachable servers */ }
                   }
 
-                  // Merge hydrated schemas back into node.tools
-                  if (Object.keys(globalMcpSchemaCache).length > 0) {
-                    node.tools = node.tools.map(tool => {
-                      if (!tool || typeof tool !== "object") return tool;
-                      const name = tool.name || "";
-                      if (globalMcpSchemaCache[name] && !tool.inputSchema) {
-                        const rawSchema = globalMcpSchemaCache[name] as unknown as { type?: string; properties?: Record<string, { type: string; description: string }>; required?: string[] };
-                        const hydrated: AgentflowTool = {
-                          ...tool,
-                          inputSchema: {
-                            type: "object" as const,
-                            properties: rawSchema.properties || {},
-                            required: rawSchema.required,
-                          }
-                        };
-                        if (!hydrated.description && globalMcpSchemaCache[`__desc__${name}`]) {
-                          hydrated.description = (globalMcpSchemaCache[`__desc__${name}`] as { desc: string }).desc;
-                        }
-                        return hydrated;
+                    // Hydrate standard schemas for native tools if missing
+                    const nativeSchemas: Record<string, { description: string; inputSchema: { type: "object"; properties: Record<string, { type: string; description: string }>; required?: string[] } }> = {
+                      "google-places": {
+                        description: "Search local places, businesses, venues, and points of interest with ratings, review counts, address, phone numbers, and website/Maps links.",
+                        inputSchema: {
+                          type: "object",
+                          properties: {
+                            textQuery: { type: "string", description: "Search query for locations or businesses (e.g. 'wedding decorators in Tirupati, India')" },
+                            query: { type: "string", description: "Search query alias" },
+                            pageSize: { type: "number", description: "Number of places to return (default: 20, max: 20)" },
+                            languageCode: { type: "string", description: "Language code for the response (e.g. 'en')" },
+                          },
+                          required: ["textQuery"],
+                        },
+                      },
+                      "web-search": {
+                        description: "Search the web to extract real-time information, contact phone numbers, emails, and website links.",
+                        inputSchema: {
+                          type: "object",
+                          properties: {
+                            query: { type: "string", description: "Web search query (e.g. 'R2R Events & Weddings Tirupati contact phone email website')" },
+                            count: { type: "number", description: "Number of search results to return (default: 5)" },
+                          },
+                          required: ["query"],
+                        },
+                      },
+                    };
+
+                    for (const [nName, nDef] of Object.entries(nativeSchemas)) {
+                      if (!globalMcpSchemaCache[nName]) {
+                        globalMcpSchemaCache[nName] = nDef.inputSchema as any;
+                        globalMcpSchemaCache[`__desc__${nName}`] = { desc: nDef.description } as Record<string, unknown>;
                       }
-                      return tool;
-                    });
-                    sendEvent({ type: "trace", content: `[Schema Hydration: ${node.label}] Hydrated ${Object.keys(globalMcpSchemaCache).length} tool schemas from MCP server.` });
-                  }
+                    }
+
+                    // Merge hydrated schemas back into node.tools
+                    if (Object.keys(globalMcpSchemaCache).length > 0) {
+                      node.tools = node.tools.map(tool => {
+                        if (!tool || typeof tool !== "object") return tool;
+                        const name = tool.name || "";
+                        if (globalMcpSchemaCache[name] && !tool.inputSchema) {
+                          const rawSchema = globalMcpSchemaCache[name] as unknown as { type?: string; properties?: Record<string, { type: string; description: string }>; required?: string[] };
+                          const hydrated: AgentflowTool = {
+                            ...tool,
+                            inputSchema: {
+                              type: "object" as const,
+                              properties: rawSchema.properties || {},
+                              required: rawSchema.required,
+                            }
+                          };
+                          if (!hydrated.description && globalMcpSchemaCache[`__desc__${name}`]) {
+                            hydrated.description = (globalMcpSchemaCache[`__desc__${name}`] as { desc: string }).desc;
+                          }
+                          return hydrated;
+                        }
+                        return tool;
+                      });
+                      sendEvent({ type: "trace", content: `[Schema Hydration: ${node.label}] Hydrated ${Object.keys(globalMcpSchemaCache).length} tool schemas.` });
+                    }
                 }
               } catch (hydrationErr) {
                 console.error("[MCP Schema Hydration] Failed:", hydrationErr);
@@ -3153,6 +3231,16 @@ function parseParametersFromText(text: string, schemaProps?: Record<string, unkn
                 nodePlanParams = { ...(nodePlanParams || {}), ...extractedTextParams };
                 sendEvent({ type: "trace", content: `[Param Extraction: ${node.label}] Extracted ${Object.keys(extractedTextParams).length} parameters from user text: ${JSON.stringify(extractedTextParams)}` });
               }
+            }
+
+            // Discovery Query Assignment: Ensure discovery tools receive the current query
+            const hasSearchTool = (node.tools || []).some(t => {
+              const tn = (typeof t === "string" ? t : (t as AgentflowTool)?.name || "").toLowerCase();
+              return tn.includes("places") || tn.includes("search") || tn.includes("yelp");
+            });
+            if (hasSearchTool && (!nodePlanParams || (!nodePlanParams.query && !nodePlanParams.textQuery && !nodePlanParams.search_query))) {
+              nodePlanParams = { ...(nodePlanParams || {}), query: message, textQuery: message };
+              sendEvent({ type: "trace", content: `[Discovery Query Assignment: ${node.label}] Assigned query: "${message}"` });
             }
 
             // Standardized Dynamic Tool Call Loop using Shared Context State
@@ -3206,6 +3294,7 @@ CRITICAL RULES:
               const toolsListStr = node.tools.map(t => t && typeof t === "object" ? (t.name || "") : String(t)).join(', ');
               workerSystemPrompt += `\nINSTRUCTION: Inspect the shared conversation history for accumulated outputs from prior nodes. If the overall user request specifies an action matching your available tools [${toolsListStr}], format the accumulated context and execute your assigned tool immediately.\n`;
               workerSystemPrompt += `\n\nCRITICAL INSTRUCTION: You have tools assigned to complete this task. You MUST invoke at least one tool to perform your action or retrieve required data before providing your final response. Do NOT output a conversational text response without calling your tool.\n`;
+              workerSystemPrompt += `\n- MULTI-TOOL CONTACT ENRICHMENT PIPELINE: When performing local discovery or finding businesses/vendors using discovery tools (e.g. google-places), execute the discovery tool first. If phone numbers, websites, or emails are missing or unlisted for top businesses, execute follow-up web searches (e.g. using web-search with query "<Business Name> <Location> contact phone email website") to enrich the records before providing your final response.\n`;
               workerSystemPrompt += `\n- When asked to create and update an item, pass the required status field directly during creation if supported by the tool schema, or immediately call the appropriate update tool in the next step.\n`;
               workerSystemPrompt += `\n- After executing all requested tool calls, review the results and determine if additional tool calls are needed to fully complete the task. You may call multiple tools across successive turns as needed. Once no further tool actions are required, conclude your turn with a clear concise summary of the actions taken.\n`;
               workerSystemPrompt += `\n- MULTI-ITEM OPERATIONS: If the user request specifies operations on MULTIPLE items (e.g., updating or creating multiple records in a single request), you MUST execute tool calls for EACH specified item until ALL requested items have been processed! You can include multiple tool_calls objects in a single JSON block.\n`;
@@ -3569,17 +3658,14 @@ If you do NOT need to call any more tools, output your final result directly to 
               workerFinalOutput = workerHistory[workerHistory.length - 1]?.content || "";
             }
 
-            // Synthesizer-safe output: strip non-fatal supervisor warnings if primary tool succeeded
+            // Synthesizer-safe output: include all successful tool payloads
             let sanitizedFinalOutput = String(sanitizeDataPayloads(workerFinalOutput));
             if (hasExecutedTools && !hasToolErrors) {
-              const hasReadTool = workerReceipts.some(r => r.tool_name.startsWith("list_") || r.tool_name.startsWith("get_"));
-              if (hasReadTool) {
-                const successReceipts = workerReceipts.filter(r => r.status === "SUCCESS");
-                if (successReceipts.length > 0) {
-                  sanitizedFinalOutput = successReceipts.map(r => `[DATA FETCH SUCCESS: ${r.tool_name}] Returned payload:\n${r.output_payload}`).join("\n\n");
-                }
+              const successReceipts = workerReceipts.filter(r => r.status === "SUCCESS");
+              if (successReceipts.length > 0) {
+                sanitizedFinalOutput = successReceipts.map(r => `[DATA PAYLOAD: ${r.tool_name}]\n${r.output_payload}`).join("\n\n");
               } else {
-                sanitizedFinalOutput = `Node ${node.label}: Execution Completed Successfully. Action performed.`;
+                sanitizedFinalOutput = `Node ${node.label}: Execution Completed Successfully.`;
               }
             }
             workerResults.push({ nodeLabel: node.label, output: sanitizedFinalOutput, receipts: workerReceipts });
@@ -3634,11 +3720,18 @@ If you do NOT need to call any more tools, output your final result directly to 
           
           const msgStr = String(message || "");
           const msgLower = msgStr.toLowerCase();
-          const isExplicitEmailPrompt = msgLower.includes("send email") || msgLower.includes("email report") || msgLower.includes("mail to") || msgLower.includes("send to email") || msgLower.includes("send report to");
-          const userRequestsEmail = isExplicitEmailPrompt;
+          const emailAddressMatch = msgStr.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
+          const userRequestsEmail = Boolean(emailAddressMatch) ||
+            msgLower.includes("email") ||
+            msgLower.includes("mail to") ||
+            msgLower.includes("send to") ||
+            msgLower.includes("send this") ||
+            msgLower.includes("forward to") ||
+            msgLower.includes("dispatch");
           const userRequestsPdf = msgLower.includes("pdf") || msgLower.includes("generate pdf");
+          const userRequestsCsv = msgLower.includes("csv") || msgLower.includes("download csv") || msgLower.includes("export csv") || msgLower.includes("to a csv") || msgLower.includes("to csv");
 
-          // Filter synthesizer tools: remove mutation tools AND remove export tools unless explicitly requested by user prompt
+          // Filter synthesizer tools: remove database mutation tools AND remove export tools NOT requested by the user
           const synthTools: AgentflowTool[] = (synthesizerNode.tools || [])
             .filter((t): t is AgentflowTool => {
               if (!t) return false;
@@ -3646,18 +3739,22 @@ If you do NOT need to call any more tools, output your final result directly to 
               const n = String(toolNameStr).toLowerCase();
               const blocked = ["create", "delete", "update", "remove", "insert", "destroy", "modify"];
               if (blocked.some(b => n.includes(b))) return false;
-              if (n === "send-email" || n === "send_email") return userRequestsEmail;
-              if (n === "generate-pdf" || n === "generate_pdf" || n === "pdf_report") return userRequestsPdf;
+              if ((n === "generate-pdf" || n === "generate_pdf" || n === "pdf_export") && !userRequestsPdf) return false;
+              if ((n === "generate-csv" || n === "generate_csv" || n === "csv_export") && !userRequestsCsv) return false;
+              if ((n === "send-email" || n === "send_email") && !userRequestsEmail) return false;
               return true;
             })
-            .map(t => (typeof t === "string" ? { name: t, category: "mcp" } : t));
+            .map(t => (typeof t === "string" ? { name: t, category: "native" } : t));
 
-          // Auto-equip send-email and generate-pdf if prompt explicitly requests them
-          if (userRequestsEmail && !synthTools.some(t => t && t.name === "send-email")) {
+          // Auto-equip send-email, generate-pdf, and generate-csv if prompt explicitly requests them
+          if (userRequestsEmail && !synthTools.some(t => t && (t.name === "send-email" || t.name === "send_email"))) {
             synthTools.push({ name: "send-email", category: "native" });
           }
           if (userRequestsPdf && !synthTools.some(t => t && (t.name === "generate-pdf" || t.name === "generate_pdf"))) {
             synthTools.push({ name: "generate-pdf", category: "native" });
+          }
+          if (userRequestsCsv && !synthTools.some(t => t && (t.name === "generate-csv" || t.name === "generate_csv"))) {
+            synthTools.push({ name: "generate-csv", category: "native" });
           }
 
           // Hydrate input schemas for synthTools (native & MCP) so LLM receives complete function signatures
@@ -3675,17 +3772,28 @@ If you do NOT need to call any more tools, output your final result directly to 
                 required: ["to"]
               };
               st.description = "Send a Markdown or HTML email report to a recipient email address.";
-            } else if (sName === "generate-pdf" || sName === "generate_pdf" || sName === "pdf_report") {
+            } else if (sName === "generate-pdf" || sName === "generate_pdf") {
               st.inputSchema = {
                 type: "object",
                 properties: {
-                  title: { type: "string", description: "Title of the PDF report" },
-                  content: { type: "string", description: "Markdown or plain text content for the PDF report" },
-                  filename: { type: "string", description: "PDF file basename" }
+                  title: { type: "string", description: "Report title" },
+                  content: { type: "string", description: "Markdown or text content of the report" },
+                  filename: { type: "string", description: "Output PDF filename (optional)" }
                 },
                 required: ["content"]
               };
-              st.description = "Generate a PDF document report from formatted text content.";
+              st.description = "Generate a formatted PDF document with downloadable data URI link.";
+            } else if (sName === "generate-csv" || sName === "generate_csv") {
+              st.inputSchema = {
+                type: "object",
+                properties: {
+                  title: { type: "string", description: "CSV export title" },
+                  content: { type: "string", description: "Raw CSV string, Markdown table string, or array of records" },
+                  filename: { type: "string", description: "Output CSV filename (optional)" }
+                },
+                required: ["content"]
+              };
+              st.description = "Generate an RFC 4180 compliant CSV document with downloadable data URI link.";
             } else if (st.name && globalMcpSchemaCache[st.name]) {
               st.inputSchema = globalMcpSchemaCache[st.name] as unknown as AgentflowTool["inputSchema"];
             }
@@ -3723,16 +3831,39 @@ If you do NOT need to call any more tools, output your final result directly to 
 You are the Synthesizer Agent. Your primary role is to aggregate, validate, and report the execution results from downstream worker nodes.
 
 CRITICAL INSTRUCTIONS:
-- You must synthesize a unified response based strictly on the actual facts, numbers, and execution receipts returned by the worker nodes below.
+- ZERO DATA HALLUCINATION MANDATE: You must synthesize a unified response based strictly on the actual facts, numbers, and execution receipts returned by the worker nodes below. If upstream worker nodes returned no results or failed, state clearly: "No search results were retrieved from the tools." NEVER invent or fabricate sample business names, phone numbers, ratings, or addresses!
+- ACTION VERIFICATION & RECEIPT GROUNDING MANDATE:
+  * Only confirm that an email was sent if an explicit successful execution receipt (status: "sent" or success: true) exists from the 'send-email' tool. If no email tool was executed, state: "Email action could not be completed because the email tool was not invoked in this pipeline run."
+  * Only confirm that a CSV or PDF file was generated if a valid download link was returned from 'generate-csv' or 'generate-pdf'.
+- FORMAT RESTRICTION MANDATE:
+  * Do NOT mention, generate, or format PDF reports/links unless the user explicitly requested a PDF in their prompt!
+  * Do NOT mention or format CSV exports unless the user explicitly requested a CSV in their prompt!
 - FOCUS EXCLUSIVELY ON THE CURRENT TURN ACTION: Report on the current action executed in the current turn trace. Do NOT re-print tables or datasets from prior conversation turns (e.g., do not output historical data when adding a new record) unless the user explicitly asks for a combined overview.
 - HUMAN-READABLE DATE & TIME FORMATTING MANDATE: NEVER display raw ISO 8601 timestamp strings (e.g. "2026-09-01T12:33:08.468Z") in report tables or output text! Convert all date/time fields into clean human-readable date strings (e.g. "September 1, 2026" or "Sep 1, 2026 at 12:33 PM").
 - HIDE RAW SYSTEM UUID & ID COLUMNS: DO NOT render raw database UUID string columns (e.g. "e1d59c57-8392-4004-94fa-c9203ead34c2") in report tables meant for human viewing. Map status IDs or foreign keys to readable names or omit raw system ID columns.
 - CURRENCY FORMATTING: Format all monetary amounts cleanly with currency symbols and commas (e.g. "₹8,00,000", "$800,000").
+- CONTACT, WEBSITE, AND REVIEW MATRIX FORMATTING MANDATE: For business discovery and location tables, format standard markdown table columns:
+  | Business Name | ⭐ Rating | Review Count | Address | 📞 Contact / Email | 🌐 Website / Maps |
+  - Format phone numbers cleanly into clickable tel links (e.g. \[📞 +91 70043 38655\](tel:+917004338655) or formatted numbers). If missing, display "Not listed".
+  - Format email addresses into mailto links (e.g. \[📧 email@domain.com\](mailto:email@domain.com)).
+  - Format websites into \[🌐 Website\](url) and Google Maps links into \[🗺️ Google Maps\](url).
+- MANDATORY REPORT RENDERING & DATA MATRIX MANDATE:
+  * In your final markdown report, you MUST ALWAYS output the comprehensive Markdown table containing ALL discovered items, caterers, vendors, or businesses with columns:
+    | Business Name | ⭐ Rating | Review Count | Address | 📞 Contact / Email | 🌐 Website / Maps |
+  * NEVER output only an "Executive Summary" or brief status note without displaying the complete table matrix of records!
+  * When 'generate-csv' has executed, you MUST copy the exact markdown link (e.g. '[ 📥 Download CSV Export (filename.csv) ](data:text/csv;charset=utf-8;base64,...)') returned in the tool output into your final response under a dedicated '### 📥 Download CSV Export' section so the user can download the file!
+  * When 'send-email' is executed, confirm the recipient email address under a dedicated '### 📧 Email Dispatch Confirmation' section.
 - EXECUTIVE SUMMARY & STRATEGIC RECOMMENDATIONS: When the user requests an "Executive Summary", "Overview", or "Report with Recommendations", DO NOT output only raw data tables! You MUST provide: 1) Executive Summary Overview & Key Highlights, 2) Key Metrics Summary, 3) Strategic Recommendations & Action Items, followed by 4) Formatted Entity Data Tables.
 - COMPLETE DATA RENDERING MANDATE: Include ALL items returned in worker tool payloads. DO NOT truncate, omit, or skip items from the dataset!
 - STRICT MULTI-NODE DATA ISOLATION & ENTITY SEPARATION: By default, present each active worker node's dataset under its own dedicated section with a clear Markdown heading (e.g. "### Entity A List" and "### Entity B List"). DO NOT mix rows or columns between different worker node datasets unless the user explicitly requests a combined/unified overview or single table.
 - ${hasReceipts ? "The ground-truth EXECUTION RECEIPTS block above is the authoritative source for determining whether actions succeeded or failed. Base your report strictly on it." : "Base your report on the data returned in the agent outputs above."}
-${synthTools.length > 0 ? `\nINSTRUCTION: You have tools available [${synthToolsListStr}]. ${userRequestsEmail ? "The user explicitly requested to email/send the report. You MUST invoke the 'send-email' tool with recipient email ('to'), subject, and formatted report body BEFORE outputting your final summary response." : ""} ${userRequestsPdf ? "The user explicitly requested a PDF. You MUST invoke 'generate-pdf' with title, content, and filename." : ""}\n` : ""}`;
+${synthTools.length > 0 ? `
+MANDATORY MULTI-ACTION TOOL INVOCATION MANDATE:
+You have action tools available [${synthToolsListStr}].
+* If the user requested a downloadable CSV file (e.g., "csv file", "download csv", "csv export"): You MUST invoke the 'generate-csv' tool with title, content (or table data rows), and filename based on CURRENT TURN data.
+* If the user requested an email (e.g., provided an email address such as "${emailAddressMatch ? emailAddressMatch[0] : "recipient email"}" or asked to send/email the report): You MUST invoke the 'send-email' tool with the recipient email ('to'), subject, and formatted HTML/Markdown body based on CURRENT TURN data.
+* When BOTH CSV download and email dispatch are requested, you MUST invoke BOTH tools across sequential turns before writing your final synthesis markdown report. Do NOT stop after invoking only one tool!
+` : ""}`;
 
           async function executeSynthToolCalls(synthHistory: ChatMessage[], toolCalls: { name: string; arguments: Record<string, unknown> }[]): Promise<void> {
             for (const tc of toolCalls) {
@@ -3744,49 +3875,59 @@ ${synthTools.length > 0 ? `\nINSTRUCTION: You have tools available [${synthTools
               }
               let result = "";
               try {
+                const nodeLabels = workerResults.map(r => r.nodeLabel).join(" & ");
+                const dynamicTitle = nodeLabels ? `${nodeLabels} Report` : "SavazAI Summary Report";
+                const dynamicFilename = nodeLabels ? nodeLabels.toLowerCase().replace(/[^a-z0-9]+/g, "_") : "export";
+
                 if (toolName === "send-email") {
                   let to = String(tc.arguments?.to || tc.arguments?.recipient || tc.arguments?.email || "").trim();
                   if (!to || !isValidEmail(to)) {
-                    const emailMatch = msgStr.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
-                    if (emailMatch) to = emailMatch[0];
+                    to = fallbackRecipientEmail;
                   }
-                  if (!to || !isValidEmail(to)) {
-                    result = JSON.stringify({ success: false, error: "ERROR: Recipient email address missing or invalid." });
-                    synthHistory.push({ role: "tool", name: toolName, content: result });
-                    continue;
-                  }
-                  const nodeLabels = workerResults.map(r => r.nodeLabel).join(" & ");
-                  const dynamicTitle = nodeLabels ? `${nodeLabels} Report` : "Summary Report";
                   const subject = String(tc.arguments?.subject || dynamicTitle);
-
-                  let body = String(tc.arguments?.body || tc.arguments?.content || "").trim();
-                  if (!body || body === aggregationContext || workerResults.length === 0) {
-                    // Search thread memory for the previous compiled assistant report
-                    if (execThreadId) {
-                      const threadMem = await loadThreadMemory(execThreadId);
-                      const prevAssistantMsg = [...threadMem].reverse().find(m => m.role === "assistant" && m.content && m.content.length > 50);
-                      if (prevAssistantMsg) {
-                        body = prevAssistantMsg.content;
-                      }
-                    }
+                  
+                  // Ground the email body strictly to the current turn's worker results
+                  const currentWorkerOutput = workerResults.map(r => r.output).join("\n\n");
+                  let rawBody = String(tc.arguments?.body || tc.arguments?.content || tc.arguments?.html || "").trim();
+                  const rawBodyHasRecords = Boolean(extractRecordsFromPayload(rawBody)) || (rawBody.includes("|") && rawBody.split("\n").filter(l => l.includes("|")).length >= 3);
+                  if (!rawBody || !rawBodyHasRecords) {
+                    rawBody = currentWorkerOutput || aggregationContext;
                   }
-                  if (!body) body = aggregationContext;
 
-                  sendEvent({ type: "trace", content: `[Synthesizer Tool: send-email] Dispatching report email to ${to}...` });
-                  const emailRes = await sendEmailReal(to, subject, body, providerConfigs, pool);
-                  result = JSON.stringify(emailRes);
-                } else if (toolName === "generate-pdf" || toolName === "generate_pdf" || toolName === "pdf_report") {
-                  const nodeLabels = workerResults.map(r => r.nodeLabel).join(" & ");
-                  const dynamicTitle = nodeLabels ? `${nodeLabels} Report` : "Summary Report";
-                  const dynamicFilename = nodeLabels ? nodeLabels.toLowerCase().replace(/[^a-z0-9]+/g, "_") : "summary_report";
+                  let html = tc.arguments?.html ? String(tc.arguments.html) : "";
+                  if (!html || (!html.includes("<table") && !html.includes("<div"))) {
+                    html = formatHtmlEmailBody(subject, rawBody);
+                  }
+                  sendEvent({ type: "trace", content: `[Synthesizer Tool: send-email] Dispatching formatted HTML report email to ${to}...` });
+                  const emailRes = await sendEmailReal(to, subject, html || rawBody, providerConfigs, pool);
+                  result = typeof emailRes === "string" ? emailRes : JSON.stringify(emailRes);
+                } else if (toolName === "generate-pdf" || toolName === "generate_pdf" || toolName === "pdf_export") {
                   const pdfTitle = String(tc.arguments?.title || dynamicTitle);
-                  const pdfContent = String(tc.arguments?.content || tc.arguments?.body || aggregationContext);
+                  const currentWorkerOutput = workerResults.map(r => r.output).join("\n\n");
+                  let pdfContent = String(tc.arguments?.content || tc.arguments?.body || "").trim();
+                  const pdfContentHasRecords = Boolean(extractRecordsFromPayload(pdfContent)) || (pdfContent.includes("|") && pdfContent.split("\n").filter(l => l.includes("|")).length >= 3);
+                  if (!pdfContent || !pdfContentHasRecords) {
+                    pdfContent = currentWorkerOutput || aggregationContext;
+                  }
                   const pdfFilename = String(tc.arguments?.filename || dynamicFilename);
                   sendEvent({ type: "trace", content: `[Synthesizer Tool: generate-pdf] Generating PDF document "${pdfTitle}"...` });
                   const pdfRes = await executeNativeTool("generate-pdf", { title: pdfTitle, content: pdfContent, filename: pdfFilename }, designTokens);
-                  result = JSON.stringify(pdfRes);
+                  result = typeof pdfRes === "string" ? pdfRes : JSON.stringify(pdfRes);
+                } else if (toolName === "generate-csv" || toolName === "generate_csv" || toolName === "csv_export") {
+                  const csvTitle = String(tc.arguments?.title || (nodeLabels ? `${nodeLabels} Export` : "Export"));
+                  const currentWorkerOutput = workerResults.map(r => r.output).join("\n\n");
+                  let csvContent = String(tc.arguments?.content || tc.arguments?.body || tc.arguments?.data || "").trim();
+                  const csvContentHasRecords = Boolean(extractRecordsFromPayload(csvContent)) || (csvContent.includes("|") && csvContent.split("\n").filter(l => l.includes("|")).length >= 3);
+                  if (!csvContent || !csvContentHasRecords) {
+                    csvContent = currentWorkerOutput || aggregationContext;
+                  }
+                  const csvFilename = String(tc.arguments?.filename || dynamicFilename);
+                  sendEvent({ type: "trace", content: `[Synthesizer Tool: generate-csv] Generating RFC 4180 CSV export "${csvFilename}"...` });
+                  const csvRes = await executeNativeTool("generate-csv", { title: csvTitle, content: csvContent, filename: csvFilename }, designTokens);
+                  result = typeof csvRes === "string" ? csvRes : JSON.stringify(csvRes);
                 } else if (boundTool.category === "native") {
-                  result = await executeNativeTool(toolName, tc.arguments || {}, designTokens);
+                  const nativeRes = await executeNativeTool(toolName, tc.arguments || {}, designTokens);
+                  result = typeof nativeRes === "string" ? nativeRes : JSON.stringify(nativeRes);
                 } else {
                   result = await runMcpToolWithResilience(boundTool.serverId || toolName, toolName, tc.arguments || {}, synthTools);
                 }
@@ -3806,12 +3947,17 @@ ${synthTools.length > 0 ? `\nINSTRUCTION: You have tools available [${synthTools
           if (synthTools.length > 0) {
             // Tool-enabled synthesizer: worker-style loop for function calling
             let synthTurn = 0;
+            // Strictly isolate synthesizer context to the current turn's worker results (aggregationContext)
+            // to guarantee zero data bleeding from prior conversational turns
             const synthHistory: ChatMessage[] = [
-              ...threadHistory,
               { role: "user", content: aggregationContext }
             ];
             while (synthTurn < 5) {
-              const forceTools = (synthTurn === 0 && (userRequestsEmail || userRequestsPdf)) ? "required" : undefined;
+              const pendingEmail = userRequestsEmail && !synthHistory.some(m => m.role === "tool" && (m.name === "send-email" || m.name === "send_email"));
+              const pendingCsv = userRequestsCsv && !synthHistory.some(m => m.role === "tool" && (m.name === "generate-csv" || m.name === "generate_csv"));
+              const pendingPdf = userRequestsPdf && !synthHistory.some(m => m.role === "tool" && (m.name === "generate-pdf" || m.name === "generate_pdf"));
+              const hasPendingRequestedTool = pendingEmail || pendingCsv || pendingPdf;
+              const forceTools = (synthTurn < 3 && hasPendingRequestedTool) ? "required" : undefined;
               const response = await queryLLMWithHistory(
                 synthesizerNode.modelConfig.provider,
                 synthesizerNode.modelConfig.model,
@@ -3831,8 +3977,121 @@ ${synthTools.length > 0 ? `\nINSTRUCTION: You have tools available [${synthTools
                 break;
               }
             }
+
+            // Guaranteed Fallback Execution Guard: If user explicitly requested email or CSV and tool wasn't called, invoke now!
+            const emailExecuted = synthHistory.some(m => m.role === "tool" && (m.name === "send-email" || m.name === "send_email"));
+            if (userRequestsEmail && !emailExecuted && synthTools.some(t => t.name === "send-email" || t.name === "send_email")) {
+              const nodeLabels = workerResults.map(r => r.nodeLabel).join(" & ");
+              const dynamicTitle = nodeLabels ? `${nodeLabels} Report` : "SavazAI Summary Report";
+              await executeSynthToolCalls(synthHistory, [{
+                name: "send-email",
+                arguments: {
+                  to: emailAddressMatch ? emailAddressMatch[0] : fallbackRecipientEmail,
+                  subject: dynamicTitle,
+                  body: workerResults.map(r => r.output).join("\n\n") || aggregationContext
+                }
+              }]);
+            }
+
+            const csvExecuted = synthHistory.some(m => m.role === "tool" && (m.name === "generate-csv" || m.name === "generate_csv"));
+            if (userRequestsCsv && !csvExecuted && synthTools.some(t => t.name === "generate-csv" || t.name === "generate_csv")) {
+              const nodeLabels = workerResults.map(r => r.nodeLabel).join(" & ");
+              const dynamicFilename = nodeLabels ? nodeLabels.toLowerCase().replace(/[^a-z0-9]+/g, "_") : "export";
+              await executeSynthToolCalls(synthHistory, [{
+                name: "generate-csv",
+                arguments: {
+                  title: nodeLabels ? `${nodeLabels} Export` : "Export",
+                  content: workerResults.map(r => r.output).join("\n\n") || aggregationContext,
+                  filename: dynamicFilename
+                }
+              }]);
+            }
+
             if (!finalResult) {
               finalResult = synthHistory[synthHistory.length - 1]?.content || "";
+            }
+
+            // Post-processing guard 1: Ensure CSV download link is present and validly formatted in finalResult
+            const csvToolMsg = synthHistory.find(m => m.role === "tool" && (m.name === "generate-csv" || m.name === "generate_csv"));
+            if (csvToolMsg && csvToolMsg.content) {
+              try {
+                let parsedCsv = tryParseJson(csvToolMsg.content);
+                if (typeof parsedCsv === "string") {
+                  parsedCsv = tryParseJson(parsedCsv);
+                }
+                let rawFilename = parsedCsv?.filename || "export.csv";
+                const cleanFilename = String(rawFilename).replace(/\.csv$/i, "").replace(/_csv$/i, "").replace(/_+$/, "") + ".csv";
+                let downloadUrl = parsedCsv?.downloadUrl;
+                if (!downloadUrl && typeof csvToolMsg.content === "string" && csvToolMsg.content.includes("data:text/csv")) {
+                  const match = csvToolMsg.content.match(/data:text\/csv;charset=utf-8;base64,[A-Za-z0-9+/=]+/);
+                  if (match) downloadUrl = match[0];
+                }
+                if (downloadUrl) {
+                  const linkMarkdown = `[📥 Download CSV Export: ${cleanFilename}](<${downloadUrl}>)`;
+                  // Normalize any existing non-bracketed or broken links
+                  if (finalResult.includes(downloadUrl)) {
+                    finalResult = finalResult.replace(/\[\s*([^\]]+?)\s*\]\(<?(data:text\/csv[^)>]+)>?\)/gi, `[📥 Download CSV Export: ${cleanFilename}](<$2>)`);
+                  } else {
+                    const inlineCsvRegex = /(?:^|\n|[ \t]*)(?:[-*•]\s*)?(?:\[\s*)?(?:📥\s*)?Download\s*CSV\s*Export[^\n\r]*(?!\(<data:text\/csv)/gi;
+                    if (inlineCsvRegex.test(finalResult)) {
+                      finalResult = finalResult.replace(inlineCsvRegex, `\n\n- ${linkMarkdown}\n`);
+                    } else {
+                      finalResult += `\n\n---\n### 📥 Download CSV Export\n- ${linkMarkdown}\n`;
+                    }
+                  }
+                  // Deduplicate repetitive CSV download lines
+                  const csvLinkMatches = finalResult.match(/\[📥 Download CSV Export:[^\]]+\]\(<data:text\/csv[^>]+>\)/g);
+                  if (csvLinkMatches && csvLinkMatches.length > 1) {
+                    let firstSeen = false;
+                    finalResult = finalResult.replace(/\[📥 Download CSV Export:[^\]]+\]\(<data:text\/csv[^>]+>\)/g, (match) => {
+                      if (!firstSeen) {
+                        firstSeen = true;
+                        return match;
+                      }
+                      return "";
+                    });
+                  }
+                }
+              } catch (e) {
+                console.error("[PostProcessing CSV Link Error]", e);
+              }
+            }
+
+            // Post-processing guard 2: Ensure Markdown table is ALWAYS present in finalResult if worker provided records or JSON
+            if (!finalResult.includes("|")) {
+              if (aggregationContext.includes("|")) {
+                const tableLines = aggregationContext.split("\n").filter(l => l.trim().startsWith("|") && l.includes("|"));
+                if (tableLines.length >= 3) {
+                  finalResult = `### 📋 Discovered Records\n\n${tableLines.join("\n")}\n\n${finalResult}`;
+                }
+              } else {
+                const extracted = extractRecordsFromPayload(aggregationContext);
+                if (extracted && extracted.length > 0) {
+                  const tableHeader = "| Business Name | ⭐ Rating | Review Count | Address | 📞 Contact | 🌐 Website / Maps |\n| --- | --- | --- | --- | --- | --- |";
+                  const tableRows = extracted.map(r => {
+                    const name = sanitizeTableCell(r.name || r.title || r.businessName || "Unnamed");
+                    const rating = r.rating != null ? String(r.rating) : "N/A";
+                    const reviewCount = r.review_count ?? r.userRatingCount ?? r.reviews_count ?? "N/A";
+                    const address = sanitizeTableCell(r.address || r.formattedAddress || "");
+                    const phone = sanitizeTableCell(r.phone || "Not listed");
+                    const webUrl = r.website || r.websiteUri || r.website_or_map_link;
+                    const mapsUrl = r.googleMapsUri || r.map_link;
+                    let links = [];
+                    if (webUrl && String(webUrl).includes("http")) {
+                      const wLink = String(webUrl).split(/[\s|/]+/).find(s => s.startsWith("http"));
+                      if (wLink) links.push(`[🌐 Website](${wLink})`);
+                    }
+                    if (mapsUrl && String(mapsUrl).includes("http")) {
+                      const mLink = String(mapsUrl).split(/[\s|/]+/).find(s => s.startsWith("http"));
+                      if (mLink) links.push(`[🗺️ Maps](${mLink})`);
+                    }
+                    const linkCol = links.length > 0 ? links.join(" ") : "-";
+                    return `| ${name} | ${rating} | ${reviewCount} | ${address} | ${phone} | ${linkCol} |`;
+                  }).join("\n");
+                  const nodeLabels = workerResults.map(r => r.nodeLabel).join(" & ") || "Discovered Records";
+                  finalResult = `### 📋 ${nodeLabels}\n\n${tableHeader}\n${tableRows}\n\n${finalResult}`;
+                }
+              }
             }
           } else {
             // Text-only synthesizer: direct LLM call

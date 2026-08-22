@@ -342,14 +342,14 @@ app.get("/api/tools/registered", async (_req, res) => {
         label: "Google Places & Local Search",
         category: "native",
         status: placesActive ? "active" : "needs_key",
-        description: "Local business lookup and coordinate resolution utilizing the Google Places API."
+        description: "Local business lookup, ratings, review counts, contact phone numbers, and maps links via the Google Places (New) API."
       },
       {
         name: "web-search",
         label: "Web Search (Serper / Tavily)",
         category: "native",
         status: searchActive ? "active" : "needs_key",
-        description: "Search the web for real-time information utilizing Serper or Tavily."
+        description: "Search the web for real-time contact enrichment, phone numbers, emails, and website links via Serper or Tavily."
       },
       {
         name: "send-email",
@@ -364,6 +364,13 @@ app.get("/api/tools/registered", async (_req, res) => {
         category: "native",
         status: "active",
         description: "Generate structured PDF reports from text utilizing local python scripts and ReportLab."
+      },
+      {
+        name: "generate-csv",
+        label: "CSV Export Generator",
+        category: "native",
+        status: "active",
+        description: "Generate RFC 4180 compliant CSV spreadsheets with downloadable Data URI links."
       },
       {
         name: "yelp-business-search",

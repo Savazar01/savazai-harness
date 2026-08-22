@@ -1742,8 +1742,8 @@ async function executeToolByName(
       resultText = JSON.stringify({ error: err.message });
       statusCode = 500;
     }
-  } else if (toolName === "google-places" || toolName === "google_places") {
-    const params = ["query", "location", "radius"];
+  } else if (toolName === "google-places" || toolName === "google_places" || toolName === "google_places_search" || toolName === "places") {
+    const params = ["textQuery", "query", "search_query", "location", "pageSize", "languageCode"];
     for (const propName of params) {
       if (toolArgs[propName] === undefined) {
         const ambientValue = await resolveAmbientParameter(propName);
@@ -1759,41 +1759,71 @@ async function executeToolByName(
       if (!googlePlacesApiKey) {
         throw new Error("Google Places API key is not configured.");
       }
-      const query = toolArgs.query || "";
+      const query = String(toolArgs.textQuery || toolArgs.query || toolArgs.search_query || toolArgs.location || toolArgs.q || "").trim();
       if (!query) {
-        throw new Error("Missing required argument: query");
+        throw new Error("Missing required argument: textQuery or query");
       }
-      const radius = toolArgs.radius || tokens.googlePlacesRadius || 5000;
-      let url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&radius=${radius}&key=${googlePlacesApiKey}`;
-      if (toolArgs.location) {
-        url += `&location=${encodeURIComponent(toolArgs.location)}`;
-      }
-      
-      const response = await fetch(url);
+      const pageSize = Math.min(Math.max(Number(toolArgs.pageSize || toolArgs.limit || toolArgs.count || 20), 1), 20);
+      const languageCode = toolArgs.languageCode || toolArgs.language ? String(toolArgs.languageCode || toolArgs.language) : undefined;
+
+      const requestBody: Record<string, unknown> = {
+        textQuery: query,
+        pageSize,
+      };
+      if (languageCode) requestBody.languageCode = languageCode;
+
+      const fieldMask = [
+        "places.id",
+        "places.displayName",
+        "places.formattedAddress",
+        "places.rating",
+        "places.userRatingCount",
+        "places.priceLevel",
+        "places.nationalPhoneNumber",
+        "places.internationalPhoneNumber",
+        "places.websiteUri",
+        "places.googleMapsUri",
+        "places.businessStatus",
+        "places.regularOpeningHours"
+      ].join(",");
+
+      const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": googlePlacesApiKey,
+          "X-Goog-FieldMask": fieldMask,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
       if (!response.ok) {
         throw new Error(`Google Places API returned ${response.status}: ${await response.text()}`);
       }
       const data = await response.json() as any;
-      if (data.status && data.status !== "OK" && data.status !== "ZERO_RESULTS") {
-        throw new Error(`Google Places API error: ${data.status} - ${data.error_message || ""}`);
-      }
-      const results = (data.results || []).map((p: any) => ({
-        name: p.name,
-        formattedAddress: p.formatted_address,
-        rating: p.rating,
-        userRatingsTotal: p.user_ratings_total,
-        placeId: p.place_id,
-        location: p.geometry?.location,
+      const placesArr = Array.isArray(data.places) ? data.places : [];
+
+      const results = placesArr.map((p: any) => ({
+        name: p.displayName?.text || p.displayName || p.name || "Unnamed Place",
+        address: p.formattedAddress || "",
+        rating: p.rating ?? null,
+        review_count: p.userRatingCount ?? null,
+        phone: p.nationalPhoneNumber || p.internationalPhoneNumber || null,
+        website: p.websiteUri || p.googleMapsUri || null,
+        email: null,
+        googleMapsUri: p.googleMapsUri || null,
+        businessStatus: p.businessStatus || null,
+        placeId: p.id || null,
       }));
-      resultText = JSON.stringify({ results, status: data.status });
+      resultText = JSON.stringify({ results, total: results.length });
       statusCode = 200;
     } catch (err: any) {
       console.error("Google Places tool execution failed:", err);
       resultText = JSON.stringify({ error: err.message });
       statusCode = 500;
     }
-  } else if (toolName === "web-search" || toolName === "web_search") {
-    const params = ["query"];
+  } else if (toolName === "web-search" || toolName === "web_search" || toolName === "serper-search" || toolName === "serper_search" || toolName === "serper-places" || toolName === "serper_places" || toolName === "tavily" || toolName === "tavily_search") {
+    const params = ["query", "textQuery", "search_query", "count"];
     for (const propName of params) {
       if (toolArgs[propName] === undefined) {
         const ambientValue = await resolveAmbientParameter(propName);
@@ -1807,33 +1837,106 @@ async function executeToolByName(
       const tokens = configs.length > 0 ? (configs[0].designTokens || {}) as any : {};
       const tavilyApiKey = tokens.tavilyApiKey || process.env.TAVILY_API_KEY;
       const serperApiKey = tokens.serperApiKey || process.env.SERPER_API_KEY;
-      const query = toolArgs.query;
+      const query = String(toolArgs.query || toolArgs.textQuery || toolArgs.search_query || toolArgs.q || "").trim();
       if (!query) {
         throw new Error("Missing required argument: query");
       }
+      const count = Number(toolArgs.count || toolArgs.limit || toolArgs.pageSize || 5);
 
-      if (tavilyApiKey) {
-        const response = await fetch("https://api.tavily.com/search", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ api_key: tavilyApiKey, query, search_depth: "advanced" })
-        });
-        if (!response.ok) {
-          throw new Error(`Tavily search returned ${response.status}: ${await response.text()}`);
-        }
-        const data = await response.json();
-        resultText = JSON.stringify(data);
-      } else if (serperApiKey) {
-        const response = await fetch("https://google.serper.dev/search", {
+      const extractEmailsFromSnippet = (text: string): string[] => {
+        if (!text) return [];
+        const matches = Array.from(text.matchAll(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g));
+        return Array.from(new Set(matches.map((m) => m[0].replace(/[.,;:)\]]+$/, "")).filter(Boolean)));
+      };
+
+      const extractPhonesFromSnippet = (text: string): string[] => {
+        if (!text) return [];
+        const phoneRegex = /(?:\+91[\-\s]?)?[6-9]\d{4}[\-\s]?\d{5}|\b0\d{2,4}[\-\s]?\d{6,8}\b|\b\d{5}[\-\s]?\d{5}\b|\+?\d{1,3}[-.\s]\(?\d{2,4}\)?[-.\s]\d{3,4}[-.\s]\d{3,4}/g;
+        const matches = text.match(phoneRegex) || [];
+        return Array.from(new Set(matches.map((p) => p.trim()).filter((p) => !/^\d{4}$/.test(p))));
+      };
+
+      if (serperApiKey) {
+        const isPlacesSearch = toolName.includes("places");
+        const endpoint = isPlacesSearch ? "https://google.serper.dev/places" : "https://google.serper.dev/search";
+        const response = await fetch(endpoint, {
           method: "POST",
           headers: { "X-API-KEY": serperApiKey, "Content-Type": "application/json" },
-          body: JSON.stringify({ q: query })
+          body: JSON.stringify({ q: query, num: count }),
         });
         if (!response.ok) {
           throw new Error(`Serper search returned ${response.status}: ${await response.text()}`);
         }
-        const data = await response.json();
-        resultText = JSON.stringify(data);
+        const data = await response.json() as any;
+        const results: any[] = [];
+
+        if (Array.isArray(data.places)) {
+          for (const p of data.places) {
+            results.push({
+              name: p.title || p.name || "",
+              address: p.address || "",
+              rating: p.rating ?? null,
+              review_count: p.ratingCount ?? null,
+              phone: p.phoneNumber || p.phone || null,
+              website: p.website || p.link || null,
+              email: null,
+              snippet: p.category || p.address || "",
+            });
+          }
+        }
+
+        if (Array.isArray(data.organic)) {
+          for (const r of data.organic) {
+            const snippet = String(r.snippet || "");
+            const title = String(r.title || "");
+            const fullSnippet = `${title} ${snippet}`;
+            const emails = extractEmailsFromSnippet(fullSnippet);
+            const phones = extractPhonesFromSnippet(fullSnippet);
+
+            results.push({
+              name: title,
+              address: "",
+              rating: null,
+              review_count: null,
+              phone: phones[0] || null,
+              website: r.link || null,
+              email: emails[0] || null,
+              snippet,
+            });
+          }
+        }
+
+        resultText = JSON.stringify({ results, total: results.length });
+      } else if (tavilyApiKey) {
+        const response = await fetch("https://api.tavily.com/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ api_key: tavilyApiKey, query, max_results: count, search_depth: "advanced" })
+        });
+        if (!response.ok) {
+          throw new Error(`Tavily search returned ${response.status}: ${await response.text()}`);
+        }
+        const data = await response.json() as any;
+        const rawResults = Array.isArray(data.results) ? data.results : [];
+        const results = rawResults.map((r: any) => {
+          const content = String(r.content || "");
+          const title = String(r.title || "");
+          const fullText = `${title} ${content}`;
+          const emails = extractEmailsFromSnippet(fullText);
+          const phones = extractPhonesFromSnippet(fullText);
+
+          return {
+            name: title,
+            address: "",
+            rating: null,
+            review_count: null,
+            phone: phones[0] || null,
+            website: r.url || null,
+            email: emails[0] || null,
+            snippet: content,
+          };
+        });
+        resultText = JSON.stringify({ results, total: results.length });
       } else {
         throw new Error("Neither Tavily nor Serper API key is configured.");
       }
@@ -1922,6 +2025,62 @@ async function executeToolByName(
       statusCode = 200;
     } catch (err: any) {
       console.error("Generate PDF tool execution failed:", err);
+      resultText = JSON.stringify({ error: err.message });
+      statusCode = 500;
+    }
+  } else if (toolName === "generate-csv" || toolName === "generate_csv" || toolName === "csv_export" || toolName === "export_csv") {
+    try {
+      const filename = String(toolArgs.filename || toolArgs.title || `export_${Date.now()}`).replace(/[^a-zA-Z0-9_-]/g, "_");
+      const csvFilename = filename.endsWith(".csv") ? filename : `${filename}.csv`;
+      const rawData = toolArgs.data || toolArgs.records || toolArgs.items || toolArgs.rows || toolArgs.content || toolArgs.summaryText || "";
+
+      const escapeCell = (val: unknown): string => {
+        if (val === null || val === undefined) return '""';
+        const str = String(val);
+        if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return `"${str}"`;
+      };
+
+      let csvContent = "";
+      if (Array.isArray(rawData) && rawData.length > 0) {
+        const headers = Object.keys(rawData[0] || {});
+        const headerLine = headers.map(h => escapeCell(h)).join(",");
+        const dataLines = rawData.map((row: Record<string, unknown>) =>
+          headers.map(h => escapeCell(row[h])).join(",")
+        );
+        csvContent = [headerLine, ...dataLines].join("\r\n");
+      } else if (typeof rawData === "string" && rawData.trim()) {
+        const lines = rawData.trim().split(/\r?\n/);
+        const tableLines = lines.filter(l => l.includes("|") && !l.includes("---"));
+        if (tableLines.length > 0) {
+          csvContent = tableLines.map(l => {
+            const cells = l.split("|").map(c => c.trim()).filter((_, idx, arr) => idx > 0 && idx < arr.length);
+            return cells.map(c => escapeCell(c)).join(",");
+          }).join("\r\n");
+        } else {
+          csvContent = rawData;
+        }
+      } else {
+        csvContent = "Name,Address,Rating,Reviews,Phone,Website,Email\r\n";
+      }
+
+      const base64Data = Buffer.from(csvContent, "utf-8").toString("base64");
+      const downloadUrl = `data:text/csv;charset=utf-8;base64,${base64Data}`;
+      const downloadMarkdown = `[ 📥 Download CSV Export (${csvFilename}) ](${downloadUrl})`;
+
+      resultText = JSON.stringify({
+        success: true,
+        message: `CSV file "${csvFilename}" generated successfully. ${downloadMarkdown}`,
+        filename: csvFilename,
+        downloadUrl,
+        downloadMarkdown,
+        rowCount: csvContent.split("\r\n").length - 1
+      });
+      statusCode = 200;
+    } catch (err: any) {
+      console.error("Generate CSV tool execution failed:", err);
       resultText = JSON.stringify({ error: err.message });
       statusCode = 500;
     }
@@ -2590,10 +2749,17 @@ ${customGlobalPrompt ? `Global System Instructions:\n${customGlobalPrompt}\n` : 
 ${customOrchestrationRules ? `Orchestration Rules:\n${customOrchestrationRules}\n` : ""}
 
 ## Presentation and Formatting Guidelines:
-1. Synthesize all raw data present in the history. Do not invent, mock, or fallback to generic templates.
-2. Aggressively convert all incoming raw JSON database strings, system tool metrics, and key-value blocks into beautiful, highly readable Markdown formats (clean bullet structures, bold headers, and proper Markdown Table matrices).
-3. NEVER output raw JSON blocks, lists of brackets, or developer-facing debug strings.
-4. Return a complete, detailed conversational response in Markdown. Do not output JSON.`;
+1. ZERO DATA HALLUCINATION: Synthesize all raw data present strictly from the tool outputs in history. If no data was returned by tools, state clearly: "No search results were retrieved from the tools." NEVER invent, mock, fabricate, or fallback to fake placeholder records.
+2. ACTION VERIFICATION: Only confirm that an email was sent or a file/CSV was generated if a successful execution receipt exists in the history.
+3. Aggressively convert all incoming raw JSON database strings, system tool metrics, and key-value blocks into beautiful, highly readable Markdown formats (clean bullet structures, bold headers, and proper Markdown Table matrices).
+4. Contact, Website, and Entity Table Formatting:
+   - For business discovery & location tables, render standard matrix headers: | Business Name | ⭐ Rating | Review Count | Address | 📞 Contact / Email | 🌐 Website / Maps |
+   - Format phone numbers cleanly with clickable tel links where possible (e.g. \[📞 +91 70043 38655\](tel:+917004338655) or formatted numbers). If missing, display "Not listed".
+   - Format email addresses with mailto links (e.g. \[📧 name@domain.com\](mailto:email@domain.com)).
+   - Format websites and Google Maps as clean Markdown links (e.g. \[🌐 Website\](url) and \[🗺️ Google Maps\](url)).
+   - Display review counts (e.g. 497 reviews) and ratings (e.g. 4.9 ★) accurately from tool payloads.
+5. NEVER output raw JSON blocks, lists of brackets, or developer-facing debug strings.
+6. Return a complete, detailed conversational response in Markdown. Do not output JSON.`;
 
   let responseText = "No operations executed.";
   if (currentApp) {

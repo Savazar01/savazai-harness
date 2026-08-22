@@ -14,11 +14,151 @@ import {
   ChevronLeft,
   ChevronRight,
   Activity,
-  ChevronDown
+  ChevronDown,
+  Download,
+  Copy,
+  Check,
+  Mail,
+  FileSpreadsheet
 } from "lucide-react";
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+
+/* ── Bulletproof Client CSV Downloader ── */
+export function triggerCsvDownload(base64OrCsvData: string, filename = "export.csv") {
+  try {
+    let cleanFilename = filename.replace(/\.csv$/i, "").replace(/_csv$/i, "").replace(/_+$/, "") + ".csv";
+    let csvContent = base64OrCsvData;
+
+    if (base64OrCsvData.includes("base64,")) {
+      const commaIdx = base64OrCsvData.indexOf("base64,");
+      const base64Part = base64OrCsvData.substring(commaIdx + 7).replace(/^[<"']+|[>"']+$/g, "").replace(/\s+/g, "");
+      try {
+        csvContent = decodeURIComponent(escape(window.atob(base64Part)));
+      } catch {
+        try {
+          const binaryStr = window.atob(base64Part);
+          const len = binaryStr.length;
+          const bytes = new Uint8Array(len);
+          for (let i = 0; i < len; i++) {
+            bytes[i] = binaryStr.charCodeAt(i);
+          }
+          const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), bytes], { type: "text/csv;charset=utf-8;" });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.style.display = "none";
+          link.href = url;
+          link.download = cleanFilename;
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+            if (link.parentNode) link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url);
+          }, 1500);
+          return;
+        } catch (innerErr) {
+          console.error("[triggerCsvDownload atob fallback failed]", innerErr);
+        }
+      }
+    }
+
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.style.display = "none";
+    link.href = url;
+    link.download = cleanFilename;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      if (link.parentNode) link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }, 1500);
+  } catch (err) {
+    console.error("Failed to download CSV:", err);
+  }
+}
+
+/* ── Extract Markdown Table to Clean CSV ── */
+export function extractMarkdownTableToCsv(markdownText: string): string | null {
+  if (!markdownText) return null;
+  const lines = markdownText.split(/\r?\n/);
+  const tableLines = lines.filter(l => l.trim().startsWith("|") && l.trim().endsWith("|") && !l.includes("---"));
+  if (tableLines.length < 2) return null;
+
+  const rows = tableLines.map(line => {
+    const rawCells = line.split("|").slice(1, -1);
+    return rawCells.map(c => {
+      const clean = c.trim()
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // strip markdown links
+        .replace(/^[📞🌐🗺️📧⭐\s]+/g, "")       // strip leading icons
+        .replace(/"/g, '""');
+      return `"${clean}"`;
+    }).join(",");
+  });
+
+  return rows.join("\r\n");
+}
+
+/* ── Interactive Report Action Toolbar ── */
+function ReportActionToolbar({ content }: { content: string }) {
+  const [copied, setCopied] = useState(false);
+  const csvMatch = content.match(/data:text\/csv;charset=utf-8;base64,[A-Za-z0-9+/=]+/) || content.match(/data:text\/csv;[^\s>)]+/i);
+  const tableCsv = extractMarkdownTableToCsv(content);
+  const hasTableOrCsv = Boolean(tableCsv || csvMatch);
+
+  if (!hasTableOrCsv) return null;
+
+  const fileMatch = content.match(/\(([^)]+\.csv)\)/i) || content.match(/([a-zA-Z0-9_-]+\.csv)/i);
+  const rawFilename = fileMatch ? fileMatch[1] : "export.csv";
+  const downloadFilename = rawFilename.replace(/\.csv$/i, "").replace(/_csv$/i, "").replace(/_+$/, "") + ".csv";
+
+  const handleDownload = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (csvMatch) {
+      triggerCsvDownload(csvMatch[0], downloadFilename);
+    } else if (tableCsv) {
+      triggerCsvDownload(tableCsv, downloadFilename);
+    }
+  };
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const textToCopy = tableCsv || content;
+      await navigator.clipboard.writeText(textToCopy);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy table:", err);
+    }
+  };
+
+  return (
+    <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={handleDownload}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-semibold text-xs hover:bg-emerald-500/30 hover:text-emerald-100 transition-all cursor-pointer shadow-sm active:scale-95"
+      >
+        <Download className="w-3.5 h-3.5" />
+        <span>Download CSV ({downloadFilename})</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 font-medium text-xs hover:bg-slate-700/80 hover:text-white transition-all cursor-pointer shadow-sm active:scale-95"
+      >
+        {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+        <span>{copied ? "Copied to Clipboard!" : "Copy Table"}</span>
+      </button>
+    </div>
+  );
+}
 
 interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -494,28 +634,108 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                   }`}
                 >
                   {msg.role === "assistant" && msg.content ? (
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        table: (props) => (
-                          <div className="overflow-x-auto max-w-full my-2.5 rounded-xl border border-slate-800/80 bg-slate-950/50 p-1 shadow-sm [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-700">
-                            <table className="w-full min-w-max border-collapse border border-slate-800 text-[11px] font-sans" {...props} />
-                          </div>
-                        ),
-                        th: (props) => <th className="border border-slate-800 px-2 py-1.5 bg-slate-900/60 font-semibold text-slate-200 text-left" {...props} />,
-                        td: (props) => <td className="border border-slate-800 px-2 py-1 text-slate-300" {...props} />,
-                        h1: (props) => <h1 className="text-sm font-bold text-white mb-2 mt-3" {...props} />,
-                        h2: (props) => <h2 className="text-xs font-bold text-white mb-1.5 mt-2.5" {...props} />,
-                        h3: (props) => <h3 className="text-xs font-semibold text-slate-200 mb-1 mt-2" {...props} />,
-                        h4: (props) => <h4 className="text-[11px] font-semibold text-slate-300 mb-1" {...props} />,
-                        p: (props) => <p className="mb-2 leading-relaxed text-slate-300" {...props} />,
-                        ul: (props) => <ul className="list-disc pl-4 space-y-1 mb-2" {...props} />,
-                        ol: (props) => <ol className="list-decimal pl-4 space-y-1 mb-2" {...props} />,
-                        li: (props) => <li className="mb-0.5 text-slate-350" {...props} />,
-                      }}
-                    >
-                      {msg.content}
-                    </ReactMarkdown>
+                    <>
+                      <ReactMarkdown
+                        urlTransform={(url) => url}
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          table: (props) => (
+                            <div className="overflow-x-auto max-w-full my-2.5 rounded-xl border border-slate-800/80 bg-slate-950/50 p-1 shadow-sm [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-700">
+                              <table className="w-full min-w-max border-collapse border border-slate-800 text-[11px] font-sans" {...props} />
+                            </div>
+                          ),
+                          th: (props) => <th className="border border-slate-800 px-2 py-1.5 bg-slate-900/60 font-semibold text-slate-200 text-left" {...props} />,
+                          td: (props) => <td className="border border-slate-800 px-2 py-1 text-slate-300" {...props} />,
+                          h1: (props) => <h1 className="text-sm font-bold text-white mb-2 mt-3" {...props} />,
+                          h2: (props) => <h2 className="text-xs font-bold text-white mb-1.5 mt-2.5" {...props} />,
+                          h3: (props) => <h3 className="text-xs font-semibold text-slate-200 mb-1 mt-2" {...props} />,
+                          h4: (props) => <h4 className="text-[11px] font-semibold text-slate-300 mb-1" {...props} />,
+                          p: (props) => <p className="mb-2 leading-relaxed text-slate-300" {...props} />,
+                          ul: (props) => <ul className="list-disc pl-4 space-y-1 mb-2" {...props} />,
+                          ol: (props) => <ol className="list-decimal pl-4 space-y-1 mb-2" {...props} />,
+                          li: (props) => <li className="mb-0.5 text-slate-350" {...props} />,
+                          a: ({ href, children, ...props }) => {
+                            if (!href) return <span {...props}>{children}</span>;
+
+                            // 1. Data URI CSV/PDF Downloads with local Blob construction
+                            if (href.startsWith("data:text/csv") || href.startsWith("data:application/pdf") || href.startsWith("data:text/html") || href.startsWith("data:") || href.includes("data:text/csv")) {
+                              const isCsv = href.includes("data:text/csv");
+                              const isPdf = href.includes("data:application/pdf");
+                              let downloadFilename = isCsv ? "export.csv" : (isPdf ? "report.pdf" : "download.dat");
+                              const childStr = Array.isArray(children) ? children.join(" ") : String(children || "");
+                              const fileMatch = childStr.match(/\(([^)]+\.(?:csv|pdf|html|txt))\)/i) || childStr.match(/([a-zA-Z0-9_-]+\.(?:csv|pdf|html|txt))/i);
+                              if (fileMatch && fileMatch[1]) {
+                                downloadFilename = fileMatch[1];
+                              }
+                              const cleanName = downloadFilename.replace(/\.csv$/i, "").replace(/_csv$/i, "").replace(/_+$/, "") + (isCsv ? ".csv" : "");
+
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    triggerCsvDownload(href, cleanName);
+                                  }}
+                                  className="inline-flex items-center gap-1.5 my-1 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-semibold text-xs hover:bg-emerald-500/25 hover:text-emerald-200 transition-all cursor-pointer shadow-sm active:scale-95"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                  <span>{children}</span>
+                                </button>
+                              );
+                            }
+
+                            // 2. Telephone tel: links
+                            if (href.startsWith("tel:")) {
+                              return (
+                                <a
+                                  href={href}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-cyan-400 hover:text-cyan-300 font-medium underline underline-offset-2 transition-colors"
+                                >
+                                  {children}
+                                </a>
+                              );
+                            }
+
+                            // 3. Email mailto: links
+                            if (href.startsWith("mailto:")) {
+                              return (
+                                <a
+                                  href={href}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-indigo-400 hover:text-indigo-300 font-medium underline underline-offset-2 transition-colors"
+                                >
+                                  {children}
+                                </a>
+                              );
+                            }
+
+                            // 4. External web links
+                            return (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-emerald-400 hover:text-emerald-300 font-medium underline underline-offset-2 transition-colors"
+                              >
+                                {children}
+                              </a>
+                            );
+                          },
+                        }}
+                      >
+                        {(() => {
+                          let text = msg.content;
+                          text = text.replace(/\[\s*([^\]]+?)\s*\]\((data:[^)]+)\)/gi, "[$1](<$2>)");
+                          return text;
+                        })()}
+                      </ReactMarkdown>
+
+                      {/* Native Report Action Toolbar (CSV Export, Copy Table, Email) */}
+                      <ReportActionToolbar content={msg.content} />
+                    </>
                   ) : (
                     msg.content || (streaming && idx === messages.length - 1 ? (
                       <span className="inline-flex gap-1 py-1">
