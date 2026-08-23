@@ -9,13 +9,13 @@ import type { SystemConfig } from "@/components/theme-provider";
 import { fetchProviderModels, updateSystemConfig } from "@/app/admin/settings/actions";
 
 const MODEL_PRESETS: Record<string, string[]> = {
-  openai: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo", "o1", "o1-mini"],
-  anthropic: ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],
-  gemini: ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.0-pro"],
+  openai: ["gpt-4o", "gpt-4o-mini", "o3-mini", "o1", "o1-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
+  anthropic: ["claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],
+  gemini: ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-3.1-flash-lite", "gemini-3.7-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
   groq: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "gemma2-9b-it"],
   xai: ["grok-2", "grok-2-vision", "grok-beta"],
   omniroute: ["omniroute-default", "meta-llama-3-8b", "gpt-4o-mini"],
-  openrouter: ["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "google/gemini-1.5-pro", "meta-llama/llama-3-70b"],
+  openrouter: ["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "google/gemini-2.5-pro", "meta-llama/llama-3-70b"],
   ollama: ["llama3", "mistral", "qwen2.5", "codellama", "mixtral"],
   lmstudio: ["qwen2.5-7b", "qwen2.5-14b", "llama-3.2-3b", "mistral-nemo"],
 };
@@ -590,8 +590,13 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
               placeholder="Type your message..."
               rows={1}
               disabled={streaming}
-              className="w-full bg-transparent border-0 outline-none resize-none text-sm text-white placeholder-slate-500 disabled:opacity-50 py-0.5"
-              style={{ minHeight: "24px", maxHeight: "160px" }}
+              className="w-full bg-transparent border-0 outline-none resize-none text-white placeholder-slate-500 disabled:opacity-50 py-1 leading-relaxed"
+              style={{
+                minHeight: "28px",
+                maxHeight: "160px",
+                fontSize: "var(--prompt-font-size, 16px)",
+                fontFamily: "var(--prompt-font-family, inherit)",
+              }}
               onInput={(e) => {
                 const el = e.currentTarget;
                 el.style.height = "auto";

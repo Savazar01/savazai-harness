@@ -7,8 +7,22 @@ export async function runPython(
   scriptPath: string,
   args: string[] = [],
 ): Promise<unknown> {
+  const resolvedPath = resolve(process.cwd(), scriptPath);
+  const allowedDirs = [
+    resolve(process.cwd(), "scripts"),
+    resolve(process.cwd(), "src/skills"),
+    resolve(process.cwd(), "dist/skills"),
+  ];
+
+  const isAllowed = allowedDirs.some((dir) => resolvedPath.startsWith(dir));
+  if (!isAllowed) {
+    throw new Error(
+      `Security violation: Unauthorized script execution path "${scriptPath}". Scripts must reside within authorized directories (scripts/ or src/skills/).`,
+    );
+  }
+
   return new Promise((resolvePromise, reject) => {
-    const proc = spawn("python3", [scriptPath, ...args], {
+    const proc = spawn("python3", [resolvedPath, ...args], {
       cwd: process.cwd(),
       env: {
         ...process.env,

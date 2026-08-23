@@ -103,8 +103,8 @@ type TabType = "appearance" | "branding" | "llm" | "mcp" | "database" | "api" | 
 
 const DEFAULT_LLM_PROVIDERS: Record<string, LLMProviderConfig> = {
   openai: { apiKey: "", endpoint: "https://api.openai.com/v1", defaultModel: "gpt-4o", active: false },
-  anthropic: { apiKey: "", endpoint: "https://api.anthropic.com", defaultModel: "claude-3-5-sonnet", active: false },
-  gemini: { apiKey: "", endpoint: "https://generativelanguage.googleapis.com", defaultModel: "gemini-1.5-pro", active: false },
+  anthropic: { apiKey: "", endpoint: "https://api.anthropic.com", defaultModel: "claude-3-5-sonnet-20241022", active: false },
+  gemini: { apiKey: "", endpoint: "https://generativelanguage.googleapis.com", defaultModel: "gemini-2.5-flash", active: false },
   groq: { apiKey: "", endpoint: "https://api.groq.com/openai/v1", defaultModel: "llama-3.3-70b-versatile", active: false },
   xai: { apiKey: "", endpoint: "https://api.x.ai/v1", defaultModel: "grok-2-1212", active: false },
   omniroute: { apiKey: "", endpoint: "http://localhost:20128/v1", defaultModel: "omniroute-default", active: false },
@@ -138,13 +138,13 @@ const PROVIDER_SETUP_LINKS: Record<string, string> = {
 };
 
 const PROVIDER_MODELS: Record<string, string[]> = {
-  openai: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
-  anthropic: ["claude-3-5-sonnet", "claude-3-5-haiku", "claude-3-opus"],
-  gemini: ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"],
+  openai: ["gpt-4o", "gpt-4o-mini", "o3-mini", "o1", "o1-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
+  anthropic: ["claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],
+  gemini: ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-3.1-flash-lite", "gemini-3.7-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
   groq: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "gemma2-9b-it"],
   xai: ["grok-2", "grok-2-vision", "grok-beta"],
   omniroute: ["omniroute-default", "meta-llama-3-8b", "gpt-4o-mini"],
-  openrouter: ["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "google/gemini-1.5-pro", "meta-llama/llama-3-70b"],
+  openrouter: ["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "google/gemini-2.5-pro", "meta-llama/llama-3-70b"],
   ollama: ["llama3", "mistral", "qwen2.5", "codellama", "mixtral"],
   lmstudio: ["qwen2.5-7b", "qwen2.5-14b", "llama-3.2-3b", "mistral-nemo"],
 };
@@ -247,8 +247,12 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
   const [secondaryColor, setSecondaryColor] = useState(tokens.secondaryColor || "#06b6d4");
   const [background, setBackground] = useState(tokens.background || "#0a0a0a");
   const [fontSans, setFontSans] = useState(tokens.fontSans || "Geist");
+  const [promptFontSize, setPromptFontSize] = useState(tokens.promptFontSize || "16px");
+  const [promptFontFamily, setPromptFontFamily] = useState(tokens.promptFontFamily || "sans");
+  const [showAgentWorkspace, setShowAgentWorkspace] = useState(tokens.showAgentWorkspace !== false);
 
   const [llmProviders, setLlmProviders] = useState<Record<string, LLMProviderConfig>>(mergedProviders);
+  const [fetchingModels, setFetchingModels] = useState<Record<string, boolean>>({});
   const [discoveredModels, setDiscoveredModels] = useState<Record<string, string[]>>(() => {
     const initialDiscovered: Record<string, string[]> = {};
     for (const [key, prov] of Object.entries(mergedProviders)) {
@@ -258,6 +262,42 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
     }
     return initialDiscovered;
   });
+
+  const handleFetchModels = useCallback(
+    async (key: string) => {
+      setFetchingModels((prev) => ({ ...prev, [key]: true }));
+      try {
+        const prov = llmProviders[key] || DEFAULT_LLM_PROVIDERS[key];
+        const res = await fetchProviderModels(key, prov.endpoint, prov.apiKey);
+        if (res.success && res.models && res.models.length > 0) {
+          setDiscoveredModels((prev) => ({ ...prev, [key]: res.models! }));
+          setLlmProviders((prev) => {
+            const p = prev[key];
+            const updatedModels = p?.models && p.models.length > 0 ? p.models : res.models!;
+            const defaultMdl = p?.defaultModel && res.models!.includes(p.defaultModel) ? p.defaultModel : res.models![0];
+            return {
+              ...prev,
+              [key]: {
+                ...p,
+                discoveredModels: res.models!,
+                defaultModel: defaultMdl,
+                models: updatedModels,
+              },
+            };
+          });
+          setStatus({ type: "success", message: `Successfully fetched ${res.models.length} live models for ${PROVIDER_LABELS[key] || key}.` });
+        } else {
+          setStatus({ type: "error", message: res.error || `Failed to fetch live models for ${PROVIDER_LABELS[key] || key}.` });
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Fetch models error";
+        setStatus({ type: "error", message: msg });
+      } finally {
+        setFetchingModels((prev) => ({ ...prev, [key]: false }));
+      }
+    },
+    [llmProviders],
+  );
 
   useEffect(() => {
     const loadAllModelsOnMount = async () => {
@@ -581,6 +621,9 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
       secondaryColor,
       background,
       fontSans,
+      promptFontSize,
+      promptFontFamily,
+      showAgentWorkspace,
       llmProviders,
       mcpServers,
       tavilyApiKey,
@@ -605,6 +648,17 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
       socialConnections: JSON.stringify(socialConnections),
       agentsMd,
     });
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("savazai_prompt_font_size", promptFontSize);
+      localStorage.setItem("savazai_prompt_font_family", promptFontFamily);
+      localStorage.setItem("savazai_show_agent_workspace", String(showAgentWorkspace));
+      window.dispatchEvent(
+        new CustomEvent("savazai-appearance-updated", {
+          detail: { promptFontSize, promptFontFamily, showAgentWorkspace },
+        })
+      );
+    }
 
     setSaving(false);
     if (result.success) {
@@ -1065,6 +1119,81 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                       className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20" />
                   </div>
                 </div>
+
+                {/* Prompt Typography Configuration Section */}
+                <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-5 space-y-4">
+                  <div>
+                    <h4 className="text-sm font-bold text-white mb-1 flex items-center gap-2">
+                      Prompt Input Typography
+                      <HelpTooltip content="Configure the default font size and font family applied to prompt inputs across Capability Studio Test Playground and Agent Workspace." side="right" />
+                    </h4>
+                    <p className="text-xs text-slate-400">Controls prompt textarea readability for test prompts, agent instructions, and user chat</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Prompt Font Size</label>
+                      <select
+                        value={promptFontSize}
+                        onChange={(e) => setPromptFontSize(e.target.value)}
+                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-4 text-sm text-white outline-none focus:border-primary/50"
+                      >
+                        <option value="14px">Small (14px)</option>
+                        <option value="16px">Medium (16px) - Default</option>
+                        <option value="18px">Large (18px)</option>
+                        <option value="20px">Extra Large (20px)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Prompt Font Family</label>
+                      <select
+                        value={promptFontFamily}
+                        onChange={(e) => setPromptFontFamily(e.target.value)}
+                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-4 text-sm text-white outline-none focus:border-primary/50"
+                      >
+                        <option value="sans">Modern Sans (Default)</option>
+                        <option value="system">System UI</option>
+                        <option value="inter">Inter (SaaS Standard)</option>
+                        <option value="mono">Monospace / Code</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Live Visual Preview */}
+                  <div className="pt-2">
+                    <label className="block text-[11px] font-semibold text-indigo-300 uppercase tracking-wider mb-1.5">Live Typography Preview</label>
+                    <div
+                      className="p-4 rounded-xl border border-slate-800 bg-slate-900/90 text-white leading-relaxed"
+                      style={{
+                        fontSize: promptFontSize,
+                        fontFamily: promptFontFamily === "mono" ? "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" : promptFontFamily === "inter" ? "Inter, system-ui, sans-serif" : promptFontFamily === "system" ? "system-ui, -apple-system, sans-serif" : "var(--font-sans), system-ui, sans-serif"
+                      }}
+                    >
+                      Draft a comprehensive multi-agent workflow for our enterprise operations with step-by-step validation...
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sidebar Navigation Visibility Section */}
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/20 p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-white mb-1 flex items-center gap-2">
+                        Sidebar Navigation &amp; Workspace Visibility
+                        <HelpTooltip content="Enable or disable the Agent Workspace tab in the primary navigation sidebar." side="right" />
+                      </h4>
+                      <p className="text-xs text-slate-400">Show or hide the &quot;Agent Workspace&quot; tab in the primary sidebar navigation</p>
+                    </div>
+                    <label className="flex items-center gap-2.5 cursor-pointer">
+                      <span className="text-xs font-semibold text-slate-300">{showAgentWorkspace ? "Enabled" : "Disabled"}</span>
+                      <input
+                        type="checkbox"
+                        checked={showAgentWorkspace}
+                        onChange={(e) => setShowAgentWorkspace(e.target.checked)}
+                        className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-primary focus:ring-primary/30 accent-primary"
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1295,11 +1424,16 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <button type="button" onClick={() => handleTestConnection(key)} disabled={testingProvider === key}
+                      <div className="flex flex-wrap items-center gap-3">
+                        <button type="button" onClick={() => handleTestConnection(key)} disabled={testingProvider === key || fetchingModels[key]}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/40 hover:bg-slate-900/70 text-xs font-semibold text-slate-300 hover:text-white transition-all disabled:opacity-50">
                           {testingProvider === key ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plug className="h-3 w-3" />}
                           Test Connection
+                        </button>
+                        <button type="button" onClick={() => handleFetchModels(key)} disabled={fetchingModels[key] || testingProvider === key}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-xs font-semibold text-indigo-300 hover:text-indigo-200 transition-all disabled:opacity-50">
+                          {fetchingModels[key] ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />}
+                          Fetch / Refresh Models
                         </button>
                         {testRes ? (
                           <div className={`flex items-center gap-1.5 text-xs ${testRes.success ? "text-emerald-400" : "text-red-400"}`}>

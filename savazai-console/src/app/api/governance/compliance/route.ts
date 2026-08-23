@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { Pool } from "pg";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -104,7 +106,22 @@ function migrateConfig(config: ComplianceConfig): ComplianceConfig {
 
 export async function PUT(req: NextRequest) {
   try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return new Response(JSON.stringify({ error: "Unauthorized: Authentication required to modify compliance rules." }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const body = (await req.json()) as ComplianceConfig;
+    if (!body || typeof body !== "object") {
+      return new Response(JSON.stringify({ error: "Invalid request payload." }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const id = crypto.randomUUID();
 
     await pool.query(`CREATE TABLE IF NOT EXISTS agentflow_compliance_rules (

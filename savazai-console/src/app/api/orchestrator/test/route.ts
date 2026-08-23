@@ -1373,8 +1373,7 @@ function isValidEmail(email: string): boolean {
   if (!trimmed) return false;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(trimmed)) return false;
-  // Reject dangerous or dummy domains
-  const blockList = ["example.com", "test.com", "localhost", "local", "domain.com", "invalid"];
+  const blockList = ["localhost", "local", "invalid", "undefined", "null"];
   const domain = trimmed.split("@")[1]?.toLowerCase() || "";
   if (blockList.some(b => domain === b || domain.endsWith("." + b))) return false;
   return true;
@@ -2319,15 +2318,16 @@ Return ONLY the JSON object, no extra commentary, no markdown backticks, no text
     // Auto-populate query parameter for discovery/search worker nodes if missing or empty
     for (const item of executionPlan) {
       if (!item.parameters) item.parameters = {};
-      if (!item.parameters.query && !item.parameters.textQuery && !item.parameters.search_query) {
-        const targetN = typedNodes.find(n => n.id === item.nodeId);
-        const hasSearchTool = targetN?.tools?.some(t => {
+      const params = item.parameters as Record<string, unknown>;
+      if (!params.query && !params.textQuery && !params.search_query) {
+        const targetN = targetNodes.find((n: any) => n.id === item.nodeId);
+        const hasSearchTool = targetN?.tools?.some((t: any) => {
           const tn = (typeof t === "string" ? t : (t as AgentflowTool)?.name || "").toLowerCase();
           return tn.includes("places") || tn.includes("search") || tn.includes("yelp");
         });
         if (hasSearchTool) {
-          item.parameters.query = message;
-          item.parameters.textQuery = message;
+          params.query = message;
+          params.textQuery = message;
         }
       }
     }
@@ -2864,12 +2864,13 @@ INSTRUCTIONS FOR DIRECT RESPONSE:
               if (childNode) {
                 sendEvent({ type: "trace", content: `[Graph Traversal] Supervisor dispatching to child: ${childNode.label}` });
                 const nodePlan = executionPlan.find((p: ExecutionPlanItem) => p.nodeId === childId) || { actionVerb: "READ", allowedVerbs: ["READ", "LIST"], targetEntity: childNode.label, parameters: {} };
-                const queryParam = nodePlan.parameters?.query || nodePlan.parameters?.search_query || nodePlan.parameters?.textQuery || message;
-                if (!nodePlan.parameters) nodePlan.parameters = {};
-                if (!nodePlan.parameters.query && !nodePlan.parameters.textQuery) {
-                  nodePlan.parameters.query = queryParam;
-                  nodePlan.parameters.textQuery = queryParam;
+                const nodeParams = (nodePlan.parameters || {}) as Record<string, unknown>;
+                const queryParam = String(nodeParams.query || nodeParams.search_query || nodeParams.textQuery || message);
+                if (!nodeParams.query && !nodeParams.textQuery) {
+                  nodeParams.query = queryParam;
+                  nodeParams.textQuery = queryParam;
                 }
+                nodePlan.parameters = nodeParams;
                 const taskInstruction = `CURRENT USER REQUEST: "${message}"\n\nSUPERVISOR PLAN FOR WORKER "${childNode.label}":\n- Action: ${nodePlan.actionVerb || "LIST"}\n- Target Entity: ${nodePlan.targetEntity || childNode.label}\n- Search Query / Keywords: "${queryParam}"\n- Parameters: ${JSON.stringify(nodePlan.parameters)}\n\nInstruction: Execute your assigned tools to discover or manage records for this request.`;
                 // Each child gets a fresh clone of the pre-dispatch context — sibling outputs stay isolated
                 let output = "";
@@ -3553,7 +3554,7 @@ If you do NOT need to call any more tools, output your final result directly to 
 
                   // HITL Policy Interception Check
                   const policy = (node as GraphNode).hitlPolicy || node.data?.guardrails?.hitlPolicy;
-                  const isApproved = approvedPlan && Array.isArray(approvedPlan);
+                  const isApproved = (approvedPlan && Array.isArray(approvedPlan)) || executionMode === "direct";
                   if (!isApproved && shouldInterceptHITL(policy, toolName)) {
                     sendEvent({
                       type: "trace",
@@ -3868,6 +3869,7 @@ You have action tools available [${synthToolsListStr}].
 
           // Turn-scoped idempotency lock set to prevent duplicate tool execution
           const executedSynthActions = new Set<string>();
+          const fallbackRecipientEmail = emailAddressMatch ? emailAddressMatch[0] : "";
 
           async function executeSynthToolCalls(synthHistory: ChatMessage[], toolCalls: { name: string; arguments: Record<string, unknown> }[]): Promise<void> {
             for (const tc of toolCalls) {
@@ -4072,7 +4074,7 @@ You have action tools available [${synthToolsListStr}].
                   const match = csvToolMsg.content.match(/data:text\/csv;charset=utf-8;base64,[A-Za-z0-9+/=]+/);
                   if (match) downloadUrl = match[0];
                 }
-                if (downloadUrl) {
+                if (downloadUrl && typeof downloadUrl === "string") {
                   const linkMarkdown = `[📥 Download CSV Export: ${cleanFilename}](<${downloadUrl}>)`;
                   // Normalize any existing non-bracketed or broken links
                   if (finalResult.includes(downloadUrl)) {

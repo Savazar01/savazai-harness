@@ -1,0 +1,289 @@
+[
+  {
+    "verdict": "confirmed",
+    "title": "Unrestricted Database Modification via postgres_query_tool",
+    "description": "The postgres_query_tool claims to execute read-only queries but passes arbitrary raw SQL directly to the PostgreSQL pool. An attacker can execute destructive SQL statements including DROP TABLE, INSERT, UPDATE, or DELETE.",
+    "root_cause": "executeNativeTool in savazai-console/src/lib/tool-gateway.ts does not validate SQL statements for read-only query operations, allowing arbitrary database mutations including table drop and unauthorized data modification.",
+    "intended_behavior": "Execute safe read-only SQL queries against configured database connections.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "savazai-console/src/app/api/orchestrator/test/route.ts",
+        "line": 4,
+        "scope": "POST",
+        "description": "Receives user query dispatching postgres_query_tool with arbitrary query argument."
+      },
+      {
+        "kind": "propagation",
+        "file": "savazai-console/src/lib/tool-gateway.ts",
+        "line": 828,
+        "scope": "executeNativeTool",
+        "description": "Passes untrusted SQL query string to executeDbQuery."
+      },
+      {
+        "kind": "sink",
+        "file": "savazai-console/src/lib/tool-gateway.ts",
+        "line": 682,
+        "scope": "executeDbQuery",
+        "description": "Executes raw unvalidated SQL statement directly via pool.query(query)."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "system_configuration",
+        "description": "At least one database connection is registered in system configurations or passed in parameters."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Attacker sends an orchestration or tool request invoking postgres_query_tool with a destructive SQL payload.",
+      "payloads": [
+        "DROP TABLE agentflows CASCADE;",
+        "UPDATE system_configurations SET design_tokens = '{}';"
+      ],
+      "instructions": [
+        "Trigger /api/orchestrator/test or /api/graph/invoke with a tool payload targeting postgres_query_tool.",
+        "Pass a mutating SQL command in the query parameter.",
+        "Observe database modifications."
+      ],
+      "expected_result": "Database tables are dropped or modified."
+    },
+    "remediation": {
+      "strategy": "Enforce strict read-only query validation, rejecting any statement starting with or containing mutating DDL/DML clauses.",
+      "code_changes": [
+        {
+          "file_name": "savazai-console/src/lib/tool-gateway.ts",
+          "fixed_code": "function isReadOnlyQuery(sql: string): boolean { const trimmed = sql.trim().toUpperCase(); const forbidden = [/\\b(DROP|ALTER|TRUNCATE|DELETE|UPDATE|INSERT|GRANT|REVOKE|COPY|EXECUTE)\\b/i]; return !forbidden.some(r => r.test(trimmed)) && /^(SELECT|EXPLAIN|SHOW|WITH)\\b/i.test(trimmed); }"
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "high",
+        "reason": "Any user or agent able to call postgres_query_tool can submit arbitrary SQL."
+      },
+      "impact": {
+        "score": "high",
+        "reason": "Full database tampering, loss of data integrity, and denial of service."
+      },
+      "overall_severity": "high"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Confirmed by source code inspection of executeDbQuery in tool-gateway.ts."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "title": "Server-Side Request Forgery via Custom Webhook Tool Invocation",
+    "description": "The custom webhook tool execution gateway accepts arbitrary URLs without verifying that destination IP addresses are outside private network ranges, loopbacks, and cloud metadata endpoints.",
+    "root_cause": "callCustomWebhook in savazai-console/src/lib/tool-gateway.ts does not validate destination URLs against private IP and link-local ranges, allowing attackers to access internal intranet infrastructure and cloud metadata services.",
+    "intended_behavior": "Allow outbound webhook notifications exclusively to public external internet APIs.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "savazai-console/src/app/api/orchestrator/test/route.ts",
+        "line": 4,
+        "scope": "POST",
+        "description": "Receives tool invocation request for custom webhook or fallback tool."
+      },
+      {
+        "kind": "propagation",
+        "file": "savazai-console/src/lib/tool-gateway.ts",
+        "line": 843,
+        "scope": "executeNativeTool",
+        "description": "Routes tool execution with URL argument to callCustomWebhook."
+      },
+      {
+        "kind": "sink",
+        "file": "savazai-console/src/lib/tool-gateway.ts",
+        "line": 711,
+        "scope": "callCustomWebhook",
+        "description": "Performs unconstrained HTTP fetch to arbitrary user-supplied URL."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "network_routing",
+        "description": "Application is hosted in cloud or internal environment with reachable private endpoints or metadata services."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Attacker triggers custom webhook execution with an internal destination IP.",
+      "payloads": [
+        "http://169.254.169.254/latest/meta-data/",
+        "http://127.0.0.1:5432"
+      ],
+      "instructions": [
+        "Send tool execution payload with url='http://169.254.169.254/latest/meta-data/'",
+        "Observe internal responses returned in tool execution result."
+      ],
+      "expected_result": "Cloud metadata or internal service response returned to caller."
+    },
+    "remediation": {
+      "strategy": "Validate destination URLs against loopback, private RFC1918 subnets, and link-local metadata addresses before initiating HTTP requests.",
+      "code_changes": [
+        {
+          "file_name": "savazai-console/src/lib/tool-gateway.ts",
+          "fixed_code": "function isSafeExternalUrl(urlStr: string): boolean { try { const parsed = new URL(urlStr); if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false; const host = parsed.hostname.toLowerCase(); if (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '169.254.169.254') return false; if (host.startsWith('10.') || host.startsWith('192.168.') || /^172\\.(1[6-9]|2[0-9]|3[0-1])\\./.test(host)) return false; return true; } catch { return false; } }"
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "high",
+        "reason": "Webhook tool execution is readily accessible via tool dispatcher."
+      },
+      "impact": {
+        "score": "high",
+        "reason": "Access to cloud instance metadata, internal databases, and private services."
+      },
+      "overall_severity": "high"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Confirmed in callCustomWebhook implementation."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "title": "Unauthenticated Compliance Policy Override in Governance API",
+    "description": "The PUT endpoint for compliance rules allows any unauthenticated HTTP client to overwrite data masking, keyword blocking, and PII protection policies.",
+    "root_cause": "PUT in savazai-console/src/app/api/governance/compliance/route.ts does not authenticate the requesting session, allowing unauthenticated attackers to overwrite or disable data compliance and PII masking configurations.",
+    "intended_behavior": "Only authenticated administrative users should be able to update compliance policies.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "savazai-console/src/app/api/governance/compliance/route.ts",
+        "line": 105,
+        "scope": "PUT",
+        "description": "Receives HTTP PUT request with arbitrary ComplianceConfig payload."
+      },
+      {
+        "kind": "propagation",
+        "file": "savazai-console/src/app/api/governance/compliance/route.ts",
+        "line": 117,
+        "scope": "PUT",
+        "description": "Deletes existing agentflow compliance rules from database."
+      },
+      {
+        "kind": "sink",
+        "file": "savazai-console/src/app/api/governance/compliance/route.ts",
+        "line": 118,
+        "scope": "PUT",
+        "description": "Inserts attacker-supplied compliance configuration without authorization check."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "authentication_level",
+        "description": "Unauthenticated attacker on network."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Attacker issues direct HTTP PUT request to /api/governance/compliance with empty entity rules.",
+      "payloads": [
+        "PUT /api/governance/compliance HTTP/1.1\\nContent-Type: application/json\\n\\n{\\\"frameworks\\\":[],\\\"entityRules\\\":[],\\\"customKeywords\\\":[],\\\"customRegex\\\":[]}"
+      ],
+      "instructions": [
+        "Send PUT request to /api/governance/compliance with disabled PII rules.",
+        "Observe 200 OK response and cleared compliance table."
+      ],
+      "expected_result": "PII masking is disabled across all subsequent agent interactions."
+    },
+    "remediation": {
+      "strategy": "Enforce Better-Auth session verification on PUT /api/governance/compliance to restrict policy modifications to authenticated administrators.",
+      "code_changes": [
+        {
+          "file_name": "savazai-console/src/app/api/governance/compliance/route.ts",
+          "fixed_code": "const session = await auth.api.getSession({ headers: await headers() }); if (!session) { return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }); }"
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "high",
+        "reason": "Endpoint is exposed and unauthenticated."
+      },
+      "impact": {
+        "score": "high",
+        "reason": "Complete bypass of PII redaction and compliance governance across the platform."
+      },
+      "overall_severity": "high"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Confirmed by inspection of PUT handler in compliance route.ts."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "title": "Insecure Script Path Traversal in Python Sandbox Runner",
+    "description": "The python-runner utility accepts arbitrary script paths without verifying that they resolve within authorized script directories, allowing traversal outside intended boundaries.",
+    "root_cause": "runPython in src/utils/python-runner.ts does not restrict the scriptPath argument to allowed script directories, allowing directory traversal and arbitrary script execution.",
+    "intended_behavior": "Only execute verified Python scripts located in scripts/ or src/skills/ directories.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "src/index.ts",
+        "line": 78,
+        "scope": "POST",
+        "description": "Receives graph execution trigger with active tools and parameters."
+      },
+      {
+        "kind": "propagation",
+        "file": "src/orchestrator/graph.ts",
+        "line": 1531,
+        "scope": "executeTool",
+        "description": "Passes script path to runPython utility."
+      },
+      {
+        "kind": "sink",
+        "file": "src/utils/python-runner.ts",
+        "line": 11,
+        "scope": "runPython",
+        "description": "Spawns python3 process with unconstrained path."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "system_configuration",
+        "description": "Python execution environment is configured on host."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Attacker crafts tool parameters referencing traversal paths like '../../tmp/malicious.py'.",
+      "payloads": [
+        "../../tmp/malicious.py"
+      ],
+      "instructions": [
+        "Invoke python runner with relative path escaping scripts directory.",
+        "Observe execution of external script."
+      ],
+      "expected_result": "Arbitrary python script executed."
+    },
+    "remediation": {
+      "strategy": "Validate and resolve scriptPath ensuring it resides strictly within allowed directories (scripts/ or src/skills/).",
+      "code_changes": [
+        {
+          "file_name": "src/utils/python-runner.ts",
+          "fixed_code": "const resolved = resolve(process.cwd(), scriptPath); const allowedDirs = [resolve(process.cwd(), 'scripts'), resolve(process.cwd(), 'src/skills')]; if (!allowedDirs.some(dir => resolved.startsWith(dir))) throw new Error('Unauthorized script path');"
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "medium",
+        "reason": "Requires triggering tool execution with manipulated script path."
+      },
+      "impact": {
+        "score": "medium",
+        "reason": "Execution confined to Python runtime on host/container."
+      },
+      "overall_severity": "medium"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Confirmed in runPython implementation in python-runner.ts."
+    }
+  }
+]

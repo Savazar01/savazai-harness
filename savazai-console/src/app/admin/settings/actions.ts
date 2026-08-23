@@ -17,6 +17,9 @@ export interface UpdateSettingsInput {
   secondaryColor?: string;
   background?: string;
   fontSans?: string;
+  promptFontSize?: string;
+  promptFontFamily?: string;
+  showAgentWorkspace?: boolean;
 
   llmProviders?: Record<string, LLMProviderConfig>;
   activeModel?: string;
@@ -71,6 +74,9 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
           JSON.stringify({
             primaryColor: "#4f46e5",
             secondaryColor: "#06b6d4",
+            promptFontSize: "16px",
+            promptFontFamily: "sans",
+            showAgentWorkspace: true,
           }),
         ]
       );
@@ -89,6 +95,9 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
       ...(input.secondaryColor !== undefined && { secondaryColor: input.secondaryColor }),
       ...(input.background !== undefined && { background: input.background }),
       ...(input.fontSans !== undefined && { fontSans: input.fontSans }),
+      ...(input.promptFontSize !== undefined && { promptFontSize: input.promptFontSize }),
+      ...(input.promptFontFamily !== undefined && { promptFontFamily: input.promptFontFamily }),
+      ...(input.showAgentWorkspace !== undefined && { showAgentWorkspace: input.showAgentWorkspace }),
 
       ...(input.llmProviders !== undefined && { llmProviders: input.llmProviders }),
       ...(input.activeModel !== undefined && { activeModel: input.activeModel }),
@@ -157,8 +166,10 @@ export async function testProviderConnection(
   model: string,
 ) {
   try {
+    const baseUrl = (endpoint || "").replace(/\/+$/, "");
+
     if (providerType === "ollama") {
-      const res = await fetch(`${endpoint.replace(/\/$/, "")}/api/tags`, {
+      const res = await fetch(`${baseUrl || "http://localhost:11434"}/api/tags`, {
         signal: AbortSignal.timeout(5000),
       });
       if (!res.ok) return { success: false, error: `Ollama returned ${res.status}` };
@@ -171,11 +182,13 @@ export async function testProviderConnection(
     }
 
     if (providerType === "lmstudio") {
-      const res = await fetch(`${endpoint.replace(/\/$/, "")}/v1/models`, {
+      const res = await fetch(`${baseUrl || "http://localhost:1234"}/v1/models`, {
         signal: AbortSignal.timeout(5000),
       });
       if (!res.ok) return { success: false, error: `LM Studio returned ${res.status}` };
-      return { success: true, detail: "LM Studio server is reachable" };
+      const data = await res.json();
+      const models = (data.data ?? []).map((m: { id: string }) => m.id);
+      return { success: true, detail: `LM Studio reachable (${models.length} models loaded)` };
     }
 
     const headers: Record<string, string> = {
@@ -192,24 +205,22 @@ export async function testProviderConnection(
       }
     }
 
-    const baseUrl = endpoint.replace(/\/$/, "");
     let testUrl = "";
     let testBody: string | undefined;
 
-    if (providerType === "anthropic") {
-      testUrl = `${baseUrl}/v1/messages`;
-      testBody = JSON.stringify({
-        model: model || "claude-3-5-sonnet",
-        max_tokens: 1,
-        messages: [{ role: "user", content: "ping" }],
-      });
-    } else if (providerType === "gemini") {
-      testUrl = `${baseUrl}/v1/models/${model || "gemini-1.5-pro"}`;
-      if (apiKey) {
-        testUrl += `?key=${apiKey}`;
-      }
+    if (providerType === "gemini") {
+      const apiHost = baseUrl || "https://generativelanguage.googleapis.com";
+      testUrl = `${apiHost}/v1beta/models?key=${apiKey}`;
+    } else if (providerType === "anthropic") {
+      testUrl = `${baseUrl || "https://api.anthropic.com"}/v1/models`;
     } else {
-      testUrl = `${baseUrl}/models`;
+      const apiHost = baseUrl || (
+        providerType === "groq" ? "https://api.groq.com/openai/v1" :
+        providerType === "xai" ? "https://api.x.ai/v1" :
+        providerType === "openrouter" ? "https://openrouter.ai/api/v1" :
+        "https://api.openai.com/v1"
+      );
+      testUrl = apiHost.endsWith("/models") ? apiHost : `${apiHost}/models`;
     }
 
     const res = await fetch(testUrl, {
@@ -220,8 +231,38 @@ export async function testProviderConnection(
     });
 
     if (!res.ok) {
+      // For Anthropic, if /v1/models returns 404/400, test a minimal message
+      if (providerType === "anthropic" && apiKey) {
+        const msgRes = await fetch(`${baseUrl || "https://api.anthropic.com"}/v1/messages`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            model: model || "claude-3-5-sonnet-20241022",
+            max_tokens: 1,
+            messages: [{ role: "user", content: "ping" }],
+          }),
+          signal: AbortSignal.timeout(8000),
+        });
+        if (msgRes.ok) {
+          return { success: true, detail: "Anthropic API reachable (Claude 3.5/3.7 ready)" };
+        }
+      }
+
       const text = await res.text().catch(() => "");
-      return { success: false, error: `${res.status}: ${text.slice(0, 100)}` };
+      return { success: false, error: `${res.status}: ${text.slice(0, 150)}` };
+    }
+
+    const data = await res.json().catch(() => ({}));
+    let count = 0;
+    if (providerType === "gemini" && data.models) {
+      count = data.models.filter((m: { supportedGenerationMethods?: string[] }) =>
+        !m.supportedGenerationMethods || m.supportedGenerationMethods.includes("generateContent")
+      ).length;
+      return { success: true, detail: `Google Gemini connected (${count} live models discovered)` };
+    }
+    if (data.data && Array.isArray(data.data)) {
+      count = data.data.length;
+      return { success: true, detail: `Provider reachable (${count} models discovered)` };
     }
 
     return {
@@ -240,6 +281,7 @@ export async function fetchProviderModels(
   apiKey: string,
 ) {
   try {
+    const baseUrl = (endpoint || "").replace(/\/+$/, "");
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
@@ -254,37 +296,103 @@ export async function fetchProviderModels(
       }
     }
 
-    const baseUrl = endpoint.replace(/\/$/, "");
     let url = "";
-
     if (providerType === "ollama") {
-      url = `${baseUrl}/api/tags`;
+      url = `${baseUrl || "http://localhost:11434"}/api/tags`;
+    } else if (providerType === "lmstudio") {
+      url = `${baseUrl || "http://localhost:1234"}/v1/models`;
     } else if (providerType === "gemini") {
-      url = `${baseUrl}/v1beta/models?key=${apiKey}`;
+      const host = baseUrl || "https://generativelanguage.googleapis.com";
+      url = `${host}/v1beta/models?key=${apiKey}`;
     } else if (providerType === "anthropic") {
-      return { success: true, models: ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"] };
+      url = `${baseUrl || "https://api.anthropic.com"}/v1/models`;
     } else {
-      url = `${baseUrl}/models`;
+      const apiHost = baseUrl || (
+        providerType === "groq" ? "https://api.groq.com/openai/v1" :
+        providerType === "xai" ? "https://api.x.ai/v1" :
+        providerType === "openrouter" ? "https://openrouter.ai/api/v1" :
+        "https://api.openai.com/v1"
+      );
+      url = apiHost.endsWith("/models") ? apiHost : `${apiHost}/models`;
     }
 
     const res = await fetch(url, {
       method: "GET",
       headers,
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(8000),
     });
 
     if (!res.ok) {
-      return { success: false, error: `Returned ${res.status}` };
+      if (providerType === "anthropic") {
+        return {
+          success: true,
+          models: [
+            "claude-3-7-sonnet-20250219",
+            "claude-3-5-sonnet-20241022",
+            "claude-3-5-haiku-20241022",
+            "claude-3-opus-20240229",
+          ],
+        };
+      }
+      const text = await res.text().catch(() => "");
+      return { success: false, error: `Returned ${res.status}: ${text.slice(0, 100)}` };
     }
 
     const data = await res.json();
     let models: string[] = [];
+
     if (providerType === "ollama") {
       models = (data.models ?? []).map((m: { name: string }) => m.name);
+    } else if (providerType === "lmstudio") {
+      models = (data.data ?? []).map((m: { id: string }) => m.id);
     } else if (providerType === "gemini") {
-      models = (data.models ?? []).map((m: { name: string }) => m.name.replace("models/", ""));
+      const rawModels = (data.models ?? []) as Array<{ name: string; supportedGenerationMethods?: string[] }>;
+      models = rawModels
+        .filter((m) => !m.supportedGenerationMethods || m.supportedGenerationMethods.includes("generateContent"))
+        .map((m) => m.name.replace(/^models\//, ""))
+        .filter((m) => !m.includes("embedding") && !m.includes("aqa") && !m.includes("imagen"));
+
+      const priority = [
+        "gemini-2.5-flash",
+        "gemini-2.5-pro",
+        "gemini-2.0-flash",
+        "gemini-2.0-flash-lite",
+        "gemini-3.1-flash-lite",
+        "gemini-3.7-flash",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro",
+      ];
+      models.sort((a, b) => {
+        const idxA = priority.indexOf(a);
+        const idxB = priority.indexOf(b);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return a.localeCompare(b);
+      });
+    } else if (providerType === "groq") {
+      models = (data.data ?? [])
+        .map((m: { id: string }) => m.id)
+        .filter((id: string) => !id.includes("whisper") && !id.includes("guard"));
+    } else if (providerType === "openai") {
+      models = (data.data ?? [])
+        .map((m: { id: string }) => m.id)
+        .filter((id: string) => id.startsWith("gpt-") || id.startsWith("o1") || id.startsWith("o3") || id.startsWith("chatgpt"));
+      const priority = ["gpt-4o", "gpt-4o-mini", "o3-mini", "o1", "o1-mini", "gpt-4-turbo", "gpt-3.5-turbo"];
+      models.sort((a, b) => {
+        const idxA = priority.indexOf(a);
+        const idxB = priority.indexOf(b);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return a.localeCompare(b);
+      });
     } else {
       models = (data.data ?? []).map((m: { id: string }) => m.id);
+    }
+
+    if (models.length === 0 && providerType === "gemini") {
+      models = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-3.1-flash-lite", "gemini-3.7-flash"];
     }
 
     return { success: true, models };

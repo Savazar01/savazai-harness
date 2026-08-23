@@ -1431,12 +1431,64 @@ async function executeToolByName(
       if (!expression) {
         throw new Error("Missing required argument: expression");
       }
-      const sanitized = expression.replace(/[^0-9+\-*/().\s]/g, "");
-      if (sanitized.trim() !== expression.trim()) {
-        throw new Error("Invalid characters in expression. Only digits and operators (+ - * / ( )) are allowed.");
+      const sanitized = expression.replace(/[^0-9+\-*/().\s]/g, "").trim();
+      if (!sanitized) {
+        throw new Error("Empty mathematical expression.");
       }
-      const evalFn = new Function(`return (${sanitized});`);
-      const result = evalFn();
+
+      // Safe token-based math evaluator without new Function
+      const tokens: string[] = [];
+      const regex = /\d+(\.\d+)?|[+\-*/()]/g;
+      let m: RegExpExecArray | null;
+      while ((m = regex.exec(sanitized)) !== null) {
+        tokens.push(m[0]);
+      }
+      if (tokens.length === 0) throw new Error("Invalid mathematical expression.");
+
+      let index = 0;
+      const parsePrimary = (): number => {
+        const token = tokens[index++];
+        if (token === "(") {
+          const val = parseAddSub();
+          if (tokens[index++] !== ")") throw new Error("Mismatched parentheses.");
+          return val;
+        }
+        if (token === "-" || token === "+") {
+          const next = parsePrimary();
+          return token === "-" ? -next : next;
+        }
+        const num = parseFloat(token);
+        if (isNaN(num)) throw new Error(`Invalid token: ${token}`);
+        return num;
+      };
+
+      const parseMulDiv = (): number => {
+        let left = parsePrimary();
+        while (index < tokens.length && (tokens[index] === "*" || tokens[index] === "/")) {
+          const op = tokens[index++];
+          const right = parsePrimary();
+          if (op === "*") {
+            left *= right;
+          } else {
+            if (right === 0) throw new Error("Division by zero.");
+            left /= right;
+          }
+        }
+        return left;
+      };
+
+      const parseAddSub = (): number => {
+        let left = parseMulDiv();
+        while (index < tokens.length && (tokens[index] === "+" || tokens[index] === "-")) {
+          const op = tokens[index++];
+          const right = parseMulDiv();
+          if (op === "+") left += right;
+          else left -= right;
+        }
+        return left;
+      };
+
+      const result = parseAddSub();
       resultText = JSON.stringify({ expression, sanitized, result });
       statusCode = 200;
     } catch (err: any) {
@@ -1507,6 +1559,15 @@ async function executeToolByName(
         throw new Error("Missing required argument: query");
       }
       
+      const trimmedQuery = String(query).trim();
+      const isReadOnly = /^(SELECT|EXPLAIN|SHOW|WITH)\b/i.test(trimmedQuery) &&
+        !/\b(DROP|ALTER|TRUNCATE|DELETE|UPDATE|INSERT|GRANT|REVOKE|COPY|EXECUTE|CREATE|REPLACE|VACUUM|REINDEX|LOCK|CALL|DO)\b/i.test(trimmedQuery) &&
+        trimmedQuery.split(";").map(s => s.trim()).filter(Boolean).length <= 1;
+
+      if (!isReadOnly) {
+        throw new Error("Security violation: postgres_query_tool is strictly restricted to read-only queries (SELECT, EXPLAIN, SHOW, WITH). Destructive DDL and DML operations are forbidden.");
+      }
+
       const sqlClient = postgres(connectionString);
       const rows = await sqlClient.unsafe(query);
       await sqlClient.end();
@@ -1526,6 +1587,15 @@ async function executeToolByName(
       }
       if (!query) {
         throw new Error("Missing required argument: query");
+      }
+
+      const trimmedQuery = String(query).trim();
+      const isReadOnly = /^(SELECT|EXPLAIN|PRAGMA|WITH)\b/i.test(trimmedQuery) &&
+        !/\b(DROP|ALTER|DELETE|UPDATE|INSERT|CREATE|REPLACE|ATTACH|DETACH|VACUUM|REINDEX)\b/i.test(trimmedQuery) &&
+        trimmedQuery.split(";").map(s => s.trim()).filter(Boolean).length <= 1;
+
+      if (!isReadOnly) {
+        throw new Error("Security violation: sqlite_query_tool is strictly restricted to read-only queries. Destructive statements are forbidden.");
       }
       
       const executionResult = await runPython("scripts/sqlite_query.py", [dbPath, query]);

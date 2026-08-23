@@ -57,6 +57,13 @@ export function Sidebar() {
   const [threads, setThreads] = useState<ChatThread[]>(() => loadThreads());
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showAgentWorkspace, setShowAgentWorkspace] = useState(() => {
+    if (typeof window !== "undefined") {
+      const persisted = localStorage.getItem("savazai_show_agent_workspace");
+      if (persisted !== null) return persisted === "true";
+    }
+    return true;
+  });
   const isDashboard = pathname === "/dashboard";
 
   // Persistent sidebar state & window resize listener
@@ -81,6 +88,24 @@ export function Sidebar() {
       return () => window.removeEventListener("resize", handleResize);
     }
   }, []);
+
+  useEffect(() => {
+    const handleAppearance = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.showAgentWorkspace !== undefined) {
+        setShowAgentWorkspace(detail.showAgentWorkspace);
+      }
+    };
+    window.addEventListener("savazai-appearance-updated", handleAppearance);
+    return () => window.removeEventListener("savazai-appearance-updated", handleAppearance);
+  }, []);
+
+  const activeNavItems = [
+    ...(showAgentWorkspace ? [{ href: "/dashboard", label: "Agent Workspace", icon: LayoutDashboard }] : []),
+    { href: "/studio", label: "Capability Studio", icon: BrainCircuit },
+    { href: "/business", label: "Business Center", icon: Library },
+    { href: "/admin/settings", label: "Command Center", icon: Settings },
+  ];
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -162,7 +187,7 @@ export function Sidebar() {
       </div>
 
       <nav className="px-2 pt-4 pb-2 space-y-1">
-        {navItems.map((item) => {
+        {activeNavItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link

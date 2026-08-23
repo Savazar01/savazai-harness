@@ -6,10 +6,117 @@ import { decrypt } from "@/lib/crypto";
 
 type DesignTokens = Record<string, unknown>;
 
-/* ── Safe math evaluator ── */
-function safeEval(expr: string): number {
-  const sanitized = expr.replace(/[^0-9+\-*/.()%\s]/g, "");
-  return Function(`"use strict"; return (${sanitized})`)();
+/* ── SSRF URL Validator ── */
+export function isSafeExternalUrl(urlStr: string): boolean {
+  try {
+    const parsed = new URL(urlStr);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "::1" ||
+      host === "0.0.0.0" ||
+      host === "169.254.169.254" ||
+      host.endsWith(".local") ||
+      host.endsWith(".internal") ||
+      host === "savazai-backend" ||
+      host === "savazai-db" ||
+      host === "savazai-console"
+    ) {
+      return false;
+    }
+    if (
+      host.startsWith("10.") ||
+      host.startsWith("192.168.") ||
+      host.startsWith("127.") ||
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host) ||
+      /^169\.254\./.test(host)
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/* ── Read-only SQL Validator ── */
+export function isReadOnlySqlQuery(sqlStr: string): boolean {
+  const trimmed = sqlStr.trim();
+  if (!trimmed) return false;
+  
+  const startsWithAllowed = /^(SELECT|EXPLAIN|SHOW|WITH)\b/i.test(trimmed);
+  if (!startsWithAllowed) return false;
+
+  const forbidden = /\b(DROP|ALTER|TRUNCATE|DELETE|UPDATE|INSERT|GRANT|REVOKE|COPY|EXECUTE|CREATE|REPLACE|VACUUM|REINDEX|LOCK|CALL|DO)\b/i;
+  if (forbidden.test(trimmed)) return false;
+
+  const statements = trimmed.split(";").map((s) => s.trim()).filter(Boolean);
+  if (statements.length > 1) return false;
+
+  return true;
+}
+
+/* ── Pure Safe Math Evaluator (No Function/eval) ── */
+export function safeEval(expr: string): number {
+  const sanitized = expr.replace(/[^0-9+\-*/().\s]/g, "").trim();
+  if (!sanitized) throw new Error("Empty mathematical expression.");
+
+  const tokens: string[] = [];
+  const regex = /\d+(\.\d+)?|[+\-*/()]/g;
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(sanitized)) !== null) {
+    tokens.push(m[0]);
+  }
+  if (tokens.length === 0) throw new Error("Invalid mathematical expression.");
+
+  let index = 0;
+  function parsePrimary(): number {
+    const token = tokens[index++];
+    if (token === "(") {
+      const val = parseAddSub();
+      if (tokens[index++] !== ")") throw new Error("Mismatched parentheses in expression.");
+      return val;
+    }
+    if (token === "-" || token === "+") {
+      const next = parsePrimary();
+      return token === "-" ? -next : next;
+    }
+    const num = parseFloat(token);
+    if (isNaN(num)) throw new Error(`Invalid token: ${token}`);
+    return num;
+  }
+
+  function parseMulDiv(): number {
+    let left = parsePrimary();
+    while (index < tokens.length && (tokens[index] === "*" || tokens[index] === "/")) {
+      const op = tokens[index++];
+      const right = parsePrimary();
+      if (op === "*") {
+        left *= right;
+      } else {
+        if (right === 0) throw new Error("Division by zero.");
+        left /= right;
+      }
+    }
+    return left;
+  }
+
+  function parseAddSub(): number {
+    let left = parseMulDiv();
+    while (index < tokens.length && (tokens[index] === "+" || tokens[index] === "-")) {
+      const op = tokens[index++];
+      const right = parseMulDiv();
+      if (op === "+") left += right;
+      else left -= right;
+    }
+    return left;
+  }
+
+  const result = parseAddSub();
+  if (index < tokens.length) throw new Error("Unexpected trailing characters in expression.");
+  return result;
 }
 
 /* ── Phone validation ── */
@@ -656,6 +763,12 @@ async function executeDbQuery(args: Record<string, unknown>, tokens: DesignToken
   const query = String(args.query || args.sql || "").trim();
   if (!query) return { error: "SQL query is required." };
 
+  if (!isReadOnlySqlQuery(query)) {
+    return {
+      error: "Security violation: postgres_query_tool is strictly restricted to read-only queries (SELECT, EXPLAIN, SHOW, WITH). Destructive DDL and DML operations are forbidden.",
+    };
+  }
+
   let connections: Record<string, unknown>[] = [];
   try {
     connections = typeof tokens.dbConnections === "string" ? JSON.parse(tokens.dbConnections) : (tokens.dbConnections as Record<string, unknown>[] || []);
@@ -699,6 +812,12 @@ async function callCustomWebhook(args: Record<string, unknown>): Promise<Record<
   const body = args.body || args.data || args.payload || {};
 
   if (!url) return { error: "Webhook URL is required." };
+
+  if (!isSafeExternalUrl(url)) {
+    return {
+      error: "Security violation: Webhook requests to private networks, loopback addresses (127.0.0.1, localhost), or cloud metadata endpoints (169.254.169.254) are blocked.",
+    };
+  }
 
   const fetchOpts: RequestInit = {
     method,

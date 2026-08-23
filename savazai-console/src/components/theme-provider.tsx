@@ -23,6 +23,9 @@ export interface SystemConfig {
     secondaryColor?: string;
     background?: string;
     fontSans?: string;
+    promptFontSize?: string;
+    promptFontFamily?: string;
+    showAgentWorkspace?: boolean;
 
     llmProviders?: Record<string, LLMProviderConfig>;
     activeModel?: string;
@@ -111,10 +114,18 @@ function hexToRgbComponents(hex: string): string {
 
 export async function ThemeProvider({ children }: { children: React.ReactNode }) {
   const config = await getSystemConfig();
-  const { primaryColor, secondaryColor, background, fontSans } = config.designTokens || {};
+  const { primaryColor, secondaryColor, background, fontSans, promptFontSize, promptFontFamily } = config.designTokens || {};
 
   const primaryRgb = hexToRgbComponents(primaryColor || "#4f46e5");
   const secondaryRgb = hexToRgbComponents(secondaryColor || "#06b6d4");
+
+  const resolvedFontFamily = (() => {
+    if (!promptFontFamily || promptFontFamily === "sans") return "var(--font-sans), system-ui, -apple-system, sans-serif";
+    if (promptFontFamily === "mono") return "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+    if (promptFontFamily === "inter") return "Inter, var(--font-sans), system-ui, sans-serif";
+    if (promptFontFamily === "system") return "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    return promptFontFamily;
+  })();
 
   const cssVariables = `
     :root {
@@ -122,6 +133,8 @@ export async function ThemeProvider({ children }: { children: React.ReactNode })
       --secondary: ${secondaryRgb};
       ${background ? `--background: ${background};` : ""}
       ${fontSans ? `--font-sans: ${fontSans};` : ""}
+      --prompt-font-size: ${promptFontSize || "16px"};
+      --prompt-font-family: ${resolvedFontFamily};
       --brand-logo-url: url("${config.brandLogoUrl}");
     }
   `;

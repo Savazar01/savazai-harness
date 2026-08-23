@@ -901,7 +901,11 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
               placeholder="Type a test prompt (Shift+Enter for new line)..."
               disabled={streaming}
               rows={Math.min(5, Math.max(1, (input.match(/\n/g) || []).length + 1))}
-              className="flex-1 rounded-xl border border-slate-800 bg-slate-900/30 py-2.5 px-4 text-xs text-white outline-none focus:border-emerald-500 disabled:opacity-40 placeholder-slate-600 resize-none font-sans leading-relaxed transition-all"
+              style={{
+                fontSize: "var(--prompt-font-size, 16px)",
+                fontFamily: "var(--prompt-font-family, inherit)",
+              }}
+              className="flex-1 rounded-xl border border-slate-800 bg-slate-900/30 py-3 px-4 text-white outline-none focus:border-emerald-500 disabled:opacity-40 placeholder-slate-600 resize-none leading-relaxed transition-all"
             />
 
             <div className="relative">
