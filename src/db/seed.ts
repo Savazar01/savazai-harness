@@ -244,9 +244,13 @@ async function seed() {
   console.log("[seed] Baseline configuration complete");
 }
 
-seed().then(() => {
-  process.exit(0);
-}).catch((err) => {
-  console.error("[seed] Failed:", err);
-  process.exit(1);
-});
+export { seed };
+
+if (process.argv[1]?.includes("seed")) {
+  seed().then(() => {
+    process.exit(0);
+  }).catch((err) => {
+    console.error("[seed] Failed:", err);
+    process.exit(1);
+  });
+}

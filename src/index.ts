@@ -12,6 +12,7 @@ import { systemConfigurations, agentflows } from "./db/schema.js";
 import { TelemetryGateway } from "./utils/telemetry.js";
 import { CanvasDefinitionSchema } from "./core/schemas.js";
 import { compileCanvasToGraph } from "./core/compiler.js";
+import { seed } from "./db/seed.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3055;
@@ -668,6 +669,16 @@ app.delete("/api/agentflows/:id", async (req, res) => {
 
 console.log("[savazai-harness] Service initialized");
 
-app.listen(PORT, () => {
-  console.log(`[savazai-harness] Listening on port ${PORT}`);
-});
+async function startServer() {
+  try {
+    await seed();
+  } catch (err) {
+    console.error("[savazai-harness] Background seed warning:", err);
+  }
+
+  app.listen(PORT, () => {
+    console.log(`[savazai-harness] Listening on port ${PORT}`);
+  });
+}
+
+startServer();

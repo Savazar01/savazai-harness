@@ -1,9 +1,104 @@
 import { betterAuth } from "better-auth";
+import { hashPassword } from "better-auth/crypto";
 import { Pool } from "pg";
+import { randomUUID } from "node:crypto";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
+
+let adminBootstrapped = false;
+
+export async function ensureAdminProvisioned() {
+  if (adminBootstrapped) return;
+  const adminEmail = process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.trim().toLowerCase() : null;
+  const adminPassword = process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.trim() : null;
+  const adminName = (process.env.ADMIN_NAME || "System Administrator").trim();
+
+  if (!adminEmail || !adminPassword) {
+    return;
+  }
+
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "user" (
+        "id" TEXT PRIMARY KEY,
+        "name" TEXT NOT NULL,
+        "email" TEXT NOT NULL UNIQUE,
+        "emailVerified" BOOLEAN NOT NULL DEFAULT false,
+        "image" TEXT,
+        "role" TEXT NOT NULL DEFAULT 'user',
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE TABLE IF NOT EXISTS "session" (
+        "id" TEXT PRIMARY KEY,
+        "userId" TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+        "token" TEXT NOT NULL UNIQUE,
+        "expiresAt" TIMESTAMPTZ NOT NULL,
+        "ipAddress" TEXT,
+        "userAgent" TEXT,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE TABLE IF NOT EXISTS "account" (
+        "id" TEXT PRIMARY KEY,
+        "accountId" TEXT NOT NULL,
+        "providerId" TEXT NOT NULL,
+        "userId" TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+        "accessToken" TEXT,
+        "refreshToken" TEXT,
+        "idToken" TEXT,
+        "accessTokenExpiresAt" TIMESTAMPTZ,
+        "refreshTokenExpiresAt" TIMESTAMPTZ,
+        "scope" TEXT,
+        "password" TEXT,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE TABLE IF NOT EXISTS "verification" (
+        "id" TEXT PRIMARY KEY,
+        "identifier" TEXT NOT NULL,
+        "value" TEXT NOT NULL,
+        "expiresAt" TIMESTAMPTZ NOT NULL,
+        "createdAt" TIMESTAMPTZ DEFAULT now(),
+        "updatedAt" TIMESTAMPTZ DEFAULT now()
+      );
+    `);
+
+    const userRes = await pool.query('SELECT id, role FROM "user" WHERE LOWER(email) = $1 LIMIT 1', [adminEmail]);
+    const hashedPassword = await hashPassword(adminPassword);
+
+    if (userRes.rows.length > 0) {
+      const user = userRes.rows[0];
+      await pool.query('UPDATE "user" SET name = $1, role = \'admin\', "emailVerified" = true, "updatedAt" = now() WHERE id = $2', [adminName, user.id]);
+      
+      const accountRes = await pool.query('SELECT id FROM "account" WHERE "userId" = $1 AND "providerId" = \'credential\' LIMIT 1', [user.id]);
+      if (accountRes.rows.length > 0) {
+        await pool.query('UPDATE "account" SET password = $1, "updatedAt" = now() WHERE "userId" = $2 AND "providerId" = \'credential\'', [hashedPassword, user.id]);
+      } else {
+        const accountId = randomUUID();
+        await pool.query('INSERT INTO "account" (id, "userId", "accountId", "providerId", password, "createdAt", "updatedAt") VALUES ($1, $2, $2, \'credential\', $3, now(), now())', [accountId, user.id, hashedPassword]);
+      }
+      console.log(`[Better Auth Init] Synchronized admin user and password for: ${adminEmail}`);
+    } else {
+      const userId = randomUUID();
+      const accountId = randomUUID();
+      await pool.query('INSERT INTO "user" (id, name, email, "emailVerified", role, "createdAt", "updatedAt") VALUES ($1, $2, $3, true, \'admin\', now(), now())', [userId, adminName, adminEmail]);
+      await pool.query('INSERT INTO "account" (id, "userId", "accountId", "providerId", password, "createdAt", "updatedAt") VALUES ($1, $2, $2, \'credential\', $3, now(), now())', [accountId, userId, hashedPassword]);
+      console.log(`[Better Auth Init] Created initial admin credentials for: ${adminEmail}`);
+    }
+    adminBootstrapped = true;
+  } catch (err) {
+    console.error("[Better Auth Init] Failed to provision admin credentials:", err);
+  }
+}
+
+if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
+  ensureAdminProvisioned().catch((err) => {
+    console.error("[Better Auth Init] Immediate bootstrap error:", err);
+  });
+}
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3056",
