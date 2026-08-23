@@ -10,6 +10,16 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  try {
+    if (req.nextUrl.pathname.includes("/sign-in/email")) {
+      const cloned = req.clone();
+      const body = await cloned.json().catch(() => ({}));
+      if (body?.email) {
+        console.log(`[Auth Diagnostic] Sign-in attempt for email: "${body.email}" (Configured ADMIN_EMAIL: "${process.env.ADMIN_EMAIL}")`);
+      }
+    }
+  } catch (_) {}
+
   await ensureAdminProvisioned();
   return handler.POST(req);
 }

@@ -8,6 +8,15 @@ import { skillTools } from "../utils/skills-loader.js";
 import { storeSkillEmbedding } from "../utils/vector-matcher.js";
 import { CryptoVault } from "../utils/crypto-vault.js";
 
+function cleanEnv(val?: string | null): string | null {
+  if (!val) return null;
+  let s = val.trim();
+  while ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1).trim();
+  }
+  return s || null;
+}
+
 async function seed() {
   // 1. Ensure Better-Auth tables exist
   await db.execute(sql`
@@ -57,15 +66,15 @@ async function seed() {
   `);
 
   // 2. Admin account bootstrapping from environment variables
+  const adminEmail = cleanEnv(process.env.ADMIN_EMAIL)?.toLowerCase() || null;
+  const adminPassword = cleanEnv(process.env.ADMIN_PASSWORD) || null;
+  const adminName = cleanEnv(process.env.ADMIN_NAME) || "System Administrator";
+
   console.log("[Seed] Checking administrator bootstrapping parameters...");
   console.log("[Seed] NODE_ENV:", process.env.NODE_ENV);
-  console.log("[Seed] ADMIN_EMAIL detected:", process.env.ADMIN_EMAIL ? `YES (${process.env.ADMIN_EMAIL.trim()})` : "NO");
-  console.log("[Seed] ADMIN_PASSWORD detected:", process.env.ADMIN_PASSWORD ? `YES (${process.env.ADMIN_PASSWORD.length} chars)` : "NO");
-  console.log("[Seed] ADMIN_NAME:", process.env.ADMIN_NAME || "System Administrator (default)");
-
-  const adminEmail = process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.trim().toLowerCase() : null;
-  const adminPassword = process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.trim() : null;
-  const adminName = (process.env.ADMIN_NAME || "System Administrator").trim();
+  console.log("[Seed] ADMIN_EMAIL detected:", adminEmail ? `YES (${adminEmail})` : "NO");
+  console.log("[Seed] ADMIN_PASSWORD detected:", adminPassword ? `YES (${adminPassword.length} chars)` : "NO");
+  console.log("[Seed] ADMIN_NAME:", adminName);
 
   if (adminEmail && adminPassword) {
     const existingUser = (await db.execute(sql`SELECT * FROM "user" WHERE LOWER(email) = ${adminEmail} LIMIT 1`)) as unknown as Array<{ id: string; role: string }>;

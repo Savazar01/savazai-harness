@@ -1285,8 +1285,8 @@
     "semantic_hash": "ec185f843c7b7b170032374dae568928"
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\api\\auth\\[...all]\\route.ts": {
-    "mtime": 1787485208.413824,
-    "ast_hash": "30b8a95f10c17bdba43c11330f0badb5",
+    "mtime": 1787483415.6937373,
+    "ast_hash": "1f2b42b09997a39f6947ca0f7b608926",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\api\\chat\\route.ts": {
@@ -1365,8 +1365,8 @@
     "semantic_hash": "7e5ffd0852aee321277975c6e0ef14a2"
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\lib\\auth.ts": {
-    "mtime": 1787485193.7627075,
-    "ast_hash": "5bbad0b0609fe6ac09f7e83dc695ba25",
+    "mtime": 1787483404.9764068,
+    "ast_hash": "e9a0f84984bb1d4f267f8b2cd60c4560",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\lib\\crypto.ts": {
@@ -1430,8 +1430,8 @@
     "semantic_hash": "174eeaae14578a57095f7206be77fa0d"
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\db\\seed.ts": {
-    "mtime": 1787485227.3462908,
-    "ast_hash": "dac80ecd2455e829c044a101b2b53b37",
+    "mtime": 1787483449.4529142,
+    "ast_hash": "5fbe14e2628d8b77b6386508d4965eca",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\db\\wait-for-db.ts": {

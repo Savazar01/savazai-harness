@@ -7,13 +7,24 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+export function cleanEnv(val?: string | null): string | null {
+  if (!val) return null;
+  let s = val.trim();
+  while ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1).trim();
+  }
+  return s || null;
+}
+
 let adminBootstrapped = false;
 
 export async function ensureAdminProvisioned() {
   if (adminBootstrapped) return;
-  const adminEmail = process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.trim().toLowerCase() : null;
-  const adminPassword = process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.trim() : null;
-  const adminName = (process.env.ADMIN_NAME || "System Administrator").trim();
+  if (process.env.NEXT_PHASE === "phase-production-build") return;
+
+  const adminEmail = cleanEnv(process.env.ADMIN_EMAIL)?.toLowerCase();
+  const adminPassword = cleanEnv(process.env.ADMIN_PASSWORD);
+  const adminName = cleanEnv(process.env.ADMIN_NAME) || "System Administrator";
 
   if (!adminEmail || !adminPassword) {
     return;
@@ -94,7 +105,7 @@ export async function ensureAdminProvisioned() {
   }
 }
 
-if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
+if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD && process.env.NEXT_PHASE !== "phase-production-build") {
   ensureAdminProvisioned().catch((err) => {
     console.error("[Better Auth Init] Immediate bootstrap error:", err);
   });
