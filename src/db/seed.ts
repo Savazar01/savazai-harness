@@ -84,7 +84,7 @@ async function seed() {
     if (existingUser && existingUser.length > 0) {
       const u = existingUser[0];
 
-      await db.execute(sql`UPDATE "user" SET name = ${adminName}, role = 'admin', "emailVerified" = true, "updatedAt" = now() WHERE id = ${u.id}`);
+      await db.execute(sql`UPDATE "user" SET name = ${adminName}, email = ${adminEmail}, role = 'admin', "emailVerified" = true, "updatedAt" = now() WHERE id = ${u.id}`);
       
       const existingAccount = (await db.execute(sql`SELECT * FROM "account" WHERE "userId" = ${u.id} AND "providerId" = 'credential' LIMIT 1`)) as unknown as Array<Record<string, unknown>>;
       if (existingAccount && existingAccount.length > 0) {

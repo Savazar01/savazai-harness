@@ -82,7 +82,7 @@ export async function ensureAdminProvisioned() {
 
     if (userRes.rows.length > 0) {
       const user = userRes.rows[0];
-      await pool.query('UPDATE "user" SET name = $1, role = \'admin\', "emailVerified" = true, "updatedAt" = now() WHERE id = $2', [adminName, user.id]);
+      await pool.query('UPDATE "user" SET name = $1, email = $2, role = \'admin\', "emailVerified" = true, "updatedAt" = now() WHERE id = $3', [adminName, adminEmail, user.id]);
       
       const accountRes = await pool.query('SELECT id FROM "account" WHERE "userId" = $1 AND "providerId" = \'credential\' LIMIT 1', [user.id]);
       if (accountRes.rows.length > 0) {

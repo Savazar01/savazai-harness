@@ -29,9 +29,9 @@ export function SignUpForm({ appTitle, logoUrl }: SignUpFormProps) {
 
     try {
       const { error: signUpError } = await authClient.signUp.email({
-        email,
+        email: email.trim().toLowerCase(),
         password,
-        name,
+        name: name.trim(),
         callbackURL: "/admin/settings",
       });
 

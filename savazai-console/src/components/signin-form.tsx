@@ -28,7 +28,7 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
 
     try {
       const { error: signInError } = await authClient.signIn.email({
-        email,
+        email: email.trim().toLowerCase(),
         password,
         callbackURL: "/admin/settings",
       });
