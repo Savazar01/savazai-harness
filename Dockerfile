@@ -1,10 +1,11 @@
 FROM node:22-bookworm-slim AS builder
 WORKDIR /app
+ENV NODE_ENV=development
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --include=dev
 COPY tsconfig.json drizzle.config.ts ./
 COPY src/ ./src/
-RUN npx tsc
+RUN ./node_modules/.bin/tsc
 
 FROM node:22-bookworm-slim
 RUN apt-get update && apt-get install -y python3 python3-pip python3-venv && rm -rf /var/lib/apt/lists/*
