@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { randomBytes, scrypt } from "node:crypto";
+import { randomBytes, scrypt, randomUUID } from "node:crypto";
 import { db } from "./index.js";
 import { connectedApps, autonomousAgents, systemConfigurations } from "./schema.js";
 import { eq, sql } from "drizzle-orm";
@@ -97,19 +97,19 @@ async function seed() {
       const hashedPassword = await hashPassword(adminPassword);
       const now = new Date();
 
-      await db.execute(sql`UPDATE "user" SET role = 'admin', "emailVerified" = true, "updatedAt" = ${now} WHERE id = ${u.id}`);
+      await db.execute(sql`UPDATE "user" SET name = ${adminName}, role = 'admin', "emailVerified" = true, "updatedAt" = ${now} WHERE id = ${u.id}`);
       
       const existingAccount = (await db.execute(sql`SELECT * FROM "account" WHERE "userId" = ${u.id} AND "providerId" = 'credential' LIMIT 1`)) as unknown as Array<Record<string, unknown>>;
       if (existingAccount && existingAccount.length > 0) {
         await db.execute(sql`UPDATE "account" SET password = ${hashedPassword}, issuer = 'local:credential', "updatedAt" = ${now} WHERE "userId" = ${u.id} AND "providerId" = 'credential'`);
       } else {
-        const accountId = crypto.randomUUID();
+        const accountId = randomUUID();
         await db.execute(sql`INSERT INTO "account" (id, "userId", "accountId", "providerId", password, issuer, "createdAt", "updatedAt") VALUES (${accountId}, ${u.id}, ${u.id}, 'credential', ${hashedPassword}, 'local:credential', ${now}, ${now})`);
       }
       console.log(`[seed] Admin user (${adminEmail}) synchronized with environment configuration.`);
     } else {
-      const userId = crypto.randomUUID();
-      const accountId = crypto.randomUUID();
+      const userId = randomUUID();
+      const accountId = randomUUID();
       const hashedPassword = await hashPassword(adminPassword);
       const now = new Date();
 

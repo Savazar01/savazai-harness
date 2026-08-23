@@ -9,6 +9,12 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3056",
   secret: process.env.BETTER_AUTH_SECRET || "savazai_secure_auth_secret_development_vault_key_2026",
   database: pool,
+  trustedOrigins: [
+    "http://localhost:3056",
+    "http://localhost:3055",
+    process.env.BETTER_AUTH_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+  ].filter(Boolean) as string[],
   emailAndPassword: {
     enabled: true,
   },
