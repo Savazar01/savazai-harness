@@ -9783,7 +9783,7 @@
       "source_file": "drizzle/migrations/meta/0005_snapshot.json",
       "source_location": "L6",
       "id": "meta_0005_snapshot_tables",
-      "community": 278,
+      "community": 284,
       "norm_label": "tables"
     },
     {
@@ -12519,7 +12519,7 @@
       "source_file": "drizzle/migrations/meta/0006_snapshot.json",
       "source_location": "L6",
       "id": "meta_0006_snapshot_tables",
-      "community": 254,
+      "community": 358,
       "norm_label": "tables"
     },
     {
@@ -18391,19 +18391,10 @@
       "norm_label": "@types/react-dom"
     },
     {
-      "label": "auth",
-      "file_type": "code",
-      "source_file": "savazai-console/package.json",
-      "source_location": "L32",
-      "id": "savazai_console_package_devdependencies_auth",
-      "community": 5,
-      "norm_label": "auth"
-    },
-    {
       "label": "eslint",
       "file_type": "code",
       "source_file": "savazai-console/package.json",
-      "source_location": "L33",
+      "source_location": "L32",
       "id": "savazai_console_package_devdependencies_eslint",
       "community": 5,
       "norm_label": "eslint"
@@ -18412,7 +18403,7 @@
       "label": "eslint-config-next",
       "file_type": "code",
       "source_file": "savazai-console/package.json",
-      "source_location": "L34",
+      "source_location": "L33",
       "id": "savazai_console_package_devdependencies_eslint_config_next",
       "community": 5,
       "norm_label": "eslint-config-next"
@@ -18421,7 +18412,7 @@
       "label": "tailwindcss",
       "file_type": "code",
       "source_file": "savazai-console/package.json",
-      "source_location": "L35",
+      "source_location": "L34",
       "id": "savazai_console_package_devdependencies_tailwindcss",
       "community": 5,
       "norm_label": "tailwindcss"
@@ -18430,7 +18421,7 @@
       "label": "typescript",
       "file_type": "code",
       "source_file": "savazai-console/package.json",
-      "source_location": "L36",
+      "source_location": "L35",
       "id": "savazai_console_package_devdependencies_typescript",
       "community": 5,
       "norm_label": "typescript"
@@ -22491,7 +22482,7 @@
       "source_file": "src/db/index.ts",
       "source_location": "L1",
       "id": "src_db_index_ts",
-      "community": 259,
+      "community": 7,
       "norm_label": "index.ts"
     },
     {
@@ -22500,7 +22491,7 @@
       "source_file": "src/db/index.ts",
       "source_location": "L12",
       "id": "db_index_parsed",
-      "community": 259,
+      "community": 7,
       "norm_label": "parsed"
     },
     {
@@ -22509,7 +22500,7 @@
       "source_file": "src/db/index.ts",
       "source_location": "L18",
       "id": "db_index_matches",
-      "community": 259,
+      "community": 7,
       "norm_label": "matches"
     },
     {
@@ -31941,7 +31932,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3283",
       "id": "vercel_react_best_practices_agents_7_8_early_length_check_for_array_comparisons",
-      "community": 408,
+      "community": 83,
       "norm_label": "7.8 early length check for array comparisons"
     },
     {
@@ -31950,7 +31941,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3293",
       "id": "vercel_react_best_practices_agents_codeblock_148",
-      "community": 408,
+      "community": 83,
       "norm_label": "code:typescript (function haschanges(current: string[], original: string[]) {)"
     },
     {
@@ -31959,7 +31950,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3304",
       "id": "vercel_react_best_practices_agents_codeblock_149",
-      "community": 408,
+      "community": 83,
       "norm_label": "code:typescript (function haschanges(current: string[], original: string[]) {)"
     },
     {
@@ -31968,7 +31959,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3332",
       "id": "vercel_react_best_practices_agents_7_9_early_return_from_functions",
-      "community": 83,
+      "community": 408,
       "norm_label": "7.9 early return from functions"
     },
     {
@@ -31977,7 +31968,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3340",
       "id": "vercel_react_best_practices_agents_codeblock_150",
-      "community": 83,
+      "community": 408,
       "norm_label": "code:typescript (function validateusers(users: user[]) {)"
     },
     {
@@ -31986,7 +31977,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/AGENTS.md",
       "source_location": "L3363",
       "id": "vercel_react_best_practices_agents_codeblock_151",
-      "community": 83,
+      "community": 408,
       "norm_label": "code:typescript (function validateusers(users: user[]) {)"
     },
     {
@@ -35163,7 +35154,7 @@
       "source_file": ".agents/skills/vercel-react-best-practices/rules/server-cache-react.md",
       "source_location": "L46",
       "id": "rules_server_cache_react_codeblock_3",
-      "community": 178,
+      "community": 383,
       "norm_label": "code:typescript (const getuser = cache(async (uid: number) => {)"
     },
     {
@@ -37991,6 +37982,15 @@
       "id": "src_skills_send_email_md",
       "community": 303,
       "norm_label": "send-email.md"
+    },
+    {
+      "label": "auth",
+      "file_type": "code",
+      "source_file": "savazai-console/package.json",
+      "source_location": "L32",
+      "community": 5,
+      "norm_label": "auth",
+      "id": "savazai_console_package_devdependencies_auth"
     },
     {
       "label": "report-schema.json",
@@ -69223,16 +69223,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "savazai-console/package.json",
-      "source_location": "L32",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "savazai_console_package_devdependencies",
-      "target": "savazai_console_package_devdependencies_auth"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "savazai-console/package.json",
       "source_location": "L33",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -69268,6 +69258,16 @@
       "confidence_score": 1.0,
       "source": "savazai_console_package_devdependencies",
       "target": "savazai_console_package_devdependencies_typescript"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "savazai-console/package.json",
+      "source_location": "L32",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "savazai_console_package_devdependencies",
+      "target": "savazai_console_package_devdependencies_auth"
     },
     {
       "relation": "contains",
@@ -104399,5 +104399,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "f721bc75515efd5c5431c8e3fffd3b7185d6c2c4"
+  "built_at_commit": "e4e724e52cb5e00d57bd733dda6883c148cf6b77"
 }
