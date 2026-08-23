@@ -29,20 +29,31 @@ export const auth = betterAuth({
       create: {
         before: async (user) => {
           try {
-            // Check count of users in the "user" table
-            const res = await pool.query('SELECT COUNT(*) FROM "user"').catch(() => null);
-            const userCount = res ? parseInt(res.rows[0].count, 10) : 0;
+            const isLocalDev = process.env.NODE_ENV !== "production";
+            
+            if (isLocalDev) {
+              const res = await pool.query('SELECT COUNT(*) FROM "user"').catch(() => null);
+              const userCount = res ? parseInt(res.rows[0].count, 10) : 0;
+              const isFirstLocalUser = userCount === 0;
 
-            // Auto-provision first user as 'admin', others as 'user'
-            const role = userCount === 0 ? "admin" : "user";
+              return {
+                data: {
+                  ...user,
+                  role: isFirstLocalUser ? "admin" : "user",
+                  emailVerified: isFirstLocalUser ? true : (user.emailVerified ?? false),
+                },
+              };
+            }
+
+            // In production, public registration NEVER receives admin role. Admin is provisioned strictly via environment variables.
             return {
               data: {
                 ...user,
-                role,
+                role: "user",
               },
             };
           } catch (err) {
-            console.error("[auth-hook] Error querying user count:", err);
+            console.error("[auth-hook] Error in user.create.before hook:", err);
             return {
               data: {
                 ...user,
@@ -50,6 +61,22 @@ export const auth = betterAuth({
               },
             };
           }
+        },
+      },
+    },
+    account: {
+      create: {
+        before: async (account) => {
+          // Normalize issuer for credential provider accounts
+          if (account.providerId === "credential" && !account.issuer) {
+            return {
+              data: {
+                ...account,
+                issuer: "local:credential",
+              },
+            };
+          }
+          return { data: account };
         },
       },
     },

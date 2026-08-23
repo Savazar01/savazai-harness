@@ -1340,9 +1340,9 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\signin-form.tsx": {
-    "mtime": 1784001701.1290536,
-    "ast_hash": "9ec01f54a65e40e7620b28072e17e267",
-    "semantic_hash": "9ec01f54a65e40e7620b28072e17e267"
+    "mtime": 1787470104.4680989,
+    "ast_hash": "b0328b972a73b227577ce249eb2aea3c",
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\signup-form.tsx": {
     "mtime": 1783507973.1515446,
@@ -1365,8 +1365,8 @@
     "semantic_hash": "7e5ffd0852aee321277975c6e0ef14a2"
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\lib\\auth.ts": {
-    "mtime": 1787456951.7133534,
-    "ast_hash": "b608ab0f3e349a4660d2143eaa6fc953",
+    "mtime": 1787470081.1167493,
+    "ast_hash": "72ac5eee48617c404e31e69ac84f0acb",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\lib\\crypto.ts": {
@@ -1430,9 +1430,9 @@
     "semantic_hash": "174eeaae14578a57095f7206be77fa0d"
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\db\\seed.ts": {
-    "mtime": 1783949912.1725414,
-    "ast_hash": "543196068187dbf11f1125551c8cc3b3",
-    "semantic_hash": "543196068187dbf11f1125551c8cc3b3"
+    "mtime": 1787470187.4419441,
+    "ast_hash": "06fa7b8850a1aecd2433c73b4dfbbadd",
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\src\\db\\wait-for-db.ts": {
     "mtime": 1784465107.660474,
@@ -1515,8 +1515,8 @@
     "semantic_hash": "194876b6c495cd7d50dc9d5e1b34d634"
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\AGENTS.md": {
-    "mtime": 1786188482.4152584,
-    "ast_hash": "9f1b2e86fe2a9b75c8f73df29730b4f5",
+    "mtime": 1787470068.5061076,
+    "ast_hash": "1e084073d300e04fa35c192d0871e0ae",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\Claude.md": {
@@ -1525,9 +1525,9 @@
     "semantic_hash": "5c27369b226fcf2be8a6cfe52224e767"
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\docker-compose.yml": {
-    "mtime": 1786534561.9382243,
-    "ast_hash": "01ba28a1d2ff3f76fe7982d5f878b0ad",
-    "semantic_hash": "01ba28a1d2ff3f76fe7982d5f878b0ad"
+    "mtime": 1787470133.8921783,
+    "ast_hash": "3aa674995f9e90b762a56b7ba1f66311",
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\README.md": {
     "mtime": 1786188471.0388217,

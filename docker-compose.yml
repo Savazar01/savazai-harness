@@ -25,6 +25,9 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgresql://${DB_USER:-sz_harness_admin}:${DB_PASSWORD:-sz_secure_vault_pass_99}@savazai-db:5432/${DB_NAME:-savazai_harness}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_NAME: ${ADMIN_NAME:-}
     depends_on:
       savazai-db:
         condition: service_healthy

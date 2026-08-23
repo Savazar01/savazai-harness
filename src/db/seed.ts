@@ -1,12 +1,129 @@
 import "dotenv/config";
+import { randomBytes, scrypt } from "node:crypto";
 import { db } from "./index.js";
 import { connectedApps, autonomousAgents, systemConfigurations } from "./schema.js";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { skillTools } from "../utils/skills-loader.js";
 import { storeSkillEmbedding } from "../utils/vector-matcher.js";
 import { CryptoVault } from "../utils/crypto-vault.js";
 
+const SCRYPT_CONFIG = {
+  N: 16384,
+  r: 16,
+  p: 1,
+  dkLen: 64,
+};
+
+async function hashPassword(password: string): Promise<string> {
+  const salt = randomBytes(16).toString("hex");
+  return new Promise((resolve, reject) => {
+    scrypt(
+      password.normalize("NFKC"),
+      salt,
+      SCRYPT_CONFIG.dkLen,
+      {
+        N: SCRYPT_CONFIG.N,
+        r: SCRYPT_CONFIG.r,
+        p: SCRYPT_CONFIG.p,
+        maxmem: 128 * SCRYPT_CONFIG.N * SCRYPT_CONFIG.r * 2,
+      },
+      (err, key) => {
+        if (err) reject(err);
+        else resolve(`${salt}:${key.toString("hex")}`);
+      }
+    );
+  });
+}
+
 async function seed() {
+  // 1. Ensure Better-Auth tables exist
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS "user" (
+      "id" TEXT PRIMARY KEY,
+      "name" TEXT NOT NULL,
+      "email" TEXT NOT NULL UNIQUE,
+      "emailVerified" BOOLEAN NOT NULL DEFAULT false,
+      "image" TEXT,
+      "role" TEXT NOT NULL DEFAULT 'user',
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE TABLE IF NOT EXISTS "session" (
+      "id" TEXT PRIMARY KEY,
+      "expiresAt" TIMESTAMPTZ NOT NULL,
+      "token" TEXT NOT NULL UNIQUE,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+      "ipAddress" TEXT,
+      "userAgent" TEXT,
+      "userId" TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS "account" (
+      "id" TEXT PRIMARY KEY,
+      "accountId" TEXT NOT NULL,
+      "providerId" TEXT NOT NULL,
+      "userId" TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+      "accessToken" TEXT,
+      "refreshToken" TEXT,
+      "idToken" TEXT,
+      "accessTokenExpiresAt" TIMESTAMPTZ,
+      "refreshTokenExpiresAt" TIMESTAMPTZ,
+      "scope" TEXT,
+      "password" TEXT,
+      "issuer" TEXT,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE TABLE IF NOT EXISTS "verification" (
+      "id" TEXT PRIMARY KEY,
+      "identifier" TEXT NOT NULL,
+      "value" TEXT NOT NULL,
+      "expiresAt" TIMESTAMPTZ NOT NULL,
+      "createdAt" TIMESTAMPTZ DEFAULT now(),
+      "updatedAt" TIMESTAMPTZ DEFAULT now()
+    );
+  `);
+
+  // 2. Admin account bootstrapping from environment variables
+  const adminEmail = process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.trim().toLowerCase() : null;
+  const adminPassword = process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.trim() : null;
+  const adminName = (process.env.ADMIN_NAME || "System Administrator").trim();
+
+  if (adminEmail && adminPassword) {
+    const existingUser = (await db.execute(sql`SELECT * FROM "user" WHERE LOWER(email) = ${adminEmail} LIMIT 1`)) as unknown as Array<{ id: string; role: string }>;
+
+    if (existingUser && existingUser.length > 0) {
+      const u = existingUser[0];
+      const hashedPassword = await hashPassword(adminPassword);
+      const now = new Date();
+
+      await db.execute(sql`UPDATE "user" SET role = 'admin', "emailVerified" = true, "updatedAt" = ${now} WHERE id = ${u.id}`);
+      
+      const existingAccount = (await db.execute(sql`SELECT * FROM "account" WHERE "userId" = ${u.id} AND "providerId" = 'credential' LIMIT 1`)) as unknown as Array<Record<string, unknown>>;
+      if (existingAccount && existingAccount.length > 0) {
+        await db.execute(sql`UPDATE "account" SET password = ${hashedPassword}, issuer = 'local:credential', "updatedAt" = ${now} WHERE "userId" = ${u.id} AND "providerId" = 'credential'`);
+      } else {
+        const accountId = crypto.randomUUID();
+        await db.execute(sql`INSERT INTO "account" (id, "userId", "accountId", "providerId", password, issuer, "createdAt", "updatedAt") VALUES (${accountId}, ${u.id}, ${u.id}, 'credential', ${hashedPassword}, 'local:credential', ${now}, ${now})`);
+      }
+      console.log(`[seed] Admin user (${adminEmail}) synchronized with environment configuration.`);
+    } else {
+      const userId = crypto.randomUUID();
+      const accountId = crypto.randomUUID();
+      const hashedPassword = await hashPassword(adminPassword);
+      const now = new Date();
+
+      await db.execute(sql`INSERT INTO "user" (id, name, email, "emailVerified", role, "createdAt", "updatedAt") VALUES (${userId}, ${adminName}, ${adminEmail}, true, 'admin', ${now}, ${now})`);
+      await db.execute(sql`INSERT INTO "account" (id, "userId", "accountId", "providerId", password, issuer, "createdAt", "updatedAt") VALUES (${accountId}, ${userId}, ${userId}, 'credential', ${hashedPassword}, 'local:credential', ${now}, ${now})`);
+      console.log(`[seed] Production admin provisioned successfully from environment (${adminEmail}).`);
+    }
+  } else {
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[seed] Running in local mode. First UI signup will claim administrator role.");
+    } else {
+      console.log("[seed] Production mode active. No ADMIN_EMAIL/ADMIN_PASSWORD environment variables set.");
+    }
+  }
   const existingApp = await db
     .select()
     .from(connectedApps)

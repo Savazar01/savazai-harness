@@ -123,3 +123,11 @@ npm run build
 npm run db:generate
 npm run db:migrate
 ```
+
+---
+
+## 9. SECURITY & SYSTEM INTEGRITY INVARIANTS
+
+- **Zero Cryptomining / Unauthorized Binary Execution**: The execution, bundling, or invocation of any cryptocurrency mining software (e.g., XMRig), unverified third-party binaries, or covert background processes is strictly prohibited across all agents, tools, skills, and containers.
+- **Strict Execution Isolation**: All tool executions and sandboxed scripts (Python/Node) must execute within defined memory and process bounds without privilege escalation.
+- **Production Authorization Boundary**: In production environments (`NODE_ENV === 'production'`), administrative privileges are granted strictly via verified environment configuration (`ADMIN_EMAIL`/`ADMIN_PASSWORD`) and never via open registration self-promotion.
