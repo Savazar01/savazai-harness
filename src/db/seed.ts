@@ -52,6 +52,7 @@ async function seed() {
       "refreshTokenExpiresAt" TIMESTAMPTZ,
       "scope" TEXT,
       "password" TEXT,
+      "issuer" TEXT DEFAULT 'local:credential',
       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
     );
@@ -63,6 +64,8 @@ async function seed() {
       "createdAt" TIMESTAMPTZ DEFAULT now(),
       "updatedAt" TIMESTAMPTZ DEFAULT now()
     );
+    ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "issuer" TEXT DEFAULT 'local:credential';
+    UPDATE "account" SET "issuer" = 'local:credential' WHERE "issuer" IS NULL OR "issuer" = '';
   `);
 
   // 2. Admin account bootstrapping from environment variables
@@ -88,11 +91,11 @@ async function seed() {
       
       const existingAccount = (await db.execute(sql`SELECT * FROM "account" WHERE "userId" = ${u.id} AND "providerId" = 'credential' LIMIT 1`)) as unknown as Array<Record<string, unknown>>;
       if (existingAccount && existingAccount.length > 0) {
-        await db.execute(sql`UPDATE "account" SET password = ${hashedPassword}, "updatedAt" = now() WHERE "userId" = ${u.id} AND "providerId" = 'credential'`);
+        await db.execute(sql`UPDATE "account" SET password = ${hashedPassword}, "issuer" = 'local:credential', "updatedAt" = now() WHERE "userId" = ${u.id} AND "providerId" = 'credential'`);
         console.log(`[Seed] Successfully synchronized admin user and password: ${adminEmail}`);
       } else {
         const accountId = randomUUID();
-        await db.execute(sql`INSERT INTO "account" (id, "userId", "accountId", "providerId", password, "createdAt", "updatedAt") VALUES (${accountId}, ${u.id}, ${u.id}, 'credential', ${hashedPassword}, now(), now())`);
+        await db.execute(sql`INSERT INTO "account" (id, "userId", "accountId", "providerId", "issuer", password, "createdAt", "updatedAt") VALUES (${accountId}, ${u.id}, ${u.id}, 'credential', 'local:credential', ${hashedPassword}, now(), now())`);
         console.log(`[Seed] Successfully created credential account & admin role for existing user: ${adminEmail}`);
       }
     } else {
@@ -100,7 +103,7 @@ async function seed() {
       const accountId = randomUUID();
 
       await db.execute(sql`INSERT INTO "user" (id, name, email, "emailVerified", role, "createdAt", "updatedAt") VALUES (${userId}, ${adminName}, ${adminEmail}, true, 'admin', now(), now())`);
-      await db.execute(sql`INSERT INTO "account" (id, "userId", "accountId", "providerId", password, "createdAt", "updatedAt") VALUES (${accountId}, ${userId}, ${userId}, 'credential', ${hashedPassword}, now(), now())`);
+      await db.execute(sql`INSERT INTO "account" (id, "userId", "accountId", "providerId", "issuer", password, "createdAt", "updatedAt") VALUES (${accountId}, ${userId}, ${userId}, 'credential', 'local:credential', ${hashedPassword}, now(), now())`);
       console.log(`[Seed] Successfully inserted new admin user and credential account: ${adminEmail}`);
     }
   } else {

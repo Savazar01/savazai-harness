@@ -64,6 +64,7 @@ export async function ensureAdminProvisioned() {
         "refreshTokenExpiresAt" TIMESTAMPTZ,
         "scope" TEXT,
         "password" TEXT,
+        "issuer" TEXT DEFAULT 'local:credential',
         "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
       );
@@ -75,6 +76,8 @@ export async function ensureAdminProvisioned() {
         "createdAt" TIMESTAMPTZ DEFAULT now(),
         "updatedAt" TIMESTAMPTZ DEFAULT now()
       );
+      ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "issuer" TEXT DEFAULT 'local:credential';
+      UPDATE "account" SET "issuer" = 'local:credential' WHERE "issuer" IS NULL OR "issuer" = '';
     `);
 
     const userRes = await pool.query('SELECT id, role FROM "user" WHERE LOWER(email) = $1 LIMIT 1', [adminEmail]);
@@ -86,17 +89,17 @@ export async function ensureAdminProvisioned() {
       
       const accountRes = await pool.query('SELECT id FROM "account" WHERE "userId" = $1 AND "providerId" = \'credential\' LIMIT 1', [user.id]);
       if (accountRes.rows.length > 0) {
-        await pool.query('UPDATE "account" SET password = $1, "updatedAt" = now() WHERE "userId" = $2 AND "providerId" = \'credential\'', [hashedPassword, user.id]);
+        await pool.query('UPDATE "account" SET password = $1, "issuer" = \'local:credential\', "updatedAt" = now() WHERE "userId" = $2 AND "providerId" = \'credential\'', [hashedPassword, user.id]);
       } else {
         const accountId = randomUUID();
-        await pool.query('INSERT INTO "account" (id, "userId", "accountId", "providerId", password, "createdAt", "updatedAt") VALUES ($1, $2, $2, \'credential\', $3, now(), now())', [accountId, user.id, hashedPassword]);
+        await pool.query('INSERT INTO "account" (id, "userId", "accountId", "providerId", "issuer", password, "createdAt", "updatedAt") VALUES ($1, $2, $2, \'credential\', \'local:credential\', $3, now(), now())', [accountId, user.id, hashedPassword]);
       }
       console.log(`[Better Auth Init] Synchronized admin user and password for: ${adminEmail}`);
     } else {
       const userId = randomUUID();
       const accountId = randomUUID();
       await pool.query('INSERT INTO "user" (id, name, email, "emailVerified", role, "createdAt", "updatedAt") VALUES ($1, $2, $3, true, \'admin\', now(), now())', [userId, adminName, adminEmail]);
-      await pool.query('INSERT INTO "account" (id, "userId", "accountId", "providerId", password, "createdAt", "updatedAt") VALUES ($1, $2, $2, \'credential\', $3, now(), now())', [accountId, userId, hashedPassword]);
+      await pool.query('INSERT INTO "account" (id, "userId", "accountId", "providerId", "issuer", password, "createdAt", "updatedAt") VALUES ($1, $2, $2, \'credential\', \'local:credential\', $3, now(), now())', [accountId, userId, hashedPassword]);
       console.log(`[Better Auth Init] Created initial admin credentials for: ${adminEmail}`);
     }
     adminBootstrapped = true;
