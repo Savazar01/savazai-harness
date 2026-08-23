@@ -70,22 +70,6 @@ export const auth = betterAuth({
         },
       },
     },
-    account: {
-      create: {
-        before: async (account) => {
-          // Normalize issuer for credential provider accounts
-          if (account.providerId === "credential" && !account.issuer) {
-            return {
-              data: {
-                ...account,
-                issuer: "local:credential",
-              },
-            };
-          }
-          return { data: account };
-        },
-      },
-    },
   },
   user: {
     additionalFields: {
