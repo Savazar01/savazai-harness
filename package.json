@@ -15,8 +15,10 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@langchain/core": "^0.3.80",
     "@langchain/langgraph": "^0.2.0",
     "@langchain/langgraph-checkpoint-postgres": "^0.0.1",
+    "better-auth": "^1.6.23",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.45.2",

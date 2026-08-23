@@ -2,7 +2,7 @@ FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 ENV NODE_ENV=development
 COPY package*.json ./
-RUN npm ci --include=dev
+RUN npm ci --include=dev --legacy-peer-deps
 COPY tsconfig.json drizzle.config.ts ./
 COPY src/ ./src/
 RUN ./node_modules/.bin/tsc
