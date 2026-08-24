@@ -102,16 +102,14 @@ export function Sidebar() {
     return () => window.removeEventListener("savazai-appearance-updated", handleAppearance);
   }, []);
 
+  const isAdmin = session?.user?.role === "admin";
+
   const activeNavItems = [
-    ...(showAgentWorkspace ? [{ href: "/dashboard", label: "Agent Workspace", icon: LayoutDashboard }] : []),
+    ...(isAdmin && showAgentWorkspace ? [{ href: "/dashboard", label: "Agent Workspace", icon: LayoutDashboard }] : []),
     { href: "/studio", label: "Capability Studio", icon: BrainCircuit },
     { href: "/business", label: "Business Center", icon: Library },
-    ...(session?.user?.role === "admin"
-      ? [
-          { href: "/admin/settings", label: "Command Center", icon: Settings },
-          { href: "/admin/users", label: "User Admin", icon: Users },
-        ]
-      : []),
+    { href: "/admin/settings", label: "Command Center", icon: Settings },
+    ...(isAdmin ? [{ href: "/admin/users", label: "User Admin", icon: Users }] : []),
   ];
 
   useEffect(() => {

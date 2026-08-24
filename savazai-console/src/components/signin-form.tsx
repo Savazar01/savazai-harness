@@ -30,7 +30,7 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
       const { error: signInError } = await authClient.signIn.email({
         email: email.trim().toLowerCase(),
         password,
-        callbackURL: "/dashboard",
+        callbackURL: "/studio",
       });
 
       if (signInError) {

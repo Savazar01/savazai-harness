@@ -10,7 +10,7 @@ export default async function SignInPage() {
   });
 
   if (session) {
-    redirect(session.user.role === "admin" ? "/admin/settings" : "/dashboard");
+    redirect(session.user.role === "admin" ? "/admin/settings" : "/studio");
   }
 
   const config = await getSystemConfig();

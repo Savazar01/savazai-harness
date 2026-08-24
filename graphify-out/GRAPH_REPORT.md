@@ -1,16 +1,16 @@
 # Graph Report - savazai-harness  (2026-08-24)
 
 ## Corpus Check
-- 271 files · ~244,921 words
+- 271 files · ~244,959 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4704 nodes · 6180 edges · 413 communities (389 shown, 24 thin omitted)
+- 4704 nodes · 6182 edges · 403 communities (380 shown, 23 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0fc67a03`
+- Built from commit: `1c4e5cad`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -356,15 +356,11 @@
 - [[_COMMUNITY_Community 370|Community 370]]
 - [[_COMMUNITY_Community 371|Community 371]]
 - [[_COMMUNITY_Community 372|Community 372]]
-- [[_COMMUNITY_Community 373|Community 373]]
-- [[_COMMUNITY_Community 374|Community 374]]
-- [[_COMMUNITY_Community 377|Community 377]]
 - [[_COMMUNITY_Community 378|Community 378]]
 - [[_COMMUNITY_Community 379|Community 379]]
 - [[_COMMUNITY_Community 380|Community 380]]
 - [[_COMMUNITY_Community 381|Community 381]]
 - [[_COMMUNITY_Community 383|Community 383]]
-- [[_COMMUNITY_Community 387|Community 387]]
 - [[_COMMUNITY_Community 390|Community 390]]
 - [[_COMMUNITY_Community 391|Community 391]]
 - [[_COMMUNITY_Community 392|Community 392]]
@@ -383,15 +379,9 @@
 - [[_COMMUNITY_Community 409|Community 409]]
 - [[_COMMUNITY_Community 411|Community 411]]
 - [[_COMMUNITY_Community 413|Community 413]]
-- [[_COMMUNITY_Community 414|Community 414]]
-- [[_COMMUNITY_Community 415|Community 415]]
 - [[_COMMUNITY_Community 416|Community 416]]
-- [[_COMMUNITY_Community 418|Community 418]]
 - [[_COMMUNITY_Community 419|Community 419]]
 - [[_COMMUNITY_Community 420|Community 420]]
-- [[_COMMUNITY_Community 421|Community 421]]
-- [[_COMMUNITY_Community 423|Community 423]]
-- [[_COMMUNITY_Community 424|Community 424]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `compilerOptions` - 29 edges
@@ -417,7 +407,7 @@
 - `sendEmailReal()` --calls--> `decrypt()`  [EXTRACTED]
   savazai-console/src/app/api/orchestrator/test/route.ts → savazai-console/src/lib/crypto.ts
 
-## Communities (413 total, 24 thin omitted)
+## Communities (403 total, 23 thin omitted)
 
 ### Community 0 - "Core Engine"
 Cohesion: 0.05
@@ -456,8 +446,8 @@ Cohesion: 0.05
 Nodes (35): 1. Name Browser Sessions Semantically, 2. Always Clean Up, 3. Delete Stale Browser Data, A/B Testing Sessions, Attach by channel name, Attach via browser extension, Attach via CDP endpoint, Attaching to a Running Browser (+27 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.06
-Nodes (35): 6.10 Use React DOM Resource Hints, 6.11 Use useTransition Over Manual Loading States, 6.1 Animate SVG Wrapper Instead of SVG Element, 6.2 CSS content-visibility for Long Lists, 6.3 Hoist Static JSX Elements, 6.4 Optimize SVG Precision, 6.5 Prevent Hydration Mismatch Without Flickering, 6.6 Suppress Expected Hydration Mismatches (+27 more)
+Cohesion: 0.08
+Nodes (25): 6.10 Use React DOM Resource Hints, 6.11 Use useTransition Over Manual Loading States, 6.1 Animate SVG Wrapper Instead of SVG Element, 6.2 CSS content-visibility for Long Lists, 6.3 Hoist Static JSX Elements, 6.5 Prevent Hydration Mismatch Without Flickering, 6.6 Suppress Expected Hydration Mismatches, 6.7 Use Activity Component for Show/Hide (+17 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.29
@@ -484,8 +474,8 @@ Cohesion: 0.40
 Nodes (3): code:bash (GRAPHIFY_WHISPER_MODEL=base  # or whatever --whisper-model t), graphify reference: transcribe video and audio, Step 2.5 - Transcribe video / audio files (only if video files detected)
 
 ### Community 16 - "Community 16"
-Cohesion: 0.17
-Nodes (12): notNull, model_config, system_prompt, primaryKey, default, name, notNull, primaryKey (+4 more)
+Cohesion: 0.08
+Nodes (29): default, name, notNull, primaryKey, type, app_name, id, model_config (+21 more)
 
 ### Community 21 - "Community 21"
 Cohesion: 0.14
@@ -516,8 +506,8 @@ Cohesion: 0.07
 Nodes (26): Clipboard, code:bash (playwright-cli run-code "async page => {), code:bash (# Get page title), code:bash (# Execute JavaScript and return result), code:bash (# Try-catch in run-code), code:bash (# Login and save state), code:bash (playwright-cli run-code --filename=./my-script.js), code:bash (# Grant geolocation permission and set location) (+18 more)
 
 ### Community 33 - "Community 33"
-Cohesion: 0.14
-Nodes (12): Border Radius, Changing the Theme, Checking for Updates, code:tsx (import { ThemeProvider } from "next-themes"), code:bash (npx shadcn@latest add button --diff), code:bash (npx shadcn@latest add button --dry-run        # see all affe), code:bash (# Apply a preset code from ui.shadcn.com.), Color Variables (+4 more)
+Cohesion: 0.18
+Nodes (9): Border Radius, Changing the Theme, code:tsx (import { ThemeProvider } from "next-themes"), code:bash (# Apply a preset code from ui.shadcn.com.), Color Variables, Contents, Customization & Theming, Dark Mode (+1 more)
 
 ### Community 34 - "Community 34"
 Cohesion: 0.20
@@ -569,7 +559,7 @@ Nodes (11): code:bash (playwright-cli cookie-list --domain=example.com), code:ba
 
 ### Community 46 - "Community 46"
 Cohesion: 0.08
-Nodes (29): name, notNull, primaryKey, type, default, name, notNull, primaryKey (+21 more)
+Nodes (29): name, notNull, primaryKey, type, name, notNull, primaryKey, type (+21 more)
 
 ### Community 47 - "Community 47"
 Cohesion: 0.10
@@ -596,8 +586,8 @@ Cohesion: 0.13
 Nodes (13): code:bash (shadcn mcp        # start the MCP server (stdio)), code:json ({), Configuring Registries, Setup, `shadcn:get_add_command_for_items`, `shadcn:get_audit_checklist`, `shadcn:get_item_examples_from_registries`, `shadcn:get_project_registries` (+5 more)
 
 ### Community 53 - "Community 53"
-Cohesion: 0.12
-Nodes (17): 8.1 Do Not Put Effect Events in Dependency Arrays, 8.2 Initialize App Once, Not Per Mount, 8.3 Store Event Handlers in Refs, 8.4 useEffectEvent for Stable Callback Refs, 8. Advanced Patterns, Abstract, code:tsx (import { useEffect, useEffectEvent } from 'react'), code:tsx (import { useEffect, useEffectEvent } from 'react') (+9 more)
+Cohesion: 0.18
+Nodes (13): 8.1 Do Not Put Effect Events in Dependency Arrays, 8.2 Initialize App Once, Not Per Mount, 8.3 Store Event Handlers in Refs, 8.4 useEffectEvent for Stable Callback Refs, 8. Advanced Patterns, code:tsx (import { useEffect, useEffectEvent } from 'react'), code:tsx (import { useEffect, useEffectEvent } from 'react'), code:tsx (function Comp() {) (+5 more)
 
 ### Community 54 - "Community 54"
 Cohesion: 0.15
@@ -616,8 +606,8 @@ Cohesion: 0.25
 Nodes (6): code:markdown (---), code:block6, Creating a New Rule, React Best Practices, Rule File Structure, Structure
 
 ### Community 58 - "Community 58"
-Cohesion: 0.12
-Nodes (18): masked_content, role, session_id, name, notNull, primaryKey, type, type (+10 more)
+Cohesion: 0.09
+Nodes (24): embedding, masked_content, role, skill_name, notNull, name, notNull, primaryKey (+16 more)
 
 ### Community 59 - "Community 59"
 Cohesion: 0.12
@@ -1084,12 +1074,12 @@ Cohesion: 0.07
 Nodes (45): policies, checkConstraints, compositePrimaryKeys, indexes, isRLSEnabled, policies, schema, uniqueConstraints (+37 more)
 
 ### Community 187 - "Community 187"
-Cohesion: 0.07
-Nodes (36): name, primaryKey, type, notNull, primaryKey, type, default, name (+28 more)
+Cohesion: 0.09
+Nodes (29): notNull, primaryKey, type, default, name, notNull, primaryKey, type (+21 more)
 
 ### Community 188 - "Community 188"
-Cohesion: 0.09
-Nodes (23): AdminLayout(), GET(), { GET, POST }, handler, POST(), geistMono, geistSans, generateMetadata() (+15 more)
+Cohesion: 0.13
+Nodes (16): AdminLayout(), { GET, POST }, geistMono, geistSans, generateMetadata(), metadata, RootLayout(), GET() (+8 more)
 
 ### Community 189 - "Community 189"
 Cohesion: 0.43
@@ -1112,8 +1102,8 @@ Cohesion: 0.12
 Nodes (17): default, name, notNull, primaryKey, type, allowed_mcp_tools, reasoning_tokens, system_prompt (+9 more)
 
 ### Community 195 - "Community 195"
-Cohesion: 0.07
-Nodes (28): name, notNull, primaryKey, type, default, name, notNull, primaryKey (+20 more)
+Cohesion: 0.08
+Nodes (24): name, notNull, primaryKey, type, default, name, notNull, primaryKey (+16 more)
 
 ### Community 196 - "Community 196"
 Cohesion: 0.12
@@ -1172,8 +1162,8 @@ Cohesion: 0.16
 Nodes (13): dialect, enums, id, _meta, schemas, tables, prevId, roles (+5 more)
 
 ### Community 211 - "Community 211"
-Cohesion: 0.12
-Nodes (29): AuditLogEntry, BusinessPolicy(), KnowledgeFact, KnowledgeHub(), RagNamespace, CustomSkill, DbConnection, DEFAULT_LLM_PROVIDERS (+21 more)
+Cohesion: 0.11
+Nodes (30): AuditLogEntry, BusinessPolicy(), KnowledgeFact, KnowledgeHub(), RagNamespace, CustomSkill, DbConnection, DEFAULT_LLM_PROVIDERS (+22 more)
 
 ### Community 212 - "Community 212"
 Cohesion: 0.14
@@ -1244,16 +1234,16 @@ Cohesion: 0.40
 Nodes (5): className for layout only, code:tsx (<Card className="bg-blue-100 text-blue-900 font-bold">), code:tsx (<Card className="max-w-md mx-auto">), 2. Tailwind classes via `className`, code:tsx (<Card className="mx-auto max-w-md">...</Card>)
 
 ### Community 230 - "Community 230"
-Cohesion: 0.24
-Nodes (12): inter, Home(), ChatWorkspace(), SettingsDashboard(), getSystemConfig(), hexToRgbComponents(), pool, ThemeProvider() (+4 more)
+Cohesion: 0.25
+Nodes (11): inter, Home(), ChatWorkspace(), getSystemConfig(), hexToRgbComponents(), pool, ThemeProvider(), DashboardPage() (+3 more)
 
 ### Community 231 - "Community 231"
 Cohesion: 0.40
 Nodes (5): Adding Custom Colors, code:css (/* 1. Define in the global CSS file. */), code:css (/* 2a. Register with Tailwind v4 (@theme inline). */), code:js (// 2b. Register with Tailwind v3 (tailwind.config.js).), code:tsx (// 3. Use in components.)
 
 ### Community 232 - "Community 232"
-Cohesion: 0.09
-Nodes (23): default, name, notNull, primaryKey, type, canvas_definition, description, name (+15 more)
+Cohesion: 0.08
+Nodes (24): default, name, notNull, primaryKey, type, canvas_definition, name, updated_at (+16 more)
 
 ### Community 233 - "Community 233"
 Cohesion: 0.18
@@ -1300,8 +1290,8 @@ Cohesion: 0.43
 Nodes (6): base, matches, parsed, query, queryIndex, wait()
 
 ### Community 245 - "Community 245"
-Cohesion: 0.08
-Nodes (24): default, name, notNull, primaryKey, type, canvas_definition, name, updated_at (+16 more)
+Cohesion: 0.07
+Nodes (30): default, name, notNull, primaryKey, type, canvas_definition, name, status (+22 more)
 
 ### Community 247 - "Community 247"
 Cohesion: 0.22
@@ -1376,12 +1366,12 @@ Cohesion: 0.25
 Nodes (9): Clear sessionStorage, code:bash (playwright-cli localstorage-delete token), code:bash (playwright-cli sessionstorage-list), code:bash (playwright-cli sessionstorage-delete step), code:bash (playwright-cli sessionstorage-clear), Delete Single Item, Delete Single Item, List All sessionStorage Items (+1 more)
 
 ### Community 270 - "Community 270"
-Cohesion: 0.14
-Nodes (16): description, embedding, skill_name, name, notNull, type, name, notNull (+8 more)
+Cohesion: 0.20
+Nodes (10): checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies, schema (+2 more)
 
 ### Community 271 - "Community 271"
-Cohesion: 0.12
-Nodes (17): created_at, embedding, skill_name, default, name, notNull, primaryKey, type (+9 more)
+Cohesion: 0.09
+Nodes (22): description, embedding, id, skill_name, name, notNull, primaryKey, type (+14 more)
 
 ### Community 272 - "Community 272"
 Cohesion: 0.25
@@ -1397,7 +1387,7 @@ Nodes (14): name, notNull, primaryKey, type, chat_id, provider, nullsNotDistinct
 
 ### Community 278 - "Community 278"
 Cohesion: 0.11
-Nodes (19): columnsFrom, columnsTo, name, onDelete, onUpdate, tableFrom, tableTo, agent_session_memory_app_id_connected_apps_id_fk (+11 more)
+Nodes (18): columnsFrom, columnsTo, name, onDelete, onUpdate, tableFrom, tableTo, agent_session_memory_app_id_connected_apps_id_fk (+10 more)
 
 ### Community 279 - "Community 279"
 Cohesion: 0.40
@@ -1421,7 +1411,7 @@ Nodes (3): code:bash (npx shadcn@latest docs <components...> [options]), code:bl
 
 ### Community 284 - "Community 284"
 Cohesion: 0.11
-Nodes (18): columnsFrom, columnsTo, name, onDelete, onUpdate, tableFrom, tableTo, autonomous_agents_app_id_connected_apps_id_fk (+10 more)
+Nodes (19): columnsFrom, columnsTo, name, onDelete, onUpdate, tableFrom, tableTo, autonomous_agents_app_id_connected_apps_id_fk (+11 more)
 
 ### Community 285 - "Community 285"
 Cohesion: 0.15
@@ -1456,8 +1446,8 @@ Cohesion: 0.20
 Nodes (10): checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies, schema (+2 more)
 
 ### Community 295 - "Community 295"
-Cohesion: 0.33
-Nodes (6): name, notNull, primaryKey, type, chat_id, columns
+Cohesion: 0.06
+Nodes (34): name, notNull, primaryKey, type, chat_id, executed_mcp_tools, execution_latency_ms, input_tokens (+26 more)
 
 ### Community 305 - "Community 305"
 Cohesion: 0.13
@@ -1484,8 +1474,8 @@ Cohesion: 0.09
 Nodes (23): name, notNull, primaryKey, type, default, name, notNull, primaryKey (+15 more)
 
 ### Community 311 - "Community 311"
-Cohesion: 0.33
-Nodes (6): workspace_mode, default, name, notNull, primaryKey, type
+Cohesion: 0.40
+Nodes (4): Abstract, React Best Practices, References, Table of Contents
 
 ### Community 312 - "Community 312"
 Cohesion: 0.20
@@ -1512,12 +1502,12 @@ Cohesion: 0.15
 Nodes (21): callCustomWebhook(), DesignTokens, executeDbQuery(), executeNativeTool(), extractEmails(), extractPhones(), extractRecordsFromPayload(), formatHtmlEmailBody() (+13 more)
 
 ### Community 318 - "Community 318"
-Cohesion: 0.11
-Nodes (18): name, notNull, primaryKey, type, default, name, notNull, primaryKey (+10 more)
+Cohesion: 0.08
+Nodes (24): name, notNull, primaryKey, type, default, name, notNull, primaryKey (+16 more)
 
 ### Community 319 - "Community 319"
-Cohesion: 0.33
-Nodes (6): created_at, default, name, notNull, primaryKey, type
+Cohesion: 0.50
+Nodes (4): 6.4 Optimize SVG Precision, code:svg (<path d="M 10.293847 20.847362 L 30.938472 40.192837" />), code:svg (<path d="M 10.3 20.8 L 30.9 40.2" />), code:bash (npx svgo --precision=1 --multipass icon.svg)
 
 ### Community 320 - "Community 320"
 Cohesion: 0.07
@@ -1548,8 +1538,8 @@ Cohesion: 0.13
 Nodes (14): code:bash (npx skills add https://github.com/cloudflare/security-audit-), code:bash (npx skills add https://github.com/cloudflare/security-audit-), code:block3 (security audit this codebase), code:block4 (find security vulnerabilities in ./src), code:block5 (do a security review, output to ~/audits/my-project), Contact, Design principles, Files (+6 more)
 
 ### Community 328 - "Community 328"
-Cohesion: 0.14
-Nodes (14): columns, name, nullsNotDistinct, checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled (+6 more)
+Cohesion: 0.08
+Nodes (25): columns, name, nullsNotDistinct, checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled (+17 more)
 
 ### Community 329 - "Community 329"
 Cohesion: 0.08
@@ -1577,7 +1567,7 @@ Nodes (3): DELETE(), GET(), PUT()
 
 ### Community 336 - "Community 336"
 Cohesion: 0.11
-Nodes (19): columnsFrom, columnsTo, name, onDelete, onUpdate, tableFrom, tableTo, agent_session_memory_app_id_connected_apps_id_fk (+11 more)
+Nodes (18): columnsFrom, columnsTo, name, onDelete, onUpdate, tableFrom, tableTo, agent_session_memory_app_id_connected_apps_id_fk (+10 more)
 
 ### Community 338 - "Community 338"
 Cohesion: 0.14
@@ -1611,9 +1601,13 @@ Nodes (12): Anti-Patterns to Avoid, Confirm dynamically when you can, Core Princ
 Cohesion: 0.33
 Nodes (6): transaction_cost, default, name, notNull, primaryKey, type
 
+### Community 348 - "Community 348"
+Cohesion: 0.15
+Nodes (9): GET(), handler, POST(), pool, RouteParams, cleanEnv(), ensureAdminProvisioned(), pool (+1 more)
+
 ### Community 349 - "Community 349"
-Cohesion: 0.40
-Nodes (5): model_name, name, notNull, primaryKey, type
+Cohesion: 0.67
+Nodes (3): Checking for Updates, code:bash (npx shadcn@latest add button --diff), code:bash (npx shadcn@latest add button --dry-run        # see all affe)
 
 ### Community 350 - "Community 350"
 Cohesion: 0.20
@@ -1624,8 +1618,8 @@ Cohesion: 0.33
 Nodes (6): input_tokens, default, name, notNull, primaryKey, type
 
 ### Community 353 - "Community 353"
-Cohesion: 0.20
-Nodes (10): checkConstraints, compositePrimaryKeys, foreignKeys, indexes, isRLSEnabled, name, policies, schema (+2 more)
+Cohesion: 0.67
+Nodes (3): 6.8 Use defer or async on Script Tags, code:tsx (export default function Document() {), code:tsx (import Script from 'next/script')
 
 ### Community 354 - "Community 354"
 Cohesion: 0.18
@@ -1652,8 +1646,8 @@ Cohesion: 0.33
 Nodes (6): transaction_cost, default, name, notNull, primaryKey, type
 
 ### Community 360 - "Community 360"
-Cohesion: 0.33
-Nodes (6): name, notNull, primaryKey, type, chat_id, columns
+Cohesion: 0.06
+Nodes (34): name, notNull, primaryKey, type, chat_id, execution_latency_ms, input_tokens, model_name (+26 more)
 
 ### Community 361 - "Community 361"
 Cohesion: 0.29
@@ -1688,20 +1682,8 @@ Cohesion: 0.29
 Nodes (5): code:typescript (import { cache } from 'react'), code:typescript (const getUser = cache(async (params: { uid: number }) => {), code:typescript (const getUser = cache(async (uid: number) => {), code:typescript (const params = { uid: 1 }), Per-Request Deduplication with React.cache()
 
 ### Community 372 - "Community 372"
-Cohesion: 0.33
-Nodes (6): executed_mcp_tools, default, name, notNull, primaryKey, type
-
-### Community 373 - "Community 373"
-Cohesion: 0.33
-Nodes (6): execution_latency_ms, default, name, notNull, primaryKey, type
-
-### Community 374 - "Community 374"
-Cohesion: 0.40
-Nodes (5): provider, name, notNull, primaryKey, type
-
-### Community 377 - "Community 377"
-Cohesion: 0.33
-Nodes (6): input_tokens, default, name, notNull, primaryKey, type
+Cohesion: 0.67
+Nodes (3): 6.9 Use Explicit Conditional Rendering, code:tsx (function Badge({ count }: { count: number }) {), code:tsx (function Badge({ count }: { count: number }) {)
 
 ### Community 378 - "Community 378"
 Cohesion: 0.33
@@ -1720,10 +1702,6 @@ Cohesion: 0.40
 Nodes (5): provider, name, notNull, primaryKey, type
 
 ### Community 383 - "Community 383"
-Cohesion: 0.33
-Nodes (6): model_config, default, name, notNull, primaryKey, type
-
-### Community 387 - "Community 387"
 Cohesion: 0.33
 Nodes (6): model_config, default, name, notNull, primaryKey, type
 
@@ -1795,21 +1773,9 @@ Nodes (6): status, default, name, notNull, primaryKey, type
 Cohesion: 0.33
 Nodes (6): 3.5 Hoist Static I/O to Module Level, code:typescript (// app/api/og/route.tsx), code:typescript (// app/api/og/route.tsx), code:typescript (// app/api/og/route.tsx), code:typescript (import fs from 'node:fs/promises'), code:typescript (import fs from 'node:fs/promises')
 
-### Community 414 - "Community 414"
-Cohesion: 0.33
-Nodes (6): execution_latency_ms, default, name, notNull, primaryKey, type
-
-### Community 415 - "Community 415"
-Cohesion: 0.33
-Nodes (6): input_tokens, default, name, notNull, primaryKey, type
-
 ### Community 416 - "Community 416"
 Cohesion: 0.40
 Nodes (5): 3.2 Avoid Duplicate Serialization in RSC Props, code:tsx (// RSC: sends 6 strings (2 arrays × 3 items)), code:tsx (// RSC: send once), code:tsx (// string[] - duplicates everything), code:tsx (// ❌ Bad)
-
-### Community 418 - "Community 418"
-Cohesion: 0.33
-Nodes (6): output_tokens, default, name, notNull, primaryKey, type
 
 ### Community 419 - "Community 419"
 Cohesion: 0.50
@@ -1819,31 +1785,19 @@ Nodes (4): 3.1 Authenticate Server Actions Like API Routes, code:typescript ('us
 Cohesion: 0.67
 Nodes (3): 3.10 Use after() for Non-Blocking Operations, code:tsx (import { logUserAction } from '@/app/utils'), code:tsx (import { after } from 'next/server')
 
-### Community 421 - "Community 421"
-Cohesion: 0.33
-Nodes (6): status, default, name, notNull, primaryKey, type
-
-### Community 423 - "Community 423"
-Cohesion: 0.40
-Nodes (5): model_name, name, notNull, primaryKey, type
-
-### Community 424 - "Community 424"
-Cohesion: 0.40
-Nodes (5): provider, name, notNull, primaryKey, type
-
 ## Knowledge Gaps
 - **2475 isolated node(s):** `$schema`, `plugin`, `instructions`, `name`, `version` (+2470 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **24 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **23 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `tables` connect `Community 336` to `Community 353`, `Community 325`, `Community 293`, `Community 328`, `Community 330`, `Community 214`, `Community 313`?**
+- **Why does `tables` connect `Community 328` to `Community 325`, `Community 293`, `Community 330`, `Community 336`, `Community 214`, `Community 313`?**
   _High betweenness centrality (0.003) - this node is a cross-community bridge._
-- **Why does `created_at` connect `Community 319` to `Community 360`, `Community 180`, `Community 245`, `Community 310`, `Community 314`, `Community 315`, `Community 318`?**
+- **Why does `created_at` connect `Community 318` to `Community 360`, `Community 180`, `Community 245`, `Community 310`, `Community 314`, `Community 315`?**
   _High betweenness centrality (0.003) - this node is a cross-community bridge._
-- **Why does `React Best Practices` connect `Community 53` to `Skills & Tools`, `Community 9`, `Community 77`, `Community 47`, `Community 80`, `Community 178`, `Community 83`, `Community 59`?**
+- **Why does `React Best Practices` connect `Community 311` to `Skills & Tools`, `Community 9`, `Community 77`, `Community 47`, `Community 80`, `Community 178`, `Community 83`, `Community 53`, `Community 59`?**
   _High betweenness centrality (0.003) - this node is a cross-community bridge._
 - **What connects `$schema`, `plugin`, `instructions` to the rest of the system?**
   _2475 weakly-connected nodes found - possible documentation gaps or missing edges._

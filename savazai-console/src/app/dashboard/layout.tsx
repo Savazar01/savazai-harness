@@ -17,6 +17,10 @@ export default async function DashboardLayout({
     redirect("/signin");
   }
 
+  if (session.user.role !== "admin") {
+    redirect("/studio");
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-950">
       <Sidebar />

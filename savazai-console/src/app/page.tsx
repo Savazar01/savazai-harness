@@ -57,7 +57,7 @@ export default async function Home() {
           <nav className="flex items-center gap-4">
             {session ? (
               <Link
-                href={session.user.role === "admin" ? "/admin/settings" : "/dashboard"}
+                href={session.user.role === "admin" ? "/admin/settings" : "/studio"}
                 className="rounded-full bg-primary/20 border border-primary/40 px-5 py-2 text-sm font-semibold text-primary hover:bg-primary hover:text-white shadow-md transition-all hover:scale-[1.02]"
               >
                 Open Workspace
