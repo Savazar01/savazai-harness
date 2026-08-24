@@ -18,6 +18,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
+  BookOpen,
+  CalendarCheck,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
@@ -25,6 +27,7 @@ const navItems = [
   { href: "/dashboard", label: "Agent Workspace", icon: LayoutDashboard },
   { href: "/studio", label: "Capability Studio", icon: BrainCircuit },
   { href: "/business", label: "Business Center", icon: Library },
+  { href: "/docs", label: "Documentation", icon: BookOpen },
   { href: "/admin/settings", label: "Command Center", icon: Settings },
 ];
 
@@ -108,8 +111,14 @@ export function Sidebar() {
     ...(isAdmin && showAgentWorkspace ? [{ href: "/dashboard", label: "Agent Workspace", icon: LayoutDashboard }] : []),
     { href: "/studio", label: "Capability Studio", icon: BrainCircuit },
     { href: "/business", label: "Business Center", icon: Library },
+    { href: "/docs", label: "Documentation", icon: BookOpen },
     { href: "/admin/settings", label: "Command Center", icon: Settings },
-    ...(isAdmin ? [{ href: "/admin/users", label: "User Admin", icon: Users }] : []),
+    ...(isAdmin
+      ? [
+          { href: "/admin/demo-requests", label: "Demo Requests", icon: CalendarCheck },
+          { href: "/admin/users", label: "User Admin", icon: Users },
+        ]
+      : []),
   ];
 
   useEffect(() => {

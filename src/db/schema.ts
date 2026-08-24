@@ -108,3 +108,18 @@ export const telemetryLogs = pgTable("telemetry_logs", {
   transactionCost: doublePrecision("transaction_cost").default(0.0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const demoRequests = pgTable("demo_requests", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  fullName: text("full_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  company: text("company").notNull(),
+  industry: text("industry").notNull(),
+  timeline: text("timeline").notNull(),
+  description: text("description").notNull(),
+  status: varchar("status", { length: 50 }).default("pending").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});

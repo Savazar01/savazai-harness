@@ -1,142 +1,213 @@
 # SavazAI: Sovereign Multi-Agent Operating System & Orchestration Engine
 
-SavazAI is a sovereign, privacy-first multi-agent orchestration framework and control plane. It enables enterprise teams to build, test, and deploy stateful agentflows across Frontier models (Google Gemini, OpenAI), Open-Source LLMs, and local gateway endpoints with zero data leakage and human-in-the-loop governance.
+SavazAI is a sovereign, privacy-first multi-agent orchestration framework, execution engine, and control plane. It enables enterprise teams to design, test, and deploy stateful agentflows across Frontier models (Google Gemini, OpenAI, Anthropic), Open-Source LLMs (Groq, Ollama, LM Studio), and remote Model Context Protocol (MCP) JSON-RPC 2.0 endpoints with zero domain hardcoding, zero data leakage, and total human-in-the-loop governance.
 
 ---
 
 ## 🏗️ Architecture Overview
 
-SavazAI strictly separates execution concerns across physical monorepo boundaries:
+SavazAI strictly separates orchestration execution, control plane UI, and state persistence across physical service boundaries:
 
 ```
-                          ┌──────────────────────────────────────────┐
-                          │   SavazAI Console UI (Next.js 16 App)    │
-                          │   Port 3056 (http://localhost:3056)      │
-                          └────────────────────┬─────────────────────┘
-                                               │ JSON-RPC 2.0 / REST
-                                               ▼
-                          ┌──────────────────────────────────────────┐
-                          │   SavazAI Backend Engine (LangGraph)     │
-                          │   Port 3055 (http://savazai-backend:3055)│
-                          └──────────┬───────────────────┬───────────┘
-                                     │                   │
-                        ┌────────────▼──────┐     ┌──────▼────────────┐
-                        │ PostgreSQL (5622) │     │ Remote MCP Server │
-                        │  (pgvector / ORM) │     │ (JSON-RPC 2.0)    │
-                        └───────────────────┘     └───────────────────┘
+                               ┌────────────────────────────────────────────────────────┐
+                               │               SavazAI Console UI (Next.js 16)         │
+                               │               Port 3056 (http://localhost:3056)        │
+                               └───────────────────────────┬────────────────────────────┘
+                                                           │
+                                                           │ Internal HTTP / JSON-RPC 2.0
+                                                           ▼
+                               ┌────────────────────────────────────────────────────────┐
+                               │           SavazAI Backend Orchestrator (Node.js)       │
+                               │           Port 3055 (http://savazai-backend:3055)      │
+                               └─────────────┬────────────────────────────┬─────────────┘
+                                             │                            │
+                     PostgreSQL Protocol     │                            │ JSON-RPC 2.0 / stdio
+                     Port 5432 (Host 5622)   │                            │
+                                             ▼                            ▼
+                      ┌──────────────────────────────┐          ┌──────────────────────────────┐
+                      │    PostgreSQL 17 + pgvector  │          │   Connected MCP Servers      │
+                      │    (Vector Embeddings 1536)  │          │   (SAP, JIRA, CRMs, Custom)  │
+                      └──────────────────────────────┘          └──────────────────────────────┘
+                                                                          │
+                                                                          ▼
+                                                                ┌──────────────────────────────┐
+                                                                │ Python Sub-Runner (.venv)    │
+                                                                │ (python-runner.ts Sandboxes) │
+                                                                └──────────────────────────────┘
 ```
 
-* **Frontend Console (`./savazai-console`)**: Built with **Next.js 16 App Router**, **React 19**, **Better-Auth**, **Tailwind CSS v4**, and **Shadcn UI**. Runs on port **`3056`**.
-* **Backend Engine (`./`)**: Built with **Node.js**, **LangGraph (`@langchain/langgraph`)**, **Express/Fastify**, **Drizzle ORM**, and **pgvector**. Runs on port **`3055`**.
-* **Database (`pgvector`)**: Runs **PostgreSQL 17** with vector search on host port **`5622`** (container internal port `5432`).
+### Core Monorepo Physical Boundaries
+
+* **Frontend Console (`./savazai-console`)**:
+  * Built with **Next.js 16 App Router**, **React 19**, **Better-Auth**, **Tailwind CSS v4**, and **Shadcn UI**.
+  * Runs on container/host port **`3056`**.
+  * Provides the unified workspace: Agent Workspace (`/dashboard`), Capability Studio (`/studio`), Business Center (`/business`), In-App Documentation (`/docs`), Command Center (`/admin/settings`), and User Admin (`/admin/users`).
+
+* **Backend Engine (`./`)**:
+  * Built with **Node.js**, **LangGraph (`@langchain/langgraph`)**, **Drizzle ORM**, and **pgvector**.
+  * Runs on container/host port **`3055`**.
+  * Handles dynamic tool discovery (`/api/tools/registered`), LangGraph compilation, PII masking gateways, telemetry cost accounting, and sandboxed Python runner invocations.
+
+* **Vector Database (`savazai-db`)**:
+  * Official **PostgreSQL 17** with `pgvector` extension enabled (`pgvector/pgvector:pg17`).
+  * Runs on container internal port **`5432`** and host port **`5622`**.
 
 ---
 
-## 🌟 Capability Breakdown
+## 🔐 Complete Environment Variable Reference
 
-### 1. Capability Studio (`/studio`)
-* **Visual Agentflow Builder**: Drag-and-drop canvas for designing role-based multi-agent graphs.
-* **Role-Based Node Topology**:
-  * **Supervisor Node**: High-level plan formulation, parameter verification, and worker routing.
-  * **Specialist / Worker Nodes**: Tool-bound nodes that execute target MCP operations.
-  * **Synthesizer Node**: Aggregates ground-truth execution receipts into formatted reports.
-  * **Scheduled Cron Nodes**: Recurring cron jobs and automated background monitors.
-* **Dual Execution Modes**:
-  * **Plan First (HITL Approval)**: Generates human-in-the-loop plan cards with **Reject & Re-Plan**, **Adjust & Re-Plan**, and **Approve & Execute** controls.
-  * **Direct Execution**: Fast-path autonomous execution for trusted workflows.
-* **Test Playground**: Step-by-step trace viewer with interactive parameter forms and streaming execution receipts.
+When configuring SavazAI for production (e.g. via Coolify or custom Docker VPS) or local development, use the following non-sensitive dummy template:
 
-### 2. Business Policy & Governance Center (`/policy`)
-* **Universal Skills Registry**: Ingest, edit, and export modular `SKILL.md` markdown files with YAML frontmatter.
-* **OKF (Operational Knowledge Framework) Concepts**: Enforce corporate business rules and domain SOPs without system prompt inflation.
-* **Data Masking Gateway**: Automatically sanitizes PII/SPI fields with unique hashed reference tokens before dispatching prompts to non-local external LLMs.
+```env
+# ==============================================================================
+# DATABASE STORAGE (PostgreSQL 17 + pgvector)
+# ==============================================================================
+DB_USER=sz_harness_admin
+DB_PASSWORD=sz_dummy_vault_pass_example_123
+DB_NAME=savazai_harness
+DATABASE_URL=postgresql://sz_harness_admin:sz_dummy_vault_pass_example_123@savazai-db:5432/savazai_harness
 
-### 3. Command Center (`/command`)
-* **LLM Switchboard**: Switch dynamically between Google Gemini, OpenAI, Groq, xAI, and local OmniRoute gateways.
-* **MCP & Database Hub**: 1-click preset MCP server injection (SAP, JIRA, Salesforce, ServiceNow) and multi-alias database connectors (PostgreSQL, MySQL, MongoDB, SQLite).
-* **Appearance & Branding**: Persist hex CSS variables, custom typography, and dynamic application banners.
-* **Social Media & Webhook Connectors**: Integrations for YouTube, Instagram, LinkedIn, TikTok, X (Twitter), and REST webhooks.
+# ==============================================================================
+# AUTHENTICATION & PRODUCTION ADMIN BOOTSTRAPPING (First Run Only)
+# ==============================================================================
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=change_me_secure_password_456
+ADMIN_NAME="Platform Administrator"
+BETTER_AUTH_SECRET=sz_dummy_auth_secret_token_example_2026
+BETTER_AUTH_URL=https://savazai-harnessin.savazar.com
 
----
+# ==============================================================================
+# CORE BACKEND & ORCHESTRATOR API
+# ==============================================================================
+NEXT_PUBLIC_HARNESS_API_URL=http://savazai-backend:3055
+MASTER_VAULT_SECRET=sz_dummy_master_vault_key_example_2026_min32chars
+NODE_ENV=production
+```
 
-## 🚀 Quickstart & Deployment
+### Environment Variable Glossary
 
-### Prerequisites
-* Docker & Docker Compose
-* Node.js 20+ & npm
-
-### Local Development Setup
-
-1. **Clone and Install Dependencies**:
-   ```bash
-   # Install root engine dependencies
-   npm install
-
-   # Install frontend console dependencies
-   cd savazai-console && npm install && cd ..
-   ```
-
-2. **Configure Environment Variables**:
-   Copy `.env.example` to `.env` in the root workspace and inside `./savazai-console/.env`:
-
-   *Root Backend Environment (`./.env`)*:
-   ```ini
-   DATABASE_URL=postgresql://sz_harness_admin:sz_secure_vault_pass_99@localhost:5622/savazai_harness
-   POSTGRES_USER=sz_harness_admin
-   POSTGRES_PASSWORD=sz_secure_vault_pass_99
-   POSTGRES_DB=savazai_harness
-   MASTER_VAULT_SECRET=change_this_to_a_random_32_character_secret
-   LLM_PROVIDER_TYPE=openai-compatible
-   LLM_BASE_URL=http://localhost:11434/v1
-   LLM_MODEL_NAME=gpt-4o-mini
-   LLM_API_KEY=your_llm_provider_key
-   ```
-
-   *Frontend Console Environment (`./savazai-console/.env`)*:
-   ```ini
-   NEXT_PUBLIC_HARNESS_API_URL=http://savazai-backend:3055
-   NEXT_PUBLIC_APP_URL=http://localhost:3056
-   DATABASE_URL=postgresql://sz_harness_admin:sz_secure_vault_pass_99@localhost:5622/savazai_harness
-   BETTER_AUTH_SECRET=generate_a_secure_better_auth_secret_key
-   BETTER_AUTH_URL=http://localhost:3056
-   ```
-
-3. **Database Migrations**:
-   ```bash
-   npm run db:generate
-   npm run db:migrate
-   ```
-
-4. **Launch Application Containers**:
-   ```bash
-   docker compose up --build -d
-   ```
-
-5. **Access the Console**:
-   Open **`http://localhost:3056`** in your browser.
+| Variable | Scope | Purpose | Description |
+| :--- | :--- | :--- | :--- |
+| `DATABASE_URL` | Global | DB Connection | Fully qualified PostgreSQL connection string targeting `savazai-db:5432`. |
+| `DB_USER` / `DB_PASSWORD` / `DB_NAME` | Database | Postgres Auth | Credentials used by `pgvector/pgvector:pg17` image. |
+| `ADMIN_EMAIL` | Backend/Auth | Bootstrap Admin | Default root administrator email for initial zero-trust bootstrap. |
+| `ADMIN_PASSWORD` | Backend/Auth | Bootstrap Admin | Default initial password for the admin account (min 6 characters). |
+| `ADMIN_NAME` | Backend/Auth | Bootstrap Admin | Display name for the initial platform administrator. |
+| `BETTER_AUTH_SECRET` | Console | Session Security | Cryptographic secret used by Better-Auth to sign cookies and JWT tokens. |
+| `BETTER_AUTH_URL` | Console | Auth Domain | Public canonical URL of the SavazAI console (e.g. `https://console.example.com`). |
+| `NEXT_PUBLIC_HARNESS_API_URL` | Console | API Routing | Internal DNS or public URL for backend orchestrator API (`http://savazai-backend:3055`). |
+| `MASTER_VAULT_SECRET` | Backend/Console | Secret Encryption | 32+ char key used to encrypt LLM API keys and OAuth secrets with AES-256-GCM. |
+| `NODE_ENV` | Global | Runtime Mode | `production` enables strict auth, disables self-promotion, and enforces lockouts. |
 
 ---
 
-## 🛠️ Configuration & MCP Guide
+## 🚀 Deployment Walkthroughs
 
-### Model Context Protocol (MCP) Integration
-SavazAI communicates over standard **JSON-RPC 2.0 MCP endpoints**. Dynamic tools are discovered dynamically at runtime via `GET /api/tools/registered` or by polling connected MCP servers.
+### Option A: Coolify Multi-Container VPS Deployment
 
-To register a custom MCP server:
-1. Navigate to **Command Center $\rightarrow$ MCP & Database Hub**.
-2. Add your server endpoint URL (e.g. `https://your-domain.com/api/mcp`) and authorization headers.
-3. The engine automatically ingests available tool signatures (`list_*`, `create_*`, `update_*`, `delete_*`) and binds them to your specialist worker nodes in Capability Studio.
+SavazAI is built to deploy out-of-the-box on [Coolify](https://coolify.io) or any Docker Compose VPS manager.
+
+1. **Create New Project in Coolify**:
+   * Add a new Resource $\rightarrow$ **Docker Compose**.
+   * Connect your private Git repository.
+
+2. **Paste Environment Variables**:
+   * Populate the environment variables listed in the reference table above.
+   * Set `BETTER_AUTH_URL` to your assigned Coolify FQDN domain (e.g. `https://savazai.yourdomain.com`).
+   * Set `MASTER_VAULT_SECRET` to a generated 32-character string (`openssl rand -base64 32`).
+
+3. **Verify Container Healthcheck Startup Windows**:
+   * The `docker-compose.yml` specifies startup grace periods (`start_period: 30s`) to ensure PostgreSQL initializes its pgvector extension before the backend migrations run:
+     ```yaml
+     healthcheck:
+       test: ["CMD-SHELL", "pg_isready -U $${DB_USER} -d $${DB_NAME}"]
+       interval: 5s
+       timeout: 5s
+       retries: 5
+     ```
+
+4. **Deploy & First Login**:
+   * Trigger **Deploy** in Coolify.
+   * Navigate to `https://savazai.yourdomain.com/signin`.
+   * Log in with your `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
 
 ---
 
-## 🛡️ Security & Privacy Guardrails
+### Option B: Localhost Developer Setup
 
-* **Zero Domain-Specific Hardcoding**: The engine core remains 100% graph-agnostic and schema-driven (AGENTS.md Rule 1 compliant).
-* **Human-in-the-Loop Interceptors**: Destructive mutating operations (`delete_*`) trigger human approval interrupts before graph state resolution.
-* **Cryptographic Vault (`MASTER_VAULT_SECRET`)**: All third-party secrets and OAuth tokens are encrypted at rest using AES-256-CBC encryption.
+```bash
+# 1. Clone the repository
+git clone https://github.com/Savazar01/savazai-harness.git
+cd savazai-harness
+
+# 2. Configure Local Environment
+cp .env.example .env
+
+# 3. Launch Docker Stack
+docker compose up --build -d
+
+# 4. Inspect Container Status
+docker compose ps
+
+# 5. Access In-Browser
+# Console UI:        http://localhost:3056
+# Backend Engine:    http://localhost:3055
+# Database Host:     localhost:5622
+```
+
+#### Local First-User Auto-Promotion & Test Seeding
+* In local development (`NODE_ENV=development`), the first user to register via `/signup` is automatically granted the `admin` role if no administrator exists.
+* To run test database seeds locally:
+  ```bash
+  npm run db:seed
+  ```
 
 ---
 
-## 📄 License
+## 🧭 Canonical Workspace Architecture
 
-Copyright &copy; 2026 SavazAI. All rights reserved. Sovereign Orchestration Infrastructure.
+| Workspace Module | Route | Access Level | Description |
+| :--- | :--- | :--- | :--- |
+| **Agent Workspace** | `/dashboard` | Admin & User | Multi-turn streaming chat playground, session history, orchestrator execution timeline, context inspection, and live telemetry. |
+| **Capability Studio** | `/studio` | Admin & User | Drag-and-drop Agentflow visual canvas builder, skills catalog, tool JSON schema editor, and sandboxed Python sub-runners (`python-runner.ts`). |
+| **Business Center** | `/business` | Admin & User | Organizational Knowledge Framework (OKF) concepts, document ingestion (MD, PDF, TXT, JSON), pgvector embeddings, and compliance masking logs. |
+| **Documentation Hub** | `/docs` | Admin & User | Comprehensive 7-chapter in-app documentation center with real-time keyword search, code snippet copying, and parameter reference tables. |
+| **Command Center** | `/admin/settings` | Admin & User | AES-256-GCM encrypted LLM provider vault, dynamic model discovery (Gemini v1beta, OpenAI, Anthropic, Groq), appearance & typography controls (14px–20px sizing). |
+| **User Admin** | `/admin/users` | **Admin Only** | Enterprise RBAC user provisioning, role promotions, secure password resets, cascading deletions, and self-demotion anti-lockout safeguards. |
+
+---
+
+## 🛡️ Security, Privacy & Integrity Invariants
+
+1. **Zero Domain Hardcoding**: The backend engine remains 100% graph-agnostic and schema-driven. All target entity mappings and MCP schemas are discovered at runtime.
+2. **AES-256-GCM Master Vault**: All provider API keys and OAuth tokens are encrypted at rest using AES-256-GCM derived via HKDF-SHA256 from `MASTER_VAULT_SECRET`.
+3. **Data Masking Gateway**: Incoming payloads are sanitized against configurable PII/SPI regex rules before being sent to external LLMs; original entities rehydrate only within authenticated database boundaries.
+4. **Sandboxed Python Execution**: Python sub-runners (`python-runner.ts`) execute strictly inside isolated virtual environments (`/opt/venv` or `.venv`) with bounded stdin/stdout JSON envelopes.
+5. **Anti-Lockout Safeguards**: Active administrators cannot demote their own role or delete their own active account, preventing accidental platform lockouts.
+
+---
+
+## 🛠️ Complete Verification & Quality Loop
+
+```bash
+# Backend Verification (Root Workspace)
+npx tsc --noEmit
+npm run lint
+
+# Frontend Console Verification (./savazai-console)
+cd savazai-console
+npm run lint
+npm run build
+cd ..
+
+# Database Migration Management
+npm run db:generate
+npm run db:migrate
+```
+
+---
+
+## 📄 License & Commercial Support
+
+Copyright &copy; 2026 SavazAI. All rights reserved. Sovereign Orchestration Infrastructure.  
+For enterprise deployments, custom MCP connectors, or SLA support, contact [info@savazar.com](mailto:info@savazar.com) or visit [savazar.com](https://savazar.com).
