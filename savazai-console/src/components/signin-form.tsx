@@ -127,15 +127,17 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
         </button>
       </form>
 
-      <div className="mt-8 text-center text-xs text-slate-400">
-        Don&apos;t have an account?{" "}
-        <Link
-          href="/signup"
-          className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
-        >
-          Create account
-        </Link>
-      </div>
+      {process.env.NODE_ENV !== "production" && (
+        <div className="mt-8 text-center text-xs text-slate-400">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/signup"
+            className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+          >
+            Create account
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

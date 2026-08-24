@@ -1315,9 +1315,9 @@
     "semantic_hash": "5d569ae371724e651b8b41aacd06c7a7"
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\signup\\page.tsx": {
-    "mtime": 1783502117.6758592,
-    "ast_hash": "c9bff3d98f73f421aa7026e9ccc49480",
-    "semantic_hash": "c9bff3d98f73f421aa7026e9ccc49480"
+    "mtime": 1787541180.8141189,
+    "ast_hash": "b8e6612c4e8c197efbc26880337818ce",
+    "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\chat-message.tsx": {
     "mtime": 1787431570.054352,
@@ -1335,13 +1335,13 @@
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\sidebar.tsx": {
-    "mtime": 1787462897.6621127,
-    "ast_hash": "47c9a71a1b77ed9f6fe40bd1ff543a5b",
+    "mtime": 1787541241.1915317,
+    "ast_hash": "0f7d8fb2cb10aae80644d896bd98b03a",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\signin-form.tsx": {
-    "mtime": 1787485723.5096233,
-    "ast_hash": "96cf4bb6079ad0415839b995c453e4c3",
+    "mtime": 1787541175.331774,
+    "ast_hash": "9fa3e43a254f3ea3ebba72d05284eedc",
     "semantic_hash": ""
   },
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\signup-form.tsx": {
@@ -2557,6 +2557,26 @@
   "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\.skills\\security-audit\\skills\\security-audit\\WEB-PROTOCOL-AND-AUTH.md": {
     "mtime": 1787456435.6814947,
     "ast_hash": "a6b71c7275ed5856d2a4f9504c541967",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\admin\\users\\page.tsx": {
+    "mtime": 1787541231.063249,
+    "ast_hash": "872aabbb537a1a1cc1509af4c0517b99",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\api\\admin\\users\\route.ts": {
+    "mtime": 1787541203.1629462,
+    "ast_hash": "705dce479df450a4b355388b865a1bd2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\app\\api\\admin\\users\\[id]\\route.ts": {
+    "mtime": 1787541209.6178443,
+    "ast_hash": "ae875876356b83eb1f07fd331ceab65f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\AVASA\\Downloads\\OpenC\\savazai-harness\\savazai-console\\src\\components\\admin\\user-management.tsx": {
+    "mtime": 1787541227.5777197,
+    "ast_hash": "857a39dd87036acd6a288c47ecceaaf1",
     "semantic_hash": ""
   }
 }

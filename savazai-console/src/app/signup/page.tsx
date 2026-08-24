@@ -1,7 +1,12 @@
 import { getSystemConfig } from "@/components/theme-provider";
 import { SignUpForm } from "@/components/signup-form";
+import { redirect } from "next/navigation";
 
 export default async function SignUpPage() {
+  if (process.env.NODE_ENV === "production") {
+    redirect("/signin");
+  }
+
   const config = await getSystemConfig();
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 py-12 sm:px-6 lg:px-8 relative overflow-hidden">

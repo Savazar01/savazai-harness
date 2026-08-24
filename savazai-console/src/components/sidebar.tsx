@@ -17,6 +17,7 @@ import {
   Library,
   ChevronLeft,
   ChevronRight,
+  Users,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
@@ -53,6 +54,7 @@ function saveThreads(threads: ChatThread[]) {
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: session } = authClient.useSession();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [threads, setThreads] = useState<ChatThread[]>(() => loadThreads());
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
@@ -105,6 +107,9 @@ export function Sidebar() {
     { href: "/studio", label: "Capability Studio", icon: BrainCircuit },
     { href: "/business", label: "Business Center", icon: Library },
     { href: "/admin/settings", label: "Command Center", icon: Settings },
+    ...(session?.user?.role === "admin"
+      ? [{ href: "/admin/users", label: "User Admin", icon: Users }]
+      : []),
   ];
 
   useEffect(() => {
