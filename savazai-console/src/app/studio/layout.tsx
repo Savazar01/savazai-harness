@@ -13,8 +13,8 @@ export default async function StudioLayout({
     headers: await headers(),
   });
 
-  if (!session || session.user.role !== "admin") {
-    redirect("/");
+  if (!session) {
+    redirect("/signin");
   }
 
   return (

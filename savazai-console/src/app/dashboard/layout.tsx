@@ -13,8 +13,8 @@ export default async function DashboardLayout({
     headers: await headers(),
   });
 
-  if (!session || session.user.role !== "admin") {
-    redirect("/");
+  if (!session) {
+    redirect("/signin");
   }
 
   return (

@@ -27,8 +27,14 @@ import {
 } from "lucide-react";
 import { getSystemConfig } from "@/components/theme-provider";
 
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+
 export default async function Home() {
-  const config = await getSystemConfig();
+  const [config, session] = await Promise.all([
+    getSystemConfig(),
+    auth.api.getSession({ headers: await headers() }).catch(() => null),
+  ]);
   const logoUrl = config.brandLogoUrl || "https://savazar.com/wp-content/uploads/2023/10/cropped-Transparent_Image_2-300x100.png";
 
   return (
@@ -49,12 +55,21 @@ export default async function Home() {
           </div>
 
           <nav className="flex items-center gap-4">
-            <Link
-              href="/signin"
-              className="rounded-full bg-slate-900 border border-slate-800 px-5 py-2 text-sm font-semibold text-slate-200 shadow-md hover:bg-slate-800/80 hover:text-white transition-all hover:scale-[1.02]"
-            >
-              Sign In
-            </Link>
+            {session ? (
+              <Link
+                href={session.user.role === "admin" ? "/admin/settings" : "/dashboard"}
+                className="rounded-full bg-primary/20 border border-primary/40 px-5 py-2 text-sm font-semibold text-primary hover:bg-primary hover:text-white shadow-md transition-all hover:scale-[1.02]"
+              >
+                Open Workspace
+              </Link>
+            ) : (
+              <Link
+                href="/signin"
+                className="rounded-full bg-slate-900 border border-slate-800 px-5 py-2 text-sm font-semibold text-slate-200 shadow-md hover:bg-slate-800/80 hover:text-white transition-all hover:scale-[1.02]"
+              >
+                Sign In
+              </Link>
+            )}
           </nav>
         </div>
       </header>

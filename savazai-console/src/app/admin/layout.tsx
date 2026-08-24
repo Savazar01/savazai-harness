@@ -14,8 +14,12 @@ export default async function AdminLayout({
   });
 
   // Verify that session exists and user has the admin role
-  if (!session || session.user.role !== "admin") {
-    redirect("/");
+  if (!session) {
+    redirect("/signin");
+  }
+
+  if (session.user.role !== "admin") {
+    redirect("/dashboard");
   }
 
   return (

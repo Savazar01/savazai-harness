@@ -106,9 +106,11 @@ export function Sidebar() {
     ...(showAgentWorkspace ? [{ href: "/dashboard", label: "Agent Workspace", icon: LayoutDashboard }] : []),
     { href: "/studio", label: "Capability Studio", icon: BrainCircuit },
     { href: "/business", label: "Business Center", icon: Library },
-    { href: "/admin/settings", label: "Command Center", icon: Settings },
     ...(session?.user?.role === "admin"
-      ? [{ href: "/admin/users", label: "User Admin", icon: Users }]
+      ? [
+          { href: "/admin/settings", label: "Command Center", icon: Settings },
+          { href: "/admin/users", label: "User Admin", icon: Users },
+        ]
       : []),
   ];
 
