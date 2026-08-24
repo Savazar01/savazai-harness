@@ -2,12 +2,16 @@
 node_modules/
 /savazai-console/node_modules/
 
-# Build outputs
+# Build outputs & Cache
 dist/
 build/
+out/
+.next/
 /savazai-console/.next/
 /savazai-console/out/
 *.tsbuildinfo
+.turbo/
+coverage/
 
 # Python environment
 .venv/
@@ -16,6 +20,7 @@ venv/
 # Sensitive environment files
 .env
 .env.*
+.env*.local
 .env.local
 .env.production
 /savazai-console/.env*
@@ -24,13 +29,23 @@ venv/
 *.log
 npm-debug.log*
 yarn-debug.log*
+yarn-error.log*
 /logs/
 logs*.txt
 sse*.txt
 scratch/
+test_results/
+test-results/
+
+# Development & Session Walkthrough Artifacts
+Walkthrough*.md
+walkthrough*.md
+TASK_SPECIFICATION*.md
+IMPLEMENTATION_PLAN*.md
+implementation_plan*.md
+
+# Knowledge graph & System files
 graphify-out/
 /savazai-console/graphify-out/
-
-# System files
 .DS_Store
 Thumbs.db

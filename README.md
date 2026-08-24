@@ -62,25 +62,25 @@ When configuring SavazAI for production (e.g. via Coolify or custom Docker VPS) 
 # ==============================================================================
 # DATABASE STORAGE (PostgreSQL 17 + pgvector)
 # ==============================================================================
-DB_USER=sz_harness_admin
-DB_PASSWORD=sz_dummy_vault_pass_example_123
+DB_USER=sz_admin
+DB_PASSWORD=your_secure_db_password
 DB_NAME=savazai_harness
-DATABASE_URL=postgresql://sz_harness_admin:sz_dummy_vault_pass_example_123@savazai-db:5432/savazai_harness
+DATABASE_URL=postgresql://sz_admin:your_secure_db_password@savazai-db:5432/savazai_harness
 
 # ==============================================================================
 # AUTHENTICATION & PRODUCTION ADMIN BOOTSTRAPPING (First Run Only)
 # ==============================================================================
 ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=change_me_secure_password_456
+ADMIN_PASSWORD=your_initial_admin_password
 ADMIN_NAME="Platform Administrator"
-BETTER_AUTH_SECRET=sz_dummy_auth_secret_token_example_2026
-BETTER_AUTH_URL=https://savazai-harnessin.savazar.com
+BETTER_AUTH_SECRET=your_random_32_character_secret_here
+BETTER_AUTH_URL=https://your-domain.com
 
 # ==============================================================================
 # CORE BACKEND & ORCHESTRATOR API
 # ==============================================================================
 NEXT_PUBLIC_HARNESS_API_URL=http://savazai-backend:3055
-MASTER_VAULT_SECRET=sz_dummy_master_vault_key_example_2026_min32chars
+MASTER_VAULT_SECRET=your_master_vault_encryption_key_here
 NODE_ENV=production
 ```
 
@@ -113,7 +113,7 @@ SavazAI is built to deploy out-of-the-box on [Coolify](https://coolify.io) or an
 
 2. **Paste Environment Variables**:
    * Populate the environment variables listed in the reference table above.
-   * Set `BETTER_AUTH_URL` to your assigned Coolify FQDN domain (e.g. `https://savazai.yourdomain.com`).
+   * Set `BETTER_AUTH_URL` to your assigned Coolify FQDN domain (e.g. `https://your-domain.com`).
    * Set `MASTER_VAULT_SECRET` to a generated 32-character string (`openssl rand -base64 32`).
 
 3. **Verify Container Healthcheck Startup Windows**:
@@ -128,7 +128,7 @@ SavazAI is built to deploy out-of-the-box on [Coolify](https://coolify.io) or an
 
 4. **Deploy & First Login**:
    * Trigger **Deploy** in Coolify.
-   * Navigate to `https://savazai.yourdomain.com/signin`.
+   * Navigate to `https://your-domain.com/signin`.
    * Log in with your `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
 
 ---
@@ -208,6 +208,7 @@ npm run db:migrate
 ---
 
 ## 📄 License & Commercial Support
-
-Copyright &copy; 2026 SavazAI. All rights reserved. Sovereign Orchestration Infrastructure.  
-For enterprise deployments, custom MCP connectors, or SLA support, contact [info@savazar.com](mailto:info@savazar.com) or visit [savazar.com](https://savazar.com).
+ 
+SavazAI is licensed under the [Fair-Code Sustainable Use License](LICENSE).  
+Copyright &copy; 2026 Savazar. All rights reserved. Free for internal business and development use. Commercial multi-tenant SaaS resale requires prior written authorization.  
+For enterprise deployments, custom MCP connectors, or SLA support, visit [savazar.com](https://savazar.com).
