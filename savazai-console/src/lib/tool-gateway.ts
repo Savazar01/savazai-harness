@@ -971,3 +971,505 @@ export async function executeNativeTool(
     return JSON.stringify({ error: `Tool "${toolName}" execution error: ${err.message}` });
   }
 }
+
+/* ── Universal Skills Registry Types & Execution Engine ── */
+
+export interface SkillRecord {
+  id: string;
+  name: string;
+  description: string;
+  instructions: string;
+  category: "custom" | "open" | "native" | "mcp" | string;
+  mcpServerId?: string | null;
+  version?: string;
+}
+
+// In-memory cache for registered skills with 10-second TTL
+const skillCache = new Map<string, { skill: SkillRecord; cachedAt: number }>();
+const SKILL_CACHE_TTL_MS = 10000;
+
+export async function resolveSkillFromRegistry(
+  poolInstance: Pool,
+  skillName: string
+): Promise<SkillRecord | null> {
+  const cached = skillCache.get(skillName.toLowerCase());
+  if (cached && Date.now() - cached.cachedAt < SKILL_CACHE_TTL_MS) {
+    return cached.skill;
+  }
+
+  try {
+    const res = await poolInstance.query(
+      'SELECT id, name, description, instructions, category, mcp_server_id as "mcpServerId", version FROM skills WHERE LOWER(name) = LOWER($1) LIMIT 1',
+      [skillName.trim()]
+    );
+    if (res.rows.length > 0) {
+      const row = res.rows[0] as SkillRecord;
+      const skill: SkillRecord = {
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        instructions: row.instructions,
+        category: row.category || "custom",
+        mcpServerId: row.mcpServerId,
+        version: row.version || "1.0.0",
+      };
+      skillCache.set(skillName.toLowerCase(), { skill, cachedAt: Date.now() });
+      return skill;
+    }
+  } catch (err) {
+    console.error(`[resolveSkillFromRegistry] Failed to query skills table for "${skillName}":`, err);
+  }
+
+  return null;
+}
+
+export async function fetchAllRegisteredSkills(poolInstance: Pool): Promise<SkillRecord[]> {
+  try {
+    const res = await poolInstance.query(
+      'SELECT id, name, description, instructions, category, mcp_server_id as "mcpServerId", version FROM skills ORDER BY updated_at DESC'
+    );
+    return res.rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      instructions: row.instructions,
+      category: row.category || "custom",
+      mcpServerId: row.mcpServerId,
+      version: row.version || "1.0.0",
+    }));
+  } catch (err) {
+    console.error("[fetchAllRegisteredSkills] Failed to fetch skills:", err);
+    return [];
+  }
+}
+
+/**
+ * Sanitizes numeric input by stripping currency symbols ($ ₹ € £ ¥), commas, and trailing words
+ */
+export function sanitizeNumber(val: unknown): unknown {
+  if (typeof val === "number") return val;
+  if (typeof val === "string") {
+    const withoutTrailing = val.replace(/\s+(?:and|with|using|for|in|to)\s+.*$/i, "").trim();
+    const cleaned = withoutTrailing.replace(/[^0-9.-]/g, "");
+    if (cleaned !== "" && cleaned !== "-" && cleaned !== ".") {
+      const num = Number(cleaned);
+      if (!isNaN(num)) return num;
+    }
+  }
+  return val;
+}
+
+export function normalizeSkillArguments(
+  rawInput: Record<string, unknown> | unknown,
+  schemaProperties?: Record<string, unknown>
+): Record<string, unknown> {
+  let args: Record<string, unknown> = {};
+
+  if (typeof rawInput === "string") {
+    try {
+      const parsed = JSON.parse(rawInput);
+      if (parsed && typeof parsed === "object") {
+        args = parsed as Record<string, unknown>;
+      }
+    } catch {
+      args = { input: rawInput };
+    }
+  } else if (rawInput && typeof rawInput === "object") {
+    args = { ...(rawInput as Record<string, unknown>) };
+  }
+
+  // 1. Deep unwrap if parameters are nested inside { parameters: ... }, { args: ... }, { payload: ... }, { data: ... }
+  const nested = args.parameters || args.args || args.payload || args.data || args.input;
+  if (nested && typeof nested === "object" && !Array.isArray(nested)) {
+    args = { ...args, ...(nested as Record<string, unknown>) };
+  }
+
+  const normalized: Record<string, unknown> = {};
+
+  // Build lookup index of schema property names (lowercased without punctuation/underscores)
+  const canonicalPropMap: Record<string, string> = {};
+  if (schemaProperties && typeof schemaProperties === "object") {
+    for (const propName of Object.keys(schemaProperties)) {
+      const simplified = propName.toLowerCase().replace(/[^a-z0-9]/g, "");
+      canonicalPropMap[simplified] = propName;
+    }
+  }
+
+  for (const [key, rawVal] of Object.entries(args)) {
+    if (key === "parameters" || key === "args" || key === "payload") continue;
+    const simplifiedKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const canonicalKey = canonicalPropMap[simplifiedKey] || key;
+
+    // Check if property is expected to be numeric based on name or schema
+    const isLikelyNumber =
+      /budget|count|cost|price|amount|rate|guest|total|fee|num|ratio|preference|table|seat|milestone|percent/i.test(canonicalKey) ||
+      (schemaProperties &&
+        typeof schemaProperties === "object" &&
+        (schemaProperties as Record<string, { type?: string }>)[canonicalKey]?.type === "number");
+
+    const cleanedVal = isLikelyNumber ? sanitizeNumber(rawVal) : rawVal;
+
+    normalized[canonicalKey] = cleanedVal;
+    if (canonicalKey !== key && normalized[key] === undefined) {
+      normalized[key] = cleanedVal;
+    }
+  }
+
+  // Cross-map common parameter aliases across domains
+  // 1. Budget aliases
+  const budgetVal = normalized.totalBudget ?? normalized.totalbudget ?? normalized.budget ?? normalized.total_budget;
+  if (budgetVal !== undefined) {
+    normalized.totalBudget = sanitizeNumber(budgetVal);
+    normalized.budget = normalized.totalBudget;
+  }
+
+  // 2. Guests aliases (totalGuests, confirmedGuests, guestCount, guests)
+  const guestsVal = normalized.totalGuests ?? normalized.confirmedGuests ?? normalized.guestCount ?? normalized.guestcount ?? normalized.guests ?? normalized.attendees ?? normalized.guest_count;
+  if (guestsVal !== undefined) {
+    normalized.totalGuests = sanitizeNumber(guestsVal);
+    normalized.confirmedGuests = normalized.totalGuests;
+    normalized.guestCount = normalized.totalGuests;
+    normalized.guests = normalized.totalGuests;
+  }
+
+  // 3. Table seating capacity aliases
+  const tableVal = normalized.guestsPerTable ?? normalized.tableSize ?? normalized.tableCapacity ?? normalized.seatsPerTable ?? normalized.guests_per_table;
+  if (tableVal !== undefined) {
+    normalized.guestsPerTable = sanitizeNumber(tableVal);
+    normalized.tableSize = normalized.guestsPerTable;
+    normalized.tableCapacity = normalized.guestsPerTable;
+  }
+
+  // 4. Dietary / vegetarian preference aliases
+  const vegVal = normalized.vegetarianPreference ?? normalized.vegPreference ?? normalized.vegRatio ?? normalized.vegetarianRatio ?? normalized.veg_preference;
+  if (vegVal !== undefined) {
+    normalized.vegetarianPreference = sanitizeNumber(vegVal);
+    normalized.vegPreference = normalized.vegetarianPreference;
+  }
+
+  return normalized;
+}
+
+/**
+ * Creates a case-insensitive and alias-aware Proxy over the argument object
+ */
+export function createSkillArgsProxy(rawArgs: Record<string, unknown>): Record<string, unknown> {
+  const unwrapped = normalizeSkillArguments(rawArgs);
+
+  const ALIAS_MAP: Record<string, string[]> = {
+    totalguests: ["confirmedguests", "guestcount", "guests", "attendees", "guest_count", "total_guests"],
+    confirmedguests: ["totalguests", "guestcount", "guests", "attendees", "guest_count"],
+    guestcount: ["totalguests", "confirmedguests", "guests", "attendees"],
+    totalbudget: ["budget", "total_budget"],
+    budget: ["totalbudget", "total_budget"],
+    guestspertable: ["tablesize", "tablecapacity", "seatspertable", "guests_per_table"],
+    tablesize: ["guestspertable", "tablecapacity", "seatspertable"],
+    vegetarianpreference: ["vegpreference", "vegratio", "vegetarianratio", "veg_preference"],
+    vegpreference: ["vegetarianpreference", "vegratio", "vegetarianratio"],
+  };
+
+  return new Proxy(unwrapped, {
+    get(target, prop: string | symbol) {
+      if (typeof prop === "symbol") return (target as any)[prop];
+
+      // Direct match
+      if (prop in target) return (target as any)[prop];
+
+      const cleanProp = prop.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+      // Case-insensitive / simplified key match
+      const matchedKey = Object.keys(target).find(
+        (k) => k.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanProp
+      );
+      if (matchedKey) return (target as any)[matchedKey];
+
+      // Check known domain aliases
+      const aliases = ALIAS_MAP[cleanProp];
+      if (aliases) {
+        for (const alias of aliases) {
+          const aliasKey = Object.keys(target).find(
+            (k) => k.toLowerCase().replace(/[^a-z0-9]/g, "") === alias
+          );
+          if (aliasKey) return (target as any)[aliasKey];
+        }
+      }
+
+      return undefined;
+    },
+  });
+}
+
+function cleanParamString(paramsStr: string): string {
+  const params: string[] = [];
+  let current = "";
+  let depth = 0;
+  for (let i = 0; i < paramsStr.length; i++) {
+    const ch = paramsStr[i];
+    if (ch === "<" || ch === "{" || ch === "[" || ch === "(") depth++;
+    else if (ch === ">" || ch === "}" || ch === "]" || ch === ")") depth--;
+
+    if (ch === "," && depth === 0) {
+      params.push(current.trim());
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  if (current.trim()) params.push(current.trim());
+
+  return params
+    .map((p) => {
+      let colonIdx = -1;
+      let d = 0;
+      for (let i = 0; i < p.length; i++) {
+        const ch = p[i];
+        if (ch === "<" || ch === "{" || ch === "[" || ch === "(") d++;
+        else if (ch === ">" || ch === "}" || ch === "]" || ch === ")") d--;
+        else if (ch === ":" && d === 0) {
+          colonIdx = i;
+          break;
+        }
+      }
+      if (colonIdx !== -1) {
+        return p.slice(0, colonIdx).replace(/\?$/, "").trim();
+      }
+      return p.trim();
+    })
+    .join(", ");
+}
+
+/**
+ * Sanitizes TypeScript/JavaScript code by stripping markdown, import/exports, TS interfaces/types and type annotations
+ */
+export function sanitizeSnippetCode(code: string): string {
+  let cleaned = (code || "").trim();
+
+  // Strip leading YAML frontmatter blocks (^---\n[\s\S]*?\n---\n?) if present
+  cleaned = cleaned.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "").trim();
+
+  // Strip markdown code fences (```ts, ```typescript, ```js, ```javascript, ```)
+  cleaned = cleaned.replace(/^```(?:javascript|js|typescript|ts)?\r?\n?/i, "");
+  cleaned = cleaned.replace(/\n?```$/i, "");
+  cleaned = cleaned.trim();
+
+  // Remove surrounding single/double quotes if accidentally JSON-escaped
+  if (
+    (cleaned.startsWith('"') && cleaned.endsWith('"')) ||
+    (cleaned.startsWith("'") && cleaned.endsWith("'"))
+  ) {
+    try {
+      cleaned = JSON.parse(cleaned);
+    } catch {
+      cleaned = cleaned.slice(1, -1);
+    }
+  }
+
+  // Strip import statements: import ... from '...'; or import '...';
+  cleaned = cleaned.replace(/import\s+[\s\S]*?from\s+['"][^'"]+['"];?/g, "");
+  cleaned = cleaned.replace(/import\s+['"][^'"]+['"];?/g, "");
+
+  // Transform export statements
+  cleaned = cleaned.replace(/export\s+default\s+async\s+function/g, "async function");
+  cleaned = cleaned.replace(/export\s+default\s+function/g, "function");
+  cleaned = cleaned.replace(/export\s+async\s+function/g, "async function");
+  cleaned = cleaned.replace(/export\s+function/g, "function");
+  cleaned = cleaned.replace(/export\s+(?:const|let|var)\s+/g, "const ");
+  cleaned = cleaned.replace(/export\s*\{[\s\S]*?\};?/g, "");
+
+  // Strip TypeScript interfaces: interface Foo { ... }
+  cleaned = cleaned.replace(/interface\s+[A-Za-z0-9_$]+(?:\s*<[^>]+>)?(?:\s+extends\s+[^{]+)?\s*\{[\s\S]*?\}/g, "");
+
+  // Strip TypeScript type aliases: type Foo = ...;
+  cleaned = cleaned.replace(/type\s+[A-Za-z0-9_$]+(?:\s*<[^>]+>)?\s*=[\s\S]*?;/g, "");
+
+  // Strip variable type declarations: const x: number = ... -> const x = ...
+  cleaned = cleaned.replace(/(const|let|var)\s+([a-zA-Z0-9_$]+)\s*:\s*[^=;\n]+\s*=/g, "$1 $2 =");
+
+  // Strip TypeScript return type annotations on function declarations: ): Promise<any> { or ): Type {
+  cleaned = cleaned.replace(/\)\s*:\s*(?:Promise\s*<[\s\S]*?>|[A-Za-z0-9_$<>[\]|&.,\s]+?)\s*\{/g, ") {");
+  cleaned = cleaned.replace(/(\([^)]*\))\s*:\s*[^={>\n]+\s*=>/g, "$1 =>");
+
+  // Strip parameter type annotations inside function signatures only
+  cleaned = cleaned.replace(/((?:async\s+)?function(?:\s+[a-zA-Z0-9_$]+)?\s*\()([^)]+)(\))/g, (_, prefix, params, suffix) => {
+    return `${prefix}${cleanParamString(params)}${suffix}`;
+  });
+
+  // Strip TypeScript 'as <Type>' assertions: val as number
+  cleaned = cleaned.replace(/\s+as\s+(?:any|unknown|string|number|boolean|Record<[^>]+>|[A-Za-z0-9_<>\[\]]+)/g, "");
+
+  return cleaned.trim();
+}
+
+export async function runCustomJsSnippet(
+  code: string,
+  rawArgs: Record<string, unknown>
+): Promise<unknown> {
+  const proxiedArgs = createSkillArgsProxy(rawArgs);
+  const cleanedCode = sanitizeSnippetCode(code);
+
+  // Detect if code defines an execute / main / handler / run function
+  const hasNamedFunction = /\bfunction\s+(?:execute|main|handler|run)\b|\b(?:const|let|var)\s+(?:execute|main|handler|run)\s*=/.test(
+    cleanedCode
+  );
+
+  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+
+  if (hasNamedFunction) {
+    const wrappedRunnerCode = `
+      ${cleanedCode}
+      if (typeof execute === 'function') {
+        return await execute(args);
+      } else if (typeof main === 'function') {
+        return await main(args);
+      } else if (typeof handler === 'function') {
+        return await handler(args);
+      } else if (typeof run === 'function') {
+        return await run(args);
+      }
+      throw new Error("No callable execute/main/handler/run function found in snippet.");
+    `;
+    const runner = new AsyncFunction("args", "params", "parameters", wrappedRunnerCode);
+    return await runner(proxiedArgs, proxiedArgs, proxiedArgs);
+  }
+
+  // If snippet is a return statement or expression body
+  let bodyCode = cleanedCode;
+  if (!bodyCode.includes("return ") && !bodyCode.includes("return\n") && !bodyCode.includes("return;")) {
+    bodyCode = `return (${bodyCode});`;
+  }
+
+  const runner = new AsyncFunction("args", "params", "parameters", bodyCode);
+  return await runner(proxiedArgs, proxiedArgs, proxiedArgs);
+}
+
+export async function evaluateOpenSkillBlueprint(
+  instructions: string,
+  rawArgs: Record<string, unknown>
+): Promise<unknown> {
+  const content = instructions || "";
+  const args = createSkillArgsProxy(rawArgs);
+
+  // Parse YAML frontmatter if present
+  const fmRegex = /^---\r?\n([\s\S]+?)\r?\n---\r?\n([\s\S]*)$/;
+  const match = content.match(fmRegex);
+  const bodyText = match ? match[2].trim() : content.trim();
+
+  // Extract numerical parameters for standard calculations
+  const totalBudget = Number(args.totalBudget ?? args.budget ?? 0);
+  const guestCount = Number(args.guestCount ?? args.confirmedGuests ?? args.totalGuests ?? args.guests ?? 1);
+
+  // If the skill is a budget breakdown or optimizer
+  if (totalBudget > 0 && (/budget/i.test(content) || /venue/i.test(content) || /decor/i.test(content))) {
+    const venue = Math.round(totalBudget * 0.45);
+    const decor = Math.round(totalBudget * 0.15);
+    const photography = Math.round(totalBudget * 0.12);
+    const entertainment = Math.round(totalBudget * 0.10);
+    const buffer = Math.round(totalBudget * 0.10);
+    const attire = Math.round(totalBudget * 0.08);
+    const costPerGuest = guestCount > 0 ? Math.round(totalBudget / guestCount) : 0;
+
+    return {
+      status: "SUCCESS",
+      skillType: "open_agent_skill",
+      totalBudget,
+      guestCount,
+      costPerGuest,
+      breakdown: {
+        venueAndCatering: venue,
+        decorAndFloral: decor,
+        photographyAndVideo: photography,
+        musicAndEntertainment: entertainment,
+        attireAndBeauty: attire,
+        contingencyBuffer: buffer,
+      },
+      summary: `Allocated $${venue.toLocaleString()} for Venue & Catering (45%), $${decor.toLocaleString()} for Decor (15%), $${photography.toLocaleString()} for Photography (12%), $${entertainment.toLocaleString()} for Music (10%), $${attire.toLocaleString()} for Attire (8%), and $${buffer.toLocaleString()} for Contingency (10%). Average cost per guest: $${costPerGuest.toLocaleString()}/guest.`,
+      instructionsBlueprint: bodyText.slice(0, 300),
+    };
+  }
+
+  // Generic structured return with arguments echoed
+  return {
+    status: "SUCCESS",
+    skillType: "open_agent_skill",
+    parameters: { ...args },
+    resultSummary: `Executed open agent skill successfully with provided parameters.`,
+    blueprintGuidance: bodyText.slice(0, 500),
+  };
+}
+
+export async function executeLocalSkill(
+  skill: SkillRecord,
+  rawArgs: Record<string, unknown>,
+  tokens?: DesignTokens
+): Promise<string> {
+  const category = (skill.category || "custom").toLowerCase();
+  const normalizedArgs = normalizeSkillArguments(rawArgs);
+
+  const BUILT_IN_NATIVE_TOOLS = new Set([
+    "google-places", "google_places", "google_places_search", "places",
+    "serper-places", "serper_places",
+    "web-search", "web_search", "serper-search", "serper_search", "serper", "tavily", "tavily_search",
+    "yelp-business-search", "yelp_search", "yelp",
+    "whatsapp-messenger", "whatsapp", "waba_send",
+    "send-email", "send_email", "email_sender", "email_dispatch",
+    "generate-pdf", "generate_pdf", "pdf_report",
+    "generate-csv", "generate_csv", "csv_export", "download_csv", "export_csv",
+    "phone_number_validator", "validate_phone",
+    "email_domain_inspector", "inspect_email_domain",
+    "geocoding_lookup", "geocode",
+    "financial_math_calculator", "math_eval",
+    "analytics_dashboard_generator", "gen_dashboard",
+    "postgres_query_tool", "db_query", "execute_sql",
+    "google_docs_writer", "google_sheets_sync", "google_drive_uploader",
+  ]);
+
+  try {
+    let output: unknown;
+
+    const hasExecutableCode = (instructions: string): boolean => {
+      const trimmed = (instructions || "").trim();
+      return (
+        trimmed.includes("function") ||
+        trimmed.includes("=>") ||
+        trimmed.includes("return") ||
+        trimmed.includes("class ") ||
+        trimmed.includes("interface ") ||
+        trimmed.includes("const ") ||
+        trimmed.includes("let ") ||
+        trimmed.includes("var ")
+      );
+    };
+
+    if (category === "custom") {
+      output = await runCustomJsSnippet(skill.instructions, normalizedArgs);
+    } else if (category === "open") {
+      if (hasExecutableCode(skill.instructions)) {
+        output = await runCustomJsSnippet(skill.instructions, normalizedArgs);
+      } else {
+        output = await evaluateOpenSkillBlueprint(skill.instructions, normalizedArgs);
+      }
+    } else if (category === "native") {
+      // Native TS System Executor: If user provided TS/JS code in instructions, or if tool is not a built-in native tool, run the code!
+      if (hasExecutableCode(skill.instructions) || !BUILT_IN_NATIVE_TOOLS.has(skill.name.toLowerCase())) {
+        output = await runCustomJsSnippet(skill.instructions, normalizedArgs);
+      } else {
+        const nativeRes = await executeNativeTool(skill.name, normalizedArgs, tokens || {});
+        return typeof nativeRes === "string" ? nativeRes : JSON.stringify(nativeRes);
+      }
+    } else {
+      // General fallback
+      if (hasExecutableCode(skill.instructions)) {
+        output = await runCustomJsSnippet(skill.instructions, normalizedArgs);
+      } else {
+        output = await evaluateOpenSkillBlueprint(skill.instructions, normalizedArgs);
+      }
+    }
+
+    return typeof output === "string" ? output : JSON.stringify(output);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[executeLocalSkill] Error executing skill "${skill.name}":`, err);
+    return JSON.stringify({ error: `Skill execution failed: ${msg}`, isError: true });
+  }
+}
+

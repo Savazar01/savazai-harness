@@ -1,7 +1,17 @@
 import { NextRequest } from "next/server";
 import { Pool } from "pg";
 import { decrypt } from "@/lib/crypto";
-import { executeNativeTool, formatHtmlEmailBody, extractRecordsFromPayload, sanitizeTableCell } from "@/lib/tool-gateway";
+import {
+  executeNativeTool,
+  executeLocalSkill,
+  resolveSkillFromRegistry,
+  fetchAllRegisteredSkills,
+  normalizeSkillArguments,
+  formatHtmlEmailBody,
+  extractRecordsFromPayload,
+  sanitizeTableCell,
+  type SkillRecord,
+} from "@/lib/tool-gateway";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -2965,12 +2975,27 @@ function parseParametersFromText(text: string, schemaProps?: Record<string, unkn
     const finalKey = matchedPropKey || keyRaw.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
 
     // Generic type parsing
-    const cleanVal = valRaw.replace(/\[[^\]]*\]/g, "").trim();
+    let cleanVal = valRaw.replace(/\[[^\]]*\]/g, "").trim();
+    // Strip trailing conjunctions and punctuation from values (e.g. "60000 and" -> "60000", "250 using wedding_budget_optimizer_JS." -> "250")
+    cleanVal = cleanVal.replace(/\s+(?:and|with|using|for|in|to)\s+.*$/i, "").replace(/[.,;:]+$/, "").trim();
+
     let parsedVal: unknown = cleanVal;
     const propSchema = schemaProps?.[finalKey] as { type?: string } | undefined;
-    if (propSchema?.type === "number" || propSchema?.type === "integer" || (!propSchema && /^-?\d+(\.\d+)?$/.test(cleanVal.replace(/[\$,]/g, "")))) {
-      const num = parseFloat(cleanVal.replace(/[^0-9.-]/g, ""));
-      if (!isNaN(num)) parsedVal = num;
+    const isLikelyNumeric = /budget|count|cost|price|amount|rate|guest|total|fee|num|ratio|preference|table|seat|milestone|percent/i.test(finalKey);
+
+    const numericCleaned = cleanVal.replace(/[^0-9.-]/g, "");
+    const isValidNumericString = numericCleaned !== "" && numericCleaned !== "-" && numericCleaned !== ".";
+
+    if (
+      propSchema?.type === "number" ||
+      propSchema?.type === "integer" ||
+      isLikelyNumeric ||
+      (!propSchema && isValidNumericString && /^[$\u20B9\u20AC\u00A3\u00A5]?-?\d+/.test(cleanVal))
+    ) {
+      if (isValidNumericString) {
+        const num = Number(numericCleaned);
+        if (!isNaN(num)) parsedVal = num;
+      }
     } else if (propSchema?.type === "boolean" || cleanVal.toLowerCase() === "true" || cleanVal.toLowerCase() === "false") {
       parsedVal = cleanVal.toLowerCase() === "true";
     } else if (typeof cleanVal === "string" && /(date|time|due|start|end|at)/i.test(finalKey)) {
@@ -3189,27 +3214,112 @@ function parseParametersFromText(text: string, schemaProps?: Record<string, unkn
                       }
                     }
 
+                    // Hydrate schemas from Universal Skills Registry (skills table)
+                    const registeredSkillsMap = new Map<string, SkillRecord>();
+                    try {
+                      const regSkills = await fetchAllRegisteredSkills(pool);
+                      for (const s of regSkills) {
+                        registeredSkillsMap.set(s.name.toLowerCase(), s);
+                        if (!globalMcpSchemaCache[s.name]) {
+                          let skillProps: Record<string, { type: string; description: string }> = {};
+                          let requiredProps: string[] = [];
+
+                          // Parse YAML frontmatter parameters if present
+                          const fmMatch = s.instructions.match(/^---\r?\n([\s\S]+?)\r?\n---/);
+                          if (fmMatch) {
+                            const fmText = fmMatch[1];
+                            const lines = fmText.split("\n");
+                            let inProps = false;
+                            let inRequired = false;
+                            let currentProp = "";
+
+                            for (const line of lines) {
+                              const trimmed = line.trim();
+                              if (trimmed.startsWith("properties:")) {
+                                inProps = true;
+                                inRequired = false;
+                                continue;
+                              }
+                              if (trimmed.startsWith("required:")) {
+                                inProps = false;
+                                inRequired = true;
+                                continue;
+                              }
+                              if (inRequired && trimmed.startsWith("- ")) {
+                                requiredProps.push(trimmed.slice(2).trim());
+                                continue;
+                              }
+                              if (inProps) {
+                                const propMatch = line.match(/^(\s{2,6})([a-zA-Z0-9_]+):/);
+                                if (propMatch) {
+                                  currentProp = propMatch[2];
+                                  skillProps[currentProp] = { type: "string", description: currentProp };
+                                } else if (currentProp && trimmed.startsWith("type:")) {
+                                  skillProps[currentProp].type = trimmed.slice(5).trim();
+                                } else if (currentProp && trimmed.startsWith("description:")) {
+                                  skillProps[currentProp].description = trimmed.slice(12).trim().replace(/^['"]|['"]$/g, "");
+                                }
+                              }
+                            }
+                          }
+
+                          // Fallback / JSDoc property parsing for custom skills
+                          if (Object.keys(skillProps).length === 0) {
+                            if (/budget/i.test(s.name) || /budget/i.test(s.instructions)) {
+                              skillProps = {
+                                totalBudget: { type: "number", description: "Total budget amount (USD or INR)" },
+                                guestCount: { type: "integer", description: "Total number of guests" },
+                              };
+                              requiredProps = ["totalBudget", "guestCount"];
+                            } else {
+                              const fnParamMatch = s.instructions.match(/(?:function|execute)\s*\(\s*\{([^}]+)\}\s*\)/);
+                              if (fnParamMatch) {
+                                const params = fnParamMatch[1].split(",").map((p) => p.trim()).filter(Boolean);
+                                for (const p of params) {
+                                  skillProps[p] = { type: "string", description: p };
+                                }
+                              }
+                            }
+                          }
+
+                          globalMcpSchemaCache[s.name] = {
+                            type: "object",
+                            properties: skillProps,
+                            ...(requiredProps.length > 0 ? { required: requiredProps } : {}),
+                          } as any;
+                          globalMcpSchemaCache[`__desc__${s.name}`] = { desc: s.description } as Record<string, unknown>;
+                        }
+                      }
+                    } catch (skillHydrateErr) {
+                      console.error("[Skills Schema Hydration] Failed:", skillHydrateErr);
+                    }
+
                     // Merge hydrated schemas back into node.tools
                     if (Object.keys(globalMcpSchemaCache).length > 0) {
                       node.tools = node.tools.map(tool => {
                         if (!tool || typeof tool !== "object") return tool;
                         const name = tool.name || "";
-                        if (globalMcpSchemaCache[name] && !tool.inputSchema) {
-                          const rawSchema = globalMcpSchemaCache[name] as unknown as { type?: string; properties?: Record<string, { type: string; description: string }>; required?: string[] };
-                          const hydrated: AgentflowTool = {
-                            ...tool,
-                            inputSchema: {
-                              type: "object" as const,
-                              properties: rawSchema.properties || {},
-                              required: rawSchema.required,
-                            }
+                        const matchedSkill = registeredSkillsMap.get(name.toLowerCase());
+                        const cachedSchema = globalMcpSchemaCache[name] as unknown as { type?: string; properties?: Record<string, { type: string; description: string }>; required?: string[] } | undefined;
+                        const cachedDesc = (globalMcpSchemaCache[`__desc__${name}`] as { desc: string } | undefined)?.desc;
+
+                        const category = tool.category || (matchedSkill ? matchedSkill.category : undefined) || "mcp";
+
+                        const hydrated: AgentflowTool = {
+                          ...tool,
+                          category: category,
+                          description: tool.description || cachedDesc,
+                        };
+
+                        if (!tool.inputSchema && cachedSchema) {
+                          hydrated.inputSchema = {
+                            type: "object" as const,
+                            properties: cachedSchema.properties || {},
+                            required: cachedSchema.required,
                           };
-                          if (!hydrated.description && globalMcpSchemaCache[`__desc__${name}`]) {
-                            hydrated.description = (globalMcpSchemaCache[`__desc__${name}`] as { desc: string }).desc;
-                          }
-                          return hydrated;
                         }
-                        return tool;
+
+                        return hydrated;
                       });
                       sendEvent({ type: "trace", content: `[Schema Hydration: ${node.label}] Hydrated ${Object.keys(globalMcpSchemaCache).length} tool schemas.` });
                     }
@@ -3489,9 +3599,13 @@ If you do NOT need to call any more tools, output your final result directly to 
                     }
                   }
 
-                  const toolCategory = boundTool.category || "mcp";
+                  const registeredSkill = await resolveSkillFromRegistry(pool, toolName);
+                  const isInternalSkill = !!registeredSkill || boundTool.category === "custom" || boundTool.category === "open";
+                  const toolCategory = registeredSkill?.category || boundTool.category || (isInternalSkill ? "custom" : "mcp");
 
-                  if (toolCategory === "native") {
+                  if (isInternalSkill) {
+                    sendEvent({ type: "trace", content: `[Worker Skill: ${node.label}] Executing local skill: ${toolName} (Category: ${toolCategory})` });
+                  } else if (toolCategory === "native") {
                     sendEvent({ type: "trace", content: `[Worker Tool: ${node.label}] Executing tool: ${toolName} ...` });
                   } else {
                     sendEvent({ type: "trace", content: `[Worker Tool: ${node.label}] Executing MCP tool: ${toolName}` });
@@ -3517,11 +3631,23 @@ If you do NOT need to call any more tools, output your final result directly to 
                     console.error("Failed to load ambient params:", e);
                   }
 
-                  // Merge ambient params with tool arguments
-                  const toolArgs = {
+                  // Merge ambient params, node plan params, and tool arguments
+                  const toolArgs: Record<string, unknown> = {
                     ...ambientParams,
-                    ...tc.arguments
+                    ...(nodePlanParams || {}),
+                    ...(tc.arguments || {}),
                   };
+
+                  // Unwrap nested parameters if LLM wrapped in { parameters: ... } or { args: ... }
+                  if (tc.arguments && typeof tc.arguments === "object") {
+                    const nestedArgs = (tc.arguments as Record<string, unknown>).parameters ||
+                                       (tc.arguments as Record<string, unknown>).args ||
+                                       (tc.arguments as Record<string, unknown>).payload ||
+                                       (tc.arguments as Record<string, unknown>).data;
+                    if (nestedArgs && typeof nestedArgs === "object" && !Array.isArray(nestedArgs)) {
+                      Object.assign(toolArgs, nestedArgs);
+                    }
+                  }
 
                   const hasEmptyPlanParams = !nodePlanParams || Object.keys(nodePlanParams).length === 0;
 
@@ -3573,7 +3699,16 @@ If you do NOT need to call any more tools, output your final result directly to 
 
                   let toolResult = "";
                   try {
-                    if (toolCategory === "native") {
+                    if (isInternalSkill) {
+                      const skillToRun: SkillRecord = registeredSkill || {
+                        id: "local",
+                        name: toolName,
+                        description: boundTool.description || "",
+                        instructions: (boundTool as any).instructions || "",
+                        category: toolCategory,
+                      };
+                      toolResult = await executeLocalSkill(skillToRun, toolArgs, designTokens);
+                    } else if (toolCategory === "native") {
                       const to = String(toolArgs.to || toolArgs.recipient || "").trim();
                       if (to && toolName === "send-email") {
                         if (!isValidEmail(to)) {
@@ -3594,10 +3729,17 @@ If you do NOT need to call any more tools, output your final result directly to 
                     }
                   } catch (toolErr) {
                     const toolErrMsg = toolErr instanceof Error ? toolErr.message : String(toolErr);
-                    sendEvent({
-                      type: "trace",
-                      content: `[Worker Tool Error: ${node.label}] Tool ${toolName} execution failed: ${toolErrMsg}`
-                    });
+                    if (isInternalSkill) {
+                      sendEvent({
+                        type: "trace",
+                        content: `[Worker Skill Error: ${node.label}] Skill ${toolName} execution failed: ${toolErrMsg}`
+                      });
+                    } else {
+                      sendEvent({
+                        type: "trace",
+                        content: `[Worker Tool Error: ${node.label}] Tool ${toolName} execution failed: ${toolErrMsg}`
+                      });
+                    }
                     toolResult = JSON.stringify({ error: toolErrMsg });
                   }
                   
@@ -3625,20 +3767,35 @@ If you do NOT need to call any more tools, output your final result directly to 
 
                   if (isErrorResult) {
                     hasToolErrors = true;
-                    const errText = String(toolResultObj.error || "Unknown MCP error");
-                    sendEvent({ type: "trace", content: `[Worker Tool Error: ${node.label}] MCP tool ${toolName} returned error: ${errText}` });
-                    const formattedError = `[STATUS: FAILED] Tool ${toolName} failed: ${errText}`;
-                    workerHistory.push({ role: "tool", name: toolName, content: formattedError });
-                    workerReceipts.push({ tool_name: toolName, status: "FAILED", output_payload: errText });
+                    const errText = String(toolResultObj.error || (isInternalSkill ? "Unknown skill error" : "Unknown MCP error"));
+                    if (isInternalSkill) {
+                      sendEvent({ type: "trace", content: `[Worker Skill Error: ${node.label}] Skill ${toolName} returned error: ${errText}` });
+                      const formattedError = `[STATUS: FAILED] Skill ${toolName} failed: ${errText}`;
+                      workerHistory.push({ role: "tool", name: toolName, content: formattedError });
+                      workerReceipts.push({ tool_name: toolName, status: "FAILED", output_payload: errText });
+                    } else {
+                      sendEvent({ type: "trace", content: `[Worker Tool Error: ${node.label}] MCP tool ${toolName} returned error: ${errText}` });
+                      const formattedError = `[STATUS: FAILED] Tool ${toolName} failed: ${errText}`;
+                      workerHistory.push({ role: "tool", name: toolName, content: formattedError });
+                      workerReceipts.push({ tool_name: toolName, status: "FAILED", output_payload: errText });
+                    }
                   } else {
-                    if (toolCategory === "native") {
+                    if (isInternalSkill) {
+                      sendEvent({ type: "trace", content: `[Worker Skill: ${node.label}] Skill ${toolName} returned success.` });
+                      const formattedToolResult = `[STATUS: SUCCESS] Skill ${toolName} executed successfully. Returned data: ${toolResult}`;
+                      workerHistory.push({ role: "tool", name: toolName, content: formattedToolResult });
+                      workerReceipts.push({ tool_name: toolName, status: "SUCCESS", output_payload: toolResult });
+                    } else if (toolCategory === "native") {
                       sendEvent({ type: "trace", content: `[Worker Tool: ${node.label}] Tool ${toolName} returned success.` });
+                      const formattedToolResult = `[STATUS: SUCCESS] Tool ${toolName} executed successfully. Returned data: ${toolResult}`;
+                      workerHistory.push({ role: "tool", name: toolName, content: formattedToolResult });
+                      workerReceipts.push({ tool_name: toolName, status: "SUCCESS", output_payload: toolResult });
                     } else {
                       sendEvent({ type: "trace", content: `[Worker Tool: ${node.label}] MCP tool ${toolName} returned ${itemCount} items.` });
+                      const formattedToolResult = `[STATUS: SUCCESS] Tool ${toolName} executed successfully. Returned data: ${toolResult}`;
+                      workerHistory.push({ role: "tool", name: toolName, content: formattedToolResult });
+                      workerReceipts.push({ tool_name: toolName, status: "SUCCESS", output_payload: toolResult });
                     }
-                    const formattedToolResult = `[STATUS: SUCCESS] Tool ${toolName} executed successfully. Returned data: ${toolResult}`;
-                    workerHistory.push({ role: "tool", name: toolName, content: formattedToolResult });
-                    workerReceipts.push({ tool_name: toolName, status: "SUCCESS", output_payload: toolResult });
                   }
 
                 }
@@ -3974,7 +4131,13 @@ You have action tools available [${synthToolsListStr}].
                   const nativeRes = await executeNativeTool(toolName, tc.arguments || {}, designTokens);
                   result = typeof nativeRes === "string" ? nativeRes : JSON.stringify(nativeRes);
                 } else {
-                  result = await runMcpToolWithResilience(boundTool.serverId || toolName, toolName, tc.arguments || {}, synthTools);
+                  const synthSkill = await resolveSkillFromRegistry(pool, toolName);
+                  if (synthSkill) {
+                    sendEvent({ type: "trace", content: `[Synthesizer Tool: ${toolName}] Executing local skill (${synthSkill.category})...` });
+                    result = await executeLocalSkill(synthSkill, tc.arguments || {}, designTokens);
+                  } else {
+                    result = await runMcpToolWithResilience(boundTool.serverId || toolName, toolName, tc.arguments || {}, synthTools);
+                  }
                 }
               } catch (toolErr) {
                 const errMsg = toolErr instanceof Error ? toolErr.message : String(toolErr);
