@@ -105,7 +105,7 @@ export function Sidebar() {
     return () => window.removeEventListener("savazai-appearance-updated", handleAppearance);
   }, []);
 
-  const isAdmin = session?.user?.role === "admin";
+  const isAdmin = (session?.user as { role?: string } | undefined)?.role === "admin";
 
   const activeNavItems = [
     ...(isAdmin && showAgentWorkspace ? [{ href: "/dashboard", label: "Agent Workspace", icon: LayoutDashboard }] : []),

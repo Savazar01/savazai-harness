@@ -3707,7 +3707,7 @@ If you do NOT need to call any more tools, output your final result directly to 
                         instructions: (boundTool as any).instructions || "",
                         category: toolCategory,
                       };
-                      toolResult = await executeLocalSkill(skillToRun, toolArgs, designTokens);
+                      toolResult = await executeLocalSkill(skillToRun, toolArgs, designTokens, pool);
                     } else if (toolCategory === "native") {
                       const to = String(toolArgs.to || toolArgs.recipient || "").trim();
                       if (to && toolName === "send-email") {
@@ -3720,7 +3720,7 @@ If you do NOT need to call any more tools, output your final result directly to 
                           toolResult = JSON.stringify(emailRes);
                         }
                       } else {
-                        toolResult = await executeNativeTool(toolName, toolArgs, designTokens);
+                        toolResult = await executeNativeTool(toolName, toolArgs, designTokens, pool);
                       }
                     } else {
                       const serverId = boundTool.serverId || toolName;
@@ -4101,7 +4101,7 @@ You have action tools available [${synthToolsListStr}].
                   }
                   const pdfFilename = String(tc.arguments?.filename || dynamicFilename);
                   sendEvent({ type: "trace", content: `[Synthesizer Tool: generate-pdf] Generating PDF document "${pdfTitle}"...` });
-                  const pdfRes = await executeNativeTool("generate-pdf", { title: pdfTitle, content: pdfContent, filename: pdfFilename }, designTokens);
+                  const pdfRes = await executeNativeTool("generate-pdf", { title: pdfTitle, content: pdfContent, filename: pdfFilename }, designTokens, pool);
                   result = typeof pdfRes === "string" ? pdfRes : JSON.stringify(pdfRes);
                 } else if (toolName === "generate-csv" || toolName === "generate_csv" || toolName === "csv_export") {
                   const csvKey = `generate-csv:${dynamicFilename}`;
@@ -4125,16 +4125,16 @@ You have action tools available [${synthToolsListStr}].
                   }
                   const csvFilename = String(tc.arguments?.filename || dynamicFilename);
                   sendEvent({ type: "trace", content: `[Synthesizer Tool: generate-csv] Generating RFC 4180 CSV export "${csvFilename}"...` });
-                  const csvRes = await executeNativeTool("generate-csv", { title: csvTitle, content: csvContent, filename: csvFilename }, designTokens);
+                  const csvRes = await executeNativeTool("generate-csv", { title: csvTitle, content: csvContent, filename: csvFilename }, designTokens, pool);
                   result = typeof csvRes === "string" ? csvRes : JSON.stringify(csvRes);
                 } else if (boundTool.category === "native") {
-                  const nativeRes = await executeNativeTool(toolName, tc.arguments || {}, designTokens);
+                  const nativeRes = await executeNativeTool(toolName, tc.arguments || {}, designTokens, pool);
                   result = typeof nativeRes === "string" ? nativeRes : JSON.stringify(nativeRes);
                 } else {
                   const synthSkill = await resolveSkillFromRegistry(pool, toolName);
                   if (synthSkill) {
                     sendEvent({ type: "trace", content: `[Synthesizer Tool: ${toolName}] Executing local skill (${synthSkill.category})...` });
-                    result = await executeLocalSkill(synthSkill, tc.arguments || {}, designTokens);
+                    result = await executeLocalSkill(synthSkill, tc.arguments || {}, designTokens, pool);
                   } else {
                     result = await runMcpToolWithResilience(boundTool.serverId || toolName, toolName, tc.arguments || {}, synthTools);
                   }

@@ -838,14 +838,134 @@ async function callCustomWebhook(args: Record<string, unknown>): Promise<Record<
   }
 }
 
+/* ── OKF Concept Execution Helper ── */
+export async function executeOkfConcept(
+  toolNameOrKey: string,
+  poolInstance?: Pool
+): Promise<Record<string, unknown>> {
+  const isDirectPool = !!poolInstance;
+  const poolToUse = poolInstance || new Pool({ connectionString: process.env.DATABASE_URL });
+
+  try {
+    const rawKey = toolNameOrKey.replace(/^okf[-_]/i, "").trim();
+    const fullKey = toolNameOrKey.trim();
+
+    // 1. Query okf_concepts table
+    let conceptRow: {
+      id: string;
+      category: string;
+      conceptKey: string;
+      yamlFrontmatter: string;
+      markdownBody: string;
+    } | null = null;
+
+    try {
+      const res = await poolToUse.query(
+        `SELECT id, category, concept_key as "conceptKey", yaml_frontmatter as "yamlFrontmatter", markdown_body as "markdownBody", updated_at as "updatedAt"
+         FROM okf_concepts
+         WHERE LOWER(concept_key) = LOWER($1)
+            OR LOWER(concept_key) = LOWER($2)
+            OR LOWER(REPLACE(concept_key, '_', '-')) = LOWER(REPLACE($1, '_', '-'))
+            OR LOWER(REPLACE(concept_key, '-', '_')) = LOWER(REPLACE($1, '-', '_'))
+         LIMIT 1`,
+        [rawKey, fullKey]
+      );
+      if (res.rows.length > 0) {
+        conceptRow = res.rows[0];
+      }
+    } catch (dbErr) {
+      console.warn("[executeOkfConcept] Failed to query okf_concepts table:", dbErr);
+    }
+
+    // 2. Fallback: If not found in okf_concepts, check okf_knowledge_facts
+    if (!conceptRow) {
+      try {
+        const factRes = await poolToUse.query(
+          `SELECT id, category, fact_key as "factKey", fact_value as "factValue"
+           FROM okf_knowledge_facts
+           WHERE LOWER(fact_key) = LOWER($1)
+              OR LOWER(fact_key) = LOWER($2)
+              OR LOWER(REPLACE(fact_key, '_', '-')) = LOWER(REPLACE($1, '_', '-'))
+              OR LOWER(REPLACE(fact_key, '-', '_')) = LOWER(REPLACE($1, '-', '_'))
+           LIMIT 1`,
+          [rawKey, fullKey]
+        );
+        if (factRes.rows.length > 0) {
+          const fact = factRes.rows[0];
+          return {
+            status: "SUCCESS",
+            conceptKey: fact.factKey,
+            title: fact.factKey,
+            conceptType: fact.category || "knowledge_fact",
+            guidelines: fact.factValue || "",
+            summary: String(fact.factValue || "").slice(0, 300),
+            governanceDirectives: `MANDATORY COMPLIANCE: The worker and synthesizer must strictly enforce and cite the exact rules, ratios, deadlines, and restrictions defined in 'guidelines'. Do NOT alter rules to match user preferences if they conflict.`,
+          };
+        }
+      } catch (factErr) {
+        console.warn("[executeOkfConcept] Failed to query okf_knowledge_facts table:", factErr);
+      }
+    }
+
+    if (conceptRow) {
+      // Parse YAML frontmatter metadata
+      const fm = conceptRow.yamlFrontmatter || "";
+      const meta: Record<string, string> = {};
+      fm.split("\n").forEach((line: string) => {
+        const parts = line.split(":");
+        if (parts.length >= 2) {
+          const k = parts[0].trim();
+          const v = parts.slice(1).join(":").trim().replace(/^['"]|['"]$/g, "");
+          meta[k] = v;
+        }
+      });
+
+      const title = meta.title || conceptRow.conceptKey;
+      const type = meta.type || conceptRow.category || "sop";
+      const summary = meta.description || meta.summary || String(conceptRow.markdownBody || "").slice(0, 300);
+      const guidelines = conceptRow.markdownBody || "";
+
+      return {
+        status: "SUCCESS",
+        conceptKey: conceptRow.conceptKey,
+        title: title,
+        conceptType: type,
+        guidelines: guidelines,
+        summary: summary,
+        governanceDirectives: `MANDATORY COMPLIANCE: The worker and synthesizer must strictly enforce and cite the exact rules, ratios, deadlines, and restrictions defined in 'guidelines'. Do NOT alter rules to match user preferences if they conflict.`,
+      };
+    }
+
+    return {
+      status: "SUCCESS",
+      conceptKey: rawKey,
+      title: rawKey,
+      conceptType: "sop",
+      guidelines: `No dedicated OKF policy bundle registered for "${rawKey}". Standard operating policies apply.`,
+      summary: `OKF policy for ${rawKey}`,
+      governanceDirectives: `MANDATORY COMPLIANCE: The worker and synthesizer must strictly enforce and cite the exact rules, ratios, deadlines, and restrictions defined in 'guidelines'. Do NOT alter rules to match user preferences if they conflict.`,
+    };
+  } finally {
+    if (!isDirectPool) {
+      await poolToUse.end().catch(() => {});
+    }
+  }
+}
+
 /* ── Main dispatcher ── */
 export async function executeNativeTool(
   toolName: string,
   args: Record<string, unknown>,
   tokens: DesignTokens,
+  poolInstance?: Pool
 ): Promise<string> {
   try {
     let result: Record<string, unknown>;
+
+    if (toolName.toLowerCase().startsWith("okf-") || toolName.toLowerCase().startsWith("okf_")) {
+      result = await executeOkfConcept(toolName, poolInstance);
+      return JSON.stringify(result);
+    }
 
     switch (toolName) {
       case "google-places":
@@ -997,6 +1117,27 @@ export async function resolveSkillFromRegistry(
     return cached.skill;
   }
 
+  // Check if it's an OKF concept tool
+  if (skillName.toLowerCase().startsWith("okf-") || skillName.toLowerCase().startsWith("okf_")) {
+    try {
+      const okfData = await executeOkfConcept(skillName, poolInstance);
+      if (okfData && okfData.status === "SUCCESS") {
+        const okfSkill: SkillRecord = {
+          id: `okf-${okfData.conceptKey}`,
+          name: skillName,
+          description: String(okfData.summary || `OKF Policy Bundle for ${okfData.title || okfData.conceptKey}`),
+          instructions: String(okfData.guidelines || ""),
+          category: "okf",
+          version: "1.0.0",
+        };
+        skillCache.set(skillName.toLowerCase(), { skill: okfSkill, cachedAt: Date.now() });
+        return okfSkill;
+      }
+    } catch (okfErr) {
+      console.warn(`[resolveSkillFromRegistry] Failed to resolve OKF concept "${skillName}":`, okfErr);
+    }
+  }
+
   try {
     const res = await poolInstance.query(
       'SELECT id, name, description, instructions, category, mcp_server_id as "mcpServerId", version FROM skills WHERE LOWER(name) = LOWER($1) LIMIT 1',
@@ -1024,11 +1165,12 @@ export async function resolveSkillFromRegistry(
 }
 
 export async function fetchAllRegisteredSkills(poolInstance: Pool): Promise<SkillRecord[]> {
+  const allSkills: SkillRecord[] = [];
   try {
     const res = await poolInstance.query(
       'SELECT id, name, description, instructions, category, mcp_server_id as "mcpServerId", version FROM skills ORDER BY updated_at DESC'
     );
-    return res.rows.map((row) => ({
+    allSkills.push(...res.rows.map((row) => ({
       id: row.id,
       name: row.name,
       description: row.description,
@@ -1036,11 +1178,30 @@ export async function fetchAllRegisteredSkills(poolInstance: Pool): Promise<Skil
       category: row.category || "custom",
       mcpServerId: row.mcpServerId,
       version: row.version || "1.0.0",
-    }));
+    })));
   } catch (err) {
     console.error("[fetchAllRegisteredSkills] Failed to fetch skills:", err);
-    return [];
   }
+
+  try {
+    const okfRes = await poolInstance.query(
+      'SELECT id, category, concept_key as "conceptKey", yaml_frontmatter as "yamlFrontmatter", markdown_body as "markdownBody" FROM okf_concepts ORDER BY updated_at DESC'
+    );
+    for (const row of okfRes.rows) {
+      allSkills.push({
+        id: row.id,
+        name: `okf-${row.conceptKey}`,
+        description: `OKF Policy Bundle: ${row.conceptKey} (${row.category})`,
+        instructions: row.markdownBody || "",
+        category: "okf",
+        version: "1.0.0",
+      });
+    }
+  } catch (okfErr) {
+    // okf_concepts table might not exist in some contexts
+  }
+
+  return allSkills;
 }
 
 /**
@@ -1400,10 +1561,20 @@ export async function evaluateOpenSkillBlueprint(
 export async function executeLocalSkill(
   skill: SkillRecord,
   rawArgs: Record<string, unknown>,
-  tokens?: DesignTokens
+  tokens?: DesignTokens,
+  poolInstance?: Pool
 ): Promise<string> {
   const category = (skill.category || "custom").toLowerCase();
   const normalizedArgs = normalizeSkillArguments(rawArgs);
+
+  if (
+    skill.name.toLowerCase().startsWith("okf-") ||
+    skill.name.toLowerCase().startsWith("okf_") ||
+    category === "okf"
+  ) {
+    const okfRes = await executeOkfConcept(skill.name, poolInstance);
+    return JSON.stringify(okfRes);
+  }
 
   const BUILT_IN_NATIVE_TOOLS = new Set([
     "google-places", "google_places", "google_places_search", "places",
@@ -1453,7 +1624,7 @@ export async function executeLocalSkill(
       if (hasExecutableCode(skill.instructions) || !BUILT_IN_NATIVE_TOOLS.has(skill.name.toLowerCase())) {
         output = await runCustomJsSnippet(skill.instructions, normalizedArgs);
       } else {
-        const nativeRes = await executeNativeTool(skill.name, normalizedArgs, tokens || {});
+        const nativeRes = await executeNativeTool(skill.name, normalizedArgs, tokens || {}, poolInstance);
         return typeof nativeRes === "string" ? nativeRes : JSON.stringify(nativeRes);
       }
     } else {
