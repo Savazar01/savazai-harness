@@ -7,20 +7,21 @@ import {
   Loader2, 
   BookOpen, 
   Upload, 
-  Download,
+  Download, 
   Code, 
   Link as LinkIcon, 
   Save, 
-  Edit,
-  FileText,
-  X,
-  Search,
-  Copy,
-  Check,
-  FolderOpen,
-  Wrench,
-  Eye,
-  Sparkles
+  Edit, 
+  FileText, 
+  X, 
+  Search, 
+  Copy, 
+  Check, 
+  FolderOpen, 
+  Wrench, 
+  Eye, 
+  Sparkles,
+  FileSpreadsheet
 } from "lucide-react";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
 import { AiAssistButton } from "@/components/shared/ai-assist-button";
@@ -39,6 +40,7 @@ export interface Skill {
 
 export function SkillsRegistry() {
   const [skills, setSkills] = useState<Skill[]>([]);
+  const [agentUsageMap, setAgentUsageMap] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(false);
   const [deletingSkill, setDeletingSkill] = useState<Skill | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -85,9 +87,45 @@ export function SkillsRegistry() {
     }
   }, []);
 
+  const fetchAgentflows = useCallback(async () => {
+    try {
+      const res = await fetch("/api/agentflows");
+      if (res.ok) {
+        const flows = await res.json();
+        const usage: Record<string, Set<string>> = {};
+        const flowList = Array.isArray(flows) ? flows : (flows.agentflows || []);
+        for (const flow of flowList) {
+          const nodes = flow.canvasDefinition?.nodes || [];
+          for (const n of nodes) {
+            const agentLabel = n.label || n.data?.label || "Agent";
+            const tools = (n.tools || n.data?.tools || []).map((t: any) => typeof t === "string" ? t : (t?.name || ""));
+            for (const t of tools) {
+              const lower = String(t).toLowerCase().trim();
+              if (!usage[lower]) usage[lower] = new Set();
+              usage[lower].add(agentLabel);
+            }
+            const nodeSkills = (n.skills || n.data?.skills || []).map((s: any) => String(s).toLowerCase().trim());
+            for (const s of nodeSkills) {
+              if (!usage[s]) usage[s] = new Set();
+              usage[s].add(agentLabel);
+            }
+          }
+        }
+        const recordMap: Record<string, string[]> = {};
+        for (const [k, v] of Object.entries(usage)) {
+          recordMap[k] = Array.from(v);
+        }
+        setAgentUsageMap(recordMap);
+      }
+    } catch (err) {
+      console.error("Failed to fetch agentflows for skill usage mapping:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchSkills();
-  }, [fetchSkills]);
+    fetchAgentflows();
+  }, [fetchSkills, fetchAgentflows]);
 
   useEffect(() => {
     if (alertMessage) {
@@ -160,27 +198,49 @@ export function SkillsRegistry() {
       fmText.split("\n").forEach(line => {
         const parts = line.split(":");
         if (parts.length >= 2) {
-          metadata[parts[0].trim()] = parts.slice(1).join(":").trim().replace(/^['"]|['"]$/g, "");
+          metadata[parts[0].trim().toLowerCase()] = parts.slice(1).join(":").trim().replace(/^['"]|['"]$/g, "");
         }
       });
       return {
-        name: metadata.name || "",
-        description: metadata.description || "",
-        instructions: body.trim() || content,
+        name: metadata.name || metadata.skillname || metadata.title || "",
+        description: metadata.description || metadata.summary || metadata.descriptionsummary || "",
+        instructions: body.trim() || "",
         category: (metadata.category as Skill["category"]) || "open",
-        version: metadata.version || "1.0.0"
+        version: metadata.version || "1.0.0",
+        mcpServerId: metadata.mcp_server_id || metadata.mcpserverid || metadata.binding_id || ""
       };
     }
-    return { name: "", description: "", instructions: content.trim(), category: "custom" as const, version: "1.0.0" };
+    return { name: "", description: "", instructions: content.trim(), category: "custom" as const, version: "1.0.0", mcpServerId: "" };
   };
 
   const handleImportText = () => {
-    if (!rawMarkdown) return;
+    if (!rawMarkdown.trim()) return;
+
+    if (rawMarkdown.trim().startsWith("{")) {
+      try {
+        const data = JSON.parse(rawMarkdown);
+        setFormName(data.name || data.skillName || data.title || "imported_skill");
+        setFormDesc(data.description || data.summary || data.descriptionSummary || "Skill imported from JSON");
+        setFormInstructions((data.instructions || data.markdownBody || data.content || data.body || "").replace(/^---\r?\n[\s\S]+?\r?\n---\r?\n?/, "").trim());
+        setFormCategory(data.category || "custom");
+        setFormMcpServerId(data.mcpServerId || data.bindingId || data.serverId || "");
+        setFormVersion(data.version || "1.0.0");
+        setRawMarkdown("");
+        setIsIngestModalOpen(false);
+        setEditingSkill(null);
+        setIsAuthorModalOpen(true);
+        return;
+      } catch {
+        // Fall through to markdown parser
+      }
+    }
+
     const parsed = parseSkillMarkdown(rawMarkdown);
     setFormName(parsed.name || "imported_skill");
     setFormDesc(parsed.description || "Skill imported from text");
-    setFormInstructions(parsed.instructions);
+    setFormInstructions(parsed.instructions || rawMarkdown.replace(/^---\r?\n[\s\S]+?\r?\n---\r?\n?/, "").trim());
     setFormCategory(parsed.category);
+    setFormMcpServerId(parsed.mcpServerId || "");
     setFormVersion(parsed.version);
     setRawMarkdown("");
     setIsIngestModalOpen(false);
@@ -194,17 +254,36 @@ export function SkillsRegistry() {
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
-      if (text) {
-        const parsed = parseSkillMarkdown(text);
-        setFormName(parsed.name || file.name.replace(/\.md$/i, "").toLowerCase().replace(/[^a-z0-9_]/g, "_"));
-        setFormDesc(parsed.description || `Skill imported from ${file.name}`);
-        setFormInstructions(parsed.instructions);
-        setFormCategory(parsed.category);
-        setFormVersion(parsed.version);
-        setIsIngestModalOpen(false);
-        setEditingSkill(null);
-        setIsAuthorModalOpen(true);
+      if (!text) return;
+
+      if (file.name.toLowerCase().endsWith(".json")) {
+        try {
+          const data = JSON.parse(text);
+          setFormName(data.name || data.skillName || data.title || file.name.replace(/\.json$/i, "").toLowerCase().replace(/[^a-z0-9_]/g, "_"));
+          setFormDesc(data.description || data.summary || data.descriptionSummary || `Skill imported from ${file.name}`);
+          setFormInstructions((data.instructions || data.markdownBody || data.content || data.body || "").replace(/^---\r?\n[\s\S]+?\r?\n---\r?\n?/, "").trim());
+          setFormCategory(data.category || "custom");
+          setFormMcpServerId(data.mcpServerId || data.bindingId || data.serverId || "");
+          setFormVersion(data.version || "1.0.0");
+          setIsIngestModalOpen(false);
+          setEditingSkill(null);
+          setIsAuthorModalOpen(true);
+          return;
+        } catch {
+          // Fall through to markdown parser
+        }
       }
+
+      const parsed = parseSkillMarkdown(text);
+      setFormName(parsed.name || file.name.replace(/\.(md|txt|json)$/i, "").toLowerCase().replace(/[^a-z0-9_]/g, "_"));
+      setFormDesc(parsed.description || `Skill imported from ${file.name}`);
+      setFormInstructions(parsed.instructions || text.replace(/^---\r?\n[\s\S]+?\r?\n---\r?\n?/, "").trim());
+      setFormCategory(parsed.category);
+      setFormMcpServerId(parsed.mcpServerId || "");
+      setFormVersion(parsed.version);
+      setIsIngestModalOpen(false);
+      setEditingSkill(null);
+      setIsAuthorModalOpen(true);
     };
     reader.readAsText(file);
   };
@@ -216,11 +295,28 @@ export function SkillsRegistry() {
       const res = await fetch(fetchUrl);
       if (res.ok) {
         const text = await res.text();
+        if (fetchUrl.toLowerCase().endsWith(".json") || text.trim().startsWith("{")) {
+          try {
+            const data = JSON.parse(text);
+            setFormName(data.name || data.skillName || data.title || "fetched_skill");
+            setFormDesc(data.description || data.summary || data.descriptionSummary || `Skill fetched from ${fetchUrl}`);
+            setFormInstructions((data.instructions || data.markdownBody || data.content || data.body || "").replace(/^---\r?\n[\s\S]+?\r?\n---\r?\n?/, "").trim());
+            setFormCategory(data.category || "custom");
+            setFormMcpServerId(data.mcpServerId || data.bindingId || data.serverId || "");
+            setFormVersion(data.version || "1.0.0");
+            setFetchUrl("");
+            setIsIngestModalOpen(false);
+            setEditingSkill(null);
+            setIsAuthorModalOpen(true);
+            return;
+          } catch {}
+        }
         const parsed = parseSkillMarkdown(text);
         setFormName(parsed.name || "fetched_skill");
         setFormDesc(parsed.description || `Skill fetched from ${fetchUrl}`);
-        setFormInstructions(parsed.instructions);
+        setFormInstructions(parsed.instructions || text.replace(/^---\r?\n[\s\S]+?\r?\n---\r?\n?/, "").trim());
         setFormCategory(parsed.category);
+        setFormMcpServerId(parsed.mcpServerId || "");
         setFormVersion(parsed.version);
         setFetchUrl("");
         setIsIngestModalOpen(false);
@@ -245,6 +341,8 @@ export function SkillsRegistry() {
 
     setLoading(true);
     try {
+      const cleanInstructions = formInstructions.replace(/^---\r?\n[\s\S]+?\r?\n---\r?\n?/, "").trim();
+
       if (!editingSkill) {
         // Create mode
         const res = await fetch("/api/skills", {
@@ -253,7 +351,7 @@ export function SkillsRegistry() {
           body: JSON.stringify({
             name: formName,
             description: formDesc,
-            instructions: formInstructions,
+            instructions: cleanInstructions,
             category: formCategory,
             mcpServerId: formMcpServerId || null,
             version: formVersion
@@ -282,7 +380,7 @@ export function SkillsRegistry() {
             id: editingSkill.id,
             name: formName,
             description: formDesc,
-            instructions: formInstructions,
+            instructions: cleanInstructions,
             category: formCategory,
             mcpServerId: formMcpServerId || null,
             version: newVersion
@@ -357,6 +455,31 @@ export function SkillsRegistry() {
     setActiveExportMenuId(null);
   };
 
+  const handleExportCsv = () => {
+    const headers = ["Skill Name", "Version", "Category", "Binding/Server ID", "Description", "Active Agents", "Created At"];
+    const rows = filteredSkills.map(skill => {
+      const boundAgents = (agentUsageMap[skill.name.toLowerCase()] || agentUsageMap[skill.id.toLowerCase()] || []).join("; ");
+      return [
+        `"${(skill.name || "").replace(/"/g, '""')}"`,
+        `"${(skill.version || "1.0.0").replace(/"/g, '""')}"`,
+        `"${(skill.category || "custom").replace(/"/g, '""')}"`,
+        `"${(skill.mcpServerId || "").replace(/"/g, '""')}"`,
+        `"${(skill.description || "").replace(/"/g, '""')}"`,
+        `"${boundAgents.replace(/"/g, '""')}"`,
+        `"${skill.createdAt || skill.updatedAt || ""}"`
+      ].join(",");
+    });
+    const csvContent = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "skills-registry-export.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleCopyInstructions = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedCode(true);
@@ -407,15 +530,23 @@ export function SkillsRegistry() {
         <div className="flex items-center gap-2.5">
           <button
             type="button"
+            onClick={handleExportCsv}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer"
+            title="Export all skills to CSV"
+          >
+            <FileSpreadsheet className="h-4 w-4 text-emerald-400" /> Export CSV
+          </button>
+          <button
+            type="button"
             onClick={() => setIsIngestModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer"
           >
             <Upload className="h-4 w-4 text-slate-400" /> Import / Ingest
           </button>
           <button
             type="button"
             onClick={handleOpenAuthorModal}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
           >
             <Plus className="h-4 w-4" /> Author New Skill
           </button>
@@ -453,7 +584,7 @@ export function SkillsRegistry() {
                 key={opt.value}
                 type="button"
                 onClick={() => setSelectedCategoryFilter(opt.value)}
-                className={`px-3 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all border ${
+                className={`px-3 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all border cursor-pointer ${
                   selectedCategoryFilter === opt.value
                     ? "bg-indigo-600/20 border-indigo-500/50 text-indigo-300 shadow-sm"
                     : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
@@ -496,12 +627,12 @@ export function SkillsRegistry() {
             <p className="text-slate-500 text-xs max-w-sm mx-auto">
               {searchQuery || selectedCategoryFilter !== "All" 
                 ? "Try adjusting your query or resetting the category filter tab." 
-                : "Author a new skill or import an existing SKILL.md bundle to get started."}
+                : "Author a new skill or import an existing SKILL.md or .json bundle to get started."}
             </p>
             <button
               type="button"
               onClick={handleOpenAuthorModal}
-              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all shadow-md shadow-indigo-600/15"
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
             >
               <Plus className="h-4 w-4" /> Author New Skill
             </button>
@@ -514,117 +645,141 @@ export function SkillsRegistry() {
                 <th className="py-3 px-4">Category</th>
                 <th className="py-3 px-4">Binding / Server ID</th>
                 <th className="py-3 px-4">Description</th>
+                <th className="py-3 px-4">Active In Agents</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-900">
-              {filteredSkills.map((skill) => (
-                <tr 
-                  key={skill.id}
-                  className="group hover:bg-slate-900/30 transition-colors text-xs"
-                >
-                  {/* Name & Version */}
-                  <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-slate-100 group-hover:text-indigo-300 transition-colors">
-                        {skill.name}
-                      </span>
-                      <span className="text-[9px] font-mono text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
-                        v{skill.version}
-                      </span>
-                    </div>
-                  </td>
+              {filteredSkills.map((skill) => {
+                const boundAgents = agentUsageMap[skill.name.toLowerCase()] || agentUsageMap[skill.id.toLowerCase()] || [];
+                return (
+                  <tr 
+                    key={skill.id}
+                    className="group hover:bg-slate-900/30 transition-colors text-xs"
+                  >
+                    {/* Name & Version */}
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-slate-100 group-hover:text-indigo-300 transition-colors">
+                          {skill.name}
+                        </span>
+                        <span className="text-[9px] font-mono text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
+                          v{skill.version}
+                        </span>
+                      </div>
+                    </td>
 
-                  {/* Category Badge */}
-                  <td className="py-3.5 px-4">
-                    {renderBadge(skill.category)}
-                  </td>
+                    {/* Category Badge */}
+                    <td className="py-3.5 px-4">
+                      {renderBadge(skill.category)}
+                    </td>
 
-                  {/* Binding / Server ID */}
-                  <td className="py-3.5 px-4">
-                    {skill.mcpServerId ? (
-                      <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-400 font-mono">
-                        {skill.mcpServerId}
-                      </span>
-                    ) : (
-                      <span className="text-slate-600 text-[11px] font-mono">Local Sandbox</span>
-                    )}
-                  </td>
+                    {/* Binding / Server ID */}
+                    <td className="py-3.5 px-4">
+                      {skill.mcpServerId ? (
+                        <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-400 font-mono">
+                          {skill.mcpServerId}
+                        </span>
+                      ) : (
+                        <span className="text-slate-600 text-[11px] font-mono">Local Sandbox</span>
+                      )}
+                    </td>
 
-                  {/* Description */}
-                  <td className="py-3.5 px-4 max-w-md">
-                    <p className="text-slate-400 truncate text-[11px] leading-relaxed" title={skill.description}>
-                      {skill.description}
-                    </p>
-                  </td>
+                    {/* Description */}
+                    <td className="py-3.5 px-4 max-w-md">
+                      <p className="text-slate-400 truncate text-[11px] leading-relaxed" title={skill.description}>
+                        {skill.description}
+                      </p>
+                    </td>
 
-                  {/* Actions Group */}
-                  <td className="py-3.5 px-4 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      {/* Inspect/View */}
-                      <button
-                        type="button"
-                        onClick={() => setViewingSkill(skill)}
-                        className="p-1.5 rounded-lg border border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-850 text-slate-300 hover:text-white transition-all"
-                        title="Inspect Blueprint"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </button>
+                    {/* Active In Agents */}
+                    <td className="py-3.5 px-4 max-w-[200px]">
+                      {boundAgents.length > 0 ? (
+                        <div className="flex flex-wrap items-center gap-1">
+                          {boundAgents.slice(0, 2).map((agent, idx) => (
+                            <span key={idx} className="text-[10px] bg-indigo-950/40 text-indigo-300 px-2 py-0.5 rounded-md border border-indigo-500/30 font-medium">
+                              {agent}
+                            </span>
+                          ))}
+                          {boundAgents.length > 2 && (
+                            <span className="text-[9px] text-slate-400 font-mono" title={boundAgents.slice(2).join(", ")}>
+                              +{boundAgents.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-600 text-[10px]">Unbound</span>
+                      )}
+                    </td>
 
-                      {/* Edit */}
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditModal(skill)}
-                        className="p-1.5 rounded-lg border border-slate-850 hover:border-indigo-500/40 bg-slate-900/40 hover:bg-indigo-950/20 text-slate-300 hover:text-indigo-300 transition-all"
-                        title="Edit Skill"
-                      >
-                        <Edit className="h-3.5 w-3.5" />
-                      </button>
-
-                      {/* Export Dropdown */}
-                      <div className="relative">
+                    {/* Actions Group */}
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {/* Inspect/View */}
                         <button
                           type="button"
-                          onClick={() => setActiveExportMenuId(activeExportMenuId === skill.id ? null : skill.id)}
-                          className="p-1.5 rounded-lg border border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-850 text-slate-300 hover:text-white transition-all"
-                          title="Export Options"
+                          onClick={() => setViewingSkill(skill)}
+                          className="p-1.5 rounded-lg border border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-850 text-slate-300 hover:text-white transition-all cursor-pointer"
+                          title="Inspect Blueprint"
                         >
-                          <Download className="h-3.5 w-3.5" />
+                          <Eye className="h-3.5 w-3.5" />
                         </button>
 
-                        {activeExportMenuId === skill.id && (
-                          <div className="absolute right-0 top-full mt-1 w-32 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
-                            <button
-                              type="button"
-                              onClick={() => handleExportMarkdown(skill)}
-                              className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2"
-                            >
-                              <FileText className="h-3.5 w-3.5 text-indigo-400" /> Export .md
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleExportJson(skill)}
-                              className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2"
-                            >
-                              <Code className="h-3.5 w-3.5 text-amber-400" /> Export JSON
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                        {/* Edit */}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditModal(skill)}
+                          className="p-1.5 rounded-lg border border-slate-850 hover:border-indigo-500/40 bg-slate-900/40 hover:bg-indigo-950/20 text-slate-300 hover:text-indigo-300 transition-all cursor-pointer"
+                          title="Edit Skill"
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </button>
 
-                      {/* Delete */}
-                      <button
-                        type="button"
-                        onClick={() => setDeletingSkill(skill)}
-                        className="p-1.5 rounded-lg border border-slate-850 hover:border-red-500/40 bg-slate-900/40 hover:bg-red-950/20 text-slate-400 hover:text-red-400 transition-all"
-                        title="Delete Skill"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        {/* Export Dropdown */}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setActiveExportMenuId(activeExportMenuId === skill.id ? null : skill.id)}
+                            className="p-1.5 rounded-lg border border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-850 text-slate-300 hover:text-white transition-all cursor-pointer"
+                            title="Export Options"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                          </button>
+
+                          {activeExportMenuId === skill.id && (
+                            <div className="absolute right-0 top-full mt-1 w-32 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
+                              <button
+                                type="button"
+                                onClick={() => handleExportMarkdown(skill)}
+                                className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2 cursor-pointer"
+                              >
+                                <FileText className="h-3.5 w-3.5 text-indigo-400" /> Export .md
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleExportJson(skill)}
+                                className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2 cursor-pointer"
+                              >
+                                <Code className="h-3.5 w-3.5 text-amber-400" /> Export JSON
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Delete */}
+                        <button
+                          type="button"
+                          onClick={() => setDeletingSkill(skill)}
+                          className="p-1.5 rounded-lg border border-slate-850 hover:border-red-500/40 bg-slate-900/40 hover:bg-red-950/20 text-slate-400 hover:text-red-400 transition-all cursor-pointer"
+                          title="Delete Skill"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -640,7 +795,7 @@ export function SkillsRegistry() {
                 <Upload className="h-4 w-4 text-indigo-400" />
                 <h3 className="text-sm font-bold text-white uppercase tracking-wider">Import &amp; Ingest Skill</h3>
               </div>
-              <button onClick={() => setIsIngestModalOpen(false)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg">
+              <button onClick={() => setIsIngestModalOpen(false)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -651,25 +806,25 @@ export function SkillsRegistry() {
                 <button
                   type="button"
                   onClick={() => setIngestTab("file")}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                     ingestTab === "file" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  Upload SKILL.md File
+                  Upload SKILL.md / JSON File
                 </button>
                 <button
                   type="button"
                   onClick={() => setIngestTab("paste")}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                     ingestTab === "paste" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  Paste Raw Markdown
+                  Paste Raw Markdown / JSON
                 </button>
                 <button
                   type="button"
                   onClick={() => setIngestTab("url")}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                     ingestTab === "url" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
@@ -680,9 +835,9 @@ export function SkillsRegistry() {
               {ingestTab === "file" && (
                 <label className="flex flex-col items-center justify-center border-2 border-dashed border-indigo-500/30 hover:border-indigo-500/60 bg-indigo-950/10 hover:bg-indigo-950/20 rounded-2xl p-8 cursor-pointer transition-all">
                   <Upload className="h-8 w-8 text-indigo-400 mb-2" />
-                  <span className="text-sm text-slate-200 font-bold">Drop SKILL.md Blueprint File</span>
-                  <span className="text-xs text-slate-500 mt-1">Automatically hydrates YAML frontmatter and markdown instructions</span>
-                  <input type="file" accept=".md" onChange={handleFileUpload} className="hidden" />
+                  <span className="text-sm text-slate-200 font-bold">Drop SKILL.md Blueprint / JSON File</span>
+                  <span className="text-xs text-slate-500 mt-1">Automatically hydrates YAML frontmatter/JSON metadata and instructions</span>
+                  <input type="file" accept=".md,.json,.txt" onChange={handleFileUpload} className="hidden" />
                 </label>
               )}
 
@@ -698,7 +853,7 @@ export function SkillsRegistry() {
                   <button 
                     type="button" 
                     onClick={handleImportText}
-                    className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15"
+                    className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
                   >
                     Parse &amp; Load Blueprint
                   </button>
@@ -719,13 +874,13 @@ export function SkillsRegistry() {
                       type="button" 
                       onClick={handleFetchUrl} 
                       disabled={importing}
-                      className="px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shrink-0 disabled:opacity-50 flex items-center gap-1.5"
+                      className="px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shrink-0 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                     >
                       {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4" />}
                       Fetch
                     </button>
                   </div>
-                  <p className="text-[11px] text-slate-500">Provide an accessible raw markdown URL from GitHub, skills.sh, or an agent skill repository.</p>
+                  <p className="text-[11px] text-slate-500">Provide an accessible raw markdown or JSON URL from GitHub, skills.sh, or an agent skill repository.</p>
                 </div>
               )}
             </div>
@@ -756,7 +911,7 @@ export function SkillsRegistry() {
                 <button 
                   type="button" 
                   onClick={() => handleExportMarkdown(viewingSkill)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 hover:text-white text-xs font-semibold transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
                   title="Download Markdown Blueprint"
                 >
                   <Download className="h-3.5 w-3.5" /> .md
@@ -764,7 +919,7 @@ export function SkillsRegistry() {
                 <button 
                   type="button" 
                   onClick={() => handleExportJson(viewingSkill)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 hover:text-white text-xs font-semibold transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
                   title="Download JSON Payload"
                 >
                   <Download className="h-3.5 w-3.5" /> JSON
@@ -772,11 +927,11 @@ export function SkillsRegistry() {
                 <button 
                   type="button" 
                   onClick={() => handleOpenEditModal(viewingSkill)}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
                 >
                   <Edit className="h-3.5 w-3.5" /> Edit Skill
                 </button>
-                <button onClick={() => setViewingSkill(null)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg ml-2">
+                <button onClick={() => setViewingSkill(null)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg ml-2 cursor-pointer">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -799,9 +954,9 @@ export function SkillsRegistry() {
                   <span className="text-indigo-400 font-mono font-medium">{viewingSkill.mcpServerId || "Local Sandbox Function"}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold mb-0.5">Last Updated</span>
-                  <span className="text-slate-300 font-medium">
-                    {viewingSkill.updatedAt ? new Date(viewingSkill.updatedAt).toLocaleDateString() : "Just now"}
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold mb-0.5">Active In Agents</span>
+                  <span className="text-indigo-300 font-medium font-mono text-[11px]">
+                    {(agentUsageMap[viewingSkill.name.toLowerCase()] || agentUsageMap[viewingSkill.id.toLowerCase()] || []).join(", ") || "None"}
                   </span>
                 </div>
               </div>
@@ -821,7 +976,7 @@ export function SkillsRegistry() {
                   <button
                     type="button"
                     onClick={() => handleCopyInstructions(viewingSkill.instructions)}
-                    className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors bg-slate-900/60 hover:bg-slate-900 px-3 py-1 rounded-lg border border-slate-800"
+                    className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors bg-slate-900/60 hover:bg-slate-900 px-3 py-1 rounded-lg border border-slate-800 cursor-pointer"
                   >
                     {copiedCode ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                     {copiedCode ? "Copied" : "Copy Raw Instructions"}
@@ -853,7 +1008,7 @@ export function SkillsRegistry() {
                 <button 
                   type="button" 
                   onClick={() => setIsAuthorModalOpen(false)}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-850 text-slate-400 hover:text-white text-xs font-semibold transition-all bg-slate-950/20"
+                  className="px-3.5 py-1.5 rounded-xl border border-slate-850 text-slate-400 hover:text-white text-xs font-semibold transition-all bg-slate-950/20 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -861,12 +1016,12 @@ export function SkillsRegistry() {
                   type="button" 
                   onClick={handleSaveSkill}
                   disabled={loading}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                   {editingSkill ? "Publish & Increment Patch" : "Save Skill"}
                 </button>
-                <button onClick={() => setIsAuthorModalOpen(false)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg ml-2">
+                <button onClick={() => setIsAuthorModalOpen(false)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg ml-2 cursor-pointer">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -966,7 +1121,7 @@ export function SkillsRegistry() {
               <button 
                 type="button" 
                 onClick={() => setIsAuthorModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-850 text-slate-400 hover:text-white text-xs font-semibold transition-all bg-slate-950/20"
+                className="px-4 py-2 rounded-xl border border-slate-850 text-slate-400 hover:text-white text-xs font-semibold transition-all bg-slate-950/20 cursor-pointer"
               >
                 Cancel
               </button>
@@ -974,7 +1129,7 @@ export function SkillsRegistry() {
                 type="button" 
                 onClick={handleSaveSkill}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50"
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {editingSkill ? "Publish & Increment Patch" : "Save Skill"}
@@ -991,7 +1146,7 @@ export function SkillsRegistry() {
           <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-white">Delete Skill</h3>
-              <button onClick={() => setDeletingSkill(null)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg">
+              <button onClick={() => setDeletingSkill(null)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -1002,14 +1157,14 @@ export function SkillsRegistry() {
               <button
                 type="button"
                 onClick={() => setDeletingSkill(null)}
-                className="flex-1 py-2 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold bg-slate-900/40 transition-all"
+                className="flex-1 py-2 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold bg-slate-900/40 transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => handleDeleteSkill(deletingSkill.id)}
-                className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all"
+                className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all cursor-pointer"
               >
                 Confirm Delete
               </button>

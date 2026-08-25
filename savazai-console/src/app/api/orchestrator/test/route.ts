@@ -2140,6 +2140,24 @@ async function hydrateMcpSchemas(): Promise<Record<string, Record<string, unknow
         } catch { /* skip unreachable servers */ }
       }
     }
+
+    // Hydrate OKF Concept descriptions from okf_concepts table
+    try {
+      const okfRes = await pool.query(
+        'SELECT concept_key as "conceptKey", concept_title as "conceptTitle", description_summary as "descriptionSummary" FROM okf_concepts'
+      );
+      for (const row of okfRes.rows) {
+        if (row.conceptKey) {
+          const k = String(row.conceptKey);
+          const desc = `${row.conceptTitle || k} — ${row.descriptionSummary || "Enterprise governance and operational policy ruleset."}`;
+          cache[`__desc__okf-${k}`] = { desc };
+          cache[`__desc__${k}`] = { desc };
+          cache[`okf-${k}`] = { type: "object", description: desc, properties: {} };
+          cache[k] = { type: "object", description: desc, properties: {} };
+        }
+      }
+    } catch { /* table might not exist or error */ }
+
   } catch (hydrationErr) {
     console.error("[MCP Schema Hydration] Failed:", hydrationErr);
   }
@@ -2206,10 +2224,14 @@ async function generateSupervisorPlan(
       const schema = (toolObj?.inputSchema || schemas[tName]) as McpToolInputSchema | undefined;
       const desc = toolObj?.description || nativeToolDescMap[tName] || (schemas[`__desc__${tName}`] as { desc: string })?.desc || "Execute tool call.";
       const req = (schema?.required || []).join(", ");
-      return `  - Tool: "${tName}" — ${desc}${req ? ` [Required: ${req}]` : ""}`;
+      return `  - Tool / Policy: "${tName}" — ${desc}${req ? ` [Required: ${req}]` : ""}`;
     }).filter(Boolean).join("\n");
 
-    return `- Node ID: "${n.id}" | Name: "${n.label}"\n  Assigned Tools:\n${toolDetails || "  (No tools assigned)"}`;
+    const skillsContext = Array.isArray(n.skills) ? n.skills.join(", ") : (typeof n.skills === "string" ? n.skills : "");
+    const promptSnippet = n.systemPrompt ? `\n  Specialist Role & Scope: ${n.systemPrompt.slice(0, 250).replace(/\n+/g, " ")}` : "";
+    const skillsSnippet = skillsContext ? `\n  Bound Policies & Skills: ${skillsContext}` : "";
+
+    return `- Node ID: "${n.id}" | Target Label: "${n.label}" (Role: ${n.roleTemplate || "specialist"})${promptSnippet}${skillsSnippet}\n  Assigned Tools & Policies:\n${toolDetails || "  (No tools assigned)"}`;
   }).join("\n\n");
 
   let systemPromptContext = supervisorNode.systemPrompt || "Perform the assigned task.";
@@ -2239,10 +2261,15 @@ CLASSIFICATION & ROUTING RULES:
    - If the user request is a greeting ("Hi", "Hello") or capability inquiry ("What can you do?"):
    - Return \`"selectedNodeIds": []\` and \`"executionPlan": []\`.
    - Set \`"planSummary": "Direct Response: Answer greeting and explain workspace capabilities."\`
-3. OUT-OF-SCOPE INQUIRIES:
-   - ONLY flag out-of-scope if the user request asks for something completely unrelated to any available downstream worker tools.
+3. DOMAIN KNOWLEDGE, OPERATIONAL POLICIES & VENUE GUIDELINES:
+   - When the user asks domain policy questions, venue deposit terms, sound curfew rules, coordinator staffing requirements, drone permit deadlines, budget calculations, rituals, ceremonies, guests, or tasks:
+     * If a downstream worker node is specialized in that domain or has the relevant domain policy/ruleset assigned:
+     * You MUST delegate to that specialist worker node (actionVerb: "LIST" or "READ").
+     * DO NOT claim that domain rules or enterprise policies are out of scope when specialist worker nodes exist to handle that domain! Formulate an execution plan targeting the relevant specialist worker.
+4. OUT-OF-SCOPE INQUIRIES:
+   - ONLY flag out-of-scope if the user request asks for something completely unrelated to ANY available downstream worker tools or capabilities.
    - If ANY downstream worker node tools match the request, DO NOT set outOfScopeReason and DO NOT output out-of-scope messages! Formulate a step-by-step execution plan for the target nodes.
-4. CRITICAL PARAMETER DUE DILIGENCE & CLARIFICATION RULES:
+5. CRITICAL PARAMETER DUE DILIGENCE & CLARIFICATION RULES:
    - For any action (CREATE, ADD, UPDATE, DELETE) across ANY entity type managed by the downstream worker tools:
      * Compare the user prompt against the Required Fields array of the target tool's schema.
      * If the user explicitly asks what information is needed (e.g. "what are the details you need?"), OR if mandatory required primary human domain parameters (name, title, email, date, etc.) are missing from the user request or conversation history:
@@ -2251,13 +2278,18 @@ CLASSIFICATION & ROUTING RULES:
        3. Formulate a specific, helpful, professional \`"clarificationPrompt"\` listing each missing required parameter with its description and examples.
    - NO FABRICATION MANDATE: NEVER invent, guess, or fabricate fake placeholder values (e.g. "New Item", "example@email.com", "Dummy Record"). If required fields are missing, set \`"requiresClarification": true\`.
    - NO SYSTEM/FOREIGN-KEY WARNINGS: Primary record identifiers ("id") and foreign keys ending with "Id" are system UUIDs that are resolved automatically by downstream worker list tools — DO NOT flag system IDs or UUIDs as missing parameters from the user! NEVER ask the user to provide an "ID", "UUID", "id", or system key!
-5. MANDATORY MULTI-STEP COMPOUND REQUEST DECOMPOSITION:
+6. MANDATORY MULTI-STEP COMPOUND REQUEST DECOMPOSITION:
    - When a user prompt combines data retrieval or discovery with downstream actions (e.g. finding places/vendors/records AND generating a downloadable CSV/PDF file AND/OR sending an email report):
      * Step 1 (Data Retrieval): Select the relevant search/retrieval worker node (e.g. Web & Places Specialist Agent) with actionVerb "LIST" or "READ" to fetch real data. Extract the exact search query and location into parameters: { "query": "<search query and location from user prompt e.g. wedding caterers in Tirupati, India>" }.
      * Step 2 (Downstream Actions & Export): The downstream file export (CSV/PDF) and email dispatch will be handled by the specialized action/synthesizer tools. Do NOT add unnecessary worker nodes that have no relevant tools for the request.
    - Only select worker nodes whose tools are directly relevant to the user request. NEVER select unrelated worker nodes!
    - NEVER skip data retrieval worker nodes when the user query asks to find, search, list, or discover items!
    - NEVER return empty selectedNodeIds or route directly to Synthesizer Agent alone if data retrieval or tool execution is needed!
+7. STRICT NODE ID & TARGET NODE MAPPING MANDATE:
+   - When constructing the "executionPlan" array:
+     * "nodeId" MUST EXACTLY MATCH the Node ID corresponding to the chosen "targetNode" label from the Available Downstream Worker Nodes list below.
+     * "targetNode" MUST EXACTLY MATCH the Target Label of that chosen worker node.
+     * NEVER mix, swap, or assign the Node ID of one worker to the Target Label of a different worker!
 
 Available Downstream Worker Nodes & Tools:
 ${targetNodeDescriptions}
@@ -2271,7 +2303,7 @@ You MUST return your decision as a valid JSON object matching the following stru
   "executionPlan": [
     {
       "nodeId": "node-id-1",
-      "targetNode": "Worker Node Name",
+      "targetNode": "Worker Target Label",
       "actionVerb": "CREATE",
       "allowedVerbs": ["CREATE"],
       "targetEntity": "Entity Name",
@@ -2323,6 +2355,32 @@ Return ONLY the JSON object, no extra commentary, no markdown backticks, no text
         item.actionVerb = "LIST";
         item.allowedVerbs = ["LIST", "READ"];
       }
+    }
+
+    // Deterministic validation & auto-correction for nodeId vs targetNode label
+    for (const item of executionPlan) {
+      let candidate = targetNodes.find(n => n.id === item.nodeId);
+      const isMismatch = candidate && item.targetNode &&
+        candidate.label.toLowerCase().trim() !== item.targetNode.toLowerCase().trim();
+
+      if (!candidate || isMismatch) {
+        const matchingNode = targetNodes.find(n => {
+          const l = (n.label || (n.data as any)?.label || "").toLowerCase().trim();
+          return l === (item.targetNode || "").toLowerCase().trim();
+        });
+        if (matchingNode) {
+          console.warn(`[Supervisor Plan Auto-Correct] Corrected mismatched nodeId "${item.nodeId}" -> "${matchingNode.id}" for target "${item.targetNode}"`);
+          item.nodeId = matchingNode.id;
+          item.targetNode = matchingNode.label;
+        } else if (candidate) {
+          item.targetNode = candidate.label;
+        }
+      }
+    }
+
+    // Re-align selectedIds strictly with validated plan nodeIds
+    if (executionPlan.length > 0) {
+      selectedIds = Array.from(new Set(executionPlan.map(item => item.nodeId).filter(id => targetNodes.some(n => n.id === id))));
     }
 
     // Auto-populate query parameter for discovery/search worker nodes if missing or empty
@@ -2631,6 +2689,21 @@ export async function POST(req: NextRequest) {
         executionPlan = planResult.executionPlan;
         planSummary = planResult.planSummary;
         clarificationPrompt = planResult.clarificationPrompt;
+
+        // If in plan_first mode and LLM returned empty plan, formulate a default plan for downstream workers
+        if (executionPlan.length === 0 && !clarificationPrompt && targetNodes.length > 0) {
+          const firstWorker = targetNodes[0];
+          executionPlan = [{
+            nodeId: firstWorker.id,
+            targetNode: firstWorker.label || "Specialist Worker",
+            actionVerb: "READ",
+            allowedVerbs: ["READ", "LIST"],
+            targetEntity: firstWorker.label || "Domain Specialist Query",
+            parameters: { query: message },
+            requiresClarification: false
+          }];
+          planSummary = planSummary || `Consult ${firstWorker.label} to evaluate and execute request.`;
+        }
       }
 
       if (executionPlan.length > 0 || clarificationPrompt) {
@@ -2777,9 +2850,39 @@ export async function POST(req: NextRequest) {
 
             if (approvedPlan) {
               if (Array.isArray(approvedPlan) && approvedPlan.length > 0) {
-                sendEvent({ type: "trace", content: `[Graph Exec: Supervisor Node] Resuming with approved execution plan: ${JSON.stringify(approvedPlan)}` });
-                executionPlan = approvedPlan;
-                selectedIds = approvedPlan.map(item => item.nodeId);
+                // Self-healing dual resolution for approved plan steps
+                const healedPlan: ExecutionPlanItem[] = [];
+                const healedSelectedIds: string[] = [];
+
+                for (const rawStep of approvedPlan) {
+                  const step = { ...rawStep };
+                  let targetNode = typedNodes.find(n => n.id === step.nodeId);
+                  const nodeLabel = targetNode?.label || (targetNode?.data as any)?.label || (targetNode?.data as any)?.name;
+                  const isMismatch = nodeLabel && step.targetNode &&
+                    nodeLabel.toLowerCase().trim() !== step.targetNode.toLowerCase().trim();
+
+                  if (!targetNode || isMismatch) {
+                    const matchingNode = typedNodes.find(n => {
+                      const l = (n.label || (n.data as any)?.label || (n.data as any)?.name || "").toLowerCase().trim();
+                      return l === (step.targetNode || "").toLowerCase().trim();
+                    });
+                    if (matchingNode) {
+                      console.warn(`[Plan Resume Auto-Correct] Corrected mismatched nodeId "${step.nodeId}" -> "${matchingNode.id}" for target "${step.targetNode}"`);
+                      targetNode = matchingNode;
+                      step.nodeId = matchingNode.id;
+                      step.targetNode = matchingNode.label;
+                    }
+                  }
+
+                  if (targetNode) {
+                    healedPlan.push(step);
+                    healedSelectedIds.push(targetNode.id);
+                  }
+                }
+
+                executionPlan = healedPlan.length > 0 ? healedPlan : approvedPlan;
+                selectedIds = healedSelectedIds.length > 0 ? Array.from(new Set(healedSelectedIds)) : approvedPlan.map(item => item.nodeId);
+                sendEvent({ type: "trace", content: `[Graph Exec: Supervisor Node] Resuming with verified execution plan: ${JSON.stringify(executionPlan)}` });
               } else {
                 sendEvent({ type: "trace", content: `[Graph Exec: Supervisor Node] Resuming execution (plan approved).` });
                 selectedIds = targetNodes.map(n => n.id);

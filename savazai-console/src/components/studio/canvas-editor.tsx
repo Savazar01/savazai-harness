@@ -1487,6 +1487,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
       {/* Test Sandbox Drawer */}
       {showTestSandbox && (
         <TestSandbox
+          key={workflowId || "sandbox"}
           canvasJson={jsonText}
           onClose={() => setShowTestSandbox(false)}
           onNodeEvent={(label, event) => setCanvasNodeStatus(prev => ({ ...prev, [label]: event }))}

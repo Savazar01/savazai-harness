@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Plus, FolderKanban, Loader2, X, Database, Download, Upload } from "lucide-react";
 import { CanvasEditor, CanvasEditorHandle, CanvasNode, CanvasEdge } from "@/components/studio/canvas-editor";
+import { regenerateAgentflowCanvas } from "@/lib/agentflow-utils";
 
 interface Agentflow {
   id: string;
@@ -259,6 +260,7 @@ export default function StudioPage() {
 
   const handleDuplicateAgentflow = async (wf: Agentflow) => {
     try {
+      const sanitizedCanvas = regenerateAgentflowCanvas(wf.canvasDefinition);
       const res = await fetch("/api/agentflows", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -267,7 +269,7 @@ export default function StudioPage() {
           description: wf.description,
           workspaceMode: wf.workspaceMode,
           status: "draft",
-          canvasDefinition: wf.canvasDefinition,
+          canvasDefinition: sanitizedCanvas,
         }),
       });
       if (res.ok) {
@@ -345,6 +347,8 @@ export default function StudioPage() {
         return;
       }
 
+      const sanitizedCanvas = regenerateAgentflowCanvas(json.canvasDefinition || {});
+
       const res = await fetch("/api/agentflows", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -353,7 +357,7 @@ export default function StudioPage() {
           description: json.description || null,
           workspaceMode: json.workspaceMode || "interactive",
           status: "draft",
-          canvasDefinition: json.canvasDefinition || {},
+          canvasDefinition: sanitizedCanvas,
         }),
       });
 
@@ -485,6 +489,7 @@ export default function StudioPage() {
       <div className="flex-1 min-h-0">
         {activeAgentflow ? (
           <CanvasEditor
+            key={`${activeAgentflow.id}_${canvasLoadKey}`}
             ref={canvasEditorRef}
             initialNodes={canvasData.nodes}
             initialEdges={canvasData.edges}

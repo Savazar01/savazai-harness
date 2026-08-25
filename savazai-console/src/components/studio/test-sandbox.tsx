@@ -475,6 +475,9 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
   const handleClear = () => {
     setMessages([]);
     setError(null);
+    setPendingInterrupt(null);
+    setHitlPending(null);
+    setNodeStatus({});
   };
 
   const getWidthClass = () => {

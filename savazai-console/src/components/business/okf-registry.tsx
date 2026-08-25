@@ -19,7 +19,8 @@ import {
   FolderOpen,
   Layers,
   Eye,
-  Code
+  Code,
+  FileSpreadsheet
 } from "lucide-react";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
 import { AiAssistButton } from "@/components/shared/ai-assist-button";
@@ -58,7 +59,7 @@ export function normalizeConceptType(typeStr?: string | null): string {
 }
 
 /**
- * Parses YAML frontmatter and Markdown body defensively
+ * Parses YAML frontmatter and Markdown body defensively, stripping frontmatter from markdown body.
  */
 export function parseOkfFrontmatterAndBody(yamlFrontmatter?: string | null, markdownBody?: string | null): ParsedOkfConcept {
   const meta: Record<string, any> = {};
@@ -102,6 +103,8 @@ export function parseOkfFrontmatterAndBody(yamlFrontmatter?: string | null, mark
 
   const typeVal = meta.type || meta.concepttype || meta.concept_type || "SOP Ruleset";
   const titleVal = meta.title || meta.concepttitle || meta.concept_title || "";
+  const catVal = meta.category || meta.namespace || meta.namespacecategory || meta.namespace_category || "";
+  const keyVal = meta.conceptkey || meta.key || meta.concept_key || "";
   const descVal = meta.description || meta.summary || meta.descriptionsummary || meta.description_summary || "";
   const resourceVal = meta.resource || meta.resourceuri || meta.resource_uri || meta.url || meta.link || "";
   
@@ -113,8 +116,8 @@ export function parseOkfFrontmatterAndBody(yamlFrontmatter?: string | null, mark
   }
 
   return {
-    conceptKey: "",
-    category: "",
+    conceptKey: Array.isArray(keyVal) ? String(keyVal[0] || "") : String(keyVal || ""),
+    category: Array.isArray(catVal) ? String(catVal[0] || "") : String(catVal || ""),
     conceptType: normalizeConceptType(typeVal),
     title: Array.isArray(titleVal) ? String(titleVal[0] || "") : String(titleVal || ""),
     description: Array.isArray(descVal) ? String(descVal[0] || "") : String(descVal || ""),
@@ -150,6 +153,7 @@ export function serializeOkfFrontmatter(params: {
 
 export function OkfRegistry() {
   const [concepts, setConcepts] = useState<OkfConcept[]>([]);
+  const [agentUsageMap, setAgentUsageMap] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(false);
   const [deletingConcept, setDeletingConcept] = useState<OkfConcept | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -191,9 +195,50 @@ export function OkfRegistry() {
     }
   }, []);
 
+  const fetchAgentflows = useCallback(async () => {
+    try {
+      const res = await fetch("/api/agentflows");
+      if (res.ok) {
+        const flows = await res.json();
+        const usage: Record<string, Set<string>> = {};
+        const flowList = Array.isArray(flows) ? flows : (flows.agentflows || []);
+        for (const flow of flowList) {
+          const nodes = flow.canvasDefinition?.nodes || [];
+          for (const n of nodes) {
+            const agentLabel = n.label || n.data?.label || "Agent";
+            const tools = (n.tools || n.data?.tools || []).map((t: any) => typeof t === "string" ? t : (t?.name || ""));
+            for (const t of tools) {
+              const lower = String(t).toLowerCase().trim();
+              if (!usage[lower]) usage[lower] = new Set();
+              usage[lower].add(agentLabel);
+              if (lower.startsWith("okf-")) {
+                const keyNoPrefix = lower.slice(4);
+                if (!usage[keyNoPrefix]) usage[keyNoPrefix] = new Set();
+                usage[keyNoPrefix].add(agentLabel);
+              }
+            }
+            const nodeOkf = (n.okfConcepts || n.data?.okfConcepts || n.knowledge || n.data?.knowledge || []).map((k: any) => String(k).toLowerCase().trim());
+            for (const k of nodeOkf) {
+              if (!usage[k]) usage[k] = new Set();
+              usage[k].add(agentLabel);
+            }
+          }
+        }
+        const recordMap: Record<string, string[]> = {};
+        for (const [k, v] of Object.entries(usage)) {
+          recordMap[k] = Array.from(v);
+        }
+        setAgentUsageMap(recordMap);
+      }
+    } catch (err) {
+      console.error("Failed to fetch agentflows for usage mapping:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchConcepts();
-  }, [fetchConcepts]);
+    fetchAgentflows();
+  }, [fetchConcepts, fetchAgentflows]);
 
   useEffect(() => {
     if (alertMessage) {
@@ -302,6 +347,9 @@ export function OkfRegistry() {
         tags: tagsArray
       });
 
+      // Ensure formMarkdown has any accidental frontmatter header stripped
+      const cleanMarkdown = formMarkdown.replace(/^---\r?\n[\s\S]+?\r?\n---\r?\n?/, "").trim();
+
       if (!editingConcept) {
         const res = await fetch("/api/okf", {
           method: "POST",
@@ -310,7 +358,7 @@ export function OkfRegistry() {
             category: formCategory || "General Policy",
             conceptKey: formKey.trim(),
             yamlFrontmatter: generatedFrontmatter,
-            markdownBody: formMarkdown,
+            markdownBody: cleanMarkdown,
           }),
         });
 
@@ -330,7 +378,7 @@ export function OkfRegistry() {
             category: formCategory || "General Policy",
             conceptKey: formKey.trim(),
             yamlFrontmatter: generatedFrontmatter,
-            markdownBody: formMarkdown,
+            markdownBody: cleanMarkdown,
           }),
         });
 
@@ -414,6 +462,33 @@ export function OkfRegistry() {
     setActiveExportMenuId(null);
   };
 
+  const handleExportCsv = () => {
+    const headers = ["Concept Key", "Title", "Type", "Namespace Category", "Tags", "Description Summary", "Active Agents", "Created At"];
+    const rows = filteredConcepts.map(item => {
+      const boundAgents = (agentUsageMap[item.conceptKey.toLowerCase()] || agentUsageMap[`okf-${item.conceptKey.toLowerCase()}`] || []).join("; ");
+      const tags = Array.isArray(item.parsed.tags) ? item.parsed.tags.join(", ") : "";
+      return [
+        `"${(item.conceptKey || "").replace(/"/g, '""')}"`,
+        `"${(item.parsed.title || item.conceptKey || "").replace(/"/g, '""')}"`,
+        `"${(item.parsed.conceptType || "").replace(/"/g, '""')}"`,
+        `"${(item.category || "General Policy").replace(/"/g, '""')}"`,
+        `"${tags.replace(/"/g, '""')}"`,
+        `"${(item.parsed.description || "").replace(/"/g, '""')}"`,
+        `"${boundAgents.replace(/"/g, '""')}"`,
+        `"${item.updatedAt || ""}"`
+      ].join(",");
+    });
+    const csvContent = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "okf-concepts-export.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleCopyMarkdown = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedCode(true);
@@ -426,36 +501,104 @@ export function OkfRegistry() {
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
-      if (text) {
-        const parsed = parseOkfFrontmatterAndBody(text, "");
-        const derivedKey = file.name.replace(/\.md$/i, "").toLowerCase().replace(/[^a-z0-9_]/g, "_");
-        setFormKey(derivedKey);
-        setFormCategory("Imported SOP");
-        setFormType(parsed.conceptType);
-        setFormTitle(parsed.title || derivedKey);
-        setFormDescription(parsed.description || `Imported guidelines from ${file.name}`);
-        setFormResource(parsed.resource || "");
-        setFormTags(Array.isArray(parsed.tags) ? parsed.tags.join(", ") : "");
-        setFormMarkdown(parsed.markdownBody || text);
-        setIsIngestModalOpen(false);
-        setEditingConcept(null);
-        setIsAuthorModalOpen(true);
+      if (!text) return;
+
+      if (file.name.toLowerCase().endsWith(".json")) {
+        try {
+          const data = JSON.parse(text);
+          const rawKey = data.conceptKey || data.key || data.concept_key || file.name.replace(/\.json$/i, "").toLowerCase().replace(/[^a-z0-9_]/g, "_");
+          const rawTitle = data.title || data.conceptTitle || data.concept_title || "";
+          const rawCat = data.category || data.namespaceCategory || data.namespace || data.category_name || "General Policy";
+          const rawType = normalizeConceptType(data.conceptType || data.type || data.concept_type || "SOP Ruleset");
+          const rawDesc = data.description || data.descriptionSummary || data.summary || data.description_summary || "";
+          const rawResource = data.resource || data.resourceUri || data.resource_uri || data.url || data.link || "";
+          let rawTags = "";
+          if (Array.isArray(data.tags)) rawTags = data.tags.join(", ");
+          else if (typeof data.tags === "string") rawTags = data.tags;
+
+          let rawMd = data.markdownBody || data.guidelinesBody || data.guidelines_body || data.content || "";
+          const parsed = parseOkfFrontmatterAndBody(undefined, rawMd);
+
+          setFormKey(rawKey);
+          setFormCategory(rawCat);
+          setFormType(rawType);
+          setFormTitle(rawTitle || parsed.title || rawKey);
+          setFormResource(rawResource || parsed.resource || "");
+          setFormTags(rawTags || (Array.isArray(parsed.tags) ? parsed.tags.join(", ") : ""));
+          setFormDescription(rawDesc || parsed.description || "");
+          setFormMarkdown(parsed.markdownBody || rawMd);
+          setIsIngestModalOpen(false);
+          setEditingConcept(null);
+          setIsAuthorModalOpen(true);
+          return;
+        } catch {
+          // Fall through to markdown parsing
+        }
       }
+
+      const parsed = parseOkfFrontmatterAndBody(undefined, text);
+      const derivedKey = file.name.replace(/\.(md|txt|json)$/i, "").toLowerCase().replace(/[^a-z0-9_]/g, "_");
+      setFormKey(parsed.conceptKey || derivedKey);
+      setFormCategory(parsed.category || "General Policy");
+      setFormType(parsed.conceptType);
+      setFormTitle(parsed.title || derivedKey);
+      setFormDescription(parsed.description || `Imported guidelines from ${file.name}`);
+      setFormResource(parsed.resource || "");
+      setFormTags(Array.isArray(parsed.tags) ? parsed.tags.join(", ") : "");
+      setFormMarkdown(parsed.markdownBody || text.replace(/^---\r?\n[\s\S]+?\r?\n---\r?\n?/, "").trim());
+      setIsIngestModalOpen(false);
+      setEditingConcept(null);
+      setIsAuthorModalOpen(true);
     };
     reader.readAsText(file);
   };
 
   const handleParseRawBundle = () => {
-    if (!rawBundleMarkdown) return;
-    const parsed = parseOkfFrontmatterAndBody(rawBundleMarkdown, "");
-    setFormKey("imported_okf_concept");
-    setFormCategory("Imported SOP");
+    if (!rawBundleMarkdown.trim()) return;
+
+    if (rawBundleMarkdown.trim().startsWith("{")) {
+      try {
+        const data = JSON.parse(rawBundleMarkdown);
+        const rawKey = data.conceptKey || data.key || data.concept_key || "imported_concept";
+        const rawTitle = data.title || data.conceptTitle || data.concept_title || "";
+        const rawCat = data.category || data.namespaceCategory || data.namespace || data.category_name || "General Policy";
+        const rawType = normalizeConceptType(data.conceptType || data.type || data.concept_type || "SOP Ruleset");
+        const rawDesc = data.description || data.descriptionSummary || data.summary || data.description_summary || "";
+        const rawResource = data.resource || data.resourceUri || data.resource_uri || data.url || data.link || "";
+        let rawTags = "";
+        if (Array.isArray(data.tags)) rawTags = data.tags.join(", ");
+        else if (typeof data.tags === "string") rawTags = data.tags;
+
+        let rawMd = data.markdownBody || data.guidelinesBody || data.guidelines_body || data.content || "";
+        const parsed = parseOkfFrontmatterAndBody(undefined, rawMd);
+
+        setFormKey(rawKey);
+        setFormCategory(rawCat);
+        setFormType(rawType);
+        setFormTitle(rawTitle || parsed.title || rawKey);
+        setFormResource(rawResource || parsed.resource || "");
+        setFormTags(rawTags || (Array.isArray(parsed.tags) ? parsed.tags.join(", ") : ""));
+        setFormDescription(rawDesc || parsed.description || "");
+        setFormMarkdown(parsed.markdownBody || rawMd);
+        setRawBundleMarkdown("");
+        setIsIngestModalOpen(false);
+        setEditingConcept(null);
+        setIsAuthorModalOpen(true);
+        return;
+      } catch {
+        // Fall through to markdown bundle parsing
+      }
+    }
+
+    const parsed = parseOkfFrontmatterAndBody(undefined, rawBundleMarkdown);
+    setFormKey(parsed.conceptKey || "imported_okf_concept");
+    setFormCategory(parsed.category || "General Policy");
     setFormType(parsed.conceptType);
     setFormTitle(parsed.title || "Imported OKF Concept");
     setFormDescription(parsed.description || "Imported policy guidelines");
     setFormResource(parsed.resource || "");
     setFormTags(Array.isArray(parsed.tags) ? parsed.tags.join(", ") : "");
-    setFormMarkdown(parsed.markdownBody || rawBundleMarkdown);
+    setFormMarkdown(parsed.markdownBody || rawBundleMarkdown.replace(/^---\r?\n[\s\S]+?\r?\n---\r?\n?/, "").trim());
     setRawBundleMarkdown("");
     setIsIngestModalOpen(false);
     setEditingConcept(null);
@@ -503,15 +646,23 @@ export function OkfRegistry() {
         <div className="flex items-center gap-2.5">
           <button
             type="button"
+            onClick={handleExportCsv}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer"
+            title="Export all concepts to CSV"
+          >
+            <FileSpreadsheet className="h-4 w-4 text-emerald-400" /> Export CSV
+          </button>
+          <button
+            type="button"
             onClick={() => setIsIngestModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer"
           >
             <Upload className="h-4 w-4 text-slate-400" /> Ingest Bundle
           </button>
           <button
             type="button"
             onClick={handleOpenAuthorModal}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
           >
             <Plus className="h-4 w-4" /> + New Concept
           </button>
@@ -545,7 +696,7 @@ export function OkfRegistry() {
                 key={opt.value}
                 type="button"
                 onClick={() => setSelectedTypeFilter(opt.value)}
-                className={`px-3 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all border ${
+                className={`px-3 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all border cursor-pointer ${
                   selectedTypeFilter === opt.value
                     ? "bg-indigo-600/20 border-indigo-500/50 text-indigo-300 shadow-sm"
                     : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
@@ -587,12 +738,12 @@ export function OkfRegistry() {
             <p className="text-slate-500 text-xs max-w-sm mx-auto">
               {searchQuery || selectedTypeFilter !== "All" 
                 ? "Try adjusting your search keywords or resetting the type filter." 
-                : "Author a new concept bundle or drop an existing policy .md file."}
+                : "Author a new concept bundle or drop an existing policy .md or .json file."}
             </p>
             <button
               type="button"
               onClick={handleOpenAuthorModal}
-              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all shadow-md shadow-indigo-600/15"
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
             >
               <Plus className="h-4 w-4" /> Author New Concept
             </button>
@@ -606,116 +757,138 @@ export function OkfRegistry() {
                 <th className="py-3 px-4">Namespace Category</th>
                 <th className="py-3 px-4">Tags</th>
                 <th className="py-3 px-4">Description Summary</th>
+                <th className="py-3 px-4">Active In Agents</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-900">
-              {filteredConcepts.map((item) => (
-                <tr 
-                  key={item.id}
-                  className="group hover:bg-slate-900/30 transition-colors text-xs"
-                >
-                  <td className="py-3.5 px-4">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-semibold text-slate-100 group-hover:text-indigo-300 transition-colors">
-                        {item.parsed.title || item.conceptKey}
+              {filteredConcepts.map((item) => {
+                const boundAgents = agentUsageMap[item.conceptKey.toLowerCase()] || agentUsageMap[`okf-${item.conceptKey.toLowerCase()}`] || [];
+                return (
+                  <tr 
+                    key={item.id}
+                    className="group hover:bg-slate-900/30 transition-colors text-xs"
+                  >
+                    <td className="py-3.5 px-4">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-semibold text-slate-100 group-hover:text-indigo-300 transition-colors">
+                          {item.parsed.title || item.conceptKey}
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-500">
+                          {item.conceptKey}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      {renderTypeBadge(item.parsed.conceptType)}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[10px] text-slate-300 font-medium">
+                        {item.category || "General Policy"}
                       </span>
-                      <span className="text-[10px] font-mono text-slate-500">
-                        {item.conceptKey}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    {renderTypeBadge(item.parsed.conceptType)}
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[10px] text-slate-300 font-medium">
-                      {item.category || "General Policy"}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 max-w-[200px]">
-                    <div className="flex flex-wrap gap-1">
-                      {Array.isArray(item.parsed.tags) && item.parsed.tags.length > 0 ? (
-                        <>
-                          {item.parsed.tags.slice(0, 2).map((tag, idx) => (
-                            <span key={idx} className="text-[9px] bg-slate-900/80 text-slate-400 px-1.5 py-0.5 rounded border border-slate-850">
-                              #{tag}
-                            </span>
-                          ))}
-                          {item.parsed.tags.length > 2 && (
-                            <span className="text-[9px] text-slate-500 font-mono self-center">
-                              +{item.parsed.tags.length - 2}
-                            </span>
-                          )}
-                        </>
-                      ) : (
-                        <span className="text-slate-600 text-[10px]">—</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4 max-w-xs">
-                    <p className="text-slate-400 truncate text-[11px] leading-relaxed" title={item.parsed.description}>
-                      {item.parsed.description || "No description summary provided."}
-                    </p>
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setViewingConcept(item)}
-                        className="p-1.5 rounded-lg border border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-850 text-slate-300 hover:text-white transition-all"
-                        title="View Document"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditModal(item)}
-                        className="p-1.5 rounded-lg border border-slate-850 hover:border-indigo-500/40 bg-slate-900/40 hover:bg-indigo-950/20 text-slate-300 hover:text-indigo-300 transition-all"
-                        title="Edit Concept"
-                      >
-                        <Edit className="h-3.5 w-3.5" />
-                      </button>
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={() => setActiveExportMenuId(activeExportMenuId === item.id ? null : item.id)}
-                          className="p-1.5 rounded-lg border border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-850 text-slate-300 hover:text-white transition-all"
-                          title="Export Options"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                        </button>
-                        {activeExportMenuId === item.id && (
-                          <div className="absolute right-0 top-full mt-1 w-32 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
-                            <button
-                              type="button"
-                              onClick={() => handleExportMarkdown(item)}
-                              className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2"
-                            >
-                              <FileText className="h-3.5 w-3.5 text-indigo-400" /> Export .md
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleExportJson(item)}
-                              className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2"
-                            >
-                              <Code className="h-3.5 w-3.5 text-amber-400" /> Export JSON
-                            </button>
-                          </div>
+                    </td>
+                    <td className="py-3.5 px-4 max-w-[160px]">
+                      <div className="flex flex-wrap gap-1">
+                        {Array.isArray(item.parsed.tags) && item.parsed.tags.length > 0 ? (
+                          <>
+                            {item.parsed.tags.slice(0, 2).map((tag, idx) => (
+                              <span key={idx} className="text-[9px] bg-slate-900/80 text-slate-400 px-1.5 py-0.5 rounded border border-slate-850">
+                                #{tag}
+                              </span>
+                            ))}
+                            {item.parsed.tags.length > 2 && (
+                              <span className="text-[9px] text-slate-500 font-mono self-center">
+                                +{item.parsed.tags.length - 2}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-slate-600 text-[10px]">—</span>
                         )}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setDeletingConcept(item)}
-                        className="p-1.5 rounded-lg border border-slate-850 hover:border-red-500/40 bg-slate-900/40 hover:bg-red-950/20 text-slate-400 hover:text-red-400 transition-all"
-                        title="Delete Concept"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="py-3.5 px-4 max-w-xs">
+                      <p className="text-slate-400 truncate text-[11px] leading-relaxed" title={item.parsed.description}>
+                        {item.parsed.description || "No description summary provided."}
+                      </p>
+                    </td>
+                    <td className="py-3.5 px-4 max-w-[200px]">
+                      {boundAgents.length > 0 ? (
+                        <div className="flex flex-wrap items-center gap-1">
+                          {boundAgents.slice(0, 2).map((agent, idx) => (
+                            <span key={idx} className="text-[10px] bg-indigo-950/40 text-indigo-300 px-2 py-0.5 rounded-md border border-indigo-500/30 font-medium">
+                              {agent}
+                            </span>
+                          ))}
+                          {boundAgents.length > 2 && (
+                            <span className="text-[9px] text-slate-400 font-mono" title={boundAgents.slice(2).join(", ")}>
+                              +{boundAgents.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-600 text-[10px]">Unbound</span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setViewingConcept(item)}
+                          className="p-1.5 rounded-lg border border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-850 text-slate-300 hover:text-white transition-all cursor-pointer"
+                          title="View Document"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditModal(item)}
+                          className="p-1.5 rounded-lg border border-slate-850 hover:border-indigo-500/40 bg-slate-900/40 hover:bg-indigo-950/20 text-slate-300 hover:text-indigo-300 transition-all cursor-pointer"
+                          title="Edit Concept"
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </button>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setActiveExportMenuId(activeExportMenuId === item.id ? null : item.id)}
+                            className="p-1.5 rounded-lg border border-slate-855 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-850 text-slate-300 hover:text-white transition-all cursor-pointer"
+                            title="Export Options"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                          </button>
+                          {activeExportMenuId === item.id && (
+                            <div className="absolute right-0 top-full mt-1 w-32 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
+                              <button
+                                type="button"
+                                onClick={() => handleExportMarkdown(item)}
+                                className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2 cursor-pointer"
+                              >
+                                <FileText className="h-3.5 w-3.5 text-indigo-400" /> Export .md
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleExportJson(item)}
+                                className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2 cursor-pointer"
+                              >
+                                <Code className="h-3.5 w-3.5 text-amber-400" /> Export JSON
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingConcept(item)}
+                          className="p-1.5 rounded-lg border border-slate-850 hover:border-red-500/40 bg-slate-900/40 hover:bg-red-950/20 text-slate-400 hover:text-red-400 transition-all cursor-pointer"
+                          title="Delete Concept"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -730,20 +903,20 @@ export function OkfRegistry() {
                 <Upload className="h-4 w-4 text-indigo-400" />
                 <h3 className="text-sm font-bold text-white uppercase tracking-wider">Ingest OKF Concept Bundle</h3>
               </div>
-              <button onClick={() => setIsIngestModalOpen(false)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg">
+              <button onClick={() => setIsIngestModalOpen(false)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <label className="flex flex-col items-center justify-center border-2 border-dashed border-indigo-500/30 hover:border-indigo-500/60 bg-indigo-950/10 hover:bg-indigo-950/20 rounded-2xl p-8 cursor-pointer transition-all">
                 <Upload className="h-8 w-8 text-indigo-400 mb-2" />
-                <span className="text-sm text-slate-200 font-bold">Drop Policy Markdown Bundle (.md)</span>
-                <span className="text-xs text-slate-500 mt-1">Automatically extracts frontmatter and policy instructions</span>
-                <input type="file" accept=".md" onChange={handleIngestFile} className="hidden" />
+                <span className="text-sm text-slate-200 font-bold">Drop Policy Markdown / JSON Bundle (.md, .json)</span>
+                <span className="text-xs text-slate-500 mt-1">Automatically extracts metadata, tags, and policy instructions</span>
+                <input type="file" accept=".md,.json,.txt" onChange={handleIngestFile} className="hidden" />
               </label>
               <div className="relative my-2 text-center">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-855" /></div>
-                <span className="relative bg-slate-950 px-3 text-[10px] text-slate-500 uppercase font-bold tracking-wider">Or paste raw document</span>
+                <span className="relative bg-slate-950 px-3 text-[10px] text-slate-500 uppercase font-bold tracking-wider">Or paste raw document or JSON</span>
               </div>
               <div className="space-y-3">
                 <textarea 
@@ -756,7 +929,7 @@ export function OkfRegistry() {
                 <button 
                   type="button" 
                   onClick={handleParseRawBundle}
-                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15"
+                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
                 >
                   Parse &amp; Load Bundle
                 </button>
@@ -772,6 +945,7 @@ export function OkfRegistry() {
           <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
             {(() => {
               const parsed = parseOkfFrontmatterAndBody(viewingConcept.yamlFrontmatter, viewingConcept.markdownBody);
+              const boundAgents = agentUsageMap[viewingConcept.conceptKey.toLowerCase()] || agentUsageMap[`okf-${viewingConcept.conceptKey.toLowerCase()}`] || [];
               return (
                 <>
                   <div className="px-6 py-4 border-b border-slate-900 flex justify-between items-center bg-slate-950/40 shrink-0">
@@ -789,25 +963,25 @@ export function OkfRegistry() {
                       <button 
                         type="button" 
                         onClick={() => handleExportMarkdown(viewingConcept)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 hover:text-white text-xs font-semibold transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
                       >
                         <Download className="h-3.5 w-3.5" /> .md
                       </button>
                       <button 
                         type="button" 
                         onClick={() => handleExportJson(viewingConcept)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 hover:text-white text-xs font-semibold transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
                       >
                         <Download className="h-3.5 w-3.5" /> JSON
                       </button>
                       <button 
                         type="button" 
                         onClick={() => handleOpenEditModal(viewingConcept)}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15"
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
                       >
                         <Edit className="h-3.5 w-3.5" /> Edit Concept
                       </button>
-                      <button onClick={() => setViewingConcept(null)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg ml-2">
+                      <button onClick={() => setViewingConcept(null)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg ml-2 cursor-pointer">
                         <X className="h-4 w-4" />
                       </button>
                     </div>
@@ -838,9 +1012,9 @@ export function OkfRegistry() {
                         )}
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold mb-0.5">Last Updated</span>
-                        <span className="text-slate-300 font-medium">
-                          {viewingConcept.updatedAt ? new Date(viewingConcept.updatedAt).toLocaleDateString() : "Just now"}
+                        <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold mb-0.5">Bound In Agents</span>
+                        <span className="text-indigo-300 font-medium font-mono text-[11px]">
+                          {boundAgents.length > 0 ? boundAgents.join(", ") : "None"}
                         </span>
                       </div>
                     </div>
@@ -855,7 +1029,7 @@ export function OkfRegistry() {
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tags</span>
                         <div className="flex flex-wrap gap-1.5">
                           {parsed.tags.map((tag, idx) => (
-                            <span key={idx} className="text-xs bg-slate-900/90 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-850">
+                            <span key={idx} className="text-xs bg-slate-900/90 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-855">
                               #{tag}
                             </span>
                           ))}
@@ -868,7 +1042,7 @@ export function OkfRegistry() {
                         <button
                           type="button"
                           onClick={() => handleCopyMarkdown(parsed.markdownBody || viewingConcept.markdownBody)}
-                          className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors bg-slate-900/60 hover:bg-slate-900 px-3 py-1 rounded-lg border border-slate-800"
+                          className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors bg-slate-900/60 hover:bg-slate-900 px-3 py-1 rounded-lg border border-slate-800 cursor-pointer"
                         >
                           {copiedCode ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                           {copiedCode ? "Copied" : "Copy Raw Markdown"}
@@ -901,7 +1075,7 @@ export function OkfRegistry() {
                 <button 
                   type="button" 
                   onClick={() => setIsAuthorModalOpen(false)}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-850 text-slate-400 hover:text-white text-xs font-semibold transition-all bg-slate-950/20"
+                  className="px-3.5 py-1.5 rounded-xl border border-slate-850 text-slate-400 hover:text-white text-xs font-semibold transition-all bg-slate-950/20 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -909,12 +1083,12 @@ export function OkfRegistry() {
                   type="button" 
                   onClick={handleSaveConcept}
                   disabled={loading}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                   {editingConcept ? "Save Changes" : "Create Concept"}
                 </button>
-                <button onClick={() => setIsAuthorModalOpen(false)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg ml-2">
+                <button onClick={() => setIsAuthorModalOpen(false)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg ml-2 cursor-pointer">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -1040,7 +1214,7 @@ export function OkfRegistry() {
               <button 
                 type="button" 
                 onClick={() => setIsAuthorModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-850 text-slate-400 hover:text-white text-xs font-semibold transition-all bg-slate-950/20"
+                className="px-4 py-2 rounded-xl border border-slate-850 text-slate-400 hover:text-white text-xs font-semibold transition-all bg-slate-950/20 cursor-pointer"
               >
                 Cancel
               </button>
@@ -1048,7 +1222,7 @@ export function OkfRegistry() {
                 type="button" 
                 onClick={handleSaveConcept}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50"
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {editingConcept ? "Save Changes" : "Create Concept"}
@@ -1064,7 +1238,7 @@ export function OkfRegistry() {
           <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-white">Delete OKF Concept</h3>
-              <button onClick={() => setDeletingConcept(null)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg">
+              <button onClick={() => setDeletingConcept(null)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -1075,14 +1249,14 @@ export function OkfRegistry() {
               <button
                 type="button"
                 onClick={() => setDeletingConcept(null)}
-                className="flex-1 py-2 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold bg-slate-900/40 transition-all"
+                className="flex-1 py-2 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold bg-slate-900/40 transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => handleDeleteConcept(deletingConcept.id)}
-                className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all"
+                className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all cursor-pointer"
               >
                 Confirm Delete
               </button>
