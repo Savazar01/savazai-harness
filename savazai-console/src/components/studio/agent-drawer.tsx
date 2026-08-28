@@ -47,6 +47,7 @@ interface RegisteredTool {
 
 interface AgentDrawerProps {
   node: CanvasNode;
+  allNodes?: CanvasNode[];
   onClose: () => void;
   onSave: (updated: CanvasNode) => void;
 }
@@ -64,16 +65,30 @@ const PROVIDER_MODELS: Record<string, string[]> = {
 
 const ROLE_TEMPLATES: { value: AgentRole; label: string; description: string }[] = [
   { value: "supervisor", label: "Supervisor Agent", description: "Coordinates workflow dispatch across sub-agents" },
+  { value: "team", label: "Agent Team Container", description: "Groups and coordinates specialist workers in a clean container" },
   { value: "worker", label: "Worker / Specialist Agent", description: "Executes bound MCP/native tools" },
   { value: "synthesizer", label: "Synthesizer Agent", description: "Aggregates multi-agent outputs into cohesive responses" },
   { value: "scheduled", label: "Scheduled Autonomous Worker", description: "Executes recurring tasks on a cron schedule" },
 ];
 
-export function AgentDrawer({ node, onClose, onSave }: AgentDrawerProps) {
+export const COLOR_PRESETS = [
+  { id: "default", label: "Default", bg: "bg-slate-900", border: "border-slate-700", ring: "ring-slate-500", dot: "#64748b" },
+  { id: "emerald", label: "Emerald", bg: "bg-emerald-950", border: "border-emerald-500", ring: "ring-emerald-500", dot: "#10b981" },
+  { id: "cyan", label: "Cyan", bg: "bg-cyan-950", border: "border-cyan-500", ring: "ring-cyan-500", dot: "#06b6d4" },
+  { id: "indigo", label: "Indigo", bg: "bg-indigo-950", border: "border-indigo-500", ring: "ring-indigo-500", dot: "#6366f1" },
+  { id: "purple", label: "Purple", bg: "bg-purple-950", border: "border-purple-500", ring: "ring-purple-500", dot: "#a855f7" },
+  { id: "amber", label: "Amber", bg: "bg-amber-950", border: "border-amber-500", ring: "ring-amber-500", dot: "#f59e0b" },
+  { id: "rose", label: "Rose", bg: "bg-rose-950", border: "border-rose-500", ring: "ring-rose-500", dot: "#f43f5e" },
+  { id: "slate", label: "Slate", bg: "bg-slate-800", border: "border-slate-600", ring: "ring-slate-400", dot: "#94a3b8" },
+];
+
+export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawerProps) {
   const [activeTab, setActiveTab] = useState<"identity" | "tools" | "databases" | "social" | "mcp" | "knowledge" | "memory" | "guardrails">("identity");
 
   const [label, setLabel] = useState(node.label);
   const [roleTemplate, setRoleTemplate] = useState<AgentRole>(node.roleTemplate || "worker");
+  const [parentId, setParentId] = useState<string | undefined>(node.parentId);
+  const [customColor, setCustomColor] = useState<string>(node.customColor || "default");
   const [systemPrompt, setSystemPrompt] = useState(node.systemPrompt || "");
   const [provider, setProvider] = useState(node.modelConfig?.provider || "openai");
   const [model, setModel] = useState(node.modelConfig?.model || "gpt-4o");
@@ -231,6 +246,22 @@ export function AgentDrawer({ node, onClose, onSave }: AgentDrawerProps) {
   }, [fetchResources, fetchMcpServers, fetchLlmProviders, fetchRegisteredTools]);
 
   const handleSave = () => {
+    let newX = node.x;
+    let newY = node.y;
+    const finalParentId = roleTemplate === "team" ? undefined : parentId;
+
+    if (finalParentId && finalParentId !== node.parentId) {
+      const targetTeam = allNodes.find((t) => t.id === finalParentId);
+      if (targetTeam) {
+        const existingWorkers = allNodes.filter((c) => c.parentId === finalParentId && c.id !== node.id);
+        const count = existingWorkers.length;
+        const col = count % 2;
+        const row = Math.floor(count / 2);
+        newX = targetTeam.x + 24 + col * 260;
+        newY = targetTeam.y + 70 + row * 130;
+      }
+    }
+
     const updated: CanvasNode = {
       ...node,
       label,
@@ -244,6 +275,10 @@ export function AgentDrawer({ node, onClose, onSave }: AgentDrawerProps) {
       memoryCheckpoint,
       kvPersistence,
       piiMaskingOverride,
+      parentId: finalParentId,
+      customColor: customColor === "default" ? undefined : customColor,
+      x: newX,
+      y: newY,
       data: {
         ...node.data,
         executionMode,
@@ -478,6 +513,54 @@ export function AgentDrawer({ node, onClose, onSave }: AgentDrawerProps) {
                         <span className="text-[9px] text-slate-500">{rt.description}</span>
                       </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+
+              {roleTemplate !== "supervisor" && roleTemplate !== "team" && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Assigned Team Container</label>
+                    <HelpTooltip content="Assign this specialist worker to a visual Team Container to bundle execution into a clean bus pipeline." side="right" />
+                  </div>
+                  <select
+                    value={parentId || ""}
+                    onChange={(e) => setParentId(e.target.value ? e.target.value : undefined)}
+                    className="w-full rounded-xl border border-slate-800 bg-[#06060b] px-3.5 py-2.5 text-xs text-white outline-none focus:border-indigo-500 font-medium"
+                  >
+                    <option value="">(None — Standalone Specialist)</option>
+                    {allNodes
+                      ?.filter((n) => n.roleTemplate === "team" && n.id !== node.id)
+                      .map((team) => (
+                        <option key={team.id} value={team.id}>
+                          👥 {team.label || "Specialist Team"} ({allNodes.filter(c => c.parentId === team.id).length} specialists)
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Node Color Theme Swatches */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Node Color & Visual Theme</label>
+                  <HelpTooltip content="Customize the visual border, glow, and background tint of this node card for instant identification." side="right" />
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {COLOR_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => setCustomColor(preset.id)}
+                      className={`flex items-center gap-2 px-2.5 py-2 rounded-xl border text-xs font-semibold transition-all ${
+                        customColor === preset.id
+                          ? `border-white ring-2 ${preset.ring} ${preset.bg} text-white shadow-lg`
+                          : "border-slate-800 hover:border-slate-700 bg-slate-950/60 text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      <span className="w-3 h-3 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: preset.dot }} />
+                      <span className="truncate text-[11px] font-medium">{preset.label}</span>
+                    </button>
                   ))}
                 </div>
               </div>

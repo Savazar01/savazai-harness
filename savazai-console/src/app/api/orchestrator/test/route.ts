@@ -1736,10 +1736,14 @@ interface GraphNode {
   memoryCheckpoint?: boolean;
   kvPersistence?: boolean;
   piiMaskingOverride?: string;
+  parentId?: string;
+  collapsed?: boolean;
   data?: {
     guardrails?: {
       hitlPolicy?: string;
     };
+    parentId?: string;
+    [key: string]: unknown;
   };
 }
 
@@ -2165,6 +2169,60 @@ async function hydrateMcpSchemas(): Promise<Record<string, Record<string, unknow
   return cache;
 }
 
+// ── Multi-Team Hierarchical Specialist Discovery ──
+function getConnectedSpecialistWorkers(nodes: GraphNode[], edges: { source: string; target: string }[]): GraphNode[] {
+  const supervisor = nodes.find(n => n.roleTemplate === "supervisor" || n.label === "Supervisor Agent") || nodes[0];
+  if (!supervisor) return [];
+
+  // Find all nodes directly connected downstream from Supervisor
+  const outgoingEdgeTargets = edges
+    .filter(e => e.source === supervisor.id)
+    .map(e => nodes.find(n => n.id === e.target))
+    .filter((n): n is GraphNode => Boolean(n) && n.roleTemplate !== "synthesizer");
+
+  const candidateWorkers: GraphNode[] = [];
+  const seenIds = new Set<string>();
+
+  for (const target of outgoingEdgeTargets) {
+    if (target.roleTemplate === "team" || (target as any).type === "teamNode" || (target as any).type === "team") {
+      // Discover all child specialist agents inside this team
+      const teamChildren = nodes.filter(n => 
+        (n.parentId === target.id || (n as any).parentNode === target.id || (n.data as any)?.parentId === target.id) &&
+        n.roleTemplate !== "team" && 
+        (n as any).type !== "teamNode" &&
+        n.roleTemplate !== "supervisor" && 
+        n.roleTemplate !== "synthesizer"
+      );
+      for (const w of teamChildren) {
+        if (!seenIds.has(w.id)) {
+          seenIds.add(w.id);
+          candidateWorkers.push(w);
+        }
+      }
+    } else if (target.roleTemplate === "specialist" || target.roleTemplate === "worker" || (!target.roleTemplate && (target as any).type === "customAgent")) {
+      if (!seenIds.has(target.id)) {
+        seenIds.add(target.id);
+        candidateWorkers.push(target);
+      }
+    }
+  }
+
+  // Fallback: If no candidate workers found via outgoing edges (e.g. pending edge connections or freeform workspace),
+  // return all specialist/worker agents in the workspace
+  if (candidateWorkers.length === 0) {
+    const allWorkers = nodes.filter(n =>
+      n.roleTemplate !== "supervisor" &&
+      n.roleTemplate !== "synthesizer" &&
+      n.roleTemplate !== "team" &&
+      (n as any).type !== "teamNode" &&
+      (n.roleTemplate === "worker" || n.roleTemplate === "specialist" || (n as any).type === "customAgent")
+    );
+    return allWorkers;
+  }
+
+  return candidateWorkers;
+}
+
 // ── Shared Supervisor Plan Generation ──
 async function generateSupervisorPlan(
   supervisorNode: GraphNode,
@@ -2173,14 +2231,15 @@ async function generateSupervisorPlan(
   providerConfigs: Record<string, LLMProviderConfig>,
   parentInstruction?: string,
   threadHistory?: ChatMessage[],
-  mcpSchemaCache?: Record<string, Record<string, unknown>>
+  mcpSchemaCache?: Record<string, Record<string, unknown>>,
+  allGraphNodes?: GraphNode[]
 ): Promise<{ selectedIds: string[]; executionPlan: ExecutionPlanItem[]; planSummary?: string; clarificationPrompt?: string; outOfScopeReason?: string }> {
   const schemas = mcpSchemaCache || await hydrateMcpSchemas();
 
   // Fast-track: Email Forwarding ONLY if the user prompt does NOT contain active data retrieval or search requests
   const msgLower = message.toLowerCase();
   const emailMatch = message.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
-  const hasDataRetrievalIntent = /\b(find|search|lookup|get|list|show|fetch|query|discover|recommend|venues|decorators|vendors|caterers|photographers|guests|tasks|ceremonies|items)\b/i.test(message);
+  const hasDataRetrievalIntent = /\b(find|search|lookup|get|list|show|fetch|query|discover|recommend|items|records|data|details|status|info)\b/i.test(message);
   const isEmailForward = !hasDataRetrievalIntent && emailMatch && (
     msgLower.includes("send the above") ||
     msgLower.includes("forward the above") ||
@@ -2208,7 +2267,7 @@ async function generateSupervisorPlan(
 
   // Rich tool descriptions map for native tools
   const nativeToolDescMap: Record<string, string> = {
-    "google-places": "Search for external businesses, venues, decorators, florists, and local services in a geographic city or location via Google Places (New) API with ratings, reviews, contact numbers, and maps.",
+    "google-places": "Search for external businesses, venues, and local services in a geographic city or location via Google Places (New) API with ratings, reviews, contact numbers, and maps.",
     "web-search": "Search the live web for contact details, emails, websites, and business info via Serper/Tavily.",
     "send-email": "Send automated emails to recipients.",
     "generate-pdf": "Generate structured PDF reports.",
@@ -2216,22 +2275,44 @@ async function generateSupervisorPlan(
     "yelp-business-search": "Search for local businesses, reviews, and ratings via Yelp Fusion API."
   };
 
-  // Compact tool descriptions to keep Supervisor input tokens small (~1k tokens)
-  const targetNodeDescriptions = targetNodes.map(n => {
-    const toolDetails = (n.tools || []).map(t => {
+  // Filter out any team container nodes and ensure only specialist worker nodes are presented to the LLM
+  let candidateWorkers = targetNodes.filter(n =>
+    n.roleTemplate !== "team" && (n as any).type !== "teamNode" && n.roleTemplate !== "synthesizer" && n.roleTemplate !== "supervisor"
+  );
+
+  // If candidateWorkers is empty and allGraphNodes is available, fallback to all specialist workers in graph
+  if (candidateWorkers.length === 0 && allGraphNodes && allGraphNodes.length > 0) {
+    candidateWorkers = allGraphNodes.filter(n =>
+      n.roleTemplate !== "team" && (n as any).type !== "teamNode" && n.roleTemplate !== "supervisor" && n.roleTemplate !== "synthesizer"
+    );
+  }
+
+  const nodesContextList = allGraphNodes || targetNodes;
+
+  // Rich semantic worker registry text for Supervisor LLM
+  const targetNodeDescriptions = candidateWorkers.map((w, index) => {
+    const parentTeam = nodesContextList.find(t => t.id === w.parentId || t.id === (w as any).parentNode || t.id === (w.data as any)?.parentId);
+    const teamLabel = parentTeam ? ` [Team: ${parentTeam.label || (parentTeam.data as any)?.label}]` : " [Team: Standalone / Direct]";
+
+    const toolDetails = (w.tools || []).map(t => {
       const toolObj = typeof t === "string" ? { name: t } : t;
       const tName = toolObj?.name || String(t);
       const schema = (toolObj?.inputSchema || schemas[tName]) as McpToolInputSchema | undefined;
       const desc = toolObj?.description || nativeToolDescMap[tName] || (schemas[`__desc__${tName}`] as { desc: string })?.desc || "Execute tool call.";
       const req = (schema?.required || []).join(", ");
-      return `  - Tool / Policy: "${tName}" — ${desc}${req ? ` [Required: ${req}]` : ""}`;
+      return `    * Tool: "${tName}" — ${desc}${req ? ` [Required: ${req}]` : ""}`;
     }).filter(Boolean).join("\n");
 
-    const skillsContext = Array.isArray(n.skills) ? n.skills.join(", ") : (typeof n.skills === "string" ? n.skills : "");
-    const promptSnippet = n.systemPrompt ? `\n  Specialist Role & Scope: ${n.systemPrompt.slice(0, 250).replace(/\n+/g, " ")}` : "";
-    const skillsSnippet = skillsContext ? `\n  Bound Policies & Skills: ${skillsContext}` : "";
+    const skillsContext = Array.isArray(w.skills) ? w.skills.join(", ") : (typeof w.skills === "string" ? w.skills : "");
+    const promptSnippet = w.systemPrompt || (w.data as any)?.systemPrompt || "Specialist Agent for domain operations.";
+    const skillsSnippet = skillsContext ? `\n  - Bound Policies & Skills: ${skillsContext}` : "";
 
-    return `- Node ID: "${n.id}" | Target Label: "${n.label}" (Role: ${n.roleTemplate || "specialist"})${promptSnippet}${skillsSnippet}\n  Assigned Tools & Policies:\n${toolDetails || "  (No tools assigned)"}`;
+    return `### Candidate Worker ${index + 1}:
+- Agent Name / Target Node: "${w.label || (w.data as any)?.label}"
+- Exact Node ID: "${w.id}"
+- Parent Team:${teamLabel}
+- System Prompt / Specialization: "${promptSnippet.replace(/\n+/g, " ")}"
+- Assigned Tools:${toolDetails ? "\n" + toolDetails : " (No tools assigned)"}${skillsSnippet}`;
   }).join("\n\n");
 
   let systemPromptContext = supervisorNode.systemPrompt || "Perform the assigned task.";
@@ -2250,19 +2331,30 @@ async function generateSupervisorPlan(
 
 You are a Supervisor/Routing Agent. Your task is to analyze the user request against the explicit Downstream Worker Nodes and their Assigned Tools below.
 
+SYSTEM CONSTRAINTS & ENTITY ROUTING RULES:
+1. SEMANTIC MATCHING & STRICT ENTITY DISAMBIGUATION:
+   - Carefully analyze each candidate agent's Name, System Prompt, and Assigned Tools.
+   - Assign execution steps ONLY to the specialist agent whose declared role, system prompt, and assigned tools directly correspond to the entity and operation requested in the user prompt.
+   - Disambiguate entity boundaries strictly based on each candidate agent's specialization and assigned tool schemas (e.g. only assign entity-specific queries to the specialist agent equipped with the corresponding retrieval/mutation tools).
+2. EXACT NODE ID BINDING:
+   - You MUST copy the exact "nodeId" and "targetNode" from the candidate worker chosen above.
+   - You must NEVER invent, mix, or assign a Team ID as an execution target. Every execution step MUST have a nodeId matching a concrete Specialist Worker agent.
+3. NO PHANTOM STEPS:
+   - Do NOT create steps for general synthesis, summaries, or recommendations. The Synthesizer Agent will automatically summarize the data retrieved by the specialist workers.
+
 CLASSIFICATION & ROUTING RULES:
-1. EXTERNAL SEARCH & GEOGRAPHIC DISCOVERY VS INTERNAL DATABASE:
-   - When the user asks to find, search, or discover external businesses, services, vendors, decorators, venues, caterers, etc. in a geographic city/region/location (e.g. "in Secunderabad, India", "in Tirupati", "in Chicago"):
-     * Select ONLY the worker node equipped with external search tools (e.g. "google-places", "web-search").
-     * DO NOT select internal database worker nodes (like "list_vendors", "list_guests", "list_ceremonies", "list_tasks", "get_wedding") for external geographic business discovery queries!
-   - When the user asks to view, list, create, update, or delete existing workspace database records (e.g. "show our guests", "add a task", "update vendor budget"):
-     * Select the corresponding internal database worker node.
+1. EXTERNAL SEARCH & GEOGRAPHIC DISCOVERY VS INTERNAL WORKSPACE DATA:
+   - When the user asks to find, search, or discover external businesses, services, venues, or locations via external search tools:
+     * Select ONLY worker nodes equipped with external search/places tools (e.g. "google-places", "web-search").
+     * DO NOT select internal workspace database worker nodes for external geographic discovery queries!
+   - When the user asks to view, list, create, update, or delete existing workspace records:
+     * Select the corresponding internal specialist worker node equipped with the relevant tools.
 2. CONVERSATIONAL & CAPABILITY INQUIRIES:
    - If the user request is a greeting ("Hi", "Hello") or capability inquiry ("What can you do?"):
    - Return \`"selectedNodeIds": []\` and \`"executionPlan": []\`.
    - Set \`"planSummary": "Direct Response: Answer greeting and explain workspace capabilities."\`
-3. DOMAIN KNOWLEDGE, OPERATIONAL POLICIES & VENUE GUIDELINES:
-   - When the user asks domain policy questions, venue deposit terms, sound curfew rules, coordinator staffing requirements, drone permit deadlines, budget calculations, rituals, ceremonies, guests, or tasks:
+3. DOMAIN KNOWLEDGE & OPERATIONAL POLICIES:
+   - When the user asks domain policy questions or operational business guidelines:
      * If a downstream worker node is specialized in that domain or has the relevant domain policy/ruleset assigned:
      * You MUST delegate to that specialist worker node (actionVerb: "LIST" or "READ").
      * DO NOT claim that domain rules or enterprise policies are out of scope when specialist worker nodes exist to handle that domain! Formulate an execution plan targeting the relevant specialist worker.
@@ -2272,16 +2364,16 @@ CLASSIFICATION & ROUTING RULES:
 5. CRITICAL PARAMETER DUE DILIGENCE & CLARIFICATION RULES:
    - For any action (CREATE, ADD, UPDATE, DELETE) across ANY entity type managed by the downstream worker tools:
      * Compare the user prompt against the Required Fields array of the target tool's schema.
-     * If the user explicitly asks what information is needed (e.g. "what are the details you need?"), OR if mandatory required primary human domain parameters (name, title, email, date, etc.) are missing from the user request or conversation history:
+     * If the user explicitly asks what information is needed, OR if mandatory required primary human domain parameters (name, title, email, date, etc.) are missing from the user request or conversation history:
        1. Set \`"requiresClarification": true\` on that step.
        2. Set \`"actionVerb": "CLARIFY"\`.
        3. Formulate a specific, helpful, professional \`"clarificationPrompt"\` listing each missing required parameter with its description and examples.
    - NO FABRICATION MANDATE: NEVER invent, guess, or fabricate fake placeholder values (e.g. "New Item", "example@email.com", "Dummy Record"). If required fields are missing, set \`"requiresClarification": true\`.
    - NO SYSTEM/FOREIGN-KEY WARNINGS: Primary record identifiers ("id") and foreign keys ending with "Id" are system UUIDs that are resolved automatically by downstream worker list tools — DO NOT flag system IDs or UUIDs as missing parameters from the user! NEVER ask the user to provide an "ID", "UUID", "id", or system key!
 6. MANDATORY MULTI-STEP COMPOUND REQUEST DECOMPOSITION:
-   - When a user prompt combines data retrieval or discovery with downstream actions (e.g. finding places/vendors/records AND generating a downloadable CSV/PDF file AND/OR sending an email report):
-     * Step 1 (Data Retrieval): Select the relevant search/retrieval worker node (e.g. Web & Places Specialist Agent) with actionVerb "LIST" or "READ" to fetch real data. Extract the exact search query and location into parameters: { "query": "<search query and location from user prompt e.g. wedding caterers in Tirupati, India>" }.
-     * Step 2 (Downstream Actions & Export): The downstream file export (CSV/PDF) and email dispatch will be handled by the specialized action/synthesizer tools. Do NOT add unnecessary worker nodes that have no relevant tools for the request.
+   - When a user prompt combines data retrieval or discovery with downstream actions (e.g. finding records AND generating a downloadable CSV/PDF file AND/OR sending an email notification):
+     * Step 1 (Data Retrieval): Select the relevant search/retrieval worker node with actionVerb "LIST" or "READ" to fetch real data. Extract the exact search query and parameters into parameters: { "query": "<search query from user prompt>" }.
+     * Step 2 (Downstream Actions & Export): The downstream file export (CSV/PDF) and notification dispatch will be handled by the specialized action/synthesizer tools. Do NOT add unnecessary worker nodes that have no relevant tools for the request.
    - Only select worker nodes whose tools are directly relevant to the user request. NEVER select unrelated worker nodes!
    - NEVER skip data retrieval worker nodes when the user query asks to find, search, list, or discover items!
    - NEVER return empty selectedNodeIds or route directly to Synthesizer Agent alone if data retrieval or tool execution is needed!
@@ -2290,6 +2382,7 @@ CLASSIFICATION & ROUTING RULES:
      * "nodeId" MUST EXACTLY MATCH the Node ID corresponding to the chosen "targetNode" label from the Available Downstream Worker Nodes list below.
      * "targetNode" MUST EXACTLY MATCH the Target Label of that chosen worker node.
      * NEVER mix, swap, or assign the Node ID of one worker to the Target Label of a different worker!
+     * CRITICAL RULE: You must ONLY assign execution steps to specific Specialist Worker agents from the registry above. You must NEVER assign a Team container as an execution target. Every execution step MUST have a nodeId matching a concrete Specialist Worker agent.
 
 Available Downstream Worker Nodes & Tools:
 ${targetNodeDescriptions}
@@ -2359,12 +2452,34 @@ Return ONLY the JSON object, no extra commentary, no markdown backticks, no text
 
     // Deterministic validation & auto-correction for nodeId vs targetNode label
     for (const item of executionPlan) {
-      let candidate = targetNodes.find(n => n.id === item.nodeId);
+      let candidate = candidateWorkers.find(n => n.id === item.nodeId);
+
+      // If step accidentally targeted a team container, redirect to matching or primary child worker
+      const teamTarget = targetNodes.find(n => n.id === item.nodeId && (n.roleTemplate === "team" || (n as any).type === "teamNode" || (n as any).type === "team"));
+      if (teamTarget) {
+        const teamMembers = targetNodes.filter(n =>
+          (n.parentId === teamTarget.id || (n as any).parentNode === teamTarget.id || (n.data as any)?.parentId === teamTarget.id) &&
+          n.roleTemplate !== "team" && n.roleTemplate !== "synthesizer"
+        );
+        const matched = teamMembers.find(c => {
+          const cLabel = (c.label || (c.data as any)?.label || "").toLowerCase().trim();
+          const tEntity = (item.targetEntity || "").toLowerCase().trim();
+          const tNode = (item.targetNode || "").toLowerCase().trim();
+          return (tEntity && cLabel.includes(tEntity)) || (tNode && cLabel.includes(tNode)) || (c.systemPrompt && c.systemPrompt.toLowerCase().includes(tEntity));
+        }) || teamMembers[0];
+        if (matched) {
+          console.warn(`[Supervisor Plan Auto-Correct] Redirected team container step "${item.nodeId}" -> child worker "${matched.label}" (${matched.id})`);
+          item.nodeId = matched.id;
+          item.targetNode = matched.label;
+          candidate = matched;
+        }
+      }
+
       const isMismatch = candidate && item.targetNode &&
         candidate.label.toLowerCase().trim() !== item.targetNode.toLowerCase().trim();
 
       if (!candidate || isMismatch) {
-        const matchingNode = targetNodes.find(n => {
+        const matchingNode = candidateWorkers.find(n => {
           const l = (n.label || (n.data as any)?.label || "").toLowerCase().trim();
           return l === (item.targetNode || "").toLowerCase().trim();
         });
@@ -2443,7 +2558,6 @@ function buildClarificationFromSchema(
       lower.includes("organization") ||
       lower.includes("scope") ||
       lower.includes("app") ||
-      lower.includes("wedding") ||
       lower.includes("project")
     );
   };
@@ -2663,10 +2777,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!approvedPlan && shouldPause) {
-      const outgoingEdges = (edges as { source: string; target: string }[]).filter(e => e.source === hitlSupervisorNode.id);
-      const targetNodes = outgoingEdges
-        .map(e => hitlNodes.find(n => n.id === e.target))
-        .filter((n): n is GraphNode => !!n && n.roleTemplate !== "synthesizer");
+      const targetNodes = getConnectedSpecialistWorkers(hitlNodes, edges as { source: string; target: string }[]);
 
       // Resolve provider credentials needed for plan generation
       const configRes = await pool.query(
@@ -2684,7 +2795,7 @@ export async function POST(req: NextRequest) {
       if (targetNodes.length > 0) {
         const hitlHistory = execThreadId ? await loadThreadMemory(execThreadId) : [];
         const planResult = await generateSupervisorPlan(
-          hitlSupervisorNode, targetNodes, message, hitlProviderConfigs, undefined, hitlHistory
+          hitlSupervisorNode, targetNodes, message, hitlProviderConfigs, undefined, hitlHistory, undefined, hitlNodes
         );
         executionPlan = planResult.executionPlan;
         planSummary = planResult.planSummary;
@@ -2835,11 +2946,8 @@ export async function POST(req: NextRequest) {
             // Coordinator Node (Supervisor or Sub-Supervisor)
             sendEvent({ type: "trace", content: `[Graph Traversal] Supervisor node active: ${node.label || node.id}. Evaluating routing conditions...` });
             
-            // Get downstream connected nodes from outgoing edges (excluding synthesizers)
-            const outgoingEdges = typedEdges.filter(e => e.source === nodeId);
-            const targetNodes = outgoingEdges
-              .map(e => typedNodes.find(n => n.id === e.target))
-              .filter((n): n is GraphNode => !!n && n.roleTemplate !== "synthesizer");
+            // Get downstream connected specialist workers (expanding teams and standalone workers)
+            const targetNodes = getConnectedSpecialistWorkers(typedNodes, typedEdges);
 
             if (targetNodes.length === 0) {
               return "";
@@ -2857,6 +2965,28 @@ export async function POST(req: NextRequest) {
                 for (const rawStep of approvedPlan) {
                   const step = { ...rawStep };
                   let targetNode = typedNodes.find(n => n.id === step.nodeId);
+
+                  // If targetNode is a team container, redirect to the matching child worker
+                  if (targetNode && (targetNode.roleTemplate === "team" || (targetNode as any).type === "teamNode" || (targetNode as any).type === "team")) {
+                    const childWorkers = typedNodes.filter(n =>
+                      (n.parentId === targetNode!.id || (n as any).parentNode === targetNode!.id || (n.data as any)?.parentId === targetNode!.id) &&
+                      n.roleTemplate !== "synthesizer" && n.roleTemplate !== "team"
+                    );
+                    const matchedChild = childWorkers.find(c => {
+                      const cLabel = (c.label || (c.data as any)?.label || "").toLowerCase().trim();
+                      const tEntity = (step.targetEntity || "").toLowerCase().trim();
+                      const tNode = (step.targetNode || "").toLowerCase().trim();
+                      return (tEntity && cLabel.includes(tEntity)) || (tNode && cLabel.includes(tNode)) || (c.systemPrompt && c.systemPrompt.toLowerCase().includes(tEntity));
+                    }) || childWorkers[0];
+
+                    if (matchedChild) {
+                      console.warn(`[Team Dispatch Resolved] Redirected team target "${targetNode.label}" to child worker "${matchedChild.label}" (${matchedChild.id})`);
+                      targetNode = matchedChild;
+                      step.nodeId = matchedChild.id;
+                      step.targetNode = matchedChild.label || (matchedChild.data as any)?.label;
+                    }
+                  }
+
                   const nodeLabel = targetNode?.label || (targetNode?.data as any)?.label || (targetNode?.data as any)?.name;
                   const isMismatch = nodeLabel && step.targetNode &&
                     nodeLabel.toLowerCase().trim() !== step.targetNode.toLowerCase().trim();
@@ -2902,7 +3032,7 @@ export async function POST(req: NextRequest) {
               globalSelectedIds = Array.from(new Set([...globalSelectedIds, ...selectedIds]));
             } else {
               const planResult = await generateSupervisorPlan(
-                node, targetNodes, message || "", providerConfigs, parentInstruction, threadHistory
+                node, targetNodes, message || "", providerConfigs, parentInstruction, threadHistory, undefined, typedNodes
               );
               selectedIds = planResult.selectedIds;
               globalSelectedIds = Array.from(new Set([...globalSelectedIds, ...selectedIds]));
@@ -3079,12 +3209,12 @@ function parseParametersFromText(text: string, schemaProps?: Record<string, unkn
 
     // Generic type parsing
     let cleanVal = valRaw.replace(/\[[^\]]*\]/g, "").trim();
-    // Strip trailing conjunctions and punctuation from values (e.g. "60000 and" -> "60000", "250 using wedding_budget_optimizer_JS." -> "250")
+    // Strip trailing conjunctions and punctuation from values (e.g. "60000 and" -> "60000", "250 using tool_name." -> "250")
     cleanVal = cleanVal.replace(/\s+(?:and|with|using|for|in|to)\s+.*$/i, "").replace(/[.,;:]+$/, "").trim();
 
     let parsedVal: unknown = cleanVal;
     const propSchema = schemaProps?.[finalKey] as { type?: string } | undefined;
-    const isLikelyNumeric = /budget|count|cost|price|amount|rate|guest|total|fee|num|ratio|preference|table|seat|milestone|percent/i.test(finalKey);
+    const isLikelyNumeric = /budget|count|cost|price|amount|rate|total|fee|num|ratio|preference|milestone|percent/i.test(finalKey);
 
     const numericCleaned = cleanVal.replace(/[^0-9.-]/g, "");
     const isValidNumericString = numericCleaned !== "" && numericCleaned !== "-" && numericCleaned !== ".";
@@ -3289,7 +3419,7 @@ function parseParametersFromText(text: string, schemaProps?: Record<string, unkn
                         inputSchema: {
                           type: "object",
                           properties: {
-                            textQuery: { type: "string", description: "Search query for locations or businesses (e.g. 'wedding decorators in Tirupati, India')" },
+                            textQuery: { type: "string", description: "Search query for locations or businesses (e.g. 'local services in City, Region')" },
                             query: { type: "string", description: "Search query alias" },
                             pageSize: { type: "number", description: "Number of places to return (default: 20, max: 20)" },
                             languageCode: { type: "string", description: "Language code for the response (e.g. 'en')" },
@@ -3302,7 +3432,7 @@ function parseParametersFromText(text: string, schemaProps?: Record<string, unkn
                         inputSchema: {
                           type: "object",
                           properties: {
-                            query: { type: "string", description: "Web search query (e.g. 'R2R Events & Weddings Tirupati contact phone email website')" },
+                            query: { type: "string", description: "Web search query (e.g. 'Business Name City contact phone email website')" },
                             count: { type: "number", description: "Number of search results to return (default: 5)" },
                           },
                           required: ["query"],
@@ -3368,19 +3498,11 @@ function parseParametersFromText(text: string, schemaProps?: Record<string, unkn
 
                           // Fallback / JSDoc property parsing for custom skills
                           if (Object.keys(skillProps).length === 0) {
-                            if (/budget/i.test(s.name) || /budget/i.test(s.instructions)) {
-                              skillProps = {
-                                totalBudget: { type: "number", description: "Total budget amount (USD or INR)" },
-                                guestCount: { type: "integer", description: "Total number of guests" },
-                              };
-                              requiredProps = ["totalBudget", "guestCount"];
-                            } else {
-                              const fnParamMatch = s.instructions.match(/(?:function|execute)\s*\(\s*\{([^}]+)\}\s*\)/);
-                              if (fnParamMatch) {
-                                const params = fnParamMatch[1].split(",").map((p) => p.trim()).filter(Boolean);
-                                for (const p of params) {
-                                  skillProps[p] = { type: "string", description: p };
-                                }
+                            const fnParamMatch = s.instructions.match(/(?:function|execute)\s*\(\s*\{([^}]+)\}\s*\)/);
+                            if (fnParamMatch) {
+                              const params = fnParamMatch[1].split(",").map((p) => p.trim()).filter(Boolean);
+                              for (const p of params) {
+                                skillProps[p] = { type: "string", description: p };
                               }
                             }
                           }
@@ -3514,9 +3636,9 @@ CRITICAL RULES:
               workerSystemPrompt += `\n- MULTI-ITEM OPERATIONS: If the user request specifies operations on MULTIPLE items (e.g., updating or creating multiple records in a single request), you MUST execute tool calls for EACH specified item until ALL requested items have been processed! You can include multiple tool_calls objects in a single JSON block.\n`;
               workerSystemPrompt += `\n- CRITICAL: Never call the same tool with identical arguments twice. If you already created or updated a record, do not repeat the identical operation. Move on to the next required action or conclude the task.\n`;
               workerSystemPrompt += `\n- STRICT DOMAIN SCOPE: You MUST ONLY execute actions directly related to your assigned tools. If a portion of the user request refers to an action outside your assigned tools, IGNORE that portion entirely. DO NOT attempt to map out-of-scope actions to your assigned tools.\n`;
-              workerSystemPrompt += `\n- CRITICAL FIELD EXTRACTION MANDATE: When calling an UPDATE or CREATE tool, carefully extract ALL target field values mentioned in the user prompt and thread history (e.g. rsvpStatus, status, plusOneCount, dietaryRestrictions, startTime, date, location, description, category, amount, budget). NEVER call an update tool with only an "id" without passing the field values to update (e.g. pass {"id": "<target_id>", "rsvpStatus": "attending"}).\n`;
+              workerSystemPrompt += `\n- CRITICAL FIELD EXTRACTION MANDATE: When calling an UPDATE or CREATE tool, carefully extract ALL target field values declared in the tool input schema that are mentioned in the user prompt and thread history. NEVER call an update tool with only an "id" without passing the declared field values to update.\n`;
               workerSystemPrompt += `\n- TARGET ITEM SCOPE: Execute updates or deletions ONLY for the item(s) explicitly named in the CURRENT user request. Do NOT execute tool calls for historical items from previous conversation turns unless explicitly named in the current prompt.\n`;
-              workerSystemPrompt += `\n- CRITICAL EXCLUSIVE TARGET DIRECTIVE: You MUST ONLY invoke action tools (delete/update) for the EXACT items explicitly named in the prompt (e.g. if the prompt says "delete New Guest Name and New Guest", execute EXACTLY 2 tool calls for those 2 items). DO NOT generate tool calls for any other items returned in the list context!\n`;
+              workerSystemPrompt += `\n- CRITICAL EXCLUSIVE TARGET DIRECTIVE: You MUST ONLY invoke action tools (delete/update) for the EXACT items explicitly named in the user prompt. DO NOT generate tool calls for any other items returned in the list context!\n`;
               workerSystemPrompt += `\n- SINGLE CREATION DIRECTIVE: When the user requests to create or add a new record (e.g. "create a new item"), execute EXACTLY ONE create tool call for that new item. DO NOT re-execute creation tool calls for historical items mentioned in previous conversation turns.\n`;
               if (nodePlanParams && Object.keys(nodePlanParams).length > 0) {
                 const verbStr = allowedVerbs.length > 0 ? allowedVerbs.join("/") : "EXECUTE";
