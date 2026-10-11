@@ -264,6 +264,17 @@ function parseMarkdownToReact(content: string): React.ReactNode {
 }
 
 export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
+  if (message.role === "system") {
+    return (
+      <div className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-950/60 border border-slate-900 text-xs text-slate-400 font-mono my-2 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shrink-0">
+          <Bot className="h-3.5 w-3.5" />
+        </div>
+        <span className="flex-1 leading-normal">{message.content}</span>
+      </div>
+    );
+  }
+
   const isUser = message.role === "user";
 
   return (

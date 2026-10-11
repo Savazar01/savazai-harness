@@ -167,35 +167,87 @@ const DOCS_MODULES: DocModule[] = [
     title: "Module 2: Agent Workspace (Live AI Operations)",
     shortTitle: "2. Agent Workspace",
     icon: Bot,
-    description: "Learn how to interact with multi-agent teams, manage conversation sessions, inspect the execution timeline, and personalize your chat interface.",
+    description: "Learn how to interact with multi-agent teams, toggle between Published Agentflows and Direct MCP Chat, inspect execution telemetry, and manage workspace tools.",
     sections: [
       {
-        id: "live-interaction",
-        title: "Live Interaction & Multi-Agent Collaboration",
-        badge: "User Guide",
-        summary: "The Agent Workspace provides an interactive chat playground where multi-agent teams execute tasks collaboratively.",
-        steps: [
+        id: "workspace-execution-modes",
+        title: "Dual Execution Modes: Published Agentflows vs Direct MCP Chat",
+        badge: "Overview",
+        summary: "The Agent Workspace provides two distinct execution modes, cleanly decoupled to serve different operational requirements.",
+        highlights: [
           {
-            step: 1,
-            title: "Navigate to Agent Workspace",
-            description: "Click 'Agent Workspace' in the left sidebar or visit /dashboard."
+            label: "Mode 1: Published Agentflows (Multi-Agent LangGraph Engine)",
+            description: "Used for high-governance business processes designed in Capability Studio. The orchestrator compiles a full multi-agent pipeline: a Supervisor Node formulates an execution plan, Specialist Teams and Worker Nodes invoke tools, and a Synthesizer Node outputs clean executive summaries. Supports Plan-First Human-in-the-Loop approval cards."
           },
           {
-            step: 2,
-            title: "Compose Your Business Request",
-            description: "Type your query, analytical task, or automation prompt in the bottom input bar."
-          },
-          {
-            step: 3,
-            title: "Review Streaming Multi-Agent Execution",
-            description: "Watch as the Supervisor formulates an execution strategy, specialist workers activate tools, and the Synthesizer generates your final structured response."
+            label: "Mode 2: Direct MCP Chat (High-Speed Conversational AI)",
+            description: "Used for direct ad-hoc querying of connected Model Context Protocol (MCP) servers (e.g. NSE Bhavcopy, CM Market, GitHub). Operates without supervisor overhead or plan approval cards. Dynamically binds only the tools from explicitly selected servers using native LLM function calling."
           }
         ],
         callout: {
           type: "tip",
-          title: "Plan-First vs Autonomous Execution",
-          message: "When 'Plan First' mode is active, the agent will present an execution plan card for your approval before taking any actions. You can click 'Approve & Execute', 'Adjust & Re-Plan' with new instructions, or 'Reject & Re-Plan'."
+          title: "Switching Modes",
+          message: "Use the top execution selector in Agent Workspace to toggle between 'Published Flow' (select any compiled workflow from Capability Studio) and 'Direct MCP' (select one or more connected MCP servers)."
         }
+      },
+      {
+        id: "hitl-plan-approval",
+        title: "Human-in-the-Loop (HITL) Plan-First Approval Protocol",
+        badge: "User Guide",
+        summary: "In Published Agentflow mode, when 'Plan First' execution is active, the system presents an interactive Plan-First Approval Card before specialist workers execute tools.",
+        steps: [
+          {
+            step: 1,
+            title: "Plan Formulation",
+            description: "The Supervisor analyzes your prompt, breaks down required steps, and pauses execution at the approval boundary (PENDING_APPROVAL)."
+          },
+          {
+            step: 2,
+            title: "Parameter Review & Input",
+            description: "Any missing business parameters are displayed in an interactive clarification form. Technical internal IDs (such as database UUIDs) are automatically resolved behind the scenes."
+          },
+          {
+            step: 3,
+            title: "Operator Decision Actions",
+            description: "Choose one of 4 interactive actions: 'Approve & Execute Plan' (resumes worker execution), 'Submit Details & Execute' (submits parameters and executes), 'Adjust & Re-Plan' (provides instructions to revise the plan), or 'Reject & Re-Plan' (discards the plan)."
+          }
+        ]
+      },
+      {
+        id: "dynamic-mcp-workspace",
+        title: "Dynamic MCP Discovery & Workspace Exposure Control",
+        badge: "How-To Guide",
+        summary: "SavazAI dynamically discovers tools from connected MCP servers across streamable-http, sse, and stdio transports.",
+        highlights: [
+          {
+            label: "Live Granular Schema Hydration",
+            description: "External servers expose their full tool catalogs (e.g. 21 granular tools for NSE Bhavcopy, 15 tools for CM Market) with complete input schemas and descriptions."
+          },
+          {
+            label: "Workspace Visibility Flag (workspaceEnabled)",
+            description: "Administrators can configure each MCP server in the Command Center with 'workspaceEnabled: true' (available in Agent Workspace chat) or 'workspaceEnabled: false' (exclusive to Capability Studio flows)."
+          },
+          {
+            label: "Resilient Offline & Fallback Caching",
+            description: "If an external remote endpoint experiences transient network latency, the aggregator retains known registered tool definitions rather than falling back to empty tool arrays."
+          }
+        ]
+      },
+      {
+        id: "automated-context-resolution",
+        title: "Automated Technical Context Resolution",
+        badge: "Safety Rule",
+        summary: "End users should never need to look up or input internal technical IDs or database UUIDs.",
+        highlights: [
+          {
+            label: "Zero-UUID Guardrail",
+            description: "Clarification forms and chat prompts strip internal keys (such as weddingId, tenantId, workspaceId) from user-facing prompts."
+          },
+          {
+            label: "Intelligent Getter Resolution",
+            description: "Before tool execution, the engine queries active sessions and assigned getter tools (e.g. get_<entity> or list_<entity>) to resolve and bind the required primary and foreign keys automatically."
+          }
+        ]
       },
       {
         id: "conversation-threads",

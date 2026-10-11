@@ -28,7 +28,7 @@ interface Skill {
   name: string;
   description: string;
   instructions: string;
-  category: "open" | "native" | "mcp" | "custom";
+  category: "open" | "native" | "mcp" | "custom" | string;
 }
 
 interface OkfConcept {
@@ -40,7 +40,7 @@ interface OkfConcept {
 interface RegisteredTool {
   name: string;
   label: string;
-  category: "native" | "custom" | "mcp" | "open";
+  category: "native" | "custom" | "mcp" | "open" | string;
   status: "active" | "needs_key";
   description: string;
 }

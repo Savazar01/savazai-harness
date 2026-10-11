@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Send, Paperclip, X, ChevronDown, Square } from "lucide-react";
+import { Send, Paperclip, X, ChevronDown, Square, Zap, Server, Check, Layers } from "lucide-react";
 import { ChatMessage, type ChatMessageData } from "./chat-message";
 import { SystemTrace, type TraceEvent } from "./system-trace";
 import { streamFromBackend } from "@/lib/stream-client";
@@ -104,6 +104,8 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
     node: string;
     plan: PlanItem[];
     status: string;
+    planSummary?: string | null;
+    clarificationPrompt?: string | null;
   } | null>(null);
   const [feedbackInput, setFeedbackInput] = useState("");
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
@@ -117,6 +119,15 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dynamicModels, setDynamicModels] = useState<Record<string, string[]>>({});
 
+  // Dynamic Workspace Target: Published Agentflows vs Direct MCP
+  const [executionTarget, setExecutionTarget] = useState<"agentflow" | "mcp">("agentflow");
+  const [publishedFlows, setPublishedFlows] = useState<Array<{ id: string; name: string; description?: string; status?: string }>>([]);
+  const [selectedFlowId, setSelectedFlowId] = useState<string>("");
+  const [flowDropdownOpen, setFlowDropdownOpen] = useState(false);
+
+  const [discoveredServers, setDiscoveredServers] = useState<Array<{ serverId: string; tools: Array<{ name: string; description?: string }>; workspaceEnabled?: boolean }>>([]);
+  const [mcpDropdownOpen, setMcpDropdownOpen] = useState(false);
+
   useEffect(() => {
     const prov = storedProviders[activeProvider];
     if (prov && prov.endpoint && prov.apiKey) {
@@ -127,6 +138,42 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
       });
     }
   }, [activeProvider, storedProviders]);
+
+  // Dynamically discover published agentflows and MCP servers from DB / Command Center
+  useEffect(() => {
+    // 1. Fetch published Agentflows
+    fetch("/api/agentflows")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          const published = data.filter((f) => f.status === "published");
+          setPublishedFlows(published);
+          if (published.length > 0) {
+            setSelectedFlowId(published[0].id);
+            setExecutionTarget("agentflow");
+          } else {
+            setExecutionTarget("mcp");
+          }
+        }
+      })
+      .catch((err) => console.warn("[ChatWorkspace] Failed to fetch agentflows:", err));
+
+    // 2. Fetch all registered MCP servers and their granular tools
+    fetch("/api/mcp")
+      .then((res) => (res.ok ? res.json() : { servers: [] }))
+      .then((data) => {
+        if (data && Array.isArray(data.servers)) {
+          // Only expose servers configured as workspace-enabled (internal/studio-only servers are excluded)
+          const workspaceServers = data.servers.filter(
+            (s: { serverId: string; workspaceEnabled?: boolean }) => s.workspaceEnabled !== false
+          );
+          setDiscoveredServers(workspaceServers);
+          // Opt-in selection: Do NOT bulk-activate all servers. Start empty so user explicitly picks their target
+          setActiveTools(new Set());
+        }
+      })
+      .catch((err) => console.warn("[ChatWorkspace] Failed to fetch MCP servers:", err));
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
@@ -285,8 +332,14 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
       threadRegisteredRef.current = true;
     }
 
-    addTrace("node", "Supervisor Node", resumePayload ? "Resuming execution" : "Routing message through agent graph");
-    addTrace("masking", "PII Gateway Active", "Scanning input for sensitive data");
+    if (executionTarget === "agentflow") {
+      addTrace("node", "Supervisor Node", resumePayload ? "Resuming execution" : "Routing message through agent graph");
+      addTrace("masking", "PII Gateway Active", "Scanning input for sensitive data");
+    } else {
+      const serverNames = activeTools.size > 0 ? Array.from(activeTools).join(", ") : "None";
+      addTrace("node", "Direct MCP Mode", `Routing tool queries to active servers: [${serverNames}]`);
+      addTrace("masking", "PII Gateway Active", "Scanning input for sensitive data");
+    }
 
     abortRef.current = new AbortController();
     const filesToSend = attachedFiles.length > 0 ? attachedFiles : undefined;
@@ -296,13 +349,55 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
         text,
         "WedPlanAI-Local",
         (event) => {
-          if (event.type === "interrupt") {
+          if (event.type === "interrupt" && executionTarget === "agentflow") {
             setPendingInterrupt({
               node: event.node ?? "supervisorNode",
               plan: (event.interrupt?.plan as PlanItem[]) || [],
               status: event.interrupt?.status || "WAITING_USER_APPROVAL",
+              planSummary: event.interrupt?.planSummary || null,
+              clarificationPrompt: event.interrupt?.clarificationPrompt || null,
             });
             addTrace("node", event.node || "Supervisor", "Execution paused awaiting user approval");
+
+            // Auto-populate feedbackInput with template fields and bracketed choices
+            if (event.interrupt?.clarificationPrompt) {
+              const lines = String(event.interrupt.clarificationPrompt).split("\n");
+              const fieldLines = lines
+                .filter((l) => l.includes("• ") || l.includes("- ") || /^\d+\./.test(l.trim()))
+                .map((l) => {
+                  const rawLabel = l.replace(/^[\s•\-0-9.]+\s*/, "").replace(/\*/g, "").trim();
+                  const fieldName = rawLabel.split("[")[0].split("(")[0].trim();
+                  const choicesMatch = rawLabel.match(/\[Keep [^\]]+:\s*([^\]]+)\]/i);
+                  const choices = choicesMatch ? ` [${choicesMatch[1].trim()}]` : "";
+                  return fieldName ? `${fieldName}: ${choices}` : null;
+                })
+                .filter(Boolean);
+
+              if (fieldLines.length > 0) {
+                setFeedbackInput(fieldLines.join("\n"));
+              }
+            }
+
+            // Remove empty assistant placeholder so chat bubble doesn't look blank or frozen
+            setMessages((prev) => {
+              const updated = [...prev];
+              const last = updated[updated.length - 1];
+              if (last && last.role === "assistant" && !last.content) {
+                updated.pop();
+              }
+              return updated;
+            });
+            return;
+          }
+          if (event.type === "trace") {
+            addTrace("node", "System Trace", String(event.content || "Trace event"));
+            return;
+          }
+          if (event.type === "audit") {
+            addTrace("masking", "PII Audit", String(event.metadata?.subtype || event.node || "Compliance audit"));
+            return;
+          }
+          if (event.type === "done") {
             return;
           }
           if (event.node) {
@@ -315,12 +410,13 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
             });
           }
           if (event.type === "tool" || event.metadata?.tool) {
-            const toolName = event.metadata?.toolName ?? event.metadata?.tool ?? "unknown";
+            const toolName = event.metadata?.toolName ?? event.metadata?.tool ?? (event as unknown as Record<string, unknown>).tool ?? "unknown";
             const toolArgs = event.metadata?.args ? JSON.stringify(event.metadata.args) : undefined;
             addTrace("tool", `MCP Tool: ${toolName}`, toolArgs ?? "Tool dispatched", {
               input: event.metadata?.args ? JSON.stringify(event.metadata.args, null, 2).slice(0, 600) : undefined,
               response: event.metadata?.result ? JSON.stringify(event.metadata.result, null, 2).slice(0, 600) : undefined,
             });
+            if (event.type === "tool") return;
           }
           if (event.state?.piiCategories) {
             const piiFields = event.state.piiCategories as Array<{ type: string; count: number; label: string }>;
@@ -342,13 +438,31 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
               });
             }
           }
+          if (event.type === "trace" && event.content) {
+            addTrace("node", "Trace", String(event.content).slice(0, 200));
+            return;
+          }
+          if (event.type === "tool" || (event.node && event.node.includes("Tool"))) {
+            addTrace("tool", event.node || "Tool Call", String(event.content || "Executing MCP operation").slice(0, 200));
+            return;
+          }
           if (event.content) {
-            addTrace("completion", "LLM Chunk", `${event.content.length} chars received`);
+            const rawContent = String(event.content);
+            if (
+              rawContent.startsWith("[Supervisor:") ||
+              rawContent.startsWith("[Worker:") ||
+              rawContent.startsWith("[Team:") ||
+              rawContent.startsWith("[Graph ")
+            ) {
+              addTrace("node", "Internal Trace", rawContent.slice(0, 200));
+              return;
+            }
+            addTrace("completion", "LLM Chunk", `${rawContent.length} chars received`);
             setMessages((prev) => {
               const updated = [...prev];
               const last = updated[updated.length - 1];
               if (last && last.role === "assistant") {
-                updated[updated.length - 1] = { ...last, content: last.content + event.content };
+                updated[updated.length - 1] = { ...last, content: last.content + rawContent };
               }
               return updated;
             });
@@ -358,11 +472,13 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
         activeProvider,
         activeModel,
         filesToSend,
-        activeTools.size > 0 ? Array.from(activeTools) : undefined,
+        executionTarget === "mcp" && activeTools.size > 0 ? Array.from(activeTools) : undefined,
         threadId,
-        undefined,
+        executionTarget === "agentflow" && selectedFlowId ? selectedFlowId : undefined,
         executionModeOverride,
         resumePayload,
+        executionTarget === "mcp" ? "direct-mcp" : "published-flow",
+        executionTarget === "mcp" && activeTools.size > 0 ? Array.from(activeTools) : undefined,
       );
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === "AbortError") return;
@@ -384,7 +500,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
       abortRef.current = null;
       setAttachedFiles([]);
     }
-  }, [threadId, activeProvider, activeModel, attachedFiles, activeTools, executionModeOverride, addTrace]);
+  }, [threadId, activeProvider, activeModel, attachedFiles, activeTools, executionTarget, selectedFlowId, executionModeOverride, addTrace]);
 
   const handleSend = useCallback(async () => {
     const text = input.trim();
@@ -406,20 +522,52 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
     await executeStream(null, { approved: true, plan: currentPlan });
   }, [streaming, pendingInterrupt, executeStream]);
 
-  const handleSendFeedback = useCallback(async () => {
-    const feedback = feedbackInput.trim();
-    if (!feedback || streaming) return;
+  const handleRejectReplan = useCallback(async () => {
+    if (streaming) return;
+    const feedback = feedbackInput.trim() || "Plan rejected by user. Please re-evaluate user intent and formulate a new plan.";
     setFeedbackInput("");
     setShowFeedbackForm(false);
     const systemMsg: ChatMessageData = {
       id: nextId(),
       role: "system",
-      content: `⚡ Execution plan modified with feedback: "${feedback}". Re-planning...`,
+      content: `❌ Execution plan rejected: "${feedback}". Re-evaluating plan with Supervisor...`,
       timestamp: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, systemMsg]);
-    await executeStream(null, { approved: false, feedback });
-  }, [feedbackInput, streaming, executeStream]);
+    await executeStream(null, { approved: false, feedback: `REJECT & REPLAN: ${feedback}` });
+  }, [streaming, feedbackInput, executeStream]);
+
+  const handleEditReplan = useCallback(async () => {
+    if (streaming) return;
+    const feedback = feedbackInput.trim();
+    if (!feedback) return;
+    setFeedbackInput("");
+    setShowFeedbackForm(false);
+    const systemMsg: ChatMessageData = {
+      id: nextId(),
+      role: "system",
+      content: `📝 Plan adjustment requested: "${feedback}". Formulating updated plan with Supervisor...`,
+      timestamp: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, systemMsg]);
+    await executeStream(null, { approved: false, feedback: `REPLAN CLARIFICATION: ${feedback}` });
+  }, [streaming, feedbackInput, executeStream]);
+
+  const handleSendFeedback = useCallback(async () => {
+    const feedback = feedbackInput.trim();
+    if (!feedback || streaming) return;
+    const currentPlan = pendingInterrupt?.plan || [];
+    setFeedbackInput("");
+    setShowFeedbackForm(false);
+    const systemMsg: ChatMessageData = {
+      id: nextId(),
+      role: "system",
+      content: `✓ Parameter details provided: "${feedback}". Executing plan...`,
+      timestamp: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, systemMsg]);
+    await executeStream(feedback, { approved: true, plan: currentPlan, feedback });
+  }, [feedbackInput, streaming, pendingInterrupt, executeStream]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -431,12 +579,174 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
   return (
     <div className="flex h-full">
       <div className="flex flex-col flex-1 min-w-0">
-        <div className="flex items-center justify-between px-6 py-3 border-b border-slate-900 bg-slate-950/40">
-          <div>
-            <h2 className="text-lg font-bold text-white">Agent Workspace</h2>
-            <p className="text-xs text-slate-400">Multi-agent chat with LangGraph orchestration</p>
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 border-b border-slate-900 bg-slate-950/60 backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <div>
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                Agent Workspace
+                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  {executionTarget === "agentflow" ? "Workflow Graph" : "Direct MCP"}
+                </span>
+              </h2>
+            </div>
+
+            {/* Mode Switcher Tabs */}
+            <div className="flex items-center p-0.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
+              <button
+                onClick={() => setExecutionTarget("agentflow")}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all ${
+                  executionTarget === "agentflow"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+                title="Execute compiled multi-agent workflows"
+              >
+                <Zap className="h-3.5 w-3.5" />
+                <span>Published Agentflows</span>
+                {publishedFlows.length > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-900/60 text-indigo-300 ml-0.5">
+                    {publishedFlows.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setExecutionTarget("mcp")}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all ${
+                  executionTarget === "mcp"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+                title="Execute direct queries with active MCP servers"
+              >
+                <Server className="h-3.5 w-3.5" />
+                <span>Direct MCP Chat</span>
+                {discoveredServers.length > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-900/60 text-indigo-300 ml-0.5">
+                    {discoveredServers.length}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
-          <div className="hidden lg:block" />
+
+          {/* Target Specific Selector Dropdown */}
+          <div className="flex items-center gap-2">
+            {executionTarget === "agentflow" ? (
+              <div className="relative">
+                <button
+                  onClick={() => setFlowDropdownOpen(!flowDropdownOpen)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-indigo-500/50 text-xs font-medium text-slate-200 hover:text-white transition-all shadow-sm"
+                >
+                  <Layers className="h-3.5 w-3.5 text-indigo-400" />
+                  <span className="max-w-[200px] truncate">
+                    {publishedFlows.find((f) => f.id === selectedFlowId)?.name || (publishedFlows.length > 0 ? "Select Agentflow" : "No Published Flows")}
+                  </span>
+                  <ChevronDown className="h-3 w-3 text-slate-500 ml-1" />
+                </button>
+                {flowDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setFlowDropdownOpen(false)} />
+                    <div className="absolute right-0 top-full mt-1.5 z-30 w-72 rounded-2xl border border-slate-800 bg-[#14141f] shadow-2xl shadow-black/80 py-2 divide-y divide-slate-800/60">
+                      <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Published Agentflows ({publishedFlows.length})
+                      </div>
+                      <div className="py-1 max-h-60 overflow-y-auto">
+                        {publishedFlows.length === 0 ? (
+                          <div className="px-3 py-2 text-xs text-slate-500 italic">
+                            No published flows found. Publish a flow in Capability Studio.
+                          </div>
+                        ) : (
+                          publishedFlows.map((flow) => (
+                            <button
+                              key={flow.id}
+                              onClick={() => {
+                                setSelectedFlowId(flow.id);
+                                setFlowDropdownOpen(false);
+                              }}
+                              className={`w-full text-left px-3 py-2 text-xs flex flex-col gap-0.5 hover:bg-slate-800/50 transition-colors ${
+                                flow.id === selectedFlowId ? "bg-indigo-600/15 text-indigo-300" : "text-slate-300"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-semibold text-white">{flow.name}</span>
+                                {flow.id === selectedFlowId && <Check className="h-3.5 w-3.5 text-indigo-400" />}
+                              </div>
+                              {flow.description && (
+                                <span className="text-[11px] text-slate-400 line-clamp-1">{flow.description}</span>
+                              )}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="relative">
+                <button
+                  onClick={() => setMcpDropdownOpen(!mcpDropdownOpen)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-indigo-500/50 text-xs font-medium text-slate-200 hover:text-white transition-all shadow-sm"
+                >
+                  <Server className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>
+                    {activeTools.size === 0
+                      ? `Select MCP Server (${discoveredServers.length} available)`
+                      : activeTools.size === 1
+                        ? `MCP: ${Array.from(activeTools)[0]} (${discoveredServers.find(s => s.serverId === Array.from(activeTools)[0])?.tools.length ?? 0} tools)`
+                        : `MCP Servers: ${activeTools.size} Active`}
+                  </span>
+                  <ChevronDown className="h-3 w-3 text-slate-500 ml-1" />
+                </button>
+                {mcpDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setMcpDropdownOpen(false)} />
+                    <div className="absolute right-0 top-full mt-1.5 z-30 w-80 rounded-2xl border border-slate-800 bg-[#14141f] shadow-2xl shadow-black/80 py-2 divide-y divide-slate-800/60">
+                      <div className="px-3 py-1.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <span>Configured MCP Servers ({discoveredServers.length})</span>
+                        <span className="text-emerald-400 font-medium lowercase">live discovery</span>
+                      </div>
+                      <div className="py-1 max-h-72 overflow-y-auto">
+                        {discoveredServers.length === 0 ? (
+                          <div className="px-3 py-2 text-xs text-slate-500 italic">
+                            No MCP servers configured or reachable. Check Command Center settings.
+                          </div>
+                        ) : (
+                          discoveredServers.map((server) => {
+                            const isSelected = activeTools.has(server.serverId);
+                            return (
+                              <button
+                                key={server.serverId}
+                                onClick={() => toggleTool(server.serverId)}
+                                className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-800/50 transition-colors ${
+                                  isSelected ? "bg-emerald-500/10 text-emerald-300" : "text-slate-400"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  <div className={`h-2 w-2 rounded-full ${isSelected ? "bg-emerald-400" : "bg-slate-600"}`} />
+                                  <div>
+                                    <div className="font-semibold text-white">{server.serverId}</div>
+                                    <div className="text-[10px] text-slate-500">
+                                      {server.tools.length} granular tool{server.tools.length !== 1 ? "s" : ""} registered
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                  isSelected ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-slate-800 text-slate-500 border-slate-700"
+                                }`}>
+                                  {isSelected ? "Active" : "Disabled"}
+                                </div>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <div
@@ -462,8 +772,8 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
             />
           ))}
 
-          {pendingInterrupt && (
-            <div className="rounded-2xl border border-indigo-500/30 bg-[#0b0b14] p-5 shadow-xl max-w-xl mx-auto my-4 space-y-4 animate-in fade-in duration-200">
+          {pendingInterrupt && executionTarget === "agentflow" && (
+            <div className="rounded-2xl border border-indigo-500/30 bg-[#0b0b14] p-5 shadow-xl max-w-3xl w-full mx-auto my-4 space-y-4 animate-in fade-in duration-200">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 shrink-0">
                   <span className="text-base">📋</span>
@@ -474,7 +784,25 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                 </div>
               </div>
 
-              <div className="space-y-3 border border-slate-900 bg-slate-950/20 rounded-xl p-3.5 max-h-60 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+              <div className="space-y-3 border border-slate-900 bg-slate-950/40 rounded-xl p-3.5 max-h-72 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+                {pendingInterrupt.clarificationPrompt && (
+                  <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3.5 text-xs text-amber-200 leading-relaxed font-sans font-medium mb-3">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-2 flex items-center gap-1.5">
+                      <span>⚠️</span> Information Required To Perform Action
+                    </div>
+                    <div className="whitespace-pre-wrap text-slate-100 text-xs font-mono bg-slate-950/70 p-3 rounded-lg border border-amber-500/20 leading-relaxed">
+                      {pendingInterrupt.clarificationPrompt}
+                    </div>
+                  </div>
+                )}
+                {pendingInterrupt.planSummary && (
+                  <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-3 text-xs text-indigo-200 leading-relaxed font-sans font-medium mb-3">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1 flex items-center gap-1">
+                      <span>💡</span> Implementation Strategy Summary
+                    </div>
+                    {pendingInterrupt.planSummary}
+                  </div>
+                )}
                 {pendingInterrupt.plan.map((item, idx) => (
                   <div key={idx} className="flex flex-col gap-1 border-b border-slate-900 pb-2 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between gap-2">
@@ -508,49 +836,60 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                 ))}
               </div>
 
-              {showFeedbackForm ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={feedbackInput}
-                    onChange={(e) => setFeedbackInput(e.target.value)}
-                    placeholder="Provide feedback on how to modify the plan..."
-                    className="w-full rounded-xl border border-slate-800 bg-[#06060b] p-3 text-xs text-white placeholder-slate-600 outline-none resize-none focus:border-indigo-500"
-                    rows={2.5}
-                  />
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      onClick={() => setShowFeedbackForm(false)}
-                      className="px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 hover:text-white text-[10px] font-semibold"
-                    >
-                      Back
-                    </button>
-                    <button
-                      onClick={handleSendFeedback}
-                      disabled={!feedbackInput.trim() || streaming}
-                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Send Feedback
-                    </button>
-                  </div>
+              <div className="space-y-2 border-t border-slate-900/80 pt-4">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+                  <span>Provide or adjust execution parameters below:</span>
+                  <span className="text-[11px] font-normal text-indigo-400">💡 Edit bracketed choices or type details</span>
                 </div>
-              ) : (
-                <div className="flex gap-2">
+                <textarea
+                  value={feedbackInput}
+                  onChange={(e) => setFeedbackInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.ctrlKey && feedbackInput.trim()) {
+                      e.preventDefault();
+                      handleSendFeedback();
+                    }
+                  }}
+                  placeholder="Type execution parameters or instructions here (e.g. date: 2026-10-09, symbol: INFY)..."
+                  className="w-full rounded-xl border-2 border-indigo-500/40 bg-[#06060b] p-4 text-base text-slate-100 placeholder-slate-500 outline-none resize-y focus:border-indigo-500 font-mono leading-relaxed transition-all min-h-[140px] shadow-inner"
+                  rows={Math.max(4, (feedbackInput.match(/\n/g) || []).length + 1)}
+                />
+                <div className="flex flex-wrap gap-2 justify-end pt-2">
+                  <button
+                    onClick={handleRejectReplan}
+                    disabled={streaming}
+                    className="px-3.5 py-2 rounded-xl bg-rose-900/60 hover:bg-rose-800 border border-rose-500/30 text-rose-200 font-semibold text-xs flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow"
+                  >
+                    <span>❌</span> Reject &amp; Re-Plan
+                  </button>
+
+                  {feedbackInput.trim() && (
+                    <button
+                      onClick={handleEditReplan}
+                      disabled={streaming}
+                      className="px-3.5 py-2 rounded-xl bg-amber-900/60 hover:bg-amber-800 border border-amber-500/30 text-amber-200 font-semibold text-xs flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow"
+                    >
+                      <span>📝</span> Adjust &amp; Re-Plan
+                    </button>
+                  )}
+
+                  <button
+                    onClick={handleSendFeedback}
+                    disabled={!feedbackInput.trim() || streaming}
+                    className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed shadow transition-colors"
+                  >
+                    <span>✨</span> Submit Details &amp; Execute
+                  </button>
+
                   <button
                     onClick={handleApproveExecute}
                     disabled={streaming}
-                    className="flex-1 px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow flex items-center gap-1.5"
                   >
-                    Approve &amp; Execute
-                  </button>
-                  <button
-                    onClick={() => setShowFeedbackForm(true)}
-                    disabled={streaming}
-                    className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs hover:bg-slate-700 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Modify / Feedback
+                    <span>✓</span> Approve &amp; Execute Plan
                   </button>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>
@@ -623,32 +962,23 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                   accept="image/*,.pdf,.txt,.csv,.json,.xml,.md"
                 />
 
-                {initialConfig.designTokens?.mcpServers && (
-                  <div className="flex items-center gap-1.5 ml-1">
-                    {(() => {
-                      let serverNames: string[] = [];
-                      try {
-                        const parsed = JSON.parse(initialConfig.designTokens.mcpServers);
-                        const serversObj = parsed.mcpServers || parsed;
-                        serverNames = Object.keys(serversObj);
-                      } catch {
-                        serverNames = ["wedplanai", "playwright"];
-                      }
-                      return serverNames.map((name) => (
-                        <button
-                          key={name}
-                          onClick={() => toggleTool(name)}
-                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold border transition-all ${
-                            activeTools.has(name)
-                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                              : "bg-slate-800/40 border-slate-700/40 text-slate-400 hover:text-slate-300"
-                          }`}
-                        >
-                          <span className={`h-1.5 w-1.5 rounded-full ${activeTools.has(name) ? "bg-emerald-400" : "bg-slate-600"}`} />
-                          {name}
-                        </button>
-                      ));
-                    })()}
+                {executionTarget === "agentflow" ? (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[11px] font-medium ml-1">
+                    <Zap className="h-3 w-3 text-indigo-400 shrink-0" />
+                    <span className="truncate max-w-[200px]">
+                      {publishedFlows.find((f) => f.id === selectedFlowId)?.name || "Workflow Active"}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium ml-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                    <span>
+                      {activeTools.size === 0
+                        ? "0 MCP Servers Active"
+                        : activeTools.size === 1
+                          ? `1 MCP Server Active: ${Array.from(activeTools)[0]}`
+                          : `${activeTools.size} MCP Servers Active`}
+                    </span>
                   </div>
                 )}
               </div>

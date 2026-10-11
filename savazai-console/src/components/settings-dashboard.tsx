@@ -452,6 +452,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
   const [mcpServerNameInput, setMcpServerNameInput] = useState("");
   const [mcpServerUrlInput, setMcpServerUrlInput] = useState("");
   const [mcpServerActiveInput, setMcpServerActiveInput] = useState(true);
+  const [mcpServerWorkspaceEnabledInput, setMcpServerWorkspaceEnabledInput] = useState(true);
 
   const agentsMd = tokens.agentsMd || "";
   const [analyticsData, setAnalyticsData] = useState<TelemetryStats | null>(null);
@@ -801,8 +802,10 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
         const restConfig = { ...server };
         delete restConfig.active;
         delete restConfig.disabled;
+        delete restConfig.workspaceEnabled;
         setMcpServerUrlInput(JSON.stringify(restConfig, null, 2));
         setMcpServerActiveInput(!(server.active === false || server.disabled === true));
+        setMcpServerWorkspaceEnabledInput(server.workspaceEnabled !== false);
         setIsEditMcpOpen(true);
       }
     } else {
@@ -814,6 +817,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
         env: {}
       }, null, 2));
       setMcpServerActiveInput(true);
+      setMcpServerWorkspaceEnabledInput(true);
       setIsEditMcpOpen(true);
     }
   };
@@ -833,6 +837,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
 
     parsedConfig.active = mcpServerActiveInput;
     parsedConfig.disabled = !mcpServerActiveInput;
+    parsedConfig.workspaceEnabled = mcpServerWorkspaceEnabledInput;
 
     const parsedMcpObj = parseMcp();
     
@@ -1503,6 +1508,11 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                                   }`}>
                                     {isActive ? "Active" : "Disabled"}
                                   </span>
+                                  <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ${
+                                    cfg.workspaceEnabled !== false ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20" : "bg-slate-800 text-slate-500"
+                                  }`}>
+                                    {cfg.workspaceEnabled !== false ? "Workspace: Chat Enabled" : "Workspace: Studio Only"}
+                                  </span>
                                 </div>
                                 <div className="text-[11px] text-slate-400 font-mono">
                                   <span className="text-indigo-400 font-bold">{String(cfg.command || "npx")}</span>
@@ -1515,15 +1525,39 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                                 )}
                               </div>
                               <div className="flex items-center gap-3">
-                                <label className="relative inline-flex items-center cursor-pointer select-none">
-                                  <input
-                                    type="checkbox"
-                                    checked={isActive}
-                                    onChange={() => toggleMcpActive(name)}
-                                    className="sr-only peer"
-                                  />
-                                  <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600 peer-checked:after:bg-white"></div>
-                                </label>
+                                <div className="flex items-center gap-2 pr-2 border-r border-slate-800" title="Expose in Agent Workspace for direct chat">
+                                  <span className="text-[10px] text-slate-400 hidden sm:inline">Workspace Chat:</span>
+                                  <label className="relative inline-flex items-center cursor-pointer select-none">
+                                    <input
+                                      type="checkbox"
+                                      checked={cfg.workspaceEnabled !== false}
+                                      onChange={() => {
+                                        const currentVal = cfg.workspaceEnabled !== false;
+                                        const parsedMcpObj = parseMcp();
+                                        if (parsedMcpObj[name]) {
+                                          parsedMcpObj[name].workspaceEnabled = !currentVal;
+                                          setMcpServers(JSON.stringify({ mcpServers: parsedMcpObj }, null, 2));
+                                          setStatus({ type: "success", message: `Updated workspace visibility for ${name}. Save changes to apply.` });
+                                        }
+                                      }}
+                                      className="sr-only peer"
+                                    />
+                                    <div className="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600 peer-checked:after:bg-white"></div>
+                                  </label>
+                                </div>
+
+                                <div className="flex items-center gap-2" title="Toggle active status">
+                                  <span className="text-[10px] text-slate-400 hidden sm:inline">Active:</span>
+                                  <label className="relative inline-flex items-center cursor-pointer select-none">
+                                    <input
+                                      type="checkbox"
+                                      checked={isActive}
+                                      onChange={() => toggleMcpActive(name)}
+                                      className="sr-only peer"
+                                    />
+                                    <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600 peer-checked:after:bg-white"></div>
+                                  </label>
+                                </div>
 
                                 <button
                                   type="button"
@@ -2307,6 +2341,22 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                     className="sr-only peer"
                   />
                   <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600 peer-checked:after:bg-white"></div>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-t border-slate-800">
+                <div>
+                  <span className="text-xs font-semibold text-slate-300 block">Expose in Agent Workspace</span>
+                  <span className="text-[10px] text-slate-500">Allow direct ad-hoc chat with this MCP in /dashboard</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={mcpServerWorkspaceEnabledInput}
+                    onChange={(e) => setMcpServerWorkspaceEnabledInput(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 peer-checked:after:bg-white"></div>
                 </label>
               </div>
             </div>

@@ -12,6 +12,7 @@ import {
   sanitizeTableCell,
   type SkillRecord,
 } from "@/lib/tool-gateway";
+import { McpAggregator } from "@/lib/mcp/client-aggregator";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -69,7 +70,7 @@ interface ToolExecutionReceipt {
   output_payload: string;
 }
 
-function parseToolCalls(response: string): { name: string; arguments: Record<string, unknown> }[] {
+export function parseToolCalls(response: string): { name: string; arguments: Record<string, unknown> }[] {
   const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/;
   const match = response.match(jsonBlockRegex);
   if (match) {
@@ -509,11 +510,13 @@ async function saveKvState(namespace: string, state: Record<string, string>): Pr
   }
 }
 
-interface LLMProviderConfig {
+export interface LLMProviderConfig {
   apiKey?: string;
   baseUrl?: string;
   models?: string[];
   discoveredModels?: string[];
+  defaultModel?: string;
+  active?: boolean;
 }
 
 async function fetchMcpToolsList(serverUrl: string, headers: Record<string, string>): Promise<{ name: string; description?: string; inputSchema?: Record<string, unknown> }[]> {
@@ -758,11 +761,11 @@ function parseNaturalLanguageDate(input: string): string {
 }
 
 async function autoResolveMissingSystemIds(
-  sseUrl: string,
-  authHeader: string,
+  serverId: string,
   toolName: string,
   args: Record<string, unknown>,
-  nodeTools?: unknown[]
+  nodeTools?: unknown[],
+  toolSchema?: McpToolInputSchema
 ): Promise<Record<string, unknown>> {
   const lowerName = toolName.toLowerCase();
   const isReadTool =
@@ -796,12 +799,13 @@ async function autoResolveMissingSystemIds(
       });
       if (taskListTool) {
         try {
-          const listRes = await callMcpStatelessOrSse(sseUrl, authHeader, taskListTool, {}) as Record<string, unknown>;
+          const aggregator = McpAggregator.getInstance();
+          const listRes = await aggregator.executeTool(serverId, taskListTool, {}, pool);
           let tasksList: Record<string, unknown>[] = [];
           if (listRes && Array.isArray(listRes.content)) {
-            const textBlock = (listRes.content as Record<string, unknown>[]).find(c => (c as Record<string, unknown>)?.type === "text");
-            if (textBlock && typeof (textBlock as Record<string, unknown>).text === "string") {
-              tasksList = JSON.parse((textBlock as Record<string, unknown>).text as string);
+            const textBlock = listRes.content.find(c => c?.type === "text");
+            if (textBlock && typeof textBlock.text === "string") {
+              tasksList = JSON.parse(textBlock.text);
             }
           }
           if (Array.isArray(tasksList) && tasksList.length > 0) {
@@ -833,7 +837,16 @@ async function autoResolveMissingSystemIds(
     }
   }
 
-  // 2. Universal Primary ID and Foreign key resolution (e.g. id, ceremonyId, guestId, assignedUserId, etc.)
+  // Pre-seed any required schema properties ending with 'Id' or '_id' that are missing from args
+  if (toolSchema?.properties) {
+    for (const propKey of Object.keys(toolSchema.properties)) {
+      if (propKey.toLowerCase().endsWith("id") && (newArgs[propKey] === undefined || newArgs[propKey] === null || newArgs[propKey] === "")) {
+        newArgs[propKey] = "";
+      }
+    }
+  }
+
+  // 2. Universal Primary ID and Foreign key resolution (e.g. id, weddingId, ceremonyId, guestId, assignedUserId, etc.)
   for (const [key, val] of Object.entries(newArgs)) {
     if (/^id$|Id$|_id$/i.test(key)) {
       const isPrimaryId = key.toLowerCase() === "id";
@@ -841,14 +854,17 @@ async function autoResolveMissingSystemIds(
         ? toolName.toLowerCase().replace(/^([a-z0-9]+)_/, "").replace(/s$/, "")
         : key.replace(/Id$|_id$/i, "").toLowerCase();
 
-      if (!refEntity || refEntity.endsWith("id") || refEntity === "tenant" || refEntity === "workspace" || refEntity === "column" || refEntity === "parent" || refEntity === "root") continue;
+      if (!refEntity || refEntity.endsWith("id") || refEntity === "column" || refEntity === "parent" || refEntity === "root") continue;
       const strVal = String(val || "").trim();
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(strVal);
 
       if (isUuid) continue;
 
-      // Find an ASSIGNED tool on this Agent node matching list_<refEntity> or get_<refEntity>
-      const matchingListTool = assignedToolNames.find(tn => {
+      // Find an ASSIGNED tool on this Agent node matching get_<refEntity>, fetch_<refEntity>, or list_<refEntity>
+      const matchingTool = assignedToolNames.find(tn => {
+        const lowerTn = tn.toLowerCase();
+        return lowerTn === `get_${refEntity}` || lowerTn === `fetch_${refEntity}`;
+      }) || assignedToolNames.find(tn => {
         const lowerTn = tn.toLowerCase();
         const isQuery =
           lowerTn.startsWith("list_") ||
@@ -865,22 +881,24 @@ async function autoResolveMissingSystemIds(
         return lowerTn.includes(refEntity) || lowerTn.includes(stemRef);
       });
 
-      if (matchingListTool) {
+      if (matchingTool) {
         try {
-          const listRes = await callMcpStatelessOrSse(sseUrl, authHeader, matchingListTool, {}) as Record<string, unknown>;
+          const aggregator = McpAggregator.getInstance();
+          const listRes = await aggregator.executeTool(serverId, matchingTool, {}, pool);
           if (listRes && Array.isArray(listRes.content)) {
-            const textBlock = (listRes.content as Record<string, unknown>[]).find(c => (c as Record<string, unknown>)?.type === "text");
-            if (textBlock && typeof (textBlock as Record<string, unknown>).text === "string") {
-              const refList = JSON.parse((textBlock as Record<string, unknown>).text as string);
-              if (Array.isArray(refList) && refList.length > 0) {
-                let matchedId: string | null = null;
+            const textBlock = listRes.content.find(c => c?.type === "text");
+            if (textBlock && typeof textBlock.text === "string") {
+              const parsed = JSON.parse(textBlock.text);
+              let matchedId: string | null = null;
+
+              if (Array.isArray(parsed) && parsed.length > 0) {
                 const searchTarget = (strVal && strVal !== "unknown" && strVal !== "null")
                   ? strVal
                   : String(newArgs.name || newArgs.title || newArgs.label || newArgs.subject || newArgs.item || "").trim();
 
                 if (searchTarget) {
                   const normVal = searchTarget.toLowerCase().replace(/[^a-z0-9]/g, "");
-                  const reversedList = refList.slice().reverse();
+                  const reversedList = parsed.slice().reverse();
                   const matchedRecord = reversedList.find((r: Record<string, unknown>) => {
                     const candidateNames = Object.keys(r)
                       .filter(k => {
@@ -903,22 +921,31 @@ async function autoResolveMissingSystemIds(
                     matchedId = String(matchedRecord.id);
                   }
                 }
-                if (matchedId) {
-                  newArgs[key] = matchedId;
-                  console.log(`[Auto-Resolution] Resolved ${key} "${searchTarget}" -> UUID "${matchedId}" via assigned tool "${matchingListTool}"`);
-                } else if (!isUuid) {
-                  delete newArgs[key];
-                  console.log(`[Auto-Resolution] Removed non-UUID string "${strVal}" for ${key} because no matching record was found in ${matchingListTool}`);
+              } else if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                // Single-object getter (e.g. get_wedding returning { id: "uuid", ... })
+                if (parsed.id) {
+                  matchedId = String(parsed.id);
+                }
+              }
+
+              if (matchedId) {
+                newArgs[key] = matchedId;
+                console.log(`[Auto-Resolution] Resolved ${key} -> UUID "${matchedId}" via assigned tool "${matchingTool}"`);
+              } else if (!isUuid) {
+                delete newArgs[key];
+                if (strVal) {
+                  console.log(`[Auto-Resolution] Removed non-UUID string "${strVal}" for ${key} because no matching record was found in ${matchingTool}`);
                 }
               }
             }
           }
-        } catch {
+        } catch (mcpErr) {
+          console.warn(`[Auto-Resolution] Failed to resolve ${key} via ${matchingTool}:`, mcpErr);
           if (!isUuid) delete newArgs[key];
         }
       } else if (!isUuid && strVal) {
         delete newArgs[key];
-        console.log(`[Auto-Resolution] Stripped non-UUID string "${strVal}" for ${key} because no list tool for "${refEntity}" is assigned to node`);
+        console.log(`[Auto-Resolution] Stripped non-UUID string "${strVal}" for ${key} because no getter/list tool for "${refEntity}" is assigned to node`);
       }
     }
   }
@@ -1070,112 +1097,26 @@ async function runMcpToolWithResilience(
   args: Record<string, unknown>,
   nodeTools?: unknown[]
 ): Promise<string> {
-  // 1. Resolve active registered MCP endpoint and headers from database config (mcpServers)
-  // Fallback endpoint: reads from env var so it works for any MCP domain without code changes.
-  // Set NEXT_PUBLIC_HARNESS_API_URL and MCP_FALLBACK_TOKEN in .env / Docker secrets.
-  let sseUrl = process.env.MCP_FALLBACK_URL || process.env.NEXT_PUBLIC_HARNESS_API_URL
-    ? `${process.env.NEXT_PUBLIC_HARNESS_API_URL}/api/mcp`
-    : "http://localhost:3056/api/mcp";
-  let authHeader = process.env.MCP_FALLBACK_TOKEN
-    ? `Bearer ${process.env.MCP_FALLBACK_TOKEN}`
-    : "Bearer savaz_crawl_secret";
-  
-  try {
-    const configRes = await pool.query(
-      'SELECT design_tokens as "designTokens" FROM system_configurations LIMIT 1'
-    );
-    if (configRes.rows.length > 0 && configRes.rows[0].designTokens) {
-      const tokens = configRes.rows[0].designTokens as Record<string, unknown>;
-      const mcpServersVal = tokens.mcpServers;
-      if (mcpServersVal) {
-        let mcpServersObj: Record<string, unknown> = {};
-        if (typeof mcpServersVal === "string") {
-          try {
-            const parsed = JSON.parse(mcpServersVal);
-            mcpServersObj = parsed.mcpServers || parsed;
-          } catch {}
-        } else if (mcpServersVal && typeof mcpServersVal === "object") {
-          const valObj = mcpServersVal as Record<string, unknown>;
-          mcpServersObj = (valObj.mcpServers as Record<string, unknown>) || valObj;
-        }
-
-        // Look for server matching serverId or scan registered MCP servers for toolName
-        let serverConfig = mcpServersObj[serverId] as Record<string, unknown>;
-        if (!serverConfig) {
-          for (const [, sVal] of Object.entries(mcpServersObj)) {
-            const sc = sVal as Record<string, unknown>;
-            if (!sc || !sc.serverUrl || sc.disabled === true || sc.active === false) continue;
-            try {
-              const h = (sc.headers as Record<string, string>) || {};
-              const tools = await fetchMcpToolsList(String(sc.serverUrl), h);
-              if (tools.some((t: { name: string }) => t.name === toolName)) {
-                serverConfig = sc;
-                break;
-              }
-            } catch {}
-          }
-        }
-        if (!serverConfig) {
-          for (const [, sVal] of Object.entries(mcpServersObj)) {
-            const sc = sVal as Record<string, unknown>;
-            if (sc && sc.serverUrl && sc.disabled !== true && sc.active !== false) {
-              serverConfig = sc;
-              break;
-            }
-          }
-        }
-        if (serverConfig) {
-          if (typeof serverConfig.serverUrl === "string") {
-            sseUrl = serverConfig.serverUrl;
-          }
-          const headers = serverConfig.headers as Record<string, unknown>;
-          if (headers) {
-            authHeader = String(headers.Authorization || headers.authorization || authHeader);
-          }
-        }
-      }
-    }
-  } catch (dbErr) {
-    console.error("[runMcpToolWithResilience] Failed to fetch connected apps, falling back.", dbErr);
-  }
-
-  // Map localhost to host.docker.internal when running in Docker bridge
-  const isDocker = process.env.DATABASE_URL?.includes("savazai-db");
-  if (isDocker && sseUrl.includes("localhost")) {
-    sseUrl = sseUrl.replace("localhost", "host.docker.internal");
-  }
-
-  // Auto-resolve missing system IDs (such as columnId or foreign keys) using ONLY assigned node tools
-  const resolvedArgs = await autoResolveMissingSystemIds(sseUrl, authHeader, toolName, args, nodeTools);
+  const aggregator = McpAggregator.getInstance();
 
   try {
-    const res = await callMcpStatelessOrSse(sseUrl, authHeader, toolName, resolvedArgs) as Record<string, unknown>;
-    console.log(`[MCP RESPONSE]: tool=${toolName} url=${sseUrl} raw=${JSON.stringify(res)}`);
+    const result = await aggregator.executeTool(serverId, toolName, args, pool);
+    console.log(`[MCP RESPONSE]: tool=${toolName} serverId=${serverId} raw=${JSON.stringify(result)}`);
 
-    // Passthrough MCP errors: if the MCP server returned isError, surface it directly
-    if (res && (res.isError === true || res.error)) {
-      const errContent = res.content;
-      if (Array.isArray(errContent)) {
-        const textBlock = errContent.find((c: unknown) => (c as Record<string, unknown>)?.type === "text");
-        if (textBlock) {
-          const errText = (textBlock as Record<string, unknown>).text as string;
-          return JSON.stringify({ error: errText, isError: true });
-        }
-      }
-      return JSON.stringify({ error: "MCP server returned an error", isError: true });
+    if (result.isError) {
+      const errText = result.content[0]?.text || "MCP execution error";
+      return JSON.stringify({ error: errText, isError: true });
     }
 
-    if (res && res.content) {
-      if (Array.isArray(res.content)) {
-        const contentArray = res.content as Record<string, unknown>[];
-        const textBlock = contentArray.find(c => c && c.type === "text" && typeof c.text === "string");
-        if (textBlock) {
-          return textBlock.text as string;
-        }
+    if (result.content && result.content.length > 0) {
+      const textItem = result.content.find(c => c.type === "text");
+      if (textItem) {
+        return textItem.text;
       }
-      return typeof res.content === "string" ? res.content : JSON.stringify(res.content);
+      return JSON.stringify(result.content);
     }
-    return JSON.stringify(res || {});
+
+    return JSON.stringify(result);
   } catch (err: unknown) {
     const errMsg = err instanceof Error ? err.message : String(err);
     return JSON.stringify({ error: errMsg, isError: true });
@@ -1698,19 +1639,19 @@ async function queryLLMDirectly(
   return `[Resilient Mock Mode] Response from ${provider}/${modelName}:\nTask instruction received: "${userMessage}".\nProcessing complete under directive: "${systemPrompt.slice(0, 50)}...".`;
 }
 
-interface ChatMessage {
+export interface ChatMessage {
   role: "user" | "assistant" | "system" | "tool";
   content: string;
   name?: string;
 }
 
-interface McpToolInputSchema {
+export interface McpToolInputSchema {
   type: "object";
   properties: Record<string, { type: string; description: string }>;
   required?: string[];
 }
 
-interface AgentflowTool {
+export interface AgentflowTool {
   name: string;
   category?: string;
   description?: string;
@@ -1808,7 +1749,7 @@ function topologicalSort(
   return order;
 }
 
-async function queryLLMWithHistory(
+export async function queryLLMWithHistory(
   provider: string,
   modelName: string,
   systemPrompt: string,
@@ -2099,49 +2040,16 @@ async function hydrateMcpSchemas(): Promise<Record<string, Record<string, unknow
   }
   const cache: Record<string, Record<string, unknown>> = {};
   try {
-    const mcpConfigRes = await pool.query(
-      'SELECT design_tokens as "designTokens" FROM system_configurations LIMIT 1'
-    );
-    if (mcpConfigRes.rows.length > 0 && mcpConfigRes.rows[0].designTokens) {
-      const tokens = mcpConfigRes.rows[0].designTokens as Record<string, unknown>;
-      const mcpServersVal = tokens.mcpServers;
-      let mcpServersObj: Record<string, { serverUrl?: string; headers?: Record<string, string>; disabled?: boolean }> = {};
-      if (typeof mcpServersVal === "string") {
-        try { const p = JSON.parse(mcpServersVal); mcpServersObj = p.mcpServers || p; } catch {}
-      } else if (mcpServersVal && typeof mcpServersVal === "object") {
-        const v = mcpServersVal as Record<string, unknown>;
-        mcpServersObj = (v.mcpServers as typeof mcpServersObj) || v as typeof mcpServersObj;
-      }
-
-      for (const [, serverCfg] of Object.entries(mcpServersObj)) {
-        if (!serverCfg?.serverUrl || serverCfg.disabled === true) continue;
-        try {
-          let sseUrl = serverCfg.serverUrl;
-          const isDocker = process.env.DATABASE_URL?.includes("savazai-db");
-          if (isDocker && sseUrl.includes("localhost")) {
-            sseUrl = sseUrl.replace("localhost", "host.docker.internal");
-          }
-          const listRes = await fetch(sseUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(serverCfg.headers || {})
-            },
-            body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} }),
-            signal: AbortSignal.timeout(8000)
-          });
-          if (listRes.ok) {
-            const listData = await listRes.json() as { result?: { tools?: { name: string; description?: string; inputSchema?: Record<string, unknown> }[] } };
-            for (const t of listData?.result?.tools || []) {
-              if (t.name && t.inputSchema) {
-                cache[t.name] = t.inputSchema;
-                if (t.description) {
-                  cache[`__desc__${t.name}`] = { desc: t.description } as Record<string, unknown>;
-                }
-              }
-            }
-          }
-        } catch { /* skip unreachable servers */ }
+    const aggregator = McpAggregator.getInstance();
+    const { allTools } = await aggregator.listAllTools(pool);
+    for (const t of allTools) {
+      if (t.name) {
+        if (t.inputSchema) {
+          cache[t.name] = t.inputSchema as Record<string, unknown>;
+        }
+        if (t.description) {
+          cache[`__desc__${t.name}`] = { desc: t.description } as Record<string, unknown>;
+        }
       }
     }
 
@@ -2178,7 +2086,7 @@ function getConnectedSpecialistWorkers(nodes: GraphNode[], edges: { source: stri
   const outgoingEdgeTargets = edges
     .filter(e => e.source === supervisor.id)
     .map(e => nodes.find(n => n.id === e.target))
-    .filter((n): n is GraphNode => Boolean(n) && n.roleTemplate !== "synthesizer");
+    .filter((n): n is GraphNode => Boolean(n) && (n as GraphNode).roleTemplate !== "synthesizer");
 
   const candidateWorkers: GraphNode[] = [];
   const seenIds = new Set<string>();
@@ -2548,18 +2456,33 @@ function buildClarificationFromSchema(
   const reqFields = schema?.required || [];
   const props = schema?.properties || {};
 
-  // Hide primary internal system/scope keys (id, _id, workspaceId, tenantId, organizationId, scopeId, etc.)
+  // Hide primary internal system/scope keys (id, _id, weddingId, workspaceId, tenantId, organizationId, scopeId, or any getter-resolved context key)
   const isPrimaryScopeSystemId = (k: string) => {
     if (k === "id" || k === "_id") return true;
     const lower = k.toLowerCase().replace(/[^a-z0-9]/g, "");
-    return lower.endsWith("id") && (
-      lower.includes("tenant") ||
-      lower.includes("workspace") ||
-      lower.includes("organization") ||
-      lower.includes("scope") ||
-      lower.includes("app") ||
-      lower.includes("project")
-    );
+    if (lower.endsWith("id")) {
+      const refEntity = lower.replace(/id$/, "");
+      if (
+        lower.includes("tenant") ||
+        lower.includes("workspace") ||
+        lower.includes("organization") ||
+        lower.includes("scope") ||
+        lower.includes("app") ||
+        lower.includes("project") ||
+        lower.includes("wedding") ||
+        lower.includes("event") ||
+        lower.includes("account") ||
+        lower.includes("org")
+      ) {
+        return true;
+      }
+      const hasGetter = tools.some(t => {
+        const tn = (typeof t === "string" ? t : (t as unknown as Record<string, unknown>)?.name ? String((t as unknown as Record<string, unknown>).name) : "").toLowerCase();
+        return tn === `get_${refEntity}` || tn === `list_${refEntity}` || tn === `fetch_${refEntity}`;
+      });
+      if (hasGetter) return true;
+    }
+    return false;
   };
 
   const fieldsList = Object.keys(props)
@@ -2731,9 +2654,26 @@ export async function POST(req: NextRequest) {
   
   try {
     const body = await req.json();
-    const { nodes, edges, approvedPlan, threadId, executionMode } = body;
+    let { nodes, edges } = body;
+    const { approvedPlan, threadId, executionMode } = body;
     let { message } = body as { message: string };
     const execThreadId = threadId || crypto.randomUUID();
+
+    if ((!Array.isArray(nodes) || nodes.length === 0) && (body.workflowId || body.agentflowId)) {
+      const flowId = String(body.workflowId || body.agentflowId).trim();
+      if (/^[0-9a-fA-F-]{36}$/.test(flowId)) {
+        try {
+          const flowRes = await pool.query('SELECT canvas_definition FROM agentflows WHERE id = $1', [flowId]);
+          if (flowRes.rows.length > 0 && flowRes.rows[0].canvas_definition) {
+            const cd = flowRes.rows[0].canvas_definition;
+            nodes = cd.nodes || [];
+            edges = cd.edges || [];
+          }
+        } catch (dbErr) {
+          console.error(`[POST /api/orchestrator/test] Failed to resolve canvas for flow ${flowId}:`, dbErr);
+        }
+      }
+    }
 
     if (!message || message === "null") {
       const existingHistory = await loadThreadMemory(execThreadId);
@@ -3637,9 +3577,8 @@ CRITICAL RULES:
               workerSystemPrompt += `\n- CRITICAL: Never call the same tool with identical arguments twice. If you already created or updated a record, do not repeat the identical operation. Move on to the next required action or conclude the task.\n`;
               workerSystemPrompt += `\n- STRICT DOMAIN SCOPE: You MUST ONLY execute actions directly related to your assigned tools. If a portion of the user request refers to an action outside your assigned tools, IGNORE that portion entirely. DO NOT attempt to map out-of-scope actions to your assigned tools.\n`;
               workerSystemPrompt += `\n- CRITICAL FIELD EXTRACTION MANDATE: When calling an UPDATE or CREATE tool, carefully extract ALL target field values declared in the tool input schema that are mentioned in the user prompt and thread history. NEVER call an update tool with only an "id" without passing the declared field values to update.\n`;
-              workerSystemPrompt += `\n- TARGET ITEM SCOPE: Execute updates or deletions ONLY for the item(s) explicitly named in the CURRENT user request. Do NOT execute tool calls for historical items from previous conversation turns unless explicitly named in the current prompt.\n`;
-              workerSystemPrompt += `\n- CRITICAL EXCLUSIVE TARGET DIRECTIVE: You MUST ONLY invoke action tools (delete/update) for the EXACT items explicitly named in the user prompt. DO NOT generate tool calls for any other items returned in the list context!\n`;
               workerSystemPrompt += `\n- SINGLE CREATION DIRECTIVE: When the user requests to create or add a new record (e.g. "create a new item"), execute EXACTLY ONE create tool call for that new item. DO NOT re-execute creation tool calls for historical items mentioned in previous conversation turns.\n`;
+              workerSystemPrompt += `\n- ROOT CONTEXT AUTO-RESOLUTION: When executing create, update, or mutation tools that require or accept a root workspace or entity identifier (such as an entity ID matching an assigned getter tool like get_<entity>), if it is not provided in the parameters, check if an assigned getter tool is available to resolve the active record ID. The system will also automatically resolve missing root IDs. NEVER prompt or require the user to provide technical database UUIDs or internal system keys.\n`;
               if (nodePlanParams && Object.keys(nodePlanParams).length > 0) {
                 const verbStr = allowedVerbs.length > 0 ? allowedVerbs.join("/") : "EXECUTE";
                 workerSystemPrompt += `\n\nCRITICAL APPROVED PLAN EXECUTION DIRECTIVE:
@@ -3857,7 +3796,7 @@ If you do NOT need to call any more tools, output your final result directly to 
                   }
 
                   // Merge ambient params, node plan params, and tool arguments
-                  const toolArgs: Record<string, unknown> = {
+                  let toolArgs: Record<string, unknown> = {
                     ...ambientParams,
                     ...(nodePlanParams || {}),
                     ...(tc.arguments || {}),
@@ -3949,6 +3888,7 @@ If you do NOT need to call any more tools, output your final result directly to 
                       }
                     } else {
                       const serverId = boundTool.serverId || toolName;
+                      toolArgs = await autoResolveMissingSystemIds(serverId, toolName, toolArgs, node.tools, boundTool.inputSchema as McpToolInputSchema);
                       console.log(`[MCP Tool Execute] Calling tool "${toolName}" with arguments:`, JSON.stringify(toolArgs, null, 2));
                       toolResult = await runMcpToolWithResilience(serverId, toolName, toolArgs, node.tools);
                     }

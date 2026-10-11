@@ -68,12 +68,21 @@ app.post("/api/test-mask", (req, res) => {
 });
 
 async function resolveGraphForAgentflow(agentflowId?: string) {
-  if (!agentflowId) return compiledGraph;
-  const [wf] = await db.select().from(agentflows).where(eq(agentflows.id, agentflowId)).limit(1);
-  if (!wf || wf.status !== "published" || !wf.canvasDefinition) return compiledGraph;
-  const parsed = CanvasDefinitionSchema.safeParse(wf.canvasDefinition);
-  if (!parsed.success) return compiledGraph;
-  return compileCanvasToGraph(parsed.data);
+  if (!agentflowId || typeof agentflowId !== "string") return compiledGraph;
+  const trimmed = agentflowId.trim();
+  if (trimmed === "inherit" || trimmed === "default" || trimmed === "" || !/^[0-9a-fA-F-]{36}$/.test(trimmed)) {
+    return compiledGraph;
+  }
+  try {
+    const [wf] = await db.select().from(agentflows).where(eq(agentflows.id, trimmed)).limit(1);
+    if (!wf || wf.status !== "published" || !wf.canvasDefinition) return compiledGraph;
+    const parsed = CanvasDefinitionSchema.safeParse(wf.canvasDefinition);
+    if (!parsed.success) return compiledGraph;
+    return compileCanvasToGraph(parsed.data);
+  } catch (err) {
+    console.warn(`[resolveGraphForAgentflow] Failed to resolve graph for ${trimmed}, falling back to compiledGraph:`, err);
+    return compiledGraph;
+  }
 }
 
 app.post("/api/graph/invoke", async (req, res) => {
@@ -124,9 +133,10 @@ app.post("/api/graph/invoke/stream", async (req, res) => {
   TelemetryGateway.getInstance().startTrace(requestId, "chat-stream-pass", threadId);
 
   try {
-    let input: Partial<GraphState> | null = null;
+    let input: any = null;
     if (!isResume) {
       input = {
+        input: message,
         messages: [{ role: "user" as const, content: message, timestamp: new Date().toISOString() }],
         plan_approved: undefined,
         supervisorPlan: undefined,
@@ -156,32 +166,37 @@ app.post("/api/graph/invoke/stream", async (req, res) => {
       const anyChunk = chunk as any;
       const nodeKeys = Object.keys(anyChunk);
       for (const nodeKey of nodeKeys) {
-        // Exclude intermediate diagnostic messages from background sub-agents
-        if (nodeKey !== "respondNode") {
-          continue;
-        }
         const nodeUpdate = anyChunk[nodeKey];
-        if (nodeUpdate && Array.isArray(nodeUpdate.messages)) {
-          const assistantMsg = nodeUpdate.messages.find((m: any) => m.role === "assistant");
-          if (assistantMsg && assistantMsg.content) {
-            let content = assistantMsg.content.trim();
-            // Verify and skip any diagnostics prefixed with [MutationAgent] or [DataFetchAgent]
-            if (content.startsWith("[MutationAgent]") || content.startsWith("[DataFetchAgent]") || content.startsWith("[CommunicationAgent]")) {
-              continue;
+
+        // 1. Handle default LangGraph respondent node
+        if (nodeKey === "respondNode") {
+          if (nodeUpdate && Array.isArray(nodeUpdate.messages)) {
+            const assistantMsg = nodeUpdate.messages.find((m: any) => m.role === "assistant");
+            if (assistantMsg && assistantMsg.content) {
+              let content = assistantMsg.content.trim();
+              if (content.startsWith("[MutationAgent]") || content.startsWith("[DataFetchAgent]") || content.startsWith("[CommunicationAgent]")) {
+                continue;
+              }
+              content = content.replace(/(?:\s*\}|\])+\s*$/g, '').trim();
+              content = content.replace(/\{\s*"routingDecision".*?\}\s*$/gs, '').trim();
+              content = content.replace(/\{\s*"meta".*?\}\s*$/gs, '').trim();
+              content = content.replace(/^[\s,;|}]+/, '').trim();
+              content = content.replace(/[\s,;|}]+$/, '').trim();
+              
+              if (content) {
+                broadcaster.send({ type: "content", content });
+                hasSentAssistantMessage = true;
+              }
             }
-            // Rigorously filter trailing JSON braces/brackets and routing structures
-            content = content.replace(/(?:\s*\}|\])+\s*$/g, '').trim();
-            content = content.replace(/\{\s*"routingDecision".*?\}\s*$/gs, '').trim();
-            content = content.replace(/\{\s*"meta".*?\}\s*$/gs, '').trim();
-            
-            // Scrub any leading or trailing standalone template syntax artifacts (like }, }}, {, {{)
-            content = content.replace(/^[\s,;|}]+/, '').trim();
-            content = content.replace(/[\s,;|}]+$/, '').trim();
-            
-            if (content) {
-              broadcaster.send({ type: "content", content });
-              hasSentAssistantMessage = true;
-            }
+          }
+        }
+
+        // 2. Handle compiled canvas agentflow graph nodes (terminal unmasker or node output)
+        if (nodeKey === "__governance_unmask__" && nodeUpdate?.output) {
+          const content = String(nodeUpdate.output).trim();
+          if (content) {
+            broadcaster.send({ type: "content", content });
+            hasSentAssistantMessage = true;
           }
         }
       }

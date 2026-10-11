@@ -30,12 +30,12 @@ import {
 import { AgentDrawer } from "./agent-drawer";
 import { TestSandbox } from "./test-sandbox";
 import { TeamNode } from "./nodes/team-node";
-import { getTeamDimensions, migrateLegacyCanvasDefinition, RawNode, RawEdge } from "@/lib/agentflow-utils";
+import { getTeamDimensions, migrateLegacyCanvasDefinition, sanitizeCanvasDefinition, RawNode, RawEdge } from "@/lib/agentflow-utils";
 
 export interface ToolReference {
   id: string;
   name: string;
-  category: "native" | "mcp" | "custom" | "open";
+  category: "native" | "mcp" | "custom" | "open" | string;
   mcpServerId?: string;
   config?: Record<string, unknown>;
 }
@@ -44,6 +44,7 @@ export interface ModelConfig {
   provider: string;
   model: string;
   temperature: number;
+  maxTokens?: number;
 }
 
 export type AgentRole = "supervisor" | "worker" | "synthesizer" | "scheduled" | "team";
@@ -53,7 +54,7 @@ export interface CanvasNode {
   label: string;
   roleTemplate: AgentRole;
   systemPrompt: string;
-  modelConfig: ModelConfig;
+  modelConfig?: ModelConfig;
   tools: ToolReference[];
   ragNamespace?: string;
   embedModel?: string;
@@ -1117,7 +1118,19 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
     setSaving(true);
     try {
       if (onSaveDraft) {
-        const ok = await onSaveDraft(nodes, edges);
+        const sanitizedNodes: CanvasNode[] = nodes.map((n) => ({
+          ...n,
+          modelConfig: n.modelConfig || (n.roleTemplate === "team" ? undefined : {
+            provider: "openai",
+            model: "gpt-4o-mini",
+            temperature: 0.2,
+          }),
+          tools: (n.tools || []).map((t) => ({
+            ...t,
+            category: typeof t?.category === "string" && t.category ? t.category : "mcp",
+          })),
+        }));
+        const ok = await onSaveDraft(sanitizedNodes, edges);
         if (ok === false) {
           setPublishStatus({ type: "error", msg: "DB save failed." });
           return;
@@ -1149,7 +1162,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
         memoryCheckpoint: n.memoryCheckpoint ?? true,
         kvPersistence: n.kvPersistence ?? false,
       }));
-      setNodes(rehydratedNodes);
+      setNodes(rehydratedNodes as unknown as CanvasNode[]);
       setEdges((migrated.edges || []) as unknown as CanvasEdge[]);
       if (parsed.workflowType) setWorkflowType(parsed.workflowType);
       if (parsed.cronSchedule) setCronSchedule(parsed.cronSchedule);
@@ -1165,7 +1178,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
     setPublishing(true);
     setPublishStatus(null);
     try {
-      const spec = {
+      const rawSpec = {
         id: "canvas-1",
         name: workflowName,
         version: "1.0.0",
@@ -1179,7 +1192,9 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
         }),
         edges,
       };
-      const body = JSON.stringify(spec);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sanitizedSpec = sanitizeCanvasDefinition(rawSpec as any);
+      const body = JSON.stringify(sanitizedSpec);
 
       let res;
       if (onPublish) {
@@ -1196,9 +1211,23 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
           : { success: false, error: data.error || "Graph compilation failed." };
       }
 
+      let displayError = res.error;
+      if (typeof displayError === "string" && displayError.startsWith("{")) {
+        try {
+          const parsedErr = JSON.parse(displayError);
+          if (parsedErr.error) {
+            const detailsStr = Array.isArray(parsedErr.details)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ? parsedErr.details.map((d: any) => `${d.path?.join(".")}: ${d.message || d.code}`).join("; ")
+              : "";
+            displayError = detailsStr ? `${parsedErr.error}: ${detailsStr}` : parsedErr.error;
+          }
+        } catch {}
+      }
+
       setPublishStatus({
         type: res.success ? "success" : "error",
-        msg: res.message || res.error || "Unknown result",
+        msg: res.message || displayError || "Unknown result",
       });
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);

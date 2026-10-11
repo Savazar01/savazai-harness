@@ -395,49 +395,20 @@ const MCP_SERVERS_TOOLS: Record<string, McpToolDef[]> = {
   ]
 };
 
+import { McpAggregator, McpToolDefinition } from "@/lib/mcp/client-aggregator";
+
+const aggregator = McpAggregator.getInstance();
+
+// Register the local handler and local tool definitions
+const localToolDefs: McpToolDefinition[] = (MCP_SERVERS_TOOLS["wedplanai"] || []).map(t => ({
+  ...t
+}));
+aggregator.registerLocalHandler(handleMcpToolCall, localToolDefs);
+
 export async function GET() {
   try {
-    const res = await pool.query(
-      'SELECT design_tokens as "designTokens" FROM system_configurations LIMIT 1'
-    );
-    let configuredServers: string[] = ["wedplanai-prod", "github-mcp-server", "StitchMCP", "context7"]; // fallback default list
-    
-    if (res.rows.length > 0 && res.rows[0].designTokens) {
-      const tokens = res.rows[0].designTokens;
-      const mcpServersValue = tokens.mcpServers;
-      if (mcpServersValue) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let mcpServersObj: any = {};
-        if (typeof mcpServersValue === "string") {
-          try {
-            mcpServersObj = JSON.parse(mcpServersValue);
-            mcpServersObj = mcpServersObj.mcpServers || mcpServersObj;
-          } catch {}
-        } else {
-          mcpServersObj = mcpServersValue.mcpServers || mcpServersValue;
-        }
-        const keys = Object.keys(mcpServersObj);
-        if (keys.length > 0) {
-          configuredServers = keys;
-        }
-      }
-    }
-
-    // Map each configured server to its canonical tools list
-    const serversWithTools = configuredServers.map(server => {
-      const canonicalKey = Object.keys(MCP_SERVERS_TOOLS).find(
-        k => k.toLowerCase().includes(server.toLowerCase()) || server.toLowerCase().includes(k.toLowerCase())
-      );
-      const tools = canonicalKey ? MCP_SERVERS_TOOLS[canonicalKey] : [
-        { name: "list_tools", description: `Discovered capabilities for server ${server}` }
-      ];
-      return {
-        serverId: server,
-        tools
-      };
-    });
-
-    return new Response(JSON.stringify({ servers: serversWithTools }), {
+    const { servers } = await aggregator.listAllTools(pool);
+    return new Response(JSON.stringify({ servers }), {
       status: 200,
       headers: { "Content-Type": "application/json" }
     });
@@ -451,19 +422,19 @@ export async function GET() {
   }
 }
 
-// ── JSON-RPC tools/call POST handler for local MCP tool execution ──
+// ── JSON-RPC tools/call POST handler for aggregated MCP tool execution ──
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { method, params, id } = body;
 
     if (method === "tools/list") {
-      // Return all available wedplanai tools with full inputSchema
-      const wedplanaiTools = MCP_SERVERS_TOOLS["wedplanai"] || [];
+      // Return all dynamically aggregated tools with full inputSchema
+      const { allTools } = await aggregator.listAllTools(pool);
       return new Response(JSON.stringify({
         jsonrpc: "2.0",
         id: id || "list-tools",
-        result: { tools: wedplanaiTools }
+        result: { tools: allTools }
       }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
 
@@ -476,6 +447,7 @@ export async function POST(req: NextRequest) {
 
     const toolName = params?.name;
     const args = params?.arguments || {};
+    const serverId = params?.serverId;
 
     if (!toolName) {
       return new Response(JSON.stringify({
@@ -484,7 +456,7 @@ export async function POST(req: NextRequest) {
       }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
 
-    const result = await handleMcpToolCall(toolName, args);
+    const result = await aggregator.executeTool(serverId, toolName, args, pool);
 
     const responseObj: Record<string, unknown> = {
       jsonrpc: "2.0",
@@ -496,7 +468,7 @@ export async function POST(req: NextRequest) {
       responseObj.result = result;
     }
 
-    console.log(`[MCP POST] tool=${toolName} args=${JSON.stringify(args)} response=${JSON.stringify(responseObj)}`);
+    console.log(`[MCP POST] tool=${toolName} serverId=${serverId || "auto"} args=${JSON.stringify(args)} response=${JSON.stringify(responseObj)}`);
 
     return new Response(JSON.stringify(responseObj), {
       status: 200,

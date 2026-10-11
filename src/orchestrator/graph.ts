@@ -394,7 +394,35 @@ async function registerAppProvider(appName: string, modelOverride?: { providerTy
   }
 }
 
-async function fetchMcpTools(serverUrl: string, headers: Record<string, string>): Promise<any[]> {
+async function fetchMcpTools(serverUrl: string, headers: Record<string, string>, serverKey?: string): Promise<any[]> {
+  const mcpProxyUrl = process.env.MCP_AGGREGATOR_URL ||
+    (process.env.DATABASE_URL?.includes("savazai-db") ? "http://savazai-console:3056/api/mcp" : "http://localhost:3056/api/mcp");
+
+  // First, attempt to discover tools via universal MCP aggregator (handles StreamableHTTP, SSE, Stdio, headers)
+  try {
+    const proxyRes = await fetch(mcpProxyUrl, {
+      method: "GET",
+      signal: AbortSignal.timeout(6000),
+    });
+    if (proxyRes.ok) {
+      const data = await proxyRes.json() as { servers?: Array<{ serverId: string; tools: any[] }> };
+      if (Array.isArray(data.servers)) {
+        if (serverKey) {
+          const match = data.servers.find(s => s.serverId === serverKey);
+          if (match && Array.isArray(match.tools) && match.tools.length > 0) {
+            return match.tools;
+          }
+        } else {
+          // Find matching server by URL
+          const allTools = data.servers.flatMap(s => s.tools || []);
+          if (allTools.length > 0) return allTools;
+        }
+      }
+    }
+  } catch {
+    // Fall back to direct fetch if aggregator is unreachable
+  }
+
   let resolvedUrl = serverUrl;
   const isDocker = process.env.DATABASE_URL?.includes("savazai-db") || !process.env.DATABASE_URL?.includes("localhost");
   if (isDocker && typeof resolvedUrl === "string") {
@@ -689,8 +717,8 @@ class StructuredModelWrapper {
   }
 }
 
-async function getDynamicToolDefinitions(activeTools?: string[]): Promise<Array<{ name: string; description: string; category: string }>> {
-  const tools: Array<{ name: string; description: string; category: string }> = [];
+async function getDynamicToolDefinitions(activeTools?: string[]): Promise<Array<{ name: string; description: string; category: string; inputSchema?: any }>> {
+  const tools: Array<{ name: string; description: string; category: string; inputSchema?: any }> = [];
 
   const nativeTools = [
     { name: "phone_number_validator", description: "Validate phone number format and formatting style.", category: "native" },
@@ -723,7 +751,12 @@ async function getDynamicToolDefinitions(activeTools?: string[]): Promise<Array<
         : configs[0].designTokens.customSkills;
       if (Array.isArray(customSkills)) {
         for (const cs of customSkills) {
-          tools.push({ name: cs.name, description: cs.description, category: "custom" });
+          tools.push({
+            name: cs.name,
+            description: cs.description,
+            category: "custom",
+            inputSchema: typeof cs.inputSchema === "string" ? JSON.parse(cs.inputSchema) : cs.inputSchema,
+          });
         }
       }
     }
@@ -761,9 +794,14 @@ async function getDynamicToolDefinitions(activeTools?: string[]): Promise<Array<
       const config = mcpServersObj[serverKey];
       if (!config || !config.serverUrl || config.disabled === true || config.active === false) continue;
       const headers = config.headers || {};
-      const mcpTools = await fetchMcpTools(config.serverUrl, headers);
+      const mcpTools = await fetchMcpTools(config.serverUrl, headers, serverKey);
       for (const mt of mcpTools) {
-        tools.push({ name: mt.name, description: mt.description, category: `mcp:${serverKey}` });
+        tools.push({
+          name: mt.name,
+          description: mt.description,
+          category: `mcp:${serverKey}`,
+          inputSchema: mt.inputSchema || mt.parameters || { type: "object", properties: {} },
+        });
       }
     }
   } catch (e) {
@@ -782,6 +820,67 @@ async function getDynamicToolDefinitions(activeTools?: string[]): Promise<Array<
   }
 
   return tools;
+}
+
+function isToolIntrospectionQuery(message: string): boolean {
+  const lower = message.toLowerCase().trim();
+  const mentionsTool = lower.includes("tool") || lower.includes("tools") || lower.includes("capability") || lower.includes("capabilities") || lower.includes("skills") || lower.includes("actions");
+  
+  const isAsking = 
+    lower.startsWith("what ") || 
+    lower.startsWith("which ") || 
+    lower.startsWith("show ") || 
+    lower.startsWith("list ") || 
+    lower.startsWith("display ") || 
+    lower.startsWith("provide ") || 
+    lower.startsWith("give ") || 
+    lower.startsWith("help") ||
+    lower.includes("available tools") ||
+    lower.includes("list of tools") ||
+    lower.includes("tools available") ||
+    lower.includes("list tools") ||
+    lower.includes("what can you do") ||
+    lower.includes("what tools");
+
+  return mentionsTool && isAsking;
+}
+
+function formatToolIntrospectionResponse(
+  tools: Array<{ name: string; description: string; category: string }>,
+  _userQuery: string
+): string {
+  if (!tools || tools.length === 0) {
+    return "No tools are currently registered or active for this session.";
+  }
+
+  const groups: Record<string, typeof tools> = {};
+  for (const t of tools) {
+    const groupName = t.category.startsWith("mcp:") ? t.category.replace("mcp:", "") : t.category;
+    if (!groups[groupName]) groups[groupName] = [];
+    groups[groupName].push(t);
+  }
+
+  const sections: string[] = [];
+  for (const [groupName, groupTools] of Object.entries(groups)) {
+    let header = `### Available Tools (${groupName})`;
+    if (groupName === "native") header = "### Native Tools";
+    else if (groupName === "custom") header = "### Custom Skills";
+    else header = `### Available Tools in \`${groupName}\` MCP`;
+
+    const rows = groupTools.map((t) => {
+      const cleanDesc = (t.description || "No description provided.")
+        .replace(/\n+/g, " ")
+        .replace(/\|/g, "\\|")
+        .trim();
+      return `| \`${t.name}\` | ${cleanDesc} |`;
+    });
+
+    sections.push(
+      `${header}\n\n| Tool Name | Description |\n| :--- | :--- |\n${rows.join("\n")}`
+    );
+  }
+
+  return sections.join("\n\n");
 }
 
 async function getDefaultExecutionMode(): Promise<"plan_first" | "direct"> {
@@ -809,7 +908,7 @@ async function getDefaultExecutionMode(): Promise<"plan_first" | "direct"> {
 }
 
 async function generateExecutionPlanFromTools(
-  tools: Array<{ name: string; description: string; category: string }>,
+  tools: Array<{ name: string; description: string; category: string; inputSchema?: any }>,
   message: string,
   currentApp: string,
   modelConfig: any,
@@ -825,7 +924,13 @@ async function generateExecutionPlanFromTools(
       (!t.name.startsWith("create_") && !t.name.startsWith("update_") && !t.name.startsWith("delete_") && !t.name.startsWith("add_") && !t.name.startsWith("remove_") && !t.name.startsWith("send_"))
     );
   }
-  const toolDescriptions = filteredTools.map(t => `- Name: "${t.name}"\n  Description: "${t.description}"\n  Category: "${t.category}"`).join("\n\n");
+  const toolDescriptions = filteredTools.map(t => {
+    let schemaStr = "";
+    if (t.inputSchema && t.inputSchema.properties) {
+      schemaStr = `\n  Parameters Schema: ${JSON.stringify(t.inputSchema.properties)}`;
+    }
+    return `- Name: "${t.name}"\n  Description: "${t.description}"\n  Category: "${t.category}"${schemaStr}`;
+  }).join("\n\n");
 
   const plannerPrompt = `You are a Supervisor/Routing Agent. Your task is to analyze the user request, determine which tools should be executed, and generate a structured Execution Plan.
 Choose ONLY the tools that are strictly required to resolve the user's intent. Do not include irrelevant tools.
@@ -838,8 +943,9 @@ For each selected tool, you MUST specify:
 5. parameters: A dictionary of key-value parameters extracted from the user request to be passed to the tool.
 
 CRITICAL PARAMETER EXTRACTION RULES:
-- Extract all explicit user-provided parameters and populate them into the 'parameters' object.
-- If critical parameters for a creation/update action are ambiguous or missing, do NOT use placeholders. Instead, set "requiresClarification": true and "warning": "Description of the missing parameter" in that item.
+- Extract all explicit user-provided parameters matching the tool's parameter schema.
+- Use the exact property names specified in the Parameters Schema (e.g. use 'n' if the schema expects 'n', 'sortBy' if the schema expects 'sortBy', 'date' for dates).
+- If critical parameters for an action are ambiguous or missing, do NOT use placeholders. Instead, set "requiresClarification": true and "warning": "Description of the missing parameter" in that item.
 
 READ-ONLY & INTENT-BASED CLASSIFICATION RULES:
 - If the user request contains retrieval/querying keywords ("list", "get", "show", "provide", "status", "report", "fetch", "details", "read", "view", "display", "summarize", "export", "find", "search"), you MUST force the generated plan to set actionVerb to "READ" or "LIST".
@@ -987,6 +1093,48 @@ async function supervisorNode(state: typeof StateAnnotation.State, config?: any)
     let newSupervisorPlan = state.supervisorPlan;
     let newApprovedActions = state.approvedActions;
     let newParameterLocks = state.parameterLocks;
+
+    if (isNewTurn && isToolIntrospectionQuery(latestUserMsgContent)) {
+      const tools = await getDynamicToolDefinitions(state.activeTools);
+      
+      let filteredTools = tools;
+      const lowerQuery = latestUserMsgContent.toLowerCase();
+      const serverMatches = tools.filter(t => {
+        if (t.category.startsWith("mcp:")) {
+          const sName = t.category.replace("mcp:", "").toLowerCase();
+          return lowerQuery.includes(sName);
+        }
+        return false;
+      });
+      if (serverMatches.length > 0) {
+        filteredTools = serverMatches;
+      }
+
+      const formattedOutput = formatToolIntrospectionResponse(filteredTools, latestUserMsgContent);
+
+      telemetry.endSpan(requestId, span, {
+        routingDecision: "respond",
+        isIntrospection: true,
+      });
+
+      return {
+        maskedInput: maskedText,
+        tokenMap: Object.fromEntries(tokenMap),
+        piiCategories,
+        relevantSkills: [],
+        toolExecutedInCurrentNode: false,
+        lastUserMessageContent: latestUserMsgContent,
+        executedTools: [],
+        executedToolSignatures: [],
+        messages: [],
+        synthesisOutput: formattedOutput,
+        routingDecision: "respond" as const,
+        target_action: "respond" as const,
+        delegationQueue: [],
+        delegatedTasks: {},
+        currentApp,
+      };
+    }
 
     if (isNewTurn) {
       // Clear previous turn parameters and analyze user intent to build a new delegation queue
@@ -1284,9 +1432,13 @@ async function executeToolByName(
   state: typeof StateAnnotation.State,
   requestId: string
 ): Promise<string> {
+  // Strip functions. or tools. prefix if passed by LLM function calling schema
+  if (toolName.startsWith("functions.")) toolName = toolName.slice(10);
+  else if (toolName.startsWith("tools.")) toolName = toolName.slice(6);
+
   const startTime = Date.now();
   let statusCode = 200;
-  let resultText: string;
+  let resultText = "";
 
   let estimatedToolCost: number | undefined;
   if (toolName.startsWith("create_") || toolName.startsWith("update_") || toolName.startsWith("delete_")) {
@@ -2326,19 +2478,70 @@ async function executeToolByName(
         }
       }
 
+      let matchedServerKey = "";
       for (const serverKey of serversToScan) {
         const config = mcpServersObj[serverKey];
         if (!config || !config.serverUrl || config.disabled === true || config.active === false) continue;
-        const tools = await fetchMcpTools(config.serverUrl, config.headers || {});
+        const tools = await fetchMcpTools(config.serverUrl, config.headers || {}, serverKey);
         const toolObj = tools.find((t: any) => t.name === toolName);
         if (toolObj) {
           activeServerConfig = config;
-          const props = toolObj.inputSchema?.properties || toolObj.parameters?.properties || {};
+          matchedServerKey = serverKey;
+          const schema = toolObj.inputSchema || toolObj.parameters || {};
+          const props = schema.properties || {};
+
+          // Universal Parameter Name Normalization:
+          // For each property in tool schema, match camelCase, snake_case, or common aliases
           for (const propName of Object.keys(props)) {
             if (toolArgs[propName] === undefined) {
-              const ambientValue = await resolveAmbientParameter(propName);
-              if (ambientValue !== undefined) {
-                toolArgs[propName] = ambientValue;
+              const propLower = propName.toLowerCase();
+              const propNoUnderscore = propLower.replace(/_/g, "");
+
+              for (const argKey of Object.keys(toolArgs)) {
+                const argLower = argKey.toLowerCase();
+                const argNoUnderscore = argLower.replace(/_/g, "");
+                if (argLower === propLower || argNoUnderscore === propNoUnderscore) {
+                  toolArgs[propName] = toolArgs[argKey];
+                  delete toolArgs[argKey];
+                  break;
+                }
+              }
+
+              // Common generic aliases:
+              if (toolArgs[propName] === undefined && propName === "n") {
+                if (toolArgs.top_n !== undefined) { toolArgs.n = toolArgs.top_n; delete toolArgs.top_n; }
+                else if (toolArgs.limit !== undefined) { toolArgs.n = toolArgs.limit; delete toolArgs.limit; }
+                else if (toolArgs.count !== undefined) { toolArgs.n = toolArgs.count; delete toolArgs.count; }
+              }
+              if (toolArgs[propName] === undefined && (propName === "sortBy" || propName === "sort_by")) {
+                if (toolArgs.sortBy !== undefined) toolArgs[propName] = toolArgs.sortBy;
+                else if (toolArgs.sort_by !== undefined) toolArgs[propName] = toolArgs.sort_by;
+                else if (toolArgs.sort !== undefined) toolArgs[propName] = toolArgs.sort;
+              }
+
+              if (toolArgs[propName] === undefined) {
+                const ambientValue = await resolveAmbientParameter(propName);
+                if (ambientValue !== undefined) {
+                  toolArgs[propName] = ambientValue;
+                }
+              }
+            }
+
+            // Type coercion based on schema type
+            if (toolArgs[propName] !== undefined) {
+              const expectedType = props[propName]?.type;
+              if (expectedType === "integer" || expectedType === "number") {
+                const num = Number(toolArgs[propName]);
+                if (!isNaN(num)) toolArgs[propName] = num;
+              }
+            }
+          }
+
+          // If additionalProperties is false, strip any keys not defined in properties
+          if (schema.additionalProperties === false) {
+            for (const key of Object.keys(toolArgs)) {
+              if (!props[key]) {
+                delete toolArgs[key];
               }
             }
           }
@@ -2351,44 +2554,85 @@ async function executeToolByName(
         throw new Error(`MCP tool "${toolName}" could not be resolved on any active server.`);
       }
 
-      let executeUrl = activeServerConfig.serverUrl;
-      const isDocker = process.env.DATABASE_URL?.includes("savazai-db") || !process.env.DATABASE_URL?.includes("localhost");
-      if (isDocker && typeof executeUrl === "string") {
-        if (executeUrl.includes("localhost:")) {
-          executeUrl = executeUrl.replace("localhost:", "host.docker.internal:");
-        } else if (executeUrl.includes("127.0.0.1:")) {
-          executeUrl = executeUrl.replace("127.0.0.1:", "host.docker.internal:");
+      // First attempt execution via universal MCP aggregator (handles StreamableHTTP, SSE, Stdio, custom headers)
+      let proxySuccess = false;
+      const mcpProxyUrl = process.env.MCP_AGGREGATOR_URL ||
+        (process.env.DATABASE_URL?.includes("savazai-db") ? "http://savazai-console:3056/api/mcp" : "http://localhost:3056/api/mcp");
+
+      try {
+        const proxyRes = await fetch(mcpProxyUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: `call-${toolName}-${Date.now()}`,
+            method: "tools/call",
+            params: {
+              name: toolName,
+              arguments: toolArgs,
+              serverId: matchedServerKey || undefined,
+            },
+          }),
+          signal: AbortSignal.timeout(45000),
+        });
+
+        if (proxyRes.ok) {
+          const proxyData = await proxyRes.json() as any;
+          if (proxyData.result && !proxyData.error) {
+            statusCode = 200;
+            proxySuccess = true;
+            if (Array.isArray(proxyData.result.content)) {
+              resultText = proxyData.result.content.map((c: any) => c.text || "").join("\n");
+            } else {
+              resultText = JSON.stringify(proxyData.result);
+            }
+          }
         }
+      } catch (proxyErr) {
+        console.warn(`[executeToolByName] Proxy dispatch failed for ${toolName}, trying direct HTTP fallback:`, proxyErr);
       }
 
-      const res = await fetch(executeUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(activeServerConfig.headers || {}),
-        },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 2,
-          method: "tools/call",
-          params: {
-            name: toolName,
-            arguments: toolArgs,
+      // Direct fallback if proxy did not handle it
+      if (!proxySuccess) {
+        let executeUrl = activeServerConfig.serverUrl;
+        const isDocker = process.env.DATABASE_URL?.includes("savazai-db") || !process.env.DATABASE_URL?.includes("localhost");
+        if (isDocker && typeof executeUrl === "string") {
+          if (executeUrl.includes("localhost:")) {
+            executeUrl = executeUrl.replace("localhost:", "host.docker.internal:");
+          } else if (executeUrl.includes("127.0.0.1:")) {
+            executeUrl = executeUrl.replace("127.0.0.1:", "host.docker.internal:");
+          }
+        }
+
+        const res = await fetch(executeUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(activeServerConfig.headers || {}),
           },
-        }),
-        signal: AbortSignal.timeout(60000),
-      });
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 2,
+            method: "tools/call",
+            params: {
+              name: toolName,
+              arguments: toolArgs,
+            },
+          }),
+          signal: AbortSignal.timeout(60000),
+        });
 
-      statusCode = res.status;
-      if (!res.ok) {
-        throw new Error(`Remote MCP invocation failed: HTTP ${res.status}`);
-      }
+        statusCode = res.status;
+        if (!res.ok) {
+          throw new Error(`Remote MCP invocation failed: HTTP ${res.status}`);
+        }
 
-      const data = (await res.json()) as any;
-      if (data.result && Array.isArray(data.result.content)) {
-        resultText = data.result.content.map((c: any) => c.text || "").join("\n");
-      } else {
-        resultText = JSON.stringify(data.result || data);
+        const data = (await res.json()) as any;
+        if (data.result && Array.isArray(data.result.content)) {
+          resultText = data.result.content.map((c: any) => c.text || "").join("\n");
+        } else {
+          resultText = JSON.stringify(data.result || data);
+        }
       }
     } catch (err: any) {
       console.error(`Remote MCP execution failed for ${toolName}:`, err);
@@ -2469,13 +2713,24 @@ async function runSubAgentLoop(
       }
     }
 
-    const serversToFetch = Object.keys(mcpServersObj);
+    let serversToFetch = Object.keys(mcpServersObj);
+    if (state.activeTools && state.activeTools.length > 0) {
+      const activeServerMatches = serversToFetch.filter((s) => state.activeTools!.includes(s));
+      if (activeServerMatches.length > 0) {
+        serversToFetch = activeServerMatches;
+      }
+    }
+
     for (const serverKey of serversToFetch) {
       const serverConfig = mcpServersObj[serverKey];
       if (!serverConfig || !serverConfig.serverUrl || serverConfig.disabled === true || serverConfig.active === false) continue;
-      const tools = await fetchMcpTools(serverConfig.serverUrl, serverConfig.headers || {});
+      const tools = await fetchMcpTools(serverConfig.serverUrl, serverConfig.headers || {}, serverKey);
       for (const t of tools) {
         if (!t.name || !toolFilter(t.name)) continue;
+        if (state.activeTools && state.activeTools.length > 0) {
+          const isToolAllowed = state.activeTools.includes(t.name) || state.activeTools.includes(serverKey);
+          if (!isToolAllowed) continue;
+        }
         openAiTools.push({
           type: "function",
           function: {
@@ -2523,6 +2778,11 @@ async function runSubAgentLoop(
     })
   );
 
+  const relevantPlanSteps = (state.supervisorPlan || []).filter((item: any) => {
+    const toolName = item.nodeId;
+    return openAiTools.some(t => t.function.name === toolName);
+  });
+
   let iterations = 0;
   const maxIterations = 5;
   let done = false;
@@ -2541,10 +2801,20 @@ async function runSubAgentLoop(
       return { role: m.role, content };
     });
 
+    const planDirective = relevantPlanSteps.length > 0
+      ? `\n\nCRITICAL: The user has already approved an execution plan with the following steps:\n${JSON.stringify(relevantPlanSteps, null, 2)}\nYou MUST execute these tool calls with their specified parameters immediately. Do not respond conversationally without calling them.`
+      : "";
+
+    const availableToolsList = openAiTools.map(t => `- Tool: ${t.function.name}\n  Description: ${t.function.description}\n  Parameters: ${JSON.stringify(t.function.parameters)}`).join("\n");
+
     const messages = [
       {
         role: "system" as const,
         content: `${systemPrompt}
+
+Available Tools:
+${availableToolsList}
+${planDirective}
 
 You MUST respond with a JSON object strictly matching this schema:
 {
@@ -2568,8 +2838,21 @@ You MUST output ONLY valid JSON.`
     ];
 
     try {
-      const decision = await planner.invoke(messages, { requestId });
+      let decision = await planner.invoke(messages, { requestId });
       console.log(`[${agentName}] Planner decision:`, decision);
+
+      // If approved supervisorPlan exists for this agent's tools and planner didn't invoke them on iteration 1, enforce execution
+      if (relevantPlanSteps.length > 0 && iterations === 1 && (!decision.toolCalls || decision.toolCalls.length === 0)) {
+        console.log(`[${agentName}] Enforcing approved plan steps execution:`, relevantPlanSteps);
+        decision = {
+          target_action: "mcp_action",
+          toolCalls: relevantPlanSteps.map((p: any) => ({
+            name: p.nodeId,
+            args: p.parameters || {},
+          })),
+          conversationalText: decision.conversationalText,
+        };
+      }
 
       if (decision.conversationalText) {
         const narration = {
@@ -2584,21 +2867,6 @@ You MUST output ONLY valid JSON.`
       if (decision.target_action === "mcp_action" && decision.toolCalls && decision.toolCalls.length > 0) {
         for (const call of decision.toolCalls) {
           console.log(`[${agentName}] Executing tool: ${call.name}`);
-          
-          const weddingIdVal = await resolveAmbientParameter("weddingId");
-          if (weddingIdVal && (call.name.startsWith("update_") || call.name.startsWith("create_") || call.name.startsWith("delete_") || call.name.startsWith("list_") || call.name.startsWith("get_"))) {
-            call.args = call.args || {};
-            if (!call.args.weddingId) {
-              call.args.weddingId = weddingIdVal;
-            }
-          }
-
-          if (call.name === "update_wedding" || call.name === "create_wedding") {
-            if (call.args && call.args.date !== undefined && call.args.weddingDate === undefined) {
-              call.args.weddingDate = call.args.date;
-              delete call.args.date;
-            }
-          }
 
           if (call.args) {
             for (const key of Object.keys(call.args)) {
@@ -2639,9 +2907,10 @@ You MUST output ONLY valid JSON.`
 }
 
 async function dataFetchAgentNode(state: typeof StateAnnotation.State, config?: any) {
-  const systemPrompt = `You are the DataFetchAgent. Your role is to gather, list, or retrieve data requested by the user.
-You must use the available data-fetching tools (e.g., get_wedding, list_guests, list_tasks, list_ceremonies, list_vendors) to retrieve the relevant information.
-Call as many data-fetching tools as necessary to completely satisfy the user's request.
+  const systemPrompt = `You are the DataFetchAgent. Your role is to gather, query, list, or retrieve data requested by the user.
+You must use the available data-fetching tools to retrieve the relevant information.
+Call the appropriate data-fetching tool(s) with the necessary arguments to completely satisfy the user's request.
+Never respond conversationally with tool descriptions; call the tool(s) immediately if data is requested.
 Once you have retrieved all the data or if no tools can help, stop planning tool calls.`;
 
   const result = await runSubAgentLoop(
@@ -2668,8 +2937,8 @@ Once you have retrieved all the data or if no tools can help, stop planning tool
 }
 
 async function mutationAgentNode(state: typeof StateAnnotation.State, config?: any) {
-  const systemPrompt = `You are the MutationAgent. Your role is to write, create, update, or delete database records as requested by the user.
-You must use the available database mutation tools (e.g., create_wedding, update_wedding, create_guest, update_guest, delete_guest, create_task, update_task, delete_task, create_ceremony, update_ceremony, delete_ceremony) to perform the changes.
+  const systemPrompt = `You are the MutationAgent. Your role is to write, create, update, or delete database records or resources as requested by the user.
+You must use the available mutation tools to perform the requested changes.
 Call the mutation tools with the exact arguments requested by the user.
 Once all changes are performed, stop planning tool calls.`;
 

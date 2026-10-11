@@ -169,6 +169,54 @@ describe("Schema Validation", () => {
     });
     log("✅ Empty CanvasDefinition correctly rejected");
   });
+
+  it("should validate dynamic tool categories like 'custom', 'open', and 'database'", () => {
+    const customTool = ToolReferenceSchema.parse({
+      name: "custom_webhook_api",
+      category: "custom",
+    });
+    assert.equal(customTool.category, "custom");
+
+    const openTool = ToolReferenceSchema.parse({
+      name: "open_places_search",
+      category: "open",
+    });
+    assert.equal(openTool.category, "open");
+
+    const dbTool = ToolReferenceSchema.parse({
+      name: "db_query_postgres",
+      category: "database",
+    });
+    assert.equal(dbTool.category, "database");
+    log("✅ Dynamic tool categories ('custom', 'open', 'database') validated successfully");
+  });
+
+  it("should allow AgentNode without modelConfig and supply safe fallback defaults", () => {
+    const nodeWithoutModel = AgentNodeSchema.parse({
+      label: "Unconfigured Node",
+      roleTemplate: "worker",
+    });
+    assert.ok(nodeWithoutModel.modelConfig, "modelConfig should default cleanly");
+    assert.equal(nodeWithoutModel.modelConfig.provider, "openai");
+    assert.equal(nodeWithoutModel.modelConfig.model, "gpt-4o-mini");
+    assert.equal(nodeWithoutModel.modelConfig.temperature, 0.2);
+    log("✅ AgentNode without modelConfig defaulted safely");
+  });
+
+  it("should validate Team Container node with omitted modelConfig", () => {
+    const teamNode = AgentNodeSchema.parse({
+      id: "node-team-1",
+      label: "Web and Places Search Team",
+      roleTemplate: "team",
+      collapsed: false,
+      width: 620,
+      height: 340,
+    });
+    assert.equal(teamNode.roleTemplate, "team");
+    assert.equal(teamNode.label, "Web and Places Search Team");
+    assert.ok(teamNode.modelConfig, "modelConfig should be present via safe fallback");
+    log("✅ Team Container node validated successfully");
+  });
 });
 
 describe("GovernanceMaskingGateway", () => {

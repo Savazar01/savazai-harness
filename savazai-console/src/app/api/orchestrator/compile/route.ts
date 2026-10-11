@@ -15,8 +15,13 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => `Backend error: ${response.status}`);
+      let parsedError: Record<string, unknown> | null = null;
+      try {
+        parsedError = JSON.parse(errorText);
+      } catch {}
+      const finalError = (parsedError?.error as string) || errorText;
       return new Response(
-        JSON.stringify({ error: errorText }),
+        JSON.stringify({ error: finalError, details: parsedError?.details }),
         { status: response.status, headers: { "Content-Type": "application/json" } }
       );
     }

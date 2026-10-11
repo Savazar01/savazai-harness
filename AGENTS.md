@@ -131,3 +131,74 @@ npm run db:migrate
 - **Zero Cryptomining / Unauthorized Binary Execution**: The execution, bundling, or invocation of any cryptocurrency mining software (e.g., XMRig), unverified third-party binaries, or covert background processes is strictly prohibited across all agents, tools, skills, and containers.
 - **Strict Execution Isolation**: All tool executions and sandboxed scripts (Python/Node) must execute within defined memory and process bounds without privilege escalation.
 - **Production Authorization Boundary**: In production environments (`NODE_ENV === 'production'`), administrative privileges are granted strictly via verified environment configuration (`ADMIN_EMAIL`/`ADMIN_PASSWORD`) and never via open registration self-promotion.
+
+---
+
+## 10. FORMAL DEVPLANS WORKFLOW, KNOWLEDGE GRAPH SYNCHRONIZATION & ZERO-HARDCODING POLICY
+
+### A. DevPlans Workflow Rule
+Every feature, fix, refactor, or architectural upgrade must maintain active tracking files under `/devplans`:
+- `/devplans/PROMPT_<TASK>.md`: The incoming problem statement, error traces, and user objectives.
+- `/devplans/PLAN_<TASK>.md`: The architectural specification, schema adjustments, file change breakdown, and testing strategy.
+- `/devplans/WALKTHROUGH_<TASK>.md`: The post-execution documentation of changes, test logs, and end-to-end verification proofs.
+
+### B. Knowledge Graph Synchronization
+Every task completion requires running the codebase knowledge graph update command before declaring completion or committing code:
+```bash
+graphify update .
+```
+
+### C. Zero-Hardcoding Policy
+- **Extensible Tool Categories**: Never restrict tool categories to static enumerations (`["native", "mcp"]`). Tool schemas must support open string categories (`"custom"`, `"open"`, `"builtin"`, `"api"`, `"database"`, `"social_media"`, external MCPs) with safe fallbacks.
+- **Dynamic Model Configs**: Never mark LLM configurations as unconditionally required on structural or container nodes (such as Agent Teams). Always provide permissive schemas with safe fallback defaults (`{ provider: 'openai', model: 'gpt-4o-mini', temperature: 0.2 }`).
+- **Dynamic Endpoints & Providers**: API endpoints, MCP transports, and model providers must be discovered and resolved dynamically via the Command Center settings, database configurations, or environment variables—never hardcoded in engine runtime modules.
+
+### D. Selective MCP Workspace Exposure & Parameter Sanitization
+- **`workspaceEnabled` Flag**: Every MCP server in `system_configurations.design_tokens.mcpServers` supports an explicit `workspaceEnabled: boolean` attribute (configurable via the Command Center switch).
+  - Internal specialist tools (such as `wedplanai-prod`) set `workspaceEnabled: false` so they are exclusive to Capability Studio flows.
+  - End-user chat tools (such as `nse-bhavcopy`, `cm-market`) set `workspaceEnabled: true` and appear in Agent Workspace (`/dashboard`).
+- **Direct MCP vs Published Agentflows Isolation**:
+  - In Direct MCP mode, `workflowId` / `agentflowId` lookups are skipped entirely to prevent SQL crashes.
+  - In Published Agentflows mode, parameter sanitization ensures strings like `"inherit"`, `"default"`, or non-UUID inputs never trigger raw SQL parameter errors against PostgreSQL. All agentflow IDs must validate as valid UUID strings before querying.
+
+---
+
+## 11. UNIFIED EXECUTION ENGINE & AUTOMATED TECHNICAL CONTEXT RESOLUTION
+
+### A. Unified LangGraph / Orchestrator Engine Across Studios & Workspace
+- Agent Workspace (`/dashboard`) and Capability Studio (`/studio`) share the unified execution engine pipeline (`/api/orchestrator/test/route.ts`).
+- When a published agentflow is executed from Agent Workspace, `/api/chat` routes execution directly through the unified orchestrator engine rather than routing to a disconnected stub.
+- Internal node transitions, supervisor scratchpads, and MCP receipts are streamed strictly to the **System Trace** sidebar. Only clean, synthesized markdown is streamed to the user's chat message bubble.
+
+### B. Automated Context Resolution & Technical ID Guardrails
+- **Zero Technical IDs in HITL Forms**: Human-in-the-Loop parameter cards generated via `buildClarificationFromSchema` must never prompt end users for internal primary keys or technical UUIDs (e.g., `weddingId`, `tenantId`, `workspaceId`).
+- **Dynamic Single-Object & Array Getter Resolution**:
+  - In `autoResolveMissingSystemIds`, missing system identifiers (`<entity>Id`) are automatically resolved at runtime before tool invocation.
+  - The engine checks assigned getter tools (such as `get_<entity>` or `list_<entity>`).
+  - For single-object responses (e.g. `get_wedding`), the root record `id` is dynamically extracted and injected into the tool arguments.
+  - For array responses (e.g. `list_ceremonies`), target labels are matched fuzzy-semantically to map human names (e.g., "Mehendi") to their corresponding UUIDs without end-user manual technical intervention.
+
+### C. Client-Side HITL Plan-First Approval Card & Resumption Protocol
+- In Agent Workspace (`/dashboard`), the stream client intercepts `PAUSED_AWAITING_HUMAN_APPROVAL` responses and emits `type: "interrupt"` with `plan`, `planSummary`, and `clarificationPrompt`.
+- The chat thread renders the interactive **Plan-First Approval Card** inline with full step breakdown, implementation summary, parameters pre-populated from clarification prompts, and 4 action buttons (`Approve & Execute Plan`, `Submit Details & Execute`, `Adjust & Re-Plan`, `Reject & Re-Plan`).
+- Resumption payloads dispatch directly back to `/api/chat` with `{ resume: { approved: boolean, plan, feedback } }`, cleanly continuing graph execution through worker tool invocation and synthesis.
+
+---
+
+## 12. STRICT DECOUPLING OF DIRECT MCP CHAT AND PUBLISHED AGENTFLOWS
+
+### A. Strict Mode Separation
+1. **Mode 1: Published Agentflows (`mode === "published-flow"` / UUID `workflowId`)**:
+   - Executes the compiled LangGraph multi-agent pipeline: Supervisor -> Specialist Workers -> Synthesizer.
+   - Enforces Human-in-the-Loop Plan-First approval gates (`plan_first` mode), displaying the step breakdown and clarification cards.
+   - Resumes with human parameter adjustments or approvals directly into the downstream worker graph.
+
+2. **Mode 2: Direct MCP Chat (`mode === "direct-mcp"` / no `workflowId`)**:
+   - **ZERO Supervisor Node**: Never compiles or invokes the supervisor graph, never generates execution plans, never emits supervisor pause interrupts.
+   - **ZERO Approval Cards**: Human-in-the-Loop plan approval cards are strictly prevented from appearing.
+   - **ZERO Domain Leakage**: Prompts, schemas, and placeholders from unrelated workflows (e.g., weddings, catering) are strictly excluded.
+   - **Server-Scoped Function Calling**:
+     - Dynamically binds only the tools from explicitly selected MCP servers (`selectedMcpServers` / `activeTools`).
+     - Executes tool calling loops directly using LLM native function declarations.
+     - Dispatches JSON-RPC 2.0 calls directly to remote servers (e.g., `nse-bhavcopy` at `https://mcp.nseindia.in/bhavcopy/cm/mcp`).
+     - Streams real-time tool traces to the System Trace sidebar and cleanly formatted Markdown answers directly into the chat bubble.

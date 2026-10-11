@@ -200,10 +200,36 @@ npm run lint
 npm run build
 cd ..
 
+# Knowledge Graph Synchronization
+graphify update .
+
 # Database Migration Management
 npm run db:generate
 npm run db:migrate
 ```
+
+---
+
+## 📐 Capability Studio Resilience & Universal MCP Integration
+
+* **Schema-Driven Resilience**: Capability Studio validates agentflow canvas topologies using permissive, extensible Zod schemas (`src/core/schemas.ts` and `savazai-console/src/lib/validations/canvas.ts`). Tool categories are not limited to fixed enums—`custom`, `open`, `native`, `mcp`, `database`, `social_media`, and external provider categories are fully supported.
+* **Agent Team Architecture**: Visual container nodes (`roleTemplate: "team"`) do not require LLM configurations, and missing `modelConfig` attributes automatically resolve to safe platform defaults (`openai:gpt-4o-mini`).
+* **Universal MCP Aggregation**: The console features a multi-transport aggregator (`McpAggregator`) supporting SSE, streamable HTTP/JSON-RPC, and stdio across heterogeneous MCP servers (e.g., WedPlanAI, NSE India Bhavcopy, CM Market). Tools are discovered dynamically at runtime via `GET /api/mcp` and `GET /api/tools/registered`.
+* **Selective Workspace Exposure (`workspaceEnabled`)**: Each configured MCP server in Command Center can be toggled between "Workspace Chat Enabled" and "Studio Only". Internal studio-only servers (such as `wedplanai-prod`) are shielded from direct end-user chat, while exposed servers (such as `nse-bhavcopy` and `cm-market`) appear in the Agent Workspace dropdown for opt-in tool invocation.
+* **Resilient Agentflow Routing & Unified Pipeline**: Agent Workspace and Capability Studio share the unified LangGraph execution pipeline (`/api/orchestrator/test/route.ts`). Direct MCP chat executes without database lookups, while Published Agentflow mode binds strictly to validated flow UUIDs with live MCP execution.
+* **Automated Technical Context Resolution**: End users are never required to provide technical primary keys or UUIDs (e.g. `weddingId`, `tenantId`, `workspaceId`). The engine automatically resolves root context via assigned single-object and array getter tools (`get_<entity>`) behind the scenes before executing mutating actions, and shields technical foreign IDs from user-facing HITL parameter forms.
+* **Unified Plan-First HITL Approval Card**: When running in Plan-First mode within Agent Workspace (`/dashboard`), execution pauses at the HITL boundary and renders an interactive approval card with full plan step details, implementation summary, parameters pre-populated from clarification prompts, and 4 action buttons (`Approve & Execute Plan`, `Submit Details & Execute`, `Adjust & Re-Plan`, `Reject & Re-Plan`). Resuming dispatches back to the unified orchestrator engine and live-streams results without freezing.
+* **Strict Decoupling of Direct MCP Chat and Published Agentflows**: Agent Workspace strictly separates direct tool execution from multi-agent workflow compilation. Direct MCP mode runs pure, low-latency LLM tool calling scoped exclusively to selected servers without supervisor nodes, plan interrupts, or cross-domain leaks. Published Agentflows mode executes the full LangGraph topology with supervisor coordination, specialist teams, and Human-in-the-Loop plan approvals.
+
+---
+
+## 📋 DevPlans Contribution Framework
+
+All features, bugfixes, and refactors must strictly maintain active tracking artifacts under `/devplans`:
+* `/devplans/PROMPT_<TASK>.md`: Incoming user specifications, error traces, and targets.
+* `/devplans/PLAN_<TASK>.md`: Technical design, affected modules, schema definitions, and verification strategy.
+* `/devplans/WALKTHROUGH_<TASK>.md`: Executed changes, test results, and validation proofs.
+* **Graphify Rule**: Run `graphify update .` upon completion of each task to maintain code graph freshness.
 
 ---
 

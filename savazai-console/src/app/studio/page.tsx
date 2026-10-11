@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Plus, FolderKanban, Loader2, X, Database, Download, Upload } from "lucide-react";
 import { CanvasEditor, CanvasEditorHandle, CanvasNode, CanvasEdge } from "@/components/studio/canvas-editor";
-import { regenerateAgentflowCanvas } from "@/lib/agentflow-utils";
+import { regenerateAgentflowCanvas, sanitizeCanvasDefinition } from "@/lib/agentflow-utils";
 
 interface Agentflow {
   id: string;
@@ -154,11 +154,13 @@ export default function StudioPage() {
   const handleSaveDraft = async (nodes: CanvasNode[], edges: CanvasEdge[], suppressToast?: boolean): Promise<boolean> => {
     if (!activeAgentflowId) return false;
     try {
-      const canvasPayload = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const canvasPayload = sanitizeCanvasDefinition({
         workflowType: "interactive",
-        nodes,
-        edges,
-      };
+        nodes: nodes as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        edges: edges as any,
+      });
       const res = await fetch(`/api/agentflows/${activeAgentflowId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -195,10 +197,18 @@ export default function StudioPage() {
   const handlePublish = async (canvasJson: string) => {
     if (!activeAgentflowId) return { success: false, error: "No active agentflow" } as const;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let payloadObj: any;
+      try {
+        payloadObj = JSON.parse(canvasJson);
+      } catch {
+        payloadObj = {};
+      }
+      const sanitized = sanitizeCanvasDefinition(payloadObj);
       const res = await fetch("/api/orchestrator/compile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: canvasJson,
+        body: JSON.stringify(sanitized),
       });
       const data = await res.json();
       if (res.ok) {
@@ -207,13 +217,11 @@ export default function StudioPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             status: "published",
-            canvasDefinition: (() => {
-              try { return JSON.parse(canvasJson); } catch { return {}; }
-            })(),
+            canvasDefinition: sanitized,
           }),
         });
         setAgentflows((prev) =>
-          prev.map((w) => (w.id === activeAgentflowId ? { ...w, status: "published" } : w))
+          prev.map((w) => (w.id === activeAgentflowId ? { ...w, canvasDefinition: sanitized as unknown as Record<string, unknown>, status: "published" } : w))
         );
         return { success: true, message: data.message || "Published successfully!" } as const;
       }

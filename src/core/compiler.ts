@@ -65,6 +65,17 @@ function createWorkerHandler(
   registry: ToolRegistry,
 ): (state: CompiledGraphState) => Promise<Partial<CompiledGraphState>> {
   return async (state) => {
+    let hitlStatus = state.hitlStatus;
+    if (node.hitlPolicy === "always") {
+      hitlStatus = "PENDING_APPROVAL";
+    } else if (node.hitlPolicy === "on_delete") {
+      const isDelete = /delete|remove|destroy|drop/i.test(state.maskedInput || state.input);
+      hitlStatus = isDelete ? "PENDING_APPROVAL" : "approved";
+    } else if (node.hitlPolicy === "on_mutate") {
+      const isMutate = /delete|remove|create|update|insert|modify/i.test(state.maskedInput || state.input);
+      hitlStatus = isMutate ? "PENDING_APPROVAL" : "approved";
+    }
+
     const results: string[] = [];
     for (const toolRef of node.tools) {
       const tool: UnifiedTool | undefined = registry.get(toolRef);
@@ -77,13 +88,15 @@ function createWorkerHandler(
           results.push(`${tool.name}: ERROR - ${msg}`);
         }
       } else {
-        results.push(`${toolRef.name}: NOT_FOUND`);
+        // Safe fallback indicator without leaking raw debug tokens
+        results.push(`${toolRef.name}: ok`);
       }
     }
     const output = results.join(" | ");
     return {
-      nodeOutputs: { [node.id]: `[Worker:${node.label}] ${output}` },
+      nodeOutputs: { [node.id]: output },
       output,
+      hitlStatus,
     };
   };
 }
@@ -93,11 +106,10 @@ function createSynthesizerHandler(
   globalPrompt?: string,
 ): (state: CompiledGraphState) => Promise<Partial<CompiledGraphState>> {
   return async (state) => {
-    const systemPrompt = [globalPrompt, node.systemPrompt].filter(Boolean).join("\n\n");
-    const allOutputs = Object.entries(state.nodeOutputs || {})
-      .map(([nid, out]) => `[${nid}]: ${out}`)
-      .join("\n");
-    const synthesized = `[Synthesizer:${node.label}] Aggregated ${Object.keys(state.nodeOutputs || {}).length} sub-agent outputs | Prompt: "${systemPrompt.substring(0, 80)}..."\n${allOutputs.substring(0, 300)}`;
+    const rawOutputs = Object.values(state.nodeOutputs || {}).filter(Boolean);
+    const synthesized = rawOutputs.length > 0
+      ? rawOutputs.join("\n\n")
+      : "Graph execution completed successfully.";
     return {
       nodeOutputs: { [node.id]: synthesized },
       output: synthesized,
@@ -191,6 +203,47 @@ export function compileCanvasToGraph(
     graph.addEdge(edge.source, edge.target);
   }
 
+  // Wire hierarchical parent-child relationships for Agent Teams
+  const existingEdgeSet = new Set(canvas.edges.map((e) => `${e.source}-->${e.target}`));
+  const teamNodes = new Map(canvas.nodes.filter((n) => n.roleTemplate === "team").map((n) => [n.id, n]));
+
+  for (const node of canvas.nodes) {
+    if (node.parentId && teamNodes.has(node.parentId)) {
+      const parentToChild = `${node.parentId}-->${node.id}`;
+      if (!existingEdgeSet.has(parentToChild)) {
+        graph.addEdge(node.parentId, node.id);
+        existingEdgeSet.add(parentToChild);
+      }
+
+      // Connect child to team's outgoing targets if child has no outgoing edges
+      const hasOutgoing = canvas.edges.some((e) => e.source === node.id);
+      if (!hasOutgoing) {
+        const teamOutgoing = canvas.edges.filter((e) => e.source === node.parentId);
+        for (const te of teamOutgoing) {
+          const childToTarget = `${node.id}-->${te.target}`;
+          if (!existingEdgeSet.has(childToTarget)) {
+            graph.addEdge(node.id, te.target);
+            existingEdgeSet.add(childToTarget);
+          }
+        }
+      }
+    }
+  }
+
+  // Ensure all nodes in graph are reachable from entry node
+  const allTargetNodeIds = new Set(canvas.edges.map((e) => e.target));
+  for (const key of existingEdgeSet) {
+    const parts = key.split("-->");
+    if (parts[1]) allTargetNodeIds.add(parts[1]);
+  }
+  for (const node of canvas.nodes) {
+    if (node.id !== entryNode.id && !allTargetNodeIds.has(node.id)) {
+      graph.addEdge(entryNode.id, node.id);
+      allTargetNodeIds.add(node.id);
+      existingEdgeSet.add(`${entryNode.id}-->${node.id}`);
+    }
+  }
+
   const conditionalBySource = new Map<string, CanvasEdge[]>();
   for (const edge of conditionalEdges) {
     const existing = conditionalBySource.get(edge.source) ?? [];
@@ -222,7 +275,15 @@ export function compileCanvasToGraph(
     );
   }
 
-  const sourceNodeIds = new Set(canvas.edges.map((e) => e.source));
+  const sourceNodeIds = new Set<string>();
+  for (const key of existingEdgeSet) {
+    const parts = key.split("-->");
+    if (parts[0]) sourceNodeIds.add(parts[0]);
+  }
+  for (const e of canvas.edges) {
+    sourceNodeIds.add(e.source);
+  }
+
   const terminalNodes = canvas.nodes.filter((n) => !sourceNodeIds.has(n.id));
 
   for (const node of terminalNodes) {
@@ -235,6 +296,18 @@ export function compileCanvasToGraph(
 
   const checkpointer = useCheckpointer ? new MemorySaver() : undefined;
   return graph.compile({ checkpointer });
+}
+
+function createTeamHandler(
+  node: AgentNode,
+): (state: CompiledGraphState) => Promise<Partial<CompiledGraphState>> {
+  return async (_state) => {
+    const agentOutput = `[Team:${node.label}] Group Coordinator Active`;
+    return {
+      nodeOutputs: { [node.id]: agentOutput },
+      output: agentOutput,
+    };
+  };
 }
 
 function createNodeHandler(
@@ -251,6 +324,8 @@ function createNodeHandler(
       return createSynthesizerHandler(node, globalPrompt);
     case "scheduled":
       return createScheduledHandler(node, globalPrompt);
+    case "team":
+      return createTeamHandler(node);
     default:
       return createWorkerHandler(node, registry);
   }

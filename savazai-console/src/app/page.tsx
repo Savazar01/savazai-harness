@@ -153,19 +153,19 @@ export default async function Home() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 mb-5">
                   <Bot className="h-5 w-5" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Role-Based Node Orchestration</h3>
+                <h3 className="text-lg font-bold text-white mb-2">Decoupled Dual-Mode Agent Workspace</h3>
                 <p className="text-slate-400 text-xs leading-relaxed">
-                  Decoupled node roles: <strong>Supervisor</strong> (Plan formulation &amp; worker routing), <strong>Specialist/Worker</strong> (Tool executions), <strong>Synthesizer</strong> (Receipt aggregation &amp; final reports), and <strong>Scheduled Cron Nodes</strong>.
+                  Strictly isolate <strong>Published Agentflows</strong> (compiled LangGraph supervisor planning, specialist team execution, and Plan-First HITL cards) from <strong>Direct MCP Chat</strong> (high-speed conversational tool calling with server-scoped bindings).
                 </p>
               </div>
 
               <div className="rounded-3xl border border-slate-900 bg-slate-900/20 p-8 hover:border-slate-800 transition-all">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 mb-5">
-                  <SlidersVertical className="h-5 w-5" />
+                  <Server className="h-5 w-5" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Full Canvas Control</h3>
+                <h3 className="text-lg font-bold text-white mb-2">Universal Dynamic MCP Transports</h3>
                 <p className="text-slate-400 text-xs leading-relaxed">
-                  Interactive drag-and-drop node editing, instant graph duplication, export/import JSON topology definitions, and real-time step-by-step Test Playground trace inspection.
+                  Real-time tool discovery across <code>streamable-http</code>, <code>sse</code>, and <code>stdio</code> transports. Live granular schema hydration with resilient multi-tier fallbacks and granular <code>workspaceEnabled</code> visibility switches.
                 </p>
               </div>
 
@@ -173,9 +173,9 @@ export default async function Home() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 mb-5">
                   <PlaySquare className="h-5 w-5" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Dual Execution Strategies</h3>
+                <h3 className="text-lg font-bold text-white mb-2">Automated Technical Context Resolution</h3>
                 <p className="text-slate-400 text-xs leading-relaxed">
-                  Seamlessly toggle between <strong>Plan First</strong> (Human-in-the-Loop plan approval cards with Reject, Adjust, or Execute options) and <strong>Direct Execution</strong> (Autonomous fast-path).
+                  Eliminates technical UUID prompts from Human-in-the-Loop workflows. Intelligent runtime auto-resolution dynamically injects foreign keys and workspace context from active sessions and getter tools.
                 </p>
               </div>
             </div>

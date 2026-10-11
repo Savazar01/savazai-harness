@@ -19,8 +19,8 @@ export interface UnifiedTool {
   name: string;
   /** Human-readable description for the LLM. */
   description: string;
-  /** Whether this tool is native or from an MCP server. */
-  category: "native" | "mcp";
+  /** Category of the tool (native, mcp, custom, open, database, etc.). */
+  category: "native" | "mcp" | string;
   /** MCP server identifier (only set when category === 'mcp'). */
   mcpServerId?: string;
   /** Zod schema for parameter validation. */

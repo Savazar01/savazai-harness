@@ -298,3 +298,40 @@ export function regenerateAgentflowCanvas(canvasDefinition: unknown): CanvasDefi
     edges: regeneratedEdges,
   };
 }
+
+/**
+ * Defensive pre-save sanitizer that normalizes modelConfig, tool categories,
+ * and structural canvas attributes before backend persistence or LangGraph compilation.
+ */
+export function sanitizeCanvasDefinition(def: CanvasDefinition): CanvasDefinition {
+  if (!def || typeof def !== "object") {
+    return { workflowType: "interactive", nodes: [], edges: [] };
+  }
+  return {
+    ...def,
+    workflowType: def.workflowType || "interactive",
+    nodes: (def.nodes || []).map((node) => {
+      // Guarantee safe modelConfig fallback
+      const modelConfig = node.modelConfig || (node.roleTemplate === "team" ? undefined : {
+        provider: "openai",
+        model: "gpt-4o-mini",
+        temperature: 0.2,
+      });
+
+      // Normalize tool categories to valid strings
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const tools = ((node.tools || []) as any[]).map((t) => ({
+        ...t,
+        category: typeof t?.category === "string" && t.category ? t.category : "mcp",
+      }));
+
+      return {
+        ...node,
+        modelConfig: modelConfig as Record<string, unknown> | undefined,
+        tools,
+      };
+    }),
+    edges: def.edges || [],
+  };
+}
+
