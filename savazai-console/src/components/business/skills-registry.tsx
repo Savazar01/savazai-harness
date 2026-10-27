@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { 
@@ -644,7 +644,7 @@ export function SkillsRegistry() {
       open: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
       native: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
       mcp: "bg-amber-500/10 text-amber-400 border-amber-500/30",
-      custom: "bg-indigo-500/10 text-indigo-400 border-indigo-500/30",
+      custom: "bg-primary/10 text-primary border-primary/20",
     };
     return (
       <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border capitalize ${classes[category] || classes.custom}`}>
@@ -662,19 +662,19 @@ export function SkillsRegistry() {
   ];
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-slate-950/20 rounded-2xl border border-slate-900 overflow-hidden">
-      {/* ── Top Header Controls Bar ── */}
-      <div className="p-4 border-b border-slate-900 bg-slate-950/40 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+    <div className="flex-1 flex flex-col min-h-0 bg-card/20 rounded-2xl border border-border overflow-hidden">
+      {/* â”€â”€ Top Header Controls Bar â”€â”€ */}
+      <div className="p-4 border-b border-border bg-card flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
         {/* Title & Counter */}
         <div className="flex items-center gap-3">
-          <Wrench className="h-5 w-5 text-indigo-400" />
+          <Wrench className="h-5 w-5 text-primary" />
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono">Universal Skills Registry</h2>
+              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider font-mono">Universal Skills Registry</h2>
               <HelpTooltip content="Universal Agent Skills define procedural knowledge, code execution routines, and dynamic MCP endpoints." side="right" />
             </div>
-            <span className="text-[11px] text-slate-500">
-              Total: <strong className="text-slate-300">{filteredSkills.length}</strong> skills persisted
+            <span className="text-[11px] text-muted-foreground">
+              Total: <strong className="text-foreground">{filteredSkills.length}</strong> skills persisted
             </span>
           </div>
         </div>
@@ -685,7 +685,7 @@ export function SkillsRegistry() {
             <button
               type="button"
               onClick={handleExportCsv}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border hover:border-border bg-muted/50 hover:bg-muted text-foreground hover:text-foreground text-xs font-semibold transition-all shadow-sm cursor-pointer"
               title="Export all skills to CSV"
             >
               <FileSpreadsheet className="h-4 w-4 text-emerald-400" /> Export CSV
@@ -695,16 +695,16 @@ export function SkillsRegistry() {
             <button
               type="button"
               onClick={() => setIsIngestModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border hover:border-border bg-muted/50 hover:bg-muted text-foreground hover:text-foreground text-xs font-semibold transition-all shadow-sm cursor-pointer"
             >
-              <Upload className="h-4 w-4 text-slate-400" /> Import / Ingest
+              <Upload className="h-4 w-4 text-muted-foreground" /> Import / Ingest
             </button>
           )}
           {canCreateSkill && (
             <button
               type="button"
               onClick={handleOpenAuthorModal}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
             >
               <Plus className="h-4 w-4" /> Author New Skill
             </button>
@@ -712,22 +712,22 @@ export function SkillsRegistry() {
         </div>
       </div>
 
-      {/* ── Search, Filter & Sort Toolbar ── */}
-      <div className="p-3.5 border-b border-slate-900 bg-slate-950/30 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shrink-0">
+      {/* â”€â”€ Search, Filter & Sort Toolbar â”€â”€ */}
+      <div className="p-3.5 border-b border-border bg-card flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shrink-0">
         {/* Real-time search */}
         <div className="relative flex-1 max-w-md">
-          <Search className="h-4 w-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search skills by name, description, server ID..."
-            className="w-full rounded-xl border border-slate-850 bg-slate-900/50 py-1.5 pl-9 pr-8 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500 transition-colors"
+            className="w-full rounded-xl border border-border bg-muted/50 py-1.5 pl-9 pr-8 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500 transition-colors"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -737,7 +737,7 @@ export function SkillsRegistry() {
         {/* Filter Pills and Sort dropdown */}
         <div className="flex items-center gap-3 overflow-x-auto">
           {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 bg-slate-900/30 p-1 rounded-xl border border-slate-850">
+          <div className="flex items-center gap-1.5 bg-muted/30 p-1 rounded-xl border border-border">
             {categoryFilterOptions.map((opt) => (
               <button
                 key={opt.value}
@@ -745,8 +745,8 @@ export function SkillsRegistry() {
                 onClick={() => setSelectedCategoryFilter(opt.value)}
                 className={`px-3 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all border cursor-pointer ${
                   selectedCategoryFilter === opt.value
-                    ? "bg-indigo-600/20 border-indigo-500/50 text-indigo-300 shadow-sm"
-                    : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                    ? "bg-primary/20 border-indigo-500/50 text-primary shadow-sm"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 {opt.label}
@@ -756,11 +756,11 @@ export function SkillsRegistry() {
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[10px] uppercase font-bold text-slate-500">Sort:</span>
+            <span className="text-[10px] uppercase font-bold text-muted-foreground">Sort:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-slate-900 border border-slate-800 text-xs text-slate-300 rounded-xl px-2.5 py-1.5 outline-none focus:border-indigo-500 cursor-pointer"
+              className="bg-muted border border-border text-xs text-foreground rounded-xl px-2.5 py-1.5 outline-none focus:border-indigo-500 cursor-pointer"
             >
               <option value="updated">Recently Updated</option>
               <option value="name">Name (A-Z)</option>
@@ -770,20 +770,20 @@ export function SkillsRegistry() {
         </div>
       </div>
 
-      {/* ── Full-Width Data Table ── */}
-      <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+      {/* â”€â”€ Full-Width Data Table â”€â”€ */}
+      <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-muted">
         {loading && skills.length === 0 ? (
-          <div className="flex flex-col justify-center items-center py-24 text-slate-500 text-xs gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+          <div className="flex flex-col justify-center items-center py-24 text-muted-foreground text-xs gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <span>Loading registered skills...</span>
           </div>
         ) : filteredSkills.length === 0 ? (
           <div className="text-center py-24 px-4 space-y-3">
             <FolderOpen className="h-10 w-10 text-slate-700 mx-auto" />
-            <p className="text-slate-300 text-sm font-semibold">
+            <p className="text-foreground text-sm font-semibold">
               {searchQuery || selectedCategoryFilter !== "All" ? "No skills match your search filters." : "No skills registered yet."}
             </p>
-            <p className="text-slate-500 text-xs max-w-sm mx-auto">
+            <p className="text-muted-foreground text-xs max-w-sm mx-auto">
               {searchQuery || selectedCategoryFilter !== "All" 
                 ? "Try adjusting your query or resetting the category filter tab." 
                 : "Author a new skill or import an existing SKILL.md or .json bundle to get started."}
@@ -791,7 +791,7 @@ export function SkillsRegistry() {
             <button
               type="button"
               onClick={handleOpenAuthorModal}
-              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-semibold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
             >
               <Plus className="h-4 w-4" /> Author New Skill
             </button>
@@ -799,7 +799,7 @@ export function SkillsRegistry() {
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-850 bg-slate-950/60 text-[10px] uppercase font-bold text-slate-400 font-mono tracking-wider">
+              <tr className="border-b border-border bg-muted/50 text-[10px] uppercase font-bold text-muted-foreground font-mono tracking-wider">
                 <th className="py-3 px-4">Skill Name &amp; Key</th>
                 <th className="py-3 px-4">Category</th>
                 <th className="py-3 px-4">Binding / Server ID</th>
@@ -814,15 +814,15 @@ export function SkillsRegistry() {
                 return (
                   <tr 
                     key={skill.id}
-                    className="group hover:bg-slate-900/30 transition-colors text-xs"
+                    className="group hover:bg-muted/30 transition-colors text-xs"
                   >
                     {/* Name & Version */}
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-slate-100 group-hover:text-indigo-300 transition-colors">
+                        <span className="font-mono font-bold text-foreground group-hover:text-primary transition-colors">
                           {skill.name}
                         </span>
-                        <span className="text-[9px] font-mono text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
+                        <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
                           v{skill.version}
                         </span>
                       </div>
@@ -840,13 +840,13 @@ export function SkillsRegistry() {
                           {skill.mcpServerId}
                         </span>
                       ) : (
-                        <span className="text-slate-600 text-[11px] font-mono">Local Sandbox</span>
+                        <span className="text-muted-foreground text-[11px] font-mono">Local Sandbox</span>
                       )}
                     </td>
 
                     {/* Description */}
                     <td className="py-3.5 px-4 max-w-md">
-                      <p className="text-slate-400 truncate text-[11px] leading-relaxed" title={skill.description}>
+                      <p className="text-muted-foreground truncate text-[11px] leading-relaxed" title={skill.description}>
                         {skill.description}
                       </p>
                     </td>
@@ -857,16 +857,16 @@ export function SkillsRegistry() {
                         <button
                           type="button"
                           onClick={() => handleOpenAssignModal(skill)}
-                          className="flex flex-wrap items-center gap-1 text-left group/badge cursor-pointer p-1 rounded-lg hover:bg-slate-800/50 transition-colors"
+                          className="flex flex-wrap items-center gap-1 text-left group/badge cursor-pointer p-1 rounded-lg hover:bg-muted transition-colors"
                           title="Click to manage agent assignments"
                         >
                           {boundAgents.slice(0, 2).map((agent, idx) => (
-                            <span key={idx} className="text-[10px] bg-indigo-950/40 text-indigo-300 group-hover/badge:border-indigo-400 px-2 py-0.5 rounded-md border border-indigo-500/30 font-medium transition-colors">
+                            <span key={idx} className="text-[10px] bg-primary/10 text-primary group-hover/badge:border-indigo-400 px-2 py-0.5 rounded-md border border-primary/20 font-medium transition-colors">
                               {agent}
                             </span>
                           ))}
                           {boundAgents.length > 2 && (
-                            <span className="text-[9px] text-slate-400 font-mono group-hover/badge:text-slate-200" title={boundAgents.slice(2).join(", ")}>
+                            <span className="text-[9px] text-muted-foreground font-mono group-hover/badge:text-foreground" title={boundAgents.slice(2).join(", ")}>
                               +{boundAgents.length - 2}
                             </span>
                           )}
@@ -875,7 +875,7 @@ export function SkillsRegistry() {
                         <button
                           type="button"
                           onClick={() => handleOpenAssignModal(skill)}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-dashed border-slate-750 text-slate-500 hover:text-indigo-300 hover:border-indigo-500/40 hover:bg-indigo-950/20 text-[10px] font-medium transition-all cursor-pointer"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-dashed border-border text-muted-foreground hover:text-primary hover:border-indigo-500/40 hover:bg-indigo-950/20 text-[10px] font-medium transition-all cursor-pointer"
                           title="Assign this skill to specialist agents"
                         >
                           <Plus className="h-2.5 w-2.5" /> Assign Agents
@@ -890,7 +890,7 @@ export function SkillsRegistry() {
                         <button
                           type="button"
                           onClick={() => setViewingSkill(skill)}
-                          className="p-1.5 rounded-lg border border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-850 text-slate-300 hover:text-white transition-all cursor-pointer"
+                          className="p-1.5 rounded-lg border border-border hover:border-border bg-muted/40 hover:bg-muted text-foreground hover:text-foreground transition-all cursor-pointer"
                           title="Inspect Blueprint"
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -901,7 +901,7 @@ export function SkillsRegistry() {
                           <button
                             type="button"
                             onClick={() => handleOpenEditModal(skill)}
-                            className="p-1.5 rounded-lg border border-slate-850 hover:border-indigo-500/40 bg-slate-900/40 hover:bg-indigo-950/20 text-slate-300 hover:text-indigo-300 transition-all cursor-pointer"
+                            className="p-1.5 rounded-lg border border-border hover:border-indigo-500/40 bg-muted/40 hover:bg-indigo-950/20 text-foreground hover:text-primary transition-all cursor-pointer"
                             title="Edit Skill"
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -914,25 +914,25 @@ export function SkillsRegistry() {
                             <button
                               type="button"
                               onClick={() => setActiveExportMenuId(activeExportMenuId === skill.id ? null : skill.id)}
-                              className="p-1.5 rounded-lg border border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-850 text-slate-300 hover:text-white transition-all cursor-pointer"
+                              className="p-1.5 rounded-lg border border-border hover:border-border bg-muted/40 hover:bg-muted text-foreground hover:text-foreground transition-all cursor-pointer"
                               title="Export Options"
                             >
                               <Download className="h-3.5 w-3.5" />
                             </button>
 
                             {activeExportMenuId === skill.id && (
-                              <div className="absolute right-0 top-full mt-1 w-32 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
+                              <div className="absolute right-0 top-full mt-1 w-32 bg-card border border-border rounded-xl shadow-2xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
                                 <button
                                   type="button"
                                   onClick={() => handleExportMarkdown(skill)}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2 cursor-pointer"
+                                  className="w-full px-3 py-1.5 text-left text-xs text-foreground hover:text-foreground hover:bg-muted flex items-center gap-2 cursor-pointer"
                                 >
-                                  <FileText className="h-3.5 w-3.5 text-indigo-400" /> Export .md
+                                  <FileText className="h-3.5 w-3.5 text-primary" /> Export .md
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleExportJson(skill)}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2 cursor-pointer"
+                                  className="w-full px-3 py-1.5 text-left text-xs text-foreground hover:text-foreground hover:bg-muted flex items-center gap-2 cursor-pointer"
                                 >
                                   <Code className="h-3.5 w-3.5 text-amber-400" /> Export JSON
                                 </button>
@@ -946,7 +946,7 @@ export function SkillsRegistry() {
                           <button
                             type="button"
                             onClick={() => setDeletingSkill(skill)}
-                            className="p-1.5 rounded-lg border border-slate-850 hover:border-red-500/40 bg-slate-900/40 hover:bg-red-950/20 text-slate-400 hover:text-red-400 transition-all cursor-pointer"
+                            className="p-1.5 rounded-lg border border-border hover:border-red-500/40 bg-muted/40 hover:bg-red-950/20 text-muted-foreground hover:text-red-400 transition-all cursor-pointer"
                             title="Delete Skill"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -962,29 +962,29 @@ export function SkillsRegistry() {
         )}
       </div>
 
-      {/* ── 1. Ingestion Modal ── */}
+      {/* â”€â”€ 1. Ingestion Modal â”€â”€ */}
       {isIngestModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div onClick={() => setIsIngestModalOpen(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-slate-900 flex justify-between items-center bg-slate-950/40">
+          <div className="relative bg-card border border-border rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-card">
               <div className="flex items-center gap-2.5">
-                <Upload className="h-4 w-4 text-indigo-400" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Import &amp; Ingest Skill</h3>
+                <Upload className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Import &amp; Ingest Skill</h3>
               </div>
-              <button onClick={() => setIsIngestModalOpen(false)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg cursor-pointer">
+              <button onClick={() => setIsIngestModalOpen(false)} className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-lg cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             <div className="p-6 space-y-4">
               {/* Tab selector */}
-              <div className="flex items-center gap-1.5 bg-slate-900/60 p-1 rounded-xl border border-slate-850">
+              <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-xl border border-border">
                 <button
                   type="button"
                   onClick={() => setIngestTab("file")}
                   className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                    ingestTab === "file" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-slate-200"
+                    ingestTab === "file" ? "bg-primary text-foreground shadow" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Upload SKILL.md / JSON File
@@ -993,7 +993,7 @@ export function SkillsRegistry() {
                   type="button"
                   onClick={() => setIngestTab("paste")}
                   className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                    ingestTab === "paste" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-slate-200"
+                    ingestTab === "paste" ? "bg-primary text-foreground shadow" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Paste Raw Markdown / JSON
@@ -1002,7 +1002,7 @@ export function SkillsRegistry() {
                   type="button"
                   onClick={() => setIngestTab("url")}
                   className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                    ingestTab === "url" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-slate-200"
+                    ingestTab === "url" ? "bg-primary text-foreground shadow" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Fetch from URL
@@ -1010,10 +1010,10 @@ export function SkillsRegistry() {
               </div>
 
               {ingestTab === "file" && (
-                <label className="flex flex-col items-center justify-center border-2 border-dashed border-indigo-500/30 hover:border-indigo-500/60 bg-indigo-950/10 hover:bg-indigo-950/20 rounded-2xl p-8 cursor-pointer transition-all">
-                  <Upload className="h-8 w-8 text-indigo-400 mb-2" />
-                  <span className="text-sm text-slate-200 font-bold">Drop SKILL.md Blueprint / JSON File</span>
-                  <span className="text-xs text-slate-500 mt-1">Automatically hydrates YAML frontmatter/JSON metadata and instructions</span>
+                <label className="flex flex-col items-center justify-center border-2 border-dashed border-primary/20 hover:border-indigo-500/60 bg-indigo-950/10 hover:bg-indigo-950/20 rounded-2xl p-8 cursor-pointer transition-all">
+                  <Upload className="h-8 w-8 text-primary mb-2" />
+                  <span className="text-sm text-foreground font-bold">Drop SKILL.md Blueprint / JSON File</span>
+                  <span className="text-xs text-muted-foreground mt-1">Automatically hydrates YAML frontmatter/JSON metadata and instructions</span>
                   <input type="file" accept=".md,.json,.txt" onChange={handleFileUpload} className="hidden" />
                 </label>
               )}
@@ -1025,12 +1025,12 @@ export function SkillsRegistry() {
                     value={rawMarkdown}
                     onChange={(e) => setRawMarkdown(e.target.value)}
                     placeholder="---\nname: my_custom_skill\ndescription: A useful agent tool\ncategory: custom\nversion: 1.0.0\n---\n\n# Instructions..."
-                    className="w-full rounded-2xl border border-slate-850 bg-[#05050a] p-4 text-xs text-slate-300 font-mono placeholder-slate-655 outline-none focus:border-indigo-500"
+                    className="w-full rounded-2xl border border-border bg-muted/30 p-4 text-xs text-foreground font-mono placeholder-slate-655 outline-none focus:border-indigo-500"
                   />
                   <button 
                     type="button" 
                     onClick={handleImportText}
-                    className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
+                    className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
                   >
                     Parse &amp; Load Blueprint
                   </button>
@@ -1045,19 +1045,19 @@ export function SkillsRegistry() {
                       value={fetchUrl}
                       onChange={(e) => setFetchUrl(e.target.value)}
                       placeholder="e.g. https://skills.sh/shadcn/SKILL.md" 
-                      className="flex-1 rounded-xl border border-slate-850 bg-slate-900/50 py-2 px-3.5 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500"
+                      className="flex-1 rounded-xl border border-border bg-muted/50 py-2 px-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500"
                     />
                     <button 
                       type="button" 
                       onClick={handleFetchUrl} 
                       disabled={importing}
-                      className="px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shrink-0 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold shrink-0 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                     >
                       {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4" />}
                       Fetch
                     </button>
                   </div>
-                  <p className="text-[11px] text-slate-500">Provide an accessible raw markdown or JSON URL from GitHub, skills.sh, or an agent skill repository.</p>
+                  <p className="text-[11px] text-muted-foreground">Provide an accessible raw markdown or JSON URL from GitHub, skills.sh, or an agent skill repository.</p>
                 </div>
               )}
             </div>
@@ -1065,20 +1065,20 @@ export function SkillsRegistry() {
         </div>
       )}
 
-      {/* ── 2. View / Inspect Modal ── */}
+      {/* â”€â”€ 2. View / Inspect Modal â”€â”€ */}
       {viewingSkill && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div onClick={() => setViewingSkill(null)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+          <div className="relative bg-card border border-border rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-900 flex justify-between items-center bg-slate-950/40 shrink-0">
+            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-card shrink-0">
               <div className="flex items-center gap-3 min-w-0">
-                <BookOpen className="h-5 w-5 text-indigo-400 shrink-0" />
+                <BookOpen className="h-5 w-5 text-primary shrink-0" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold font-mono text-white truncate">{viewingSkill.name}</h3>
+                    <h3 className="text-base font-bold font-mono text-foreground truncate">{viewingSkill.name}</h3>
                     {renderBadge(viewingSkill.category)}
-                    <span className="font-mono text-[10px] text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
+                    <span className="font-mono text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
                       v{viewingSkill.version}
                     </span>
                   </div>
@@ -1088,7 +1088,7 @@ export function SkillsRegistry() {
                 <button 
                   type="button" 
                   onClick={() => handleExportMarkdown(viewingSkill)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border hover:border-border bg-muted/50 text-foreground hover:text-foreground text-xs font-semibold transition-all cursor-pointer"
                   title="Download Markdown Blueprint"
                 >
                   <Download className="h-3.5 w-3.5" /> .md
@@ -1096,7 +1096,7 @@ export function SkillsRegistry() {
                 <button 
                   type="button" 
                   onClick={() => handleExportJson(viewingSkill)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border hover:border-border bg-muted/50 text-foreground hover:text-foreground text-xs font-semibold transition-all cursor-pointer"
                   title="Download JSON Payload"
                 >
                   <Download className="h-3.5 w-3.5" /> JSON
@@ -1104,35 +1104,35 @@ export function SkillsRegistry() {
                 <button 
                   type="button" 
                   onClick={() => handleOpenEditModal(viewingSkill)}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
                 >
                   <Edit className="h-3.5 w-3.5" /> Edit Skill
                 </button>
-                <button onClick={() => setViewingSkill(null)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg ml-2 cursor-pointer">
+                <button onClick={() => setViewingSkill(null)} className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-lg ml-2 cursor-pointer">
                   <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-muted">
               {/* Metadata Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/40 border border-slate-900 p-4 rounded-2xl text-xs">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-card border border-border p-4 rounded-2xl text-xs">
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold mb-0.5">Category</span>
-                  <span className="text-slate-200 capitalize font-medium">{viewingSkill.category}</span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block font-bold mb-0.5">Category</span>
+                  <span className="text-foreground capitalize font-medium">{viewingSkill.category}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold mb-0.5">Version</span>
-                  <span className="text-slate-200 font-mono font-medium">v{viewingSkill.version}</span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block font-bold mb-0.5">Version</span>
+                  <span className="text-foreground font-mono font-medium">v{viewingSkill.version}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold mb-0.5">Binding / Execution</span>
-                  <span className="text-indigo-400 font-mono font-medium">{viewingSkill.mcpServerId || "Local Sandbox Function"}</span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block font-bold mb-0.5">Binding / Execution</span>
+                  <span className="text-primary font-mono font-medium">{viewingSkill.mcpServerId || "Local Sandbox Function"}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold mb-0.5">Active In Agents</span>
-                  <span className="text-indigo-300 font-medium font-mono text-[11px]">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block font-bold mb-0.5">Active In Agents</span>
+                  <span className="text-primary font-medium font-mono text-[11px]">
                     {(agentUsageMap[viewingSkill.name.toLowerCase()] || agentUsageMap[viewingSkill.id.toLowerCase()] || []).join(", ") || "None"}
                   </span>
                 </div>
@@ -1140,8 +1140,8 @@ export function SkillsRegistry() {
 
               {/* Description Card */}
               <div className="space-y-1.5">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Description</span>
-                <div className="text-xs text-slate-300 leading-relaxed bg-slate-950/30 border border-slate-900 p-4 rounded-2xl">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Description</span>
+                <div className="text-xs text-foreground leading-relaxed bg-card border border-border p-4 rounded-2xl">
                   {viewingSkill.description}
                 </div>
               </div>
@@ -1149,17 +1149,17 @@ export function SkillsRegistry() {
               {/* Instructions / SKILL.md Body */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Instructions &amp; Schema Blueprint (SKILL.md)</span>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Instructions &amp; Schema Blueprint (SKILL.md)</span>
                   <button
                     type="button"
                     onClick={() => handleCopyInstructions(viewingSkill.instructions)}
-                    className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors bg-slate-900/60 hover:bg-slate-900 px-3 py-1 rounded-lg border border-slate-800 cursor-pointer"
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors bg-muted/60 hover:bg-muted px-3 py-1 rounded-lg border border-border cursor-pointer"
                   >
                     {copiedCode ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                     {copiedCode ? "Copied" : "Copy Raw Instructions"}
                   </button>
                 </div>
-                <pre className="rounded-2xl border border-slate-900 bg-[#06060c] p-4 text-xs text-slate-300 font-mono overflow-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-800 whitespace-pre-wrap leading-relaxed max-h-[350px]">
+                <pre className="rounded-2xl border border-border bg-muted/30 p-4 text-xs text-foreground font-mono overflow-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-muted whitespace-pre-wrap leading-relaxed max-h-[350px]">
                   {viewingSkill.instructions}
                 </pre>
               </div>
@@ -1168,16 +1168,16 @@ export function SkillsRegistry() {
         </div>
       )}
 
-      {/* ── 3. Author / Edit Modal ── */}
+      {/* â”€â”€ 3. Author / Edit Modal â”€â”€ */}
       {isAuthorModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div onClick={() => setIsAuthorModalOpen(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+          <div className="relative bg-card border border-border rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-900 flex justify-between items-center bg-slate-950/40 shrink-0">
+            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-card shrink-0">
               <div className="flex items-center gap-2.5">
-                <Edit className="h-4 w-4 text-indigo-400" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                <Edit className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
                   {editingSkill ? `Edit Skill: ${formName}` : "Create Custom Skill Definition"}
                 </h3>
               </div>
@@ -1185,7 +1185,7 @@ export function SkillsRegistry() {
                 <button 
                   type="button" 
                   onClick={() => setIsAuthorModalOpen(false)}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-850 text-slate-400 hover:text-white text-xs font-semibold transition-all bg-slate-950/20 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl border border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all bg-card/20 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1193,23 +1193,23 @@ export function SkillsRegistry() {
                   type="button" 
                   onClick={handleSaveSkill}
                   disabled={loading}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                   {editingSkill ? "Publish & Increment Patch" : "Save Skill"}
                 </button>
-                <button onClick={() => setIsAuthorModalOpen(false)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg ml-2 cursor-pointer">
+                <button onClick={() => setIsAuthorModalOpen(false)} className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-lg ml-2 cursor-pointer">
                   <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
             {/* Form */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-muted">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Skill Name (Unique Identifier)</label>
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Skill Name (Unique Identifier)</label>
                     <HelpTooltip content="A unique, snake_case identifier for this skill. Used for programmatic binding in agent configurations. Cannot be changed after creation." side="right" />
                   </div>
                   <input 
@@ -1217,19 +1217,19 @@ export function SkillsRegistry() {
                     value={formName}
                     onChange={(e) => setFormName(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_"))}
                     placeholder="e.g. compile_visual_canvas" 
-                    className="w-full rounded-xl border border-slate-850 bg-slate-900/20 py-2.5 px-4 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500 font-mono disabled:opacity-60"
+                    className="w-full rounded-xl border border-border bg-muted/20 py-2.5 px-4 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500 font-mono disabled:opacity-60"
                     disabled={Boolean(editingSkill)}
                   />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Category</label>
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Category</label>
                     <HelpTooltip content="Determines how the skill is executed: Custom (local JS), Open (YAML+Markdown), Native (TS system), or MCP (bound to a tool server)." side="right" />
                   </div>
                   <select 
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value as Skill["category"])}
-                    className="w-full rounded-xl border border-slate-850 bg-[#0d0d18] py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500 cursor-pointer"
+                    className="w-full rounded-xl border border-border bg-background py-2.5 px-4 text-xs text-foreground outline-none focus:border-indigo-500 cursor-pointer"
                   >
                     <option value="custom">Custom (Local JS Snippet)</option>
                     <option value="open">Open Agent Skill (YAML + Markdown Instructions)</option>
@@ -1241,20 +1241,20 @@ export function SkillsRegistry() {
 
               {formCategory === "mcp" && (
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">MCP Server Identifier</label>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">MCP Server Identifier</label>
                   <input 
                     type="text" 
                     value={formMcpServerId}
                     onChange={(e) => setFormMcpServerId(e.target.value)}
                     placeholder="e.g. StitchMCP or wedplanai-prod" 
-                    className="w-full rounded-xl border border-slate-850 bg-slate-900/20 py-2.5 px-4 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500 font-mono"
+                    className="w-full rounded-xl border border-border bg-muted/20 py-2.5 px-4 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500 font-mono"
                   />
                 </div>
               )}
 
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Brief Summary / Description</label>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Brief Summary / Description</label>
                   <HelpTooltip content="A one-sentence summary of what this skill does. Used for catalog browsing and quick identification." side="right" />
                   <AiAssistButton
                     onGenerated={(text) => setFormDesc(text)}
@@ -1268,14 +1268,14 @@ export function SkillsRegistry() {
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
                   placeholder="Explain what this capability does in 1 sentence..." 
-                  className="w-full rounded-xl border border-slate-850 bg-slate-900/20 py-2.5 px-4 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500"
+                  className="w-full rounded-xl border border-border bg-muted/20 py-2.5 px-4 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500"
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2 mb-2">
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Instructions &amp; Schema body (SKILL.md Blueprint)</label>
-                  <HelpTooltip content="The full skill definition in SKILL.md format — YAML frontmatter for metadata followed by Markdown instructions for agent consumption." side="right" />
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Instructions &amp; Schema body (SKILL.md Blueprint)</label>
+                  <HelpTooltip content="The full skill definition in SKILL.md format â€” YAML frontmatter for metadata followed by Markdown instructions for agent consumption." side="right" />
                   <AiAssistButton
                     onGenerated={(text) => setFormInstructions(text)}
                     mode="all"
@@ -1288,17 +1288,17 @@ export function SkillsRegistry() {
                   value={formInstructions}
                   onChange={(e) => setFormInstructions(e.target.value)}
                   placeholder="# SKILL BLUEPRINT..." 
-                  className="w-full rounded-2xl border border-slate-855 bg-[#05050a] p-4 text-xs text-slate-300 font-mono outline-none resize-none focus:border-indigo-500 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-855 leading-relaxed"
+                  className="w-full rounded-2xl border border-border bg-muted/30 p-4 text-xs text-foreground font-mono outline-none resize-none focus:border-indigo-500 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-855 leading-relaxed"
                 />
               </div>
             </div>
 
             {/* Sticky Modal Footer */}
-            <div className="px-6 py-3.5 border-t border-slate-900 bg-slate-950/60 flex justify-end items-center gap-2.5 shrink-0">
+            <div className="px-6 py-3.5 border-t border-border bg-muted/50 flex justify-end items-center gap-2.5 shrink-0">
               <button 
                 type="button" 
                 onClick={() => setIsAuthorModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-850 text-slate-400 hover:text-white text-xs font-semibold transition-all bg-slate-950/20 cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all bg-card/20 cursor-pointer"
               >
                 Cancel
               </button>
@@ -1306,7 +1306,7 @@ export function SkillsRegistry() {
                 type="button" 
                 onClick={handleSaveSkill}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {editingSkill ? "Publish & Increment Patch" : "Save Skill"}
@@ -1316,32 +1316,32 @@ export function SkillsRegistry() {
         </div>
       )}
 
-      {/* ── 4. Delete Confirmation Modal ── */}
+      {/* â”€â”€ 4. Delete Confirmation Modal â”€â”€ */}
       {deletingSkill && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div onClick={() => setDeletingSkill(null)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
+          <div className="relative bg-card border border-border rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-white">Delete Skill</h3>
-              <button onClick={() => setDeletingSkill(null)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg cursor-pointer">
+              <h3 className="text-sm font-bold text-foreground">Delete Skill</h3>
+              <button onClick={() => setDeletingSkill(null)} className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-lg cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-xs text-slate-300 mb-6 leading-relaxed">
-              Are you sure you want to delete <strong className="text-white font-mono">{deletingSkill.name}</strong>? This action is permanent and cannot be undone.
+            <p className="text-xs text-foreground mb-6 leading-relaxed">
+              Are you sure you want to delete <strong className="text-foreground font-mono">{deletingSkill.name}</strong>? This action is permanent and cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setDeletingSkill(null)}
-                className="flex-1 py-2 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold bg-slate-900/40 transition-all cursor-pointer"
+                className="flex-1 py-2 rounded-xl border border-border hover:border-border text-muted-foreground hover:text-foreground text-xs font-semibold bg-muted/40 transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => handleDeleteSkill(deletingSkill.id)}
-                className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all cursor-pointer"
+                className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-foreground text-xs font-bold transition-all cursor-pointer"
               >
                 Confirm Delete
               </button>
@@ -1350,23 +1350,23 @@ export function SkillsRegistry() {
         </div>
       )}
 
-      {/* ── 5. Assign to Agents Modal ── */}
+      {/* â”€â”€ 5. Assign to Agents Modal â”€â”€ */}
       {assigningSkill && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div onClick={() => setAssigningSkill(null)} className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-2xl max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-150">
+          <div className="relative bg-card border border-border rounded-3xl shadow-2xl p-6 w-full max-w-2xl max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-150">
             {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-900 shrink-0">
+            <div className="flex items-center justify-between pb-4 border-b border-border shrink-0">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                <div className="p-2 rounded-xl bg-primary/10 border border-indigo-500/20 text-primary">
                   <Users className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                     Assign Skill to Agents
-                    <span className="font-mono text-indigo-400 font-normal">({assigningSkill.name})</span>
+                    <span className="font-mono text-primary font-normal">({assigningSkill.name})</span>
                   </h3>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-muted-foreground">
                     Bind or unbind this skill across worker agents in your published and draft flows.
                   </p>
                 </div>
@@ -1374,30 +1374,30 @@ export function SkillsRegistry() {
               <button
                 type="button"
                 onClick={() => setAssigningSkill(null)}
-                className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg cursor-pointer"
+                className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-lg cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* Filter Search */}
-            <div className="py-3 border-b border-slate-900/60 shrink-0">
+            <div className="py-3 border-b border-border/60 shrink-0">
               <div className="relative">
-                <Search className="h-3.5 w-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={assignSearchQuery}
                   onChange={(e) => setAssignSearchQuery(e.target.value)}
                   placeholder="Filter flows or agent names..."
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-1.5 pl-8 pr-3 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+                  className="w-full rounded-xl border border-border bg-muted/50 py-1.5 pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500"
                 />
               </div>
             </div>
 
             {/* Flows & Agents List */}
-            <div className="flex-1 overflow-y-auto py-3 space-y-4 pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+            <div className="flex-1 overflow-y-auto py-3 space-y-4 pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-muted">
               {rawFlows.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 text-xs">
+                <div className="text-center py-12 text-muted-foreground text-xs">
                   No agentflows found. Create an agentflow in Capability Studio to assign skills.
                 </div>
               ) : (
@@ -1425,10 +1425,10 @@ export function SkillsRegistry() {
                   if (filteredNodes.length === 0) return null;
 
                   return (
-                    <div key={flow.id} className="rounded-2xl border border-slate-900 bg-slate-900/30 p-3.5 space-y-2.5">
-                      <div className="flex items-center justify-between pb-1.5 border-b border-slate-850/60">
-                        <span className="text-xs font-bold text-slate-200 font-mono flex items-center gap-2">
-                          <Bot className="h-3.5 w-3.5 text-indigo-400" />
+                    <div key={flow.id} className="rounded-2xl border border-border bg-muted/30 p-3.5 space-y-2.5">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
+                        <span className="text-xs font-bold text-foreground font-mono flex items-center gap-2">
+                          <Bot className="h-3.5 w-3.5 text-primary" />
                           {flow.name || "Untitled Agentflow"}
                         </span>
                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
@@ -1451,18 +1451,18 @@ export function SkillsRegistry() {
                               onClick={() => handleToggleAgentAssignment(flow.id, n.id)}
                               className={`flex items-center gap-2.5 p-2 rounded-xl border cursor-pointer transition-all ${
                                 isAssigned
-                                  ? "bg-indigo-950/30 border-indigo-500/50 text-white"
-                                  : "bg-slate-950/40 border-slate-850 text-slate-400 hover:border-slate-750 hover:text-slate-200"
+                                  ? "bg-indigo-950/30 border-indigo-500/50 text-foreground"
+                                  : "bg-card border-border text-muted-foreground hover:border-border hover:text-foreground"
                               }`}
                             >
-                              <div className={`p-1 rounded-md shrink-0 ${isAssigned ? "text-indigo-400" : "text-slate-600"}`}>
+                              <div className={`p-1 rounded-md shrink-0 ${isAssigned ? "text-primary" : "text-muted-foreground"}`}>
                                 {isAssigned ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
                               </div>
                               <div className="min-w-0 flex-1">
                                 <span className="text-xs font-semibold block truncate">
                                   {n.label || "Specialist Worker"}
                                 </span>
-                                <span className="text-[9px] text-slate-500 uppercase tracking-wider block font-mono">
+                                <span className="text-[9px] text-muted-foreground uppercase tracking-wider block font-mono">
                                   {n.roleTemplate || "worker"}
                                 </span>
                               </div>
@@ -1477,15 +1477,15 @@ export function SkillsRegistry() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-900 shrink-0">
-              <span className="text-xs text-slate-400">
-                Selected: <strong className="text-indigo-400 font-mono">{selectedAgentKeys.size}</strong> agent(s)
+            <div className="flex items-center justify-between pt-4 border-t border-border shrink-0">
+              <span className="text-xs text-muted-foreground">
+                Selected: <strong className="text-primary font-mono">{selectedAgentKeys.size}</strong> agent(s)
               </span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setAssigningSkill(null)}
-                  className="px-4 py-2 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold bg-slate-900/40 transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-border hover:border-border text-muted-foreground hover:text-foreground text-xs font-semibold bg-muted/40 transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1493,7 +1493,7 @@ export function SkillsRegistry() {
                   type="button"
                   onClick={handleSaveAssignments}
                   disabled={savingAssignments}
-                  className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer"
                 >
                   {savingAssignments ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                   Save Assignments
@@ -1506,3 +1506,5 @@ export function SkillsRegistry() {
     </div>
   );
 }
+
+

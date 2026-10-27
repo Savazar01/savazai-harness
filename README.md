@@ -55,6 +55,20 @@ SavazAI strictly separates orchestration execution, control plane UI, and state 
 
 ---
 
+### 🎨 Enterprise Design System & Dynamic Appearance Studio (`DESIGN.md`)
+
+SavazAI features a fully decoupled, enterprise-grade design system built upon Shadcn UI and WCAG AA accessibility standards:
+
+* **Semantic Contract (`DESIGN.md`)**: Replaces all ad-hoc hardcoded dark/slate classes with semantic design tokens (`bg-background`, `bg-card`, `bg-canvas`, `text-foreground`, `text-muted-foreground`, `border-border`, `bg-primary`, `text-primary-foreground`).
+* **Dynamic Palette Engine (`savazai-console/src/lib/theme/palette.ts`)**: Computes harmonious OKLCH color palettes dynamically at runtime, featuring 8 curated brand accents (Saffron `#c2410c`/`#fb923c`, Ocean, Indigo, Teal, Emerald, Rose, Violet, Graphite, and custom HEX) across 4 surface tones (Slate, Zinc, Stone, Midnight).
+* **Live Dual-Theme Simulation**: The Command Center (`/admin/settings` -> Appearance) renders side-by-side Light Mode and Dark Mode preview canvases with real-time WCAG contrast badges before saving changes to `system_configurations.designTokens`.
+* **Operator Appearance & Density Hub (`/profile`)**: Individual operators can toggle their color mode (Light, Dark, System Sync) and workspace density (Compact, Comfortable, Spacious) dynamically.
+* **Automated Guardrails**:
+  * `npm run lint:theme`: Scans the entire UI codebase for prohibited hardcoded dark/slate tokens.
+  * `npm run check:contrast`: Verifies all accent × surface combinations against WCAG AA requirements.
+
+---
+
 ## 🔐 Complete Environment Variable Reference
 
 When configuring SavazAI for production (e.g. via Coolify or custom Docker VPS) or local development, use the following non-sensitive dummy template:

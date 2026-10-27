@@ -31,7 +31,7 @@ export default async function SettingsPage() {
 
   const config = await getSystemConfig();
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <SettingsDashboard initialConfig={config} />
     </div>
   );

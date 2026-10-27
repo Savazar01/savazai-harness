@@ -74,7 +74,7 @@ const ROLE_TEMPLATES: { value: AgentRole; label: string; description: string }[]
 ];
 
 export const COLOR_PRESETS = [
-  { id: "default", label: "Default", bg: "bg-slate-900", border: "border-slate-700", ring: "ring-slate-500", dot: "#64748b" },
+  { id: "default", label: "Default", bg: "bg-muted", border: "border-border", ring: "ring-slate-500", dot: "#64748b" },
   { id: "emerald", label: "Emerald", bg: "bg-emerald-950", border: "border-emerald-500", ring: "ring-emerald-500", dot: "#10b981" },
   { id: "cyan", label: "Cyan", bg: "bg-cyan-950", border: "border-cyan-500", ring: "ring-cyan-500", dot: "#06b6d4" },
   { id: "indigo", label: "Indigo", bg: "bg-indigo-950", border: "border-indigo-500", ring: "ring-indigo-500", dot: "#6366f1" },
@@ -420,14 +420,14 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
     <div className="fixed inset-0 z-50 flex items-center justify-end">
       <div onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-      <div className={`relative w-full ${isDrawerExpanded ? "max-w-5xl" : "max-w-xl"} h-full bg-slate-950 border-l border-slate-900 shadow-2xl flex flex-col z-10 transition-all duration-300`}>
+      <div className={`relative w-full ${isDrawerExpanded ? "max-w-5xl" : "max-w-xl"} h-full bg-card border-l border-border text-card-foreground shadow-2xl flex flex-col z-10 transition-all duration-300`}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-900 bg-slate-950/40 shrink-0">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-border bg-card/60 shrink-0">
           <div className="flex items-center gap-3">
             <Bot className="h-5 w-5 text-indigo-400" />
             <div>
-              <h4 className="text-sm font-bold text-white">Agent Inspector</h4>
-              <p className="text-[10px] text-slate-500">Configure identity, tools, knowledge, memory, and guardrails</p>
+              <h4 className="text-sm font-bold text-foreground">Agent Inspector</h4>
+              <p className="text-[10px] text-muted-foreground">Configure identity, tools, knowledge, memory, and guardrails</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -435,18 +435,18 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
               type="button"
               onClick={() => setIsDrawerExpanded(!isDrawerExpanded)}
               title={isDrawerExpanded ? "Collapse Inspector Width" : "Expand Inspector Width"}
-              className="text-slate-400 hover:text-white p-1.5 hover:bg-slate-900 rounded-xl transition-all flex items-center gap-1 text-[11px] font-bold"
+              className="text-muted-foreground hover:text-foreground p-1.5 hover:bg-muted rounded-xl transition-all flex items-center gap-1 text-[11px] font-bold"
             >
               {isDrawerExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </button>
-            <button onClick={onClose} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-xl transition-all">
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-xl transition-all">
               <X className="h-4 w-4" />
             </button>
           </div>
         </div>
 
         {/* 8-Tab Bar */}
-        <div className="flex overflow-x-auto border-b border-slate-900 bg-slate-950 px-6 shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex overflow-x-auto border-b border-border bg-card px-6 shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {(["identity", "tools", "databases", "social", "mcp", "knowledge", "memory", "guardrails"] as const).map((tab) => (
             <button
               key={tab}
@@ -454,7 +454,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
               className={`py-3.5 px-4 text-[10px] font-bold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap -mb-[2px] ${
                 activeTab === tab
                   ? "border-indigo-500 text-white"
-                  : "border-transparent text-slate-500 hover:text-slate-300"
+                  : "border-transparent text-muted-foreground hover:text-muted-foreground"
               }`}
             >
               {tab === "tools" ? "NATIVE & CUSTOM TOOLS" :
@@ -474,21 +474,21 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
             <div className="space-y-4">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Agent Name</label>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Agent Name</label>
                   <HelpTooltip content="A human-readable label for this agent node. Used on the canvas and in execution logs to identify the agent." side="right" />
                 </div>
                 <input
                   type="text"
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/20 py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500"
+                  className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-4 text-xs text-foreground outline-none focus:border-indigo-500"
                 />
               </div>
 
               {roleTemplate === "supervisor" && (
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Execution Strategy</label>
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Execution Strategy</label>
                     <HelpTooltip content="Decide whether the supervisor should pause and draft a plan first for human approval, or execute directly." side="right" />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -497,7 +497,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                       className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
                         executionMode === "plan_first"
                           ? "bg-indigo-500/10 border-indigo-500/30"
-                          : "border-slate-800 bg-slate-900/20 hover:border-slate-700"
+                          : "border-border bg-muted/30 hover:border-border"
                       }`}
                     >
                       <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 ${
@@ -506,8 +506,8 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                         {executionMode === "plan_first" && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />}
                       </div>
                       <div>
-                        <span className="text-[11px] font-bold text-white block">📋 Plan First</span>
-                        <span className="text-[9px] text-slate-500">HITL Approval Required</span>
+                        <span className="text-[11px] font-bold text-foreground block">📋 Plan First</span>
+                        <span className="text-[9px] text-muted-foreground">HITL Approval Required</span>
                       </div>
                     </div>
                     <div
@@ -515,7 +515,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                       className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
                         executionMode === "direct"
                           ? "bg-indigo-500/10 border-indigo-500/30"
-                          : "border-slate-800 bg-slate-900/20 hover:border-slate-700"
+                          : "border-border bg-muted/30 hover:border-border"
                       }`}
                     >
                       <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 ${
@@ -524,8 +524,8 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                         {executionMode === "direct" && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />}
                       </div>
                       <div>
-                        <span className="text-[11px] font-bold text-white block">⚡ Direct Execution</span>
-                        <span className="text-[9px] text-slate-500">Autonomous Run</span>
+                        <span className="text-[11px] font-bold text-foreground block">⚡ Direct Execution</span>
+                        <span className="text-[9px] text-muted-foreground">Autonomous Run</span>
                       </div>
                     </div>
                   </div>
@@ -533,7 +533,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
               )}
 
               <div>
-                <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Role Template</label>
+                <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Role Template</label>
                 <div className="grid grid-cols-1 gap-2">
                   {ROLE_TEMPLATES.map((rt) => (
                     <div
@@ -542,7 +542,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                       className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                         roleTemplate === rt.value
                           ? "bg-indigo-500/10 border-indigo-500/30"
-                          : "border-slate-800 bg-slate-900/20 hover:border-slate-700"
+                          : "border-border bg-muted/30 hover:border-border"
                       }`}
                     >
                       <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
@@ -551,8 +551,8 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                         {roleTemplate === rt.value && <div className="w-2 h-2 rounded-full bg-indigo-500" />}
                       </div>
                       <div>
-                        <span className="text-xs font-bold text-white block">{rt.label}</span>
-                        <span className="text-[9px] text-slate-500">{rt.description}</span>
+                        <span className="text-xs font-bold text-foreground block">{rt.label}</span>
+                        <span className="text-[9px] text-muted-foreground">{rt.description}</span>
                       </div>
                     </div>
                   ))}
@@ -562,13 +562,13 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
               {roleTemplate !== "supervisor" && roleTemplate !== "team" && (
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Assigned Team Container</label>
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Assigned Team Container</label>
                     <HelpTooltip content="Assign this specialist worker to a visual Team Container to bundle execution into a clean bus pipeline." side="right" />
                   </div>
                   <select
                     value={parentId || ""}
                     onChange={(e) => setParentId(e.target.value ? e.target.value : undefined)}
-                    className="w-full rounded-xl border border-slate-800 bg-[#06060b] px-3.5 py-2.5 text-xs text-white outline-none focus:border-indigo-500 font-medium"
+                    className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground outline-none focus:border-indigo-500 font-medium"
                   >
                     <option value="">(None — Standalone Specialist)</option>
                     {allNodes
@@ -585,7 +585,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
               {/* Node Color Theme Swatches */}
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Node Color & Visual Theme</label>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Node Color & Visual Theme</label>
                   <HelpTooltip content="Customize the visual border, glow, and background tint of this node card for instant identification." side="right" />
                 </div>
                 <div className="grid grid-cols-4 gap-2">
@@ -597,7 +597,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                       className={`flex items-center gap-2 px-2.5 py-2 rounded-xl border text-xs font-semibold transition-all ${
                         customColor === preset.id
                           ? `border-white ring-2 ${preset.ring} ${preset.bg} text-white shadow-lg`
-                          : "border-slate-800 hover:border-slate-700 bg-slate-950/60 text-slate-400 hover:text-slate-200"
+                          : "border-border hover:border-border bg-muted/40 text-muted-foreground hover:text-slate-200"
                       }`}
                     >
                       <span className="w-3 h-3 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: preset.dot }} />
@@ -610,7 +610,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2">
-                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">System Directive Prompt</label>
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">System Directive Prompt</label>
                     <HelpTooltip content="The core system prompt defining the agent's identity, behavior rules, constraints, and execution guidelines. This is injected into every LLM call for this agent." side="right" />
                   </div>
                   <div className="flex items-center gap-2">
@@ -623,7 +623,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                     <button
                       type="button"
                       onClick={() => setIsPromptModalOpen(true)}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-700 bg-slate-800/60 hover:bg-slate-700 text-slate-300 hover:text-white text-[9px] font-bold transition-all shrink-0"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-border bg-slate-800/60 hover:bg-slate-700 text-muted-foreground hover:text-foreground text-[9px] font-bold transition-all shrink-0"
                     >
                       <Maximize2 className="h-3 w-3" />
                       Expand
@@ -640,13 +640,13 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
 
               {isPromptModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-                  <div className="relative bg-[#0a0a14] border border-slate-800 rounded-2xl p-6 max-w-4xl w-full h-[85vh] flex flex-col shadow-2xl space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
+                  <div className="relative bg-card border border-border text-card-foreground rounded-2xl p-6 max-w-4xl w-full h-[85vh] flex flex-col shadow-2xl space-y-4">
+                    <div className="flex items-center justify-between border-b border-border pb-3 shrink-0">
                       <div className="flex items-center gap-2.5">
                         <Bot className="h-5 w-5 text-indigo-400" />
                         <div>
-                          <h3 className="text-sm font-bold text-white">System Directive Prompt Editor — {label}</h3>
-                          <p className="text-[10px] text-slate-500">Edit and refine full system prompt instructions, rules, and guidelines</p>
+                          <h3 className="text-sm font-bold text-foreground">System Directive Prompt Editor — {label}</h3>
+                          <p className="text-[10px] text-muted-foreground">Edit and refine full system prompt instructions, rules, and guidelines</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -659,7 +659,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                         <button
                           type="button"
                           onClick={() => setIsPromptModalOpen(false)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-slate-800 transition-colors"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -673,7 +673,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                         placeholder="Define the agent's role, behavior, tools, and operational constraints..."
                       />
                     </div>
-                    <div className="flex justify-end gap-2 pt-2 border-t border-slate-800 shrink-0">
+                    <div className="flex justify-end gap-2 pt-2 border-t border-border shrink-0">
                       <button
                         type="button"
                         onClick={() => setIsPromptModalOpen(false)}
@@ -688,14 +688,14 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">LLM Provider</label>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">LLM Provider</label>
                   {loadingProviders ? (
-                    <div className="flex items-center gap-2 py-2.5 px-4 rounded-xl border border-slate-800 bg-[#0c0c16] text-xs text-slate-500">
+                    <div className="flex items-center gap-2 py-2.5 px-4 rounded-xl border border-border bg-background text-xs text-muted-foreground">
                       <Loader2 className="h-3 w-3 animate-spin" />
                       Loading providers...
                     </div>
                   ) : llmProviders.length === 0 ? (
-                    <div className="py-2.5 px-4 rounded-xl border border-slate-800 bg-[#0c0c16] text-xs text-slate-500">
+                    <div className="py-2.5 px-4 rounded-xl border border-border bg-background text-xs text-muted-foreground">
                       No providers configured. Go to Settings to add an LLM provider.
                     </div>
                   ) : (
@@ -708,7 +708,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                         const firstMdl = cfg?.models?.[0] || cfg?.discoveredModels?.[0] || PROVIDER_MODELS[newProvider]?.[0] || "gpt-4o";
                         setModel(cfg?.defaultModel || firstMdl);
                       }}
-                      className="w-full rounded-xl border border-slate-800 bg-[#0c0c16] py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500"
+                      className="w-full rounded-xl border border-border bg-background py-2.5 px-4 text-xs text-foreground outline-none focus:border-indigo-500"
                     >
                       {llmProviders.map((p) => (
                         <option key={p.id} value={p.id}>{p.name}</option>
@@ -717,11 +717,11 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                   )}
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Model Version</label>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Model Version</label>
                   <select
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
-                    className="w-full rounded-xl border border-slate-800 bg-[#0c0c16] py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500"
+                    className="w-full rounded-xl border border-border bg-background py-2.5 px-4 text-xs text-foreground outline-none focus:border-indigo-500"
                   >
                     {availableModels.map((m) => (
                       <option key={m} value={m}>{m}</option>
@@ -735,7 +735,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
 
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Temperature ({temperature})</label>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Temperature ({temperature})</label>
                   <HelpTooltip content="Controls randomness in LLM output. Lower values (0-0.3) for deterministic, factual responses. Higher values (0.7-1.5) for creative, varied outputs." side="right" />
                 </div>
                 <input
@@ -756,7 +756,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Native &amp; Custom Tools</span>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Native &amp; Custom Tools</span>
                   <button
                     type="button"
                     onClick={() => setShowCustomApiForm(!showCustomApiForm)}
@@ -775,20 +775,20 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                         value={customApiName}
                         onChange={(e) => setCustomApiName(e.target.value)}
                         placeholder="Tool Name (e.g. check_calendar)"
-                        className="w-full rounded-xl border border-slate-700 bg-slate-900 py-2 px-3 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+                        className="w-full rounded-xl border border-border bg-muted py-2 px-3 text-xs text-foreground placeholder-slate-500 outline-none focus:border-indigo-500"
                       />
                       <input
                         type="url"
                         value={customApiUrl}
                         onChange={(e) => setCustomApiUrl(e.target.value)}
                         placeholder="Endpoint webhook URL (https://...)"
-                        className="w-full rounded-xl border border-slate-700 bg-slate-900 py-2 px-3 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+                        className="w-full rounded-xl border border-border bg-muted py-2 px-3 text-xs text-foreground placeholder-slate-500 outline-none focus:border-indigo-500"
                       />
                       <div className="flex justify-end gap-2 pt-1">
                         <button
                           type="button"
                           onClick={() => setShowCustomApiForm(false)}
-                          className="px-3 py-1 rounded bg-slate-900 text-slate-300 hover:text-white text-[10px] font-semibold"
+                          className="px-3 py-1 rounded bg-muted text-muted-foreground hover:text-foreground text-[10px] font-semibold"
                         >
                           Cancel
                         </button>
@@ -834,7 +834,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
           {activeTab === "databases" && (
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="space-y-3">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">External Database Connectors</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">External Database Connectors</span>
                 {(() => {
                   const dbToolsList: ToolItem[] = registeredTools
                     .filter((t) => (t.category as string) === "database")
@@ -865,7 +865,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
           {activeTab === "social" && (
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="space-y-3">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Social Media Integration Hub</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Social Media Integration Hub</span>
                 {(() => {
                   const socialToolsList: ToolItem[] = registeredTools
                     .filter((t) => (t.category as string) === "social_media")
@@ -896,9 +896,9 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
           {activeTab === "mcp" && (
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="space-y-3">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">MCP Server Tools</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">MCP Server Tools</span>
                 {mcpServers.length === 0 ? (
-                  <div className="flex items-center justify-center py-4 bg-slate-900/10 border border-slate-900 rounded-xl text-slate-500 text-[10px] gap-2">
+                  <div className="flex items-center justify-center py-4 bg-muted/20 border border-border rounded-xl text-muted-foreground text-[10px] gap-2">
                     {loadingMcp ? (
                       <>
                         <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading MCP Servers...
@@ -910,11 +910,11 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                 ) : (
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase shrink-0">Server:</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase shrink-0">Server:</label>
                       <select
                         value={selectedMcpServer}
                         onChange={(e) => setSelectedMcpServer(e.target.value)}
-                        className="flex-1 rounded-xl border border-slate-800 bg-[#07070d] py-1.5 px-3 text-xs text-white outline-none focus:border-indigo-500"
+                        className="flex-1 rounded-xl border border-border bg-background py-1.5 px-3 text-xs text-foreground outline-none focus:border-indigo-500"
                       >
                         {mcpServers.map((s) => (
                           <option key={s.serverId} value={s.serverId}>{s.serverId}</option>
@@ -956,16 +956,16 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Database className="h-4 w-4 text-cyan-400" />
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">pgvector RAG Namespace</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">pgvector RAG Namespace</label>
                   <HelpTooltip content="The vector namespace this agent queries for RAG retrieval. Documents are chunked, embedded, and stored by namespace. Leave as 'default' for shared access." side="right" />
                 </div>
-                <p className="text-[10px] text-slate-500">Assign a vector namespace the agent can query via RAG retrieval.</p>
+                <p className="text-[10px] text-muted-foreground">Assign a vector namespace the agent can query via RAG retrieval.</p>
                 <input
                   type="text"
                   value={ragNamespace}
                   onChange={(e) => setRagNamespace(e.target.value)}
                   placeholder="e.g. corporate-rules-anonymized"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/20 py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500"
+                  className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-4 text-xs text-foreground outline-none focus:border-indigo-500"
                 />
               </div>
 
@@ -973,13 +973,13 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Database className="h-4 w-4 text-emerald-400" />
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Embedding Model</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Embedding Model</label>
                 </div>
-                <p className="text-[10px] text-slate-500">Select a text-embedding model from the active provider&apos;s allowed models for RAG vector search.</p>
+                <p className="text-[10px] text-muted-foreground">Select a text-embedding model from the active provider&apos;s allowed models for RAG vector search.</p>
                 <select
                   value={embedModel}
                   onChange={(e) => setEmbedModel(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-[#0c0c16] py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500"
+                  className="w-full rounded-xl border border-border bg-background py-2.5 px-4 text-xs text-foreground outline-none focus:border-indigo-500"
                 >
                   <option value="">No embedding — fallback to text search</option>
                   {(() => {
@@ -1007,13 +1007,13 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4 text-indigo-400" />
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">OKF v0.1 Concept Bundles</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">OKF v0.1 Concept Bundles</label>
                 </div>
-                <p className="text-[10px] text-slate-500">Bind shared business guidelines appended to agent execution state context.</p>
+                <p className="text-[10px] text-muted-foreground">Bind shared business guidelines appended to agent execution state context.</p>
 
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
                   {loadingResources && okfConcepts.length === 0 ? (
-                    <div className="flex justify-center items-center py-6 text-slate-500 text-[10px] gap-2">
+                    <div className="flex justify-center items-center py-6 text-muted-foreground text-[10px] gap-2">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading OKF database...
                     </div>
                   ) : okfConcepts.length === 0 ? (
@@ -1029,13 +1029,13 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                           className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                             isChecked
                               ? "bg-indigo-500/5 border-indigo-500/30 text-white"
-                              : "border-slate-900 bg-slate-950/20 hover:border-slate-800"
+                              : "border-border bg-muted/20 hover:border-border"
                           }`}
                         >
                           <Check className={`h-4 w-4 shrink-0 ${isChecked ? "text-indigo-400" : "text-slate-700"}`} />
                           <div className="min-w-0">
                             <span className="font-mono text-xs font-bold block truncate">{c.conceptKey}</span>
-                            <span className="text-[8px] font-medium text-slate-500 uppercase">{c.category}</span>
+                            <span className="text-[8px] font-medium text-muted-foreground uppercase">{c.category}</span>
                           </div>
                         </div>
                       );
@@ -1044,9 +1044,9 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                 </div>
               </div>
               {/* Skills Catalog rendering moved from tools tab */}
-              <div className="space-y-3 border-t border-slate-900 pt-4">
+              <div className="space-y-3 border-t border-border pt-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Skills Catalog</span>
+                  <span className="text-[10px] font-bold text-muted-foreground tracking-wider uppercase">Skills Catalog</span>
                   <button
                     type="button"
                     onClick={() => setAuthoringSkill(!authoringSkill)}
@@ -1057,34 +1057,34 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                 </div>
 
                 {authoringSkill && (
-                  <div className="border border-slate-800 bg-slate-950/50 rounded-2xl p-4 space-y-3 animate-in fade-in duration-200">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase block tracking-wider">Create Local Custom Skill</span>
+                  <div className="border border-border bg-muted/30 rounded-2xl p-4 space-y-3 animate-in fade-in duration-200">
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase block tracking-wider">Create Local Custom Skill</span>
                     <input
                       type="text"
                       value={newSkillName}
                       onChange={(e) => setNewSkillName(e.target.value)}
                       placeholder="Skill name (e.g. format_report)"
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900/30 py-2 px-3 text-xs text-white outline-none focus:border-indigo-500"
+                      className="w-full rounded-xl border border-border bg-muted/40 py-2 px-3 text-xs text-foreground outline-none focus:border-indigo-500"
                     />
                     <input
                       type="text"
                       value={newSkillDesc}
                       onChange={(e) => setNewSkillDesc(e.target.value)}
                       placeholder="One-sentence description..."
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900/30 py-2 px-3 text-xs text-white outline-none focus:border-indigo-500"
+                      className="w-full rounded-xl border border-border bg-muted/40 py-2 px-3 text-xs text-foreground outline-none focus:border-indigo-500"
                     />
                     <textarea
                       rows={4}
                       value={newSkillInstructions}
                       onChange={(e) => setNewSkillInstructions(e.target.value)}
                       placeholder="Instructions / logic..."
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900/30 py-2 px-3 text-xs text-white font-mono outline-none focus:border-indigo-500"
+                      className="w-full rounded-xl border border-border bg-muted/40 py-2 px-3 text-xs text-foreground font-mono outline-none focus:border-indigo-500"
                     />
                     <div className="flex justify-end gap-2">
                       <button
                         type="button"
                         onClick={() => setAuthoringSkill(false)}
-                        className="px-2.5 py-1 rounded bg-slate-900 text-slate-400 hover:text-white text-[10px] font-semibold"
+                        className="px-2.5 py-1 rounded bg-muted text-muted-foreground hover:text-foreground text-[10px] font-semibold"
                       >
                         Cancel
                       </button>
@@ -1102,19 +1102,19 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
 
                 <div className="flex gap-2 shrink-0">
                   <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
+                    <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                     <input
                       type="text"
                       value={skillSearch}
                       onChange={(e) => setSkillSearch(e.target.value)}
                       placeholder="Search skill catalog..."
-                      className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2 pl-9 pr-4 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500"
+                      className="w-full rounded-xl border border-border bg-background py-2 pl-9 pr-4 text-xs text-foreground placeholder-slate-600 outline-none focus:border-indigo-500"
                     />
                   </div>
                   <select
                     value={skillFilter}
                     onChange={(e) => setSkillFilter(e.target.value)}
-                    className="rounded-xl border border-slate-800 bg-[#090912] py-2 px-3 text-xs text-slate-300 outline-none"
+                    className="rounded-xl border border-border bg-background py-2 px-3 text-xs text-muted-foreground outline-none"
                   >
                     <option value="all">All Types</option>
                     <option value="custom">Custom</option>
@@ -1126,7 +1126,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
 
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
                   {loadingResources && skillsCatalog.length === 0 ? (
-                    <div className="flex justify-center items-center py-6 text-slate-500 text-[10px] gap-2">
+                    <div className="flex justify-center items-center py-6 text-muted-foreground text-[10px] gap-2">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading Skills...
                     </div>
                   ) : filteredSkills.length === 0 ? (
@@ -1141,12 +1141,12 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                           className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                             isChecked
                               ? "bg-emerald-950/20 border-emerald-500/80 text-emerald-100"
-                              : "border-slate-900 bg-slate-950/20 hover:border-slate-800"
+                              : "border-border bg-muted/20 hover:border-border"
                           }`}
                         >
                           <div className="min-w-0 flex-1">
                             <span className="font-mono text-xs font-bold text-slate-200 block truncate">{s.name}</span>
-                            <p className="text-[9px] text-slate-500 mt-0.5 leading-tight">{s.description}</p>
+                            <p className="text-[9px] text-muted-foreground mt-0.5 leading-tight">{s.description}</p>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             {isChecked && (
@@ -1173,13 +1173,13 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <BrainCircuit className="h-4 w-4 text-indigo-400" />
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Short-Term Memory (Thread Checkpointing)</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Short-Term Memory (Thread Checkpointing)</label>
                   <HelpTooltip content="When enabled, the agent preserves conversation context across turns within the same thread. Disable to force stateless behavior for each interaction." side="right" />
                 </div>
-                <p className="text-[10px] text-slate-500">
+                <p className="text-[10px] text-muted-foreground">
                   Enables conversational session memory. The agent will remember context from previous turns within the same thread.
                 </p>
-                <div className="flex items-center gap-3 p-4 rounded-xl border border-slate-800 bg-slate-900/20">
+                <div className="flex items-center gap-3 p-4 rounded-xl border border-border bg-muted/30">
                   <button
                     type="button"
                     onClick={() => setMemoryCheckpoint(!memoryCheckpoint)}
@@ -1191,22 +1191,22 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                       memoryCheckpoint ? "left-5" : "left-0.5"
                     }`} />
                   </button>
-                  <span className="text-xs text-slate-300">
+                  <span className="text-xs text-muted-foreground">
                     {memoryCheckpoint ? "Thread checkpointing enabled" : "Thread checkpointing disabled"}
                   </span>
                 </div>
               </div>
 
-              <div className="space-y-3 border-t border-slate-900 pt-5">
+              <div className="space-y-3 border-t border-border pt-5">
                 <div className="flex items-center gap-2">
                   <HardDrive className="h-4 w-4 text-emerald-400" />
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Long-Term Key-Value Persistence</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Long-Term Key-Value Persistence</label>
                   <HelpTooltip content="Enables persistent key-value storage across threads. The agent can store and retrieve long-term data using a shared KV namespace." side="right" />
                 </div>
-                <p className="text-[10px] text-slate-500">
+                <p className="text-[10px] text-muted-foreground">
                   Persist key-value state across threads. The agent can store and retrieve long-term data using a shared KV store.
                 </p>
-                <div className="flex items-center gap-3 p-4 rounded-xl border border-slate-800 bg-slate-900/20">
+                <div className="flex items-center gap-3 p-4 rounded-xl border border-border bg-muted/30">
                   <button
                     type="button"
                     onClick={() => setKvPersistence(!kvPersistence)}
@@ -1218,7 +1218,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                       kvPersistence ? "left-5" : "left-0.5"
                     }`} />
                   </button>
-                  <span className="text-xs text-slate-300">
+                  <span className="text-xs text-muted-foreground">
                     {kvPersistence ? "KV persistence enabled" : "KV persistence disabled"}
                   </span>
                 </div>
@@ -1232,16 +1232,16 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Shield className="h-4 w-4 text-red-400" />
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">HITL Approval Gate Policy</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">HITL Approval Gate Policy</label>
                   <HelpTooltip content="Human-in-the-Loop (HITL) policy determines when agent actions require manual approval. 'Always Intercept' pauses all runs; 'On Delete' intercepts destructive operations." side="right" />
                 </div>
-                <p className="text-[10px] text-slate-500 leading-relaxed">
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
                   Configure safety constraints. When the agent plans an action matching the threshold, execution freezes and requires manual approval.
                 </p>
                 <select
                   value={hitlPolicy}
                   onChange={(e) => setHitlPolicy(e.target.value as "always" | "on_delete" | "on_mutate" | "never")}
-                  className="w-full rounded-xl border border-slate-800 bg-[#0d0d17] py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500"
+                  className="w-full rounded-xl border border-border bg-background py-2.5 px-4 text-xs text-foreground outline-none focus:border-indigo-500"
                 >
                   <option value="always">Always Intercept (Require human sign-off on every run)</option>
                   <option value="on_delete">On Delete Actions (Flag endpoints starting with delete_)</option>
@@ -1250,13 +1250,13 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                 </select>
               </div>
 
-              <div className="space-y-3 border-t border-slate-900 pt-5">
+              <div className="space-y-3 border-t border-border pt-5">
                 <div className="flex items-center gap-2">
                   <Fingerprint className="h-4 w-4 text-purple-400" />
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">PII Masking Override</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">PII Masking Override</label>
                   <HelpTooltip content="Custom regex patterns for PII masking specific to this agent. Patterns are comma-separated. Leave empty to use the system-wide compliance rules defined in Business Center." side="right" />
                 </div>
-                <p className="text-[10px] text-slate-500">
+                <p className="text-[10px] text-muted-foreground">
                   Custom PII patterns to mask for this agent (comma-separated regex patterns). Leave empty for default masking rules.
                 </p>
                 <input
@@ -1264,7 +1264,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                   value={piiMaskingOverride}
                   onChange={(e) => setPiiMaskingOverride(e.target.value)}
                   placeholder="e.g. \b\d{3}-\d{2}-\d{4}\b, \b[A-Z]{2}\d{6}\b"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/20 py-2.5 px-4 text-xs text-white font-mono outline-none focus:border-indigo-500"
+                  className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-4 text-xs text-foreground font-mono outline-none focus:border-indigo-500"
                 />
               </div>
             </div>
@@ -1272,11 +1272,11 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-900 bg-slate-950 shrink-0 flex gap-3">
+        <div className="p-6 border-t border-border bg-background shrink-0 flex gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold transition-all bg-slate-950/20"
+            className="flex-1 py-2.5 rounded-xl border border-border hover:border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all bg-muted/20"
           >
             Discard
           </button>

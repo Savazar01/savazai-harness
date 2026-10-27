@@ -17,7 +17,12 @@ import {
   ChevronRight,
   Sparkles,
   Loader2,
+  Sun,
+  Moon,
+  Laptop,
+  Palette,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { PERMISSION_REGISTRY, CATEGORY_LABELS } from "@/lib/auth/permissions-registry";
 
 interface ProfileHubProps {
@@ -37,7 +42,22 @@ interface ProfileHubProps {
 }
 
 export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "security" | "access">("details");
+  const { theme, setTheme } = useTheme();
+  const [activeTab, setActiveTab] = useState<"details" | "security" | "access" | "appearance">("details");
+  const [density, setDensity] = useState<"comfortable" | "compact" | "spacious">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("savazai-density") as any) || "comfortable";
+    }
+    return "comfortable";
+  });
+
+  const handleDensityChange = (d: "comfortable" | "compact" | "spacious") => {
+    setDensity(d);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("savazai-density", d);
+      document.documentElement.setAttribute("data-density", d);
+    }
+  };
 
   // Profile form state
   const [name, setName] = useState(user.name || "");
@@ -171,7 +191,7 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                 user.name?.charAt(0).toUpperCase() || "U"
               )}
             </div>
-            <label className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-2xl opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity text-white text-xs font-medium">
+            <label className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-2xl opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity text-foreground text-xs font-medium">
               <Camera className="h-4 w-4 mr-1" />
               Edit
               <input type="file" accept="image/*" onChange={handleAvatarFile} className="hidden" />
@@ -241,6 +261,18 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
           >
             <Layers className="h-3.5 w-3.5" />
             My Access Profile
+          </button>
+
+          <button
+            onClick={() => setActiveTab("appearance")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === "appearance"
+                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            <Palette className="h-3.5 w-3.5" />
+            Appearance &amp; Density
           </button>
         </div>
       </div>
@@ -317,7 +349,7 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. San Francisco, CA / London, UK / Mumbai, IN"
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-primary/50"
+                className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-foreground placeholder-slate-500 outline-none focus:border-primary/50"
               />
             </div>
 
@@ -325,7 +357,7 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
               <button
                 type="submit"
                 disabled={profileSaving}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-semibold shadow-lg shadow-primary/20 transition-all"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-foreground text-xs font-semibold shadow-lg shadow-primary/20 transition-all"
               >
                 {profileSaving ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -342,13 +374,13 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
       {/* Tab 2: Security & Credentials */}
       {activeTab === "security" && (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-900 bg-slate-900/30 p-6 backdrop-blur-xl">
+          <div className="rounded-2xl border border-border bg-muted/30 p-6 backdrop-blur-xl">
             <div className="mb-6">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
                 <KeyRound className="h-4 w-4 text-primary" />
                 Change Account Password
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Ensure your password is at least 8 characters long with a mix of numbers and letters.
               </p>
             </div>
@@ -379,9 +411,9 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     required
                     placeholder="Enter current password"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-primary/50"
+                    className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-foreground placeholder-slate-500 outline-none focus:border-primary/50"
                   />
-                  <Lock className="absolute right-3.5 top-3 h-3.5 w-3.5 text-slate-500" />
+                  <Lock className="absolute right-3.5 top-3 h-3.5 w-3.5 text-muted-foreground" />
                 </div>
               </div>
 
@@ -396,9 +428,9 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
                     placeholder="Minimum 8 characters"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-primary/50"
+                    className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-foreground placeholder-slate-500 outline-none focus:border-primary/50"
                   />
-                  <Lock className="absolute right-3.5 top-3 h-3.5 w-3.5 text-slate-500" />
+                  <Lock className="absolute right-3.5 top-3 h-3.5 w-3.5 text-muted-foreground" />
                 </div>
               </div>
 
@@ -413,9 +445,9 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     placeholder="Confirm new password"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-primary/50"
+                    className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-foreground placeholder-slate-500 outline-none focus:border-primary/50"
                   />
-                  <Lock className="absolute right-3.5 top-3 h-3.5 w-3.5 text-slate-500" />
+                  <Lock className="absolute right-3.5 top-3 h-3.5 w-3.5 text-muted-foreground" />
                 </div>
               </div>
 
@@ -423,7 +455,7 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                 <button
                   type="submit"
                   disabled={passwordSaving}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-foreground text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all"
                 >
                   {passwordSaving ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -437,22 +469,22 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
           </div>
 
           {/* MFA / OTP Status */}
-          <div className="rounded-2xl border border-slate-900 bg-slate-900/30 p-6 backdrop-blur-xl">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-2">
+          <div className="rounded-2xl border border-border bg-muted/30 p-6 backdrop-blur-xl">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-2">
               <Shield className="h-4 w-4 text-emerald-400" />
               Two-Factor &amp; Identity Verification
             </h3>
-            <p className="text-xs text-slate-400 mb-4">
+            <p className="text-xs text-muted-foreground mb-4">
               Your account enforces mandatory 6-digit email OTP verification on credential resets and administrative actions.
             </p>
-            <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/50">
+            <div className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/30">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   <CheckCircle2 className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-white">Email OTP Challenge Pipeline</div>
-                  <div className="text-[11px] text-slate-400">Linked to {user.email} (10-minute TTL, CSPRNG SHA-256)</div>
+                  <div className="text-xs font-semibold text-foreground">Email OTP Challenge Pipeline</div>
+                  <div className="text-[11px] text-muted-foreground">Linked to {user.email} (10-minute TTL, CSPRNG SHA-256)</div>
                 </div>
               </div>
               <span className="px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
@@ -467,14 +499,14 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
       {activeTab === "access" && (
         <div className="space-y-6">
           {/* Active Profile Summary */}
-          <div className="rounded-2xl border border-slate-900 bg-slate-900/30 p-6 backdrop-blur-xl">
+          <div className="rounded-2xl border border-border bg-muted/30 p-6 backdrop-blur-xl">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  <h2 className="text-base font-bold text-white">Granted Access Profile</h2>
+                  <h2 className="text-base font-bold text-foreground">Granted Access Profile</h2>
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-muted-foreground">
                   Your account is bound to the following RBAC profile and authorization matrix.
                 </p>
               </div>
@@ -483,7 +515,7 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                 <span className="px-3.5 py-1.5 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold text-xs">
                   {user.roleName || (user.role === "admin" ? "Super Administrator" : "Operator")}
                 </span>
-                <span className="text-xs text-slate-400 font-mono">
+                <span className="text-xs text-muted-foreground font-mono">
                   {grantedSet.size} of {PERMISSION_REGISTRY.length} permissions active
                 </span>
               </div>
@@ -502,20 +534,20 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                 return (
                   <div
                     key={catKey}
-                    className="rounded-xl border border-slate-800/80 bg-slate-900/40 overflow-hidden"
+                    className="rounded-xl border border-border bg-muted/30 overflow-hidden"
                   >
                     <button
                       type="button"
                       onClick={() => toggleCategory(catKey)}
-                      className="w-full flex items-center justify-between p-3.5 text-left hover:bg-slate-900/70 transition-colors"
+                      className="w-full flex items-center justify-between p-3.5 text-left hover:bg-muted/30 transition-colors"
                     >
                       <div className="flex items-center gap-2.5">
                         {isOpen ? (
-                          <ChevronDown className="h-4 w-4 text-slate-400" />
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <ChevronRight className="h-4 w-4 text-slate-400" />
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         )}
-                        <span className="text-xs font-bold text-white tracking-wide">
+                        <span className="text-xs font-bold text-foreground tracking-wide">
                           {catLabel}
                         </span>
                       </div>
@@ -524,7 +556,7 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                         className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${
                           grantedInCat.length > 0
                             ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
-                            : "bg-slate-800 text-slate-500 border-slate-700"
+                            : "bg-muted text-muted-foreground border-border"
                         }`}
                       >
                         {grantedInCat.length} / {catPerms.length} Granted
@@ -532,7 +564,7 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                     </button>
 
                     {isOpen && (
-                      <div className="p-3.5 pt-0 border-t border-slate-800/50 bg-slate-950/40">
+                      <div className="p-3.5 pt-0 border-t border-border bg-muted/20">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
                           {catPerms.map((perm) => {
                             const isGranted = grantedSet.has(`${perm.resource}:${perm.action}`);
@@ -542,7 +574,7 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                                 className={`flex items-start gap-2.5 p-2 rounded-lg border text-xs ${
                                   isGranted
                                     ? "bg-emerald-500/5 border-emerald-500/20 text-slate-200"
-                                    : "bg-slate-900/30 border-slate-800/50 text-slate-500 opacity-60"
+                                    : "bg-muted/30 border-border text-muted-foreground opacity-60"
                                 }`}
                               >
                                 {isGranted ? (
@@ -554,7 +586,7 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                                   <div className="font-semibold text-[11px] truncate">
                                     {perm.action.replace(/_/g, " ").toUpperCase()}
                                   </div>
-                                  <div className="text-[10px] text-slate-400 truncate">
+                                  <div className="text-[10px] text-muted-foreground truncate">
                                     {perm.description}
                                   </div>
                                 </div>
@@ -567,6 +599,82 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Tab 4: Appearance & Density */}
+      {activeTab === "appearance" && (
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-xs space-y-6">
+          <div>
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+              <Palette className="h-4 w-4 text-primary" />
+              Personal Appearance &amp; Density Preferences
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Customize your local visual experience. Changes take effect immediately across all platform workspaces.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-foreground block mb-2">Color Theme</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  { id: "light", label: "Light Mode", icon: Sun, desc: "High contrast crisp light surfaces" },
+                  { id: "dark", label: "Dark Mode", icon: Moon, desc: "Deep executive dark canvas" },
+                  { id: "system", label: "System Sync", icon: Laptop, desc: "Follow OS system preference" },
+                ].map((m) => {
+                  const Icon = m.icon;
+                  const isSelected = theme === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setTheme(m.id)}
+                      className={`p-4 rounded-xl border text-left transition-all ${
+                        isSelected
+                          ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs"
+                          : "border-border bg-background hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Icon className={`h-4 w-4 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                        <span className="text-xs font-bold text-foreground">{m.label}</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">{m.desc}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-border">
+              <label className="text-xs font-semibold text-foreground block mb-2">Workspace Density</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  { id: "compact", label: "Compact", desc: "Dense data view, tighter padding for power users" },
+                  { id: "comfortable", label: "Comfortable", desc: "Balanced spacing and ergonomics (Default)" },
+                  { id: "spacious", label: "Spacious", desc: "Relaxed layout with generous whitespace" },
+                ].map((d) => {
+                  const isSelected = density === d.id;
+                  return (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => handleDensityChange(d.id as any)}
+                      className={`p-4 rounded-xl border text-left transition-all ${
+                        isSelected
+                          ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs"
+                          : "border-border bg-background hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className="text-xs font-bold text-foreground mb-1">{d.label}</div>
+                      <p className="text-[11px] text-muted-foreground">{d.desc}</p>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

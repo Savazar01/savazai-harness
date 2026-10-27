@@ -1251,19 +1251,19 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
   const nonTeamNodes = nodes.filter((n) => n.roleTemplate !== "team");
 
   return (
-    <div className="flex flex-col h-[650px] border border-slate-900 rounded-3xl bg-[#07070d]/60 backdrop-blur-md overflow-hidden relative">
+    <div className="flex flex-col h-[650px] border border-border rounded-3xl bg-card shadow-xs overflow-hidden relative">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 sm:px-6 py-4 border-b border-slate-900 bg-slate-950/40 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 sm:px-6 py-4 border-b border-border bg-card/80 backdrop-blur-sm shrink-0">
         <div className="flex items-center gap-4">
-          <Bot className="h-5 w-5 text-indigo-400" />
+          <Bot className="h-5 w-5 text-primary" />
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="text-sm font-bold text-white">{workflowName}</h4>
+              <h4 className="text-sm font-bold text-foreground">{workflowName}</h4>
               {onRename && (
                 <button
                   type="button"
                   onClick={onRename}
-                  className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg transition-all"
+                  className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-lg transition-all cursor-pointer"
                   title="Rename Agentflow"
                 >
                   <Pencil className="h-3 w-3" />
@@ -1277,7 +1277,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                 {workflowStatus === "published" ? "Published" : "Draft"}
               </span>
             </div>
-            <p className="text-[10px] text-slate-400">Agent Team Architecture: Collapsible groups, clean bus routing, drag-to-reparent</p>
+            <p className="text-[10px] text-muted-foreground">Agent Team Architecture: Collapsible groups, clean bus routing, drag-to-reparent</p>
           </div>
         </div>
 
@@ -1286,22 +1286,22 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
           <button
             type="button"
             onClick={handleAutoAlign}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border border-indigo-500/40 bg-indigo-950/40 text-indigo-300 hover:text-white hover:bg-indigo-900/50 shadow-sm transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border border-border bg-muted/60 text-foreground hover:bg-muted shadow-xs transition-all cursor-pointer"
             title="Auto-Align Flow: Arrange into clean Supervisor -> Teams -> Synthesizer columns"
           >
-            <LayoutGrid className="h-3.5 w-3.5 text-indigo-400" />
+            <LayoutGrid className="h-3.5 w-3.5 text-primary" />
             <span>Auto Align</span>
           </button>
 
           {/* Workflow Type Toggle */}
-          <div className="flex items-center bg-slate-900/60 border border-slate-800 rounded-xl p-0.5">
+          <div className="flex items-center bg-muted border border-border rounded-xl p-0.5">
             <button
               type="button"
               onClick={() => setWorkflowType("interactive")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                 workflowType === "interactive"
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Play className="h-3 w-3" /> Interactive
@@ -1309,10 +1309,10 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
             <button
               type="button"
               onClick={() => setWorkflowType("scheduled")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                 workflowType === "scheduled"
-                  ? "bg-purple-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <CalendarClock className="h-3 w-3" /> Scheduled
@@ -1325,7 +1325,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
               type="button"
               onClick={handleSaveDraft}
               disabled={saving}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900/40 transition-all disabled:opacity-40"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all disabled:opacity-40"
             >
               {saving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               Save Draft
@@ -1350,7 +1350,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
               showJsonPanel
                 ? "bg-indigo-600/20 border-indigo-500/50 text-indigo-300"
-                : "border-slate-800 text-slate-400 hover:text-white"
+                : "border-border text-muted-foreground hover:text-foreground"
             }`}
           >
             <FileCode className="h-3.5 w-3.5" />
@@ -1361,7 +1361,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
             <button
               type="button"
               onClick={() => onSave(nodes, edges)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900/40 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all"
             >
               Save Progress
             </button>
@@ -1383,7 +1383,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
 
       {/* Scheduled config bar */}
       {workflowType === "scheduled" && (
-        <div className="flex items-center gap-4 px-6 py-2 border-b border-slate-900 bg-purple-950/20 shrink-0">
+        <div className="flex items-center gap-4 px-6 py-2 border-b border-border bg-purple-950/20 shrink-0">
           <div className="flex items-center gap-2">
             <CalendarClock className="h-3.5 w-3.5 text-purple-400" />
             <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">Cron Schedule</span>
@@ -1393,15 +1393,15 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
             value={cronSchedule}
             onChange={(e) => setCronSchedule(e.target.value)}
             placeholder="0 8 * * *"
-            className="w-32 rounded-lg border border-purple-500/20 bg-slate-900/40 py-1 px-2.5 text-[10px] font-mono text-white outline-none focus:border-purple-500"
+            className="w-32 rounded-lg border border-purple-500/20 bg-muted/30 py-1 px-2.5 text-[10px] font-mono text-white outline-none focus:border-purple-500"
           />
-          <span className="text-[9px] text-slate-300">e.g. 0 8 * * * (daily 8 AM)</span>
+          <span className="text-[9px] text-muted-foreground">e.g. 0 8 * * * (daily 8 AM)</span>
           <input
             type="text"
             value={scheduledPrompt}
             onChange={(e) => setScheduledPrompt(e.target.value)}
             placeholder="Optional: Scheduled run instruction..."
-            className="flex-1 rounded-lg border border-slate-800 bg-slate-900/40 py-1 px-2.5 text-[10px] text-white outline-none focus:border-purple-500 placeholder-slate-400"
+            className="flex-1 rounded-lg border border-border bg-muted/30 py-1 px-2.5 text-[10px] text-white outline-none focus:border-purple-500 placeholder-slate-400"
           />
         </div>
       )}
@@ -1410,15 +1410,15 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
       <div className="flex flex-1 min-h-0 relative">
         {/* Left Palette */}
         {!isPaletteCollapsed && (
-          <div className="flex flex-col gap-2.5 p-4 border-r border-slate-900 bg-slate-950/20 shrink-0 w-48 relative animate-in slide-in-from-left duration-200">
+          <div className="flex flex-col gap-2.5 p-4 border-r border-border bg-muted/40 shrink-0 w-48 relative animate-in slide-in-from-left duration-200">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Agent Palette</span>
+              <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Agent Palette</span>
               <button
                 onClick={() => {
                   setIsPaletteCollapsed(true);
                   localStorage.setItem("savazai_palette_collapsed", "true");
                 }}
-                className="p-1 rounded hover:bg-slate-900 text-slate-400 hover:text-white"
+                className="p-1 rounded hover:bg-card text-muted-foreground hover:text-foreground"
                 title="Collapse Palette"
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
@@ -1432,7 +1432,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                   key={role}
                   type="button"
                   onClick={() => handleAddNode(role)}
-                  className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 border transition-all text-left ${config.bg} ${config.border} hover:opacity-90 hover:scale-[1.02]`}
+                  className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-xs font-semibold text-muted-foreground border transition-all text-left ${config.bg} ${config.border} hover:opacity-90 hover:scale-[1.02]`}
                 >
                   <Icon className={`h-4 w-4 text-${config.accent}-400 shrink-0`} />
                   <span className="leading-tight truncate">
@@ -1451,9 +1451,9 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
           onMouseUp={handleCanvasMouseUp}
           onMouseDown={handleCanvasMouseDown}
           onWheel={handleCanvasWheel}
-          className="flex-1 h-full bg-[#08080f] relative overflow-hidden select-none cursor-grab active:cursor-grabbing"
+          className="flex-1 h-full bg-canvas relative overflow-hidden select-none cursor-grab active:cursor-grabbing"
           style={{
-            backgroundImage: "radial-gradient(#141424 1.2px, transparent 1.2px)",
+            backgroundImage: "radial-gradient(var(--canvas-grid) 1.2px, transparent 1.2px)",
             backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
             backgroundPosition: `${pan.x}px ${pan.y}px`
           }}
@@ -1465,10 +1465,10 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                 setIsPaletteCollapsed(false);
                 localStorage.setItem("savazai_palette_collapsed", "false");
               }}
-              className="absolute left-4 top-4 z-30 p-2 rounded-xl bg-slate-950/80 backdrop-blur border border-slate-800 text-slate-300 hover:text-white shadow-xl hover:border-slate-700 transition-all flex items-center gap-1.5 text-xs font-bold animate-in zoom-in-90 duration-100"
+              className="absolute left-4 top-4 z-30 p-2 rounded-xl bg-card/90 backdrop-blur border border-border text-foreground hover:bg-muted shadow-xl transition-all flex items-center gap-1.5 text-xs font-bold animate-in zoom-in-90 duration-100 cursor-pointer"
               title="Open Agent Palette"
             >
-              <Bot className="h-4 w-4 text-indigo-400 shrink-0 animate-pulse" />
+              <Bot className="h-4 w-4 text-primary shrink-0 animate-pulse" />
               <span>Palette</span>
             </button>
           )}
@@ -1581,7 +1581,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                       )}
                       {edge.conditionExpression && (
                         <foreignObject x={mx - 60} y={my - 10} width="120" height="20">
-                          <div className="bg-slate-900 border border-slate-800 text-[8px] font-mono text-slate-400 px-1 py-0.5 rounded text-center truncate">
+                          <div className="bg-card border border-border text-[8px] font-mono text-muted-foreground px-1 py-0.5 rounded text-center truncate">
                             {edge.conditionExpression}
                           </div>
                         </foreignObject>
@@ -1717,7 +1717,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                           : `${config.bg} ${config.border} ${
                               isSelected
                                 ? isSupervisor ? "ring-2 ring-indigo-500/80 shadow-indigo-500/10" : "ring-2 ring-cyan-500/80 shadow-cyan-500/10"
-                                : "hover:bg-slate-900/40"
+                                : "hover:bg-muted/30"
                             }`
                       }`}
                     >
@@ -1726,10 +1726,10 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                         <div className="relative">
                           <div className={`p-1.5 rounded-lg border shrink-0 ${
                             customTheme
-                              ? `bg-slate-950/60 ${customTheme.border}`
+                              ? `bg-muted/40 ${customTheme.border}`
                               : isSynth
                               ? "bg-fuchsia-500/20 border-fuchsia-500/30 text-fuchsia-300"
-                              : "bg-slate-950/40 border-slate-900"
+                              : "bg-muted/40 border-border"
                           }`}>
                             <NodeIcon className={`h-3.5 w-3.5 ${
                               customTheme
@@ -1756,7 +1756,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); setSelectedNodeId(node.id); setDrawerOpen(true); }}
-                            className="p-1 rounded-md bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-white transition-all"
+                            className="p-1 rounded-md bg-slate-800 border border-border hover:border-slate-600 text-muted-foreground hover:text-foreground transition-all"
                             title="Configure"
                           >
                             <Settings className="h-3 w-3" />
@@ -1786,8 +1786,8 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                         {node.label}
                       </div>
 
-                      <div className="flex items-center justify-between w-full mt-1 border-t border-slate-900/60 pt-1 shrink-0">
-                        <span className="text-[8px] text-slate-400 truncate max-w-full">
+                      <div className="flex items-center justify-between w-full mt-1 border-t border-border/60 pt-1 shrink-0">
+                        <span className="text-[8px] text-muted-foreground truncate max-w-full">
                           {node.modelConfig?.provider}/{node.modelConfig?.model}
                         </span>
                       </div>
@@ -1812,11 +1812,11 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
           )}
 
           {/* Floating Canvas Controls */}
-          <div className="absolute bottom-4 left-4 flex items-center gap-1.5 p-1 bg-slate-950/85 backdrop-blur-md border border-slate-900 rounded-2xl shadow-xl z-30 select-none">
+          <div className="absolute bottom-4 left-4 flex items-center gap-1.5 p-1 bg-card/90 backdrop-blur-md border border-border rounded-2xl shadow-xl z-30 select-none text-foreground">
             <button
               type="button"
               onClick={() => setZoom(z => Math.min(2.5, z + 0.1))}
-              className="w-7 h-7 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-900 transition-all text-xs font-bold border border-transparent hover:border-slate-800"
+              className="w-7 h-7 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all text-xs font-bold border border-transparent hover:border-border cursor-pointer"
               title="Zoom In (+)"
             >
               +
@@ -1824,17 +1824,17 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
             <button
               type="button"
               onClick={() => setZoom(z => Math.max(0.1, z - 0.1))}
-              className="w-7 h-7 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-900 transition-all text-xs font-bold border border-transparent hover:border-slate-800"
+              className="w-7 h-7 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all text-xs font-bold border border-transparent hover:border-border cursor-pointer"
               title="Zoom Out (-)"
             >
               -
             </button>
-            <span className="text-[9px] text-slate-500 px-1 font-mono w-10 text-center">{Math.round(zoom * 100)}%</span>
-            <div className="w-px h-4 bg-slate-800 mx-0.5" />
+            <span className="text-[9px] text-muted-foreground px-1 font-mono w-10 text-center">{Math.round(zoom * 100)}%</span>
+            <div className="w-px h-4 bg-border mx-0.5" />
             <button
               type="button"
               onClick={handleFitView}
-              className="px-2.5 h-7 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition-all text-[9px] font-bold border border-transparent hover:border-slate-800"
+              className="px-2.5 h-7 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all text-[9px] font-bold border border-transparent hover:border-border cursor-pointer"
               title="Focus & Fit View"
             >
               Fit View
@@ -1842,8 +1842,8 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
           </div>
 
           {/* Interactive Mini-map Overlay */}
-          <div className="absolute bottom-4 right-4 w-32 h-20 rounded-2xl border border-slate-900 bg-slate-950/85 backdrop-blur-md overflow-hidden p-1 z-30 flex items-center justify-center pointer-events-none select-none">
-            <div className="relative w-full h-full bg-slate-900/30 rounded-xl overflow-hidden">
+          <div className="absolute bottom-4 right-4 w-32 h-20 rounded-2xl border border-border bg-card/90 backdrop-blur-md overflow-hidden p-1 z-30 flex items-center justify-center pointer-events-none select-none">
+            <div className="relative w-full h-full bg-muted/40 rounded-xl overflow-hidden">
               {nodes.map(n => {
                 const scale = 0.04;
                 const x = Math.max(2, Math.min(110, n.x * scale + 15));
@@ -1877,15 +1877,15 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
             if (!edge) return null;
             const currentTarget = nodes.find((n) => n.id === edge.target);
             return (
-              <div className="absolute top-10 left-10 z-40 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-3 w-56 animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute top-10 left-10 z-40 bg-background border border-border rounded-2xl shadow-2xl p-3 w-56 animate-in fade-in zoom-in-95 duration-100">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-slate-200 uppercase tracking-wider">Re-target Edge</span>
-                  <button type="button" onClick={() => setRetargetEdgeId(null)} className="text-slate-500 hover:text-white">
+                  <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">Re-target Edge</span>
+                  <button type="button" onClick={() => setRetargetEdgeId(null)} className="text-muted-foreground hover:text-foreground">
                     <X className="h-3 w-3" />
                   </button>
                 </div>
                 {edge && (
-                  <div className="flex items-center gap-1.5 text-[10px] text-slate-300 mb-2">
+                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-2">
                     <span className="font-mono truncate max-w-[70px]">{nodes.find((n) => n.id === edge.source)?.label || "?"}</span>
                     <ArrowRight className="h-3 w-3 shrink-0" />
                     <span className="font-mono truncate max-w-[70px] text-indigo-400">{currentTarget?.label || "?"}</span>
@@ -1905,7 +1905,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                           className={`flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs text-left transition-all ${
                             isCurrent
                               ? "bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 cursor-not-allowed"
-                              : "bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300"
+                              : "bg-card border border-border hover:border-border text-muted-foreground"
                           }`}
                         >
                           <ArrowRight className="h-3 w-3 shrink-0" />
@@ -1927,13 +1927,13 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                 top: `${Math.max(edgePopover.y - 80, 10)}px`,
               }}
             >
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-3 w-56">
+              <div className="bg-background border border-border rounded-2xl shadow-2xl p-3 w-56">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-slate-200 uppercase tracking-wider">Edge Connection</span>
+                  <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">Edge Connection</span>
                   <button
                     type="button"
                     onClick={() => { setEdgePopover(null); setSelectedEdgeId(null); }}
-                    className="text-slate-500 hover:text-white"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -1941,20 +1941,20 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
 
                 {showConditionEditor ? (
                   <div className="space-y-2">
-                    <label className="text-[9px] font-semibold text-slate-300 uppercase">Condition Expression</label>
+                    <label className="text-[9px] font-semibold text-muted-foreground uppercase">Condition Expression</label>
                     <input
                       type="text"
                       value={conditionInput}
                       onChange={(e) => setConditionInput(e.target.value)}
                       placeholder={clickedEdge.conditionExpression || "e.g. result.status === 'ok'"}
-                      className="w-full rounded-lg border border-slate-800 bg-slate-900/30 py-1.5 px-2.5 text-[10px] font-mono text-white outline-none focus:border-indigo-500"
+                      className="w-full rounded-lg border border-border bg-muted/30 py-1.5 px-2.5 text-[10px] font-mono text-white outline-none focus:border-indigo-500"
                       autoFocus
                     />
                     <div className="flex gap-2 pt-1">
                       <button
                         type="button"
                         onClick={() => { setShowConditionEditor(false); setConditionInput(""); }}
-                        className="flex-1 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white text-[10px] font-semibold transition-all"
+                        className="flex-1 py-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground text-[10px] font-semibold transition-all"
                       >
                         Cancel
                       </button>
@@ -1969,7 +1969,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                   </div>
                 ) : (
                   <div className="space-y-1.5">
-                    <div className="flex items-center gap-2 text-[10px] text-slate-300 mb-2">
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-2">
                       <span className="font-mono truncate max-w-[80px]">
                         {nodes.find((n) => n.id === clickedEdge.source)?.label || clickedEdge.source}
                       </span>
@@ -1981,7 +1981,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                     <button
                       type="button"
                       onClick={() => { setRetargetEdgeId(clickedEdge.id); setEdgePopover(null); }}
-                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs text-slate-300 bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all text-left"
+                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs text-muted-foreground bg-card border border-border hover:border-border transition-all text-left"
                     >
                       <ArrowLeft className="h-3 w-3 text-indigo-400 shrink-0" />
                       Re-target Edge
@@ -1989,7 +1989,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                     <button
                       type="button"
                       onClick={() => setShowConditionEditor(true)}
-                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs text-slate-300 bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all text-left"
+                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs text-muted-foreground bg-card border border-border hover:border-border transition-all text-left"
                     >
                       <CornerDownRight className="h-3 w-3 text-indigo-400 shrink-0" />
                       {clickedEdge.conditionExpression ? `Edit Condition (${clickedEdge.conditionExpression})` : "Set Condition"}
@@ -2018,12 +2018,12 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
 
         {/* JSON Panel */}
         {showJsonPanel && (
-          <div className="absolute right-0 top-0 bottom-0 w-80 border-l border-slate-900 bg-slate-950/95 backdrop-blur-md p-4 flex flex-col gap-3 z-30 animate-in slide-in-from-right duration-200">
-            <span className="text-[10px] font-bold text-slate-200 uppercase tracking-wider">Canvas JSON Schema</span>
+          <div className="absolute right-0 top-0 bottom-0 w-80 border-l border-border bg-muted/40 backdrop-blur-md p-4 flex flex-col gap-3 z-30 animate-in slide-in-from-right duration-200">
+            <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">Canvas JSON Schema</span>
             <textarea
               value={jsonText}
               onChange={(e) => setJsonText(e.target.value)}
-              className="flex-1 w-full rounded-xl border border-slate-900 bg-[#040408] p-3 text-[10px] text-slate-300 font-mono focus:border-indigo-500 outline-none resize-none [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800"
+              className="flex-1 w-full rounded-xl border border-border bg-background p-3 text-[10px] text-muted-foreground font-mono focus:border-indigo-500 outline-none resize-none [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800"
             />
             {importAlert && (
               <div className={`text-[10px] font-semibold border rounded-xl p-2.5 leading-relaxed ${
@@ -2038,14 +2038,14 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
               <button
                 type="button"
                 onClick={handleImportJson}
-                className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all"
+                className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold text-muted-foreground bg-card border border-border hover:border-border transition-all"
               >
                 <Upload className="h-3.5 w-3.5" /> Import
               </button>
               <a
                 href={`data:text/json;charset=utf-8,${encodeURIComponent(jsonText)}`}
                 download="savazai-canvas.json"
-                className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all"
+                className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold text-muted-foreground bg-card border border-border hover:border-border transition-all"
               >
                 <Download className="h-3.5 w-3.5" /> Export
               </a>
@@ -2058,17 +2058,17 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div onClick={() => setDeleteConfirmId(null)} className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-2xl shadow-2xl p-5 w-80 animate-in fade-in zoom-in-95 duration-150">
+          <div className="relative bg-background border border-border rounded-2xl shadow-2xl p-5 w-80 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20">
                 <Trash2 className="h-4 w-4 text-red-400" />
               </div>
               <div>
                 <h4 className="text-sm font-bold text-white">Delete Node</h4>
-                <p className="text-[10px] text-slate-400 mt-0.5">This action cannot be undone</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">This action cannot be undone</p>
               </div>
             </div>
-            <p className="text-xs text-slate-300 mb-5 leading-relaxed">
+            <p className="text-xs text-muted-foreground mb-5 leading-relaxed">
               Are you sure you want to delete <strong className="text-white">&lsquo;{deletingNodeLabel}&rsquo;</strong>?
               This will unbind <strong className="text-white">{connectedEdgeCount}</strong> connected edge{connectedEdgeCount !== 1 ? "s" : ""}.
             </p>
@@ -2076,7 +2076,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
               <button
                 type="button"
                 onClick={() => setDeleteConfirmId(null)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold transition-all"
+                className="flex-1 py-2.5 rounded-xl border border-border hover:border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all"
               >
                 Cancel
               </button>

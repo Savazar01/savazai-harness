@@ -138,7 +138,7 @@ function ReportActionToolbar({ content }: { content: string }) {
   };
 
   return (
-    <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center gap-2">
+    <div className="mt-3 pt-2.5 border-t border-border/80 flex flex-wrap items-center gap-2">
       <button
         type="button"
         onClick={handleDownload}
@@ -151,7 +151,7 @@ function ReportActionToolbar({ content }: { content: string }) {
       <button
         type="button"
         onClick={handleCopy}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 font-medium text-xs hover:bg-slate-700/80 hover:text-white transition-all cursor-pointer shadow-sm active:scale-95"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-border text-muted-foreground font-medium text-xs hover:bg-slate-700/80 hover:text-foreground transition-all cursor-pointer shadow-sm active:scale-95"
       >
         {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
         <span>{copied ? "Copied to Clipboard!" : "Copy Table"}</span>
@@ -483,26 +483,26 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
   const getWidthClass = () => {
     switch (widthMode) {
       case "fullscreen":
-        return "w-[95%] h-[92%] rounded-3xl border border-slate-900 m-auto";
+        return "w-[95%] h-[92%] rounded-3xl border border-border m-auto";
       case "expanded":
-        return "w-full max-w-2xl md:max-w-[50%] h-full border-l border-slate-900";
+        return "w-full max-w-2xl md:max-w-[50%] h-full border-l border-border";
       case "compact":
       default:
-        return "w-full max-w-md h-full border-l border-slate-900";
+        return "w-full max-w-md h-full border-l border-border";
     }
   };
 
   return (
     <div className={`fixed inset-0 z-50 flex items-center ${widthMode === "fullscreen" ? "justify-center" : "justify-end"}`}>
       <div onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className={`relative bg-slate-950 shadow-2xl flex flex-col z-10 transition-all duration-300 ${getWidthClass()}`}>
+      <div className={`relative bg-background shadow-2xl flex flex-col z-10 transition-all duration-300 ${getWidthClass()}`}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-900 bg-slate-950/40 shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/40 shrink-0">
           <div className="flex items-center gap-3">
             <Bot className="h-5 w-5 text-emerald-400 shrink-0" />
             <div>
               <h4 className="text-sm font-bold text-white leading-tight">Test Playground</h4>
-              <p className="text-[9px] text-slate-500">Verify generic agent graph execution traces</p>
+              <p className="text-[9px] text-muted-foreground">Verify generic agent graph execution traces</p>
             </div>
           </div>
           
@@ -512,7 +512,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
               <button
                 type="button"
                 onClick={() => setWidthMode(widthMode === "compact" ? "expanded" : "compact")}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-slate-900 transition-all"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-card transition-all"
                 title={widthMode === "compact" ? "Expand to 50% width" : "Contract drawer"}
               >
                 {widthMode === "compact" ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -522,7 +522,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
             <button
               type="button"
               onClick={() => setWidthMode(widthMode === "fullscreen" ? "compact" : "fullscreen")}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-slate-900 transition-all"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-card transition-all"
               title={widthMode === "fullscreen" ? "Dock to side" : "Pop out to full screen"}
             >
               {widthMode === "fullscreen" ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -532,14 +532,14 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
               <button
                 type="button"
                 onClick={handleClear}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-slate-900 transition-all"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-card transition-all"
                 title="Clear conversation"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             )}
 
-            <button onClick={onClose} className="text-slate-500 hover:text-white p-1.5 hover:bg-slate-900 rounded-lg transition-all">
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1.5 hover:bg-card rounded-lg transition-all">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -547,8 +547,8 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
 
         {/* Node Execution Status */}
         {Object.keys(nodeStatus).length > 0 && (
-          <div className="flex items-center gap-2 px-5 py-2 border-b border-slate-900 bg-slate-950/20 shrink-0 overflow-x-auto">
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider shrink-0">Nodes:</span>
+          <div className="flex items-center gap-2 px-5 py-2 border-b border-border bg-muted/40 shrink-0 overflow-x-auto">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider shrink-0">Nodes:</span>
             {Object.entries(nodeStatus).map(([label, status]) => (
               <span
                 key={label}
@@ -559,7 +559,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                     ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
                     : status === "failed"
                     ? "bg-red-500/10 text-red-400 border-red-500/30"
-                    : "bg-slate-800/50 text-slate-500 border-slate-800"
+                    : "bg-slate-800/50 text-muted-foreground border-border"
                 }`}
               >
                 {status === "running" && <Loader2 className="h-2.5 w-2.5 animate-spin" />}
@@ -574,15 +574,15 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
         {/* HITL Approval Overlay */}
         {hitlPending && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-slate-900 border border-amber-500/40 rounded-2xl p-6 max-w-sm mx-4 shadow-2xl">
+            <div className="bg-card border border-amber-500/40 rounded-2xl p-6 max-w-sm mx-4 shadow-2xl">
               <div className="flex items-center gap-3 mb-4">
                 <AlertCircle className="h-6 w-6 text-amber-400 shrink-0" />
                 <div>
                   <h4 className="text-sm font-bold text-white">Approval Required</h4>
-                  <p className="text-[10px] text-slate-400">HITL guardrail triggered</p>
+                  <p className="text-[10px] text-muted-foreground">HITL guardrail triggered</p>
                 </div>
               </div>
-              <div className="text-xs text-slate-300 mb-4 bg-slate-950 rounded-xl p-3 font-mono whitespace-pre-wrap max-h-40 overflow-y-auto">
+              <div className="text-xs text-muted-foreground mb-4 bg-background rounded-xl p-3 font-mono whitespace-pre-wrap max-h-40 overflow-y-auto">
                 {JSON.stringify(hitlPending, null, 2)}
               </div>
               <button
@@ -596,11 +596,11 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
         )}
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800 bg-[#07070d]">
+        <div className="flex-1 overflow-y-auto p-5 space-y-4 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800 bg-background">
           {messages.length === 0 && !error && (
             <div className="flex flex-col items-center justify-center h-full text-center text-slate-600 px-4">
               <Bot className="h-10 w-10 mb-3 text-slate-800" />
-              <p className="text-xs font-semibold text-slate-500 mb-1">Playground Initialized</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-1">Playground Initialized</p>
               <p className="text-[10px] text-slate-600 max-w-xs leading-relaxed">
                 Type a query to run the visual agentflow graph. Step traces will be streamed live as cards inline.
               </p>
@@ -612,7 +612,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
               return (
                 <div
                   key={idx}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-950/60 border border-slate-900 text-[10px] text-slate-400 font-mono my-2 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-200"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-muted/40 border border-border text-[10px] text-muted-foreground font-mono my-2 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-200"
                 >
                   <div className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shrink-0">
                     <Activity className="h-3.5 w-3.5" />
@@ -633,7 +633,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                   className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
                     msg.role === "user"
                       ? "bg-indigo-600/20 border border-indigo-500/30 text-indigo-200"
-                      : "bg-slate-900/60 border border-slate-800/80 text-slate-300"
+                      : "bg-muted/30 border border-border/80 text-muted-foreground"
                   }`}
                 >
                   {msg.role === "assistant" && msg.content ? (
@@ -643,17 +643,17 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                         remarkPlugins={[remarkGfm]}
                         components={{
                           table: (props) => (
-                            <div className="overflow-x-auto max-w-full my-2.5 rounded-xl border border-slate-800/80 bg-slate-950/50 p-1 shadow-sm [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-700">
-                              <table className="w-full min-w-max border-collapse border border-slate-800 text-[11px] font-sans" {...props} />
+                            <div className="overflow-x-auto max-w-full my-2.5 rounded-xl border border-border/80 bg-muted/40 p-1 shadow-sm [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-700">
+                              <table className="w-full min-w-max border-collapse border border-border text-[11px] font-sans" {...props} />
                             </div>
                           ),
-                          th: (props) => <th className="border border-slate-800 px-2 py-1.5 bg-slate-900/60 font-semibold text-slate-200 text-left" {...props} />,
-                          td: (props) => <td className="border border-slate-800 px-2 py-1 text-slate-300" {...props} />,
+                          th: (props) => <th className="border border-border px-2 py-1.5 bg-muted/30 font-semibold text-foreground text-left" {...props} />,
+                          td: (props) => <td className="border border-border px-2 py-1 text-muted-foreground" {...props} />,
                           h1: (props) => <h1 className="text-sm font-bold text-white mb-2 mt-3" {...props} />,
                           h2: (props) => <h2 className="text-xs font-bold text-white mb-1.5 mt-2.5" {...props} />,
-                          h3: (props) => <h3 className="text-xs font-semibold text-slate-200 mb-1 mt-2" {...props} />,
-                          h4: (props) => <h4 className="text-[11px] font-semibold text-slate-300 mb-1" {...props} />,
-                          p: (props) => <p className="mb-2 leading-relaxed text-slate-300" {...props} />,
+                          h3: (props) => <h3 className="text-xs font-semibold text-foreground mb-1 mt-2" {...props} />,
+                          h4: (props) => <h4 className="text-[11px] font-semibold text-muted-foreground mb-1" {...props} />,
+                          p: (props) => <p className="mb-2 leading-relaxed text-muted-foreground" {...props} />,
                           ul: (props) => <ul className="list-disc pl-4 space-y-1 mb-2" {...props} />,
                           ol: (props) => <ol className="list-decimal pl-4 space-y-1 mb-2" {...props} />,
                           li: (props) => <li className="mb-0.5 text-slate-350" {...props} />,
@@ -759,24 +759,24 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
           })}
 
           {pendingInterrupt && (
-            <div className="rounded-2xl border border-indigo-500/30 bg-[#0b0b14] p-5 shadow-xl max-w-3xl w-full mx-auto my-4 space-y-4 animate-in fade-in duration-200">
+            <div className="rounded-2xl border border-indigo-500/30 bg-background p-5 shadow-xl max-w-3xl w-full mx-auto my-4 space-y-4 animate-in fade-in duration-200">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 shrink-0">
                   <span className="text-base">📋</span>
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-white uppercase tracking-wider">Execution Plan Approval Required</h4>
-                  <p className="text-[10px] text-slate-400">The supervisor has formulated the following plan. Please review prior to execution.</p>
+                  <p className="text-[10px] text-muted-foreground">The supervisor has formulated the following plan. Please review prior to execution.</p>
                 </div>
               </div>
 
-              <div className="space-y-3 border border-slate-900 bg-slate-950/40 rounded-xl p-3.5 max-h-72 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+              <div className="space-y-3 border border-border bg-muted/40 rounded-xl p-3.5 max-h-72 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
                 {pendingInterrupt.clarificationPrompt && (
                   <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3.5 text-xs text-amber-200 leading-relaxed font-sans font-medium mb-3">
                     <div className="text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-2 flex items-center gap-1.5">
                       <span>⚠️</span> Information Required To Perform Action
                     </div>
-                    <div className="whitespace-pre-wrap text-slate-100 text-xs font-mono bg-slate-950/70 p-3 rounded-lg border border-amber-500/20 leading-relaxed">
+                    <div className="whitespace-pre-wrap text-slate-100 text-xs font-mono bg-muted/40 p-3 rounded-lg border border-amber-500/20 leading-relaxed">
                       {pendingInterrupt.clarificationPrompt}
                     </div>
                   </div>
@@ -790,9 +790,9 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                   </div>
                 )}
                 {pendingInterrupt.plan.map((item, idx) => (
-                  <div key={idx} className="flex flex-col gap-1 border-b border-slate-900 pb-2 last:border-0 last:pb-0">
+                  <div key={idx} className="flex flex-col gap-1 border-b border-border pb-2 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-slate-200 truncate">
+                      <span className="text-xs font-bold text-foreground truncate">
                         Step {idx + 1}: {item.targetNode || item.nodeId}
                       </span>
                       <span className="px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-bold text-indigo-300 shrink-0 capitalize">
@@ -800,14 +800,14 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                       </span>
                     </div>
                     {item.targetEntity && (
-                      <div className="text-[10px] text-slate-400">
-                        Target: <span className="text-slate-300">{item.targetEntity}</span>
+                      <div className="text-[10px] text-muted-foreground">
+                        Target: <span className="text-muted-foreground">{item.targetEntity}</span>
                       </div>
                     )}
                     {item.parameters && Object.keys(item.parameters).length > 0 && (
-                      <div className="text-[10px] text-slate-400 mt-1">
-                        <span className="block text-[9px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Parameters:</span>
-                        <pre className="text-[9px] text-cyan-400 font-mono bg-slate-950 p-2 rounded overflow-x-auto [&::-webkit-scrollbar]:h-0.5 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+                      <div className="text-[10px] text-muted-foreground mt-1">
+                        <span className="block text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Parameters:</span>
+                        <pre className="text-[9px] text-cyan-400 font-mono bg-background p-2 rounded overflow-x-auto [&::-webkit-scrollbar]:h-0.5 [&::-webkit-scrollbar-thumb]:bg-slate-800">
                           {JSON.stringify(item.parameters, null, 2)}
                         </pre>
                       </div>
@@ -822,8 +822,8 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                 ))}
               </div>
 
-              <div className="space-y-2 border-t border-slate-900/80 pt-4">
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+              <div className="space-y-2 border-t border-border/80 pt-4">
+                <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
                   <span>Provide or adjust execution parameters below:</span>
                   <span className="text-[11px] font-normal text-indigo-400">💡 Edit bracketed choices or type details</span>
                 </div>
@@ -837,7 +837,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                     }
                   }}
                   placeholder="Type parameters here (e.g. Vendor Name: Catering Co, Category: Catering)..."
-                  className="w-full rounded-xl border-2 border-indigo-500/40 bg-[#06060b] p-4 text-base text-slate-100 placeholder-slate-500 outline-none resize-y focus:border-indigo-500 font-mono leading-relaxed transition-all min-h-[220px] shadow-inner"
+                  className="w-full rounded-xl border-2 border-indigo-500/40 bg-background p-4 text-base text-slate-100 placeholder-slate-500 outline-none resize-y focus:border-indigo-500 font-mono leading-relaxed transition-all min-h-[220px] shadow-inner"
                   rows={Math.max(8, (feedbackInput.match(/\n/g) || []).length + 1)}
                 />
                 <div className="flex flex-wrap gap-2 justify-end pt-2">
@@ -890,7 +890,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t border-slate-900 bg-slate-950 shrink-0">
+        <div className="p-4 border-t border-border bg-background shrink-0">
           <div className="flex gap-2 items-end">
             <textarea
               value={input}
@@ -908,7 +908,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                 fontSize: "var(--prompt-font-size, 16px)",
                 fontFamily: "var(--prompt-font-family, inherit)",
               }}
-              className="flex-1 rounded-xl border border-slate-800 bg-slate-900/30 py-3 px-4 text-white outline-none focus:border-emerald-500 disabled:opacity-40 placeholder-slate-600 resize-none leading-relaxed transition-all"
+              className="flex-1 rounded-xl border border-border bg-muted/30 py-3 px-4 text-white outline-none focus:border-emerald-500 disabled:opacity-40 placeholder-slate-600 resize-none leading-relaxed transition-all"
             />
 
             <div className="relative">
@@ -918,7 +918,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                   setExecutionModeDropdownOpen(!executionModeDropdownOpen);
                   setShowFeedbackForm(false);
                 }}
-                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-[11px] font-bold text-slate-100 shadow-md transition-all whitespace-nowrap h-full"
+                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-card border border-border/80 text-[11px] font-bold text-slate-100 shadow-md transition-all whitespace-nowrap h-full"
                 title={`Execution: ${
                   executionModeOverride === "inherit" ? "Inherit Default" :
                   executionModeOverride === "plan_first" ? "Plan First" : "Direct Execution"
@@ -927,12 +927,12 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                 {executionModeOverride === "inherit" && "⚙️ Inherit"}
                 {executionModeOverride === "plan_first" && "📋 Plan First"}
                 {executionModeOverride === "direct" && "⚡ Direct"}
-                <ChevronDown className="h-3 w-3 text-slate-400" />
+                <ChevronDown className="h-3 w-3 text-muted-foreground" />
               </button>
               {executionModeDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setExecutionModeDropdownOpen(false)} />
-                  <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[190px] rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/80 py-1.5 space-y-0.5">
+                  <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[190px] rounded-xl border border-border bg-card shadow-2xl shadow-black/80 py-1.5 space-y-0.5">
                     <button
                       type="button"
                       onClick={() => {
@@ -942,7 +942,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                       className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors ${
                         executionModeOverride === "inherit"
                           ? "bg-indigo-600/25 text-indigo-300 border-l-2 border-indigo-500 font-bold"
-                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                          : "text-muted-foreground hover:bg-slate-800 hover:text-foreground"
                       }`}
                     >
                       ⚙️ Inherit Agent Default
@@ -956,7 +956,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                       className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors ${
                         executionModeOverride === "plan_first"
                           ? "bg-indigo-600/25 text-indigo-300 border-l-2 border-indigo-500 font-bold"
-                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                          : "text-muted-foreground hover:bg-slate-800 hover:text-foreground"
                       }`}
                     >
                       📋 Plan First
@@ -970,7 +970,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                       className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors ${
                         executionModeOverride === "direct"
                           ? "bg-indigo-600/25 text-indigo-300 border-l-2 border-indigo-500 font-bold"
-                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                          : "text-muted-foreground hover:bg-slate-800 hover:text-foreground"
                       }`}
                     >
                       ⚡ Direct Execution

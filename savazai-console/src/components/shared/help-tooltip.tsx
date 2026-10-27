@@ -157,7 +157,7 @@ export function HelpTooltip({ content, side = "top" }: HelpTooltipProps) {
           if (open) { doClose(); return; }
           doOpen(e);
         }}
-        className="inline-flex items-center justify-center h-4 w-4 rounded-full border border-slate-700 bg-slate-900/50 text-slate-500 hover:text-slate-300 hover:border-slate-600 transition-all cursor-help text-[9px] font-bold leading-none"
+        className="inline-flex items-center justify-center h-4 w-4 rounded-full border border-border bg-muted/30 text-muted-foreground hover:text-muted-foreground hover:border-slate-600 transition-all cursor-help text-[9px] font-bold leading-none"
         aria-label="Help"
       >
         ?
@@ -173,7 +173,7 @@ export function HelpTooltip({ content, side = "top" }: HelpTooltipProps) {
             pointerEvents: "none",
           }}
         >
-          <div className="relative bg-slate-900 border border-slate-700 shadow-2xl p-3 rounded-lg text-xs text-slate-200 leading-relaxed break-words">
+          <div className="relative bg-card border border-border shadow-2xl p-3 rounded-lg text-xs text-foreground leading-relaxed break-words">
             <p className="break-words">{content}</p>
             <div className={`absolute ${arrowClass[pos.side]}`} />
           </div>

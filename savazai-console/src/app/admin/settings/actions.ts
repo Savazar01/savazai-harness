@@ -18,6 +18,11 @@ export interface UpdateSettingsInput {
   secondaryColor?: string;
   background?: string;
   themeMode?: string;
+  accentPreset?: string;
+  accentCustom?: string;
+  surfaceTone?: string;
+  radius?: string;
+  density?: string;
   fontSans?: string;
   promptFontSize?: string;
   promptFontFamily?: string;
@@ -114,6 +119,11 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
       ...(input.secondaryColor !== undefined && { secondaryColor: input.secondaryColor }),
       ...(input.background !== undefined && { background: input.background }),
       ...(input.themeMode !== undefined && { themeMode: input.themeMode }),
+      ...(input.accentPreset !== undefined && { accentPreset: input.accentPreset }),
+      ...(input.accentCustom !== undefined && { accentCustom: input.accentCustom }),
+      ...(input.surfaceTone !== undefined && { surfaceTone: input.surfaceTone }),
+      ...(input.radius !== undefined && { radius: input.radius }),
+      ...(input.density !== undefined && { density: input.density }),
       ...(input.fontSans !== undefined && { fontSans: input.fontSans }),
       ...(input.promptFontSize !== undefined && { promptFontSize: input.promptFontSize }),
       ...(input.promptFontFamily !== undefined && { promptFontFamily: input.promptFontFamily }),

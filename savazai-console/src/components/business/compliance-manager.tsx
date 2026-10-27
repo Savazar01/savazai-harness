@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
@@ -33,7 +33,7 @@ const FRAMEWORKS = [
 
 const FRAMEWORK_SCOPE: Record<string, { regulatoryReference: string; entities: { key: string; label: string }[]; enforcementStrategy: string }> = {
   hipaa: {
-    regulatoryReference: "HIPAA 45 CFR § 164.514",
+    regulatoryReference: "HIPAA 45 CFR Â§ 164.514",
     entities: [
       { key: "person_name", label: "Person Name" },
       { key: "email", label: "Email" },
@@ -41,7 +41,7 @@ const FRAMEWORK_SCOPE: Record<string, { regulatoryReference: string; entities: {
       { key: "ssn", label: "SSN / National ID" },
       { key: "location", label: "Location" },
     ],
-    enforcementStrategy: "Mask — All PHI entities are redacted with [ENTITY_REDACTED] placeholders per HIPAA Safe Harbor method."
+    enforcementStrategy: "Mask â€” All PHI entities are redacted with [ENTITY_REDACTED] placeholders per HIPAA Safe Harbor method."
   },
   pci: {
     regulatoryReference: "PCI-DSS v4.0 Requirement 3",
@@ -50,17 +50,17 @@ const FRAMEWORK_SCOPE: Record<string, { regulatoryReference: string; entities: {
       { key: "iban", label: "IBAN / Bank Account" },
       { key: "person_name", label: "Person Name" },
     ],
-    enforcementStrategy: "Block — Credit card data is blocked/rejected entirely. IBAN and Person Name are masked."
+    enforcementStrategy: "Block â€” Credit card data is blocked/rejected entirely. IBAN and Person Name are masked."
   },
   gdpr: {
-    regulatoryReference: "GDPR Article 4/32, CCPA §1798.81.5",
+    regulatoryReference: "GDPR Article 4/32, CCPA Â§1798.81.5",
     entities: [
       { key: "person_name", label: "Person Name" },
       { key: "email", label: "Email" },
       { key: "ip_address", label: "IP Address" },
       { key: "location", label: "Location" },
     ],
-    enforcementStrategy: "Tokenize — PII/SPI identifiers are replaced with contextual tokens (<EMAIL_1>, <PERSON_1>) for correlation safety."
+    enforcementStrategy: "Tokenize â€” PII/SPI identifiers are replaced with contextual tokens (<EMAIL_1>, <PERSON_1>) for correlation safety."
   },
 };
 
@@ -90,7 +90,7 @@ interface AuditLogEntry {
 const SAMPLE_DPDP_JSON = `{
   "framework_id": "dpdp_act_2023",
   "name": "DPDP Act 2023 (India)",
-  "regulatory_reference": "Digital Personal Data Protection Act 2023 § 2(t), § 6-9",
+  "regulatory_reference": "Digital Personal Data Protection Act 2023 Â§ 2(t), Â§ 6-9",
   "description": "Indian digital personal data protection framework for Aadhaar, PAN, and phone numbers",
   "entities": [
     {
@@ -338,7 +338,7 @@ export function ComplianceManager() {
     }
   };
 
-  // ── Import parsing ──
+  // â”€â”€ Import parsing â”€â”€
   const parseImportedFile = (text: string, fileName: string): ImportedFramework[] => {
     const ext = fileName.split(".").pop()?.toLowerCase();
     if (ext === "json") {
@@ -397,7 +397,7 @@ export function ComplianceManager() {
   const validateImportedFramework = (fw: ImportedFramework): ImportedFramework => {
     if (!fw.framework_id) throw new Error("Imported framework missing required field: framework_id");
     if (!fw.name) fw.name = fw.framework_id;
-    if (!fw.regulatory_reference) fw.regulatory_reference = "Custom — No regulatory reference specified";
+    if (!fw.regulatory_reference) fw.regulatory_reference = "Custom â€” No regulatory reference specified";
     if (!fw.entities || !Array.isArray(fw.entities)) throw new Error(`Framework "${fw.framework_id}" missing entities array.`);
     for (const ent of fw.entities) {
       if (!ent.entity_key) throw new Error(`Entity in framework "${fw.framework_id}" missing entity_key.`);
@@ -477,7 +477,7 @@ export function ComplianceManager() {
     URL.revokeObjectURL(url);
   };
 
-  // ── AI Regex Generator ──
+  // â”€â”€ AI Regex Generator â”€â”€
   const handleGenerateRegex = async () => {
     if (!aiRegexSample.trim()) return;
     setAiRegexGenerating(true);
@@ -516,7 +516,7 @@ export function ComplianceManager() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 text-slate-500 text-xs gap-2">
+      <div className="flex items-center justify-center h-64 text-muted-foreground text-xs gap-2">
         <Loader2 className="h-4 w-4 animate-spin" /> Loading compliance configuration...
       </div>
     );
@@ -525,12 +525,12 @@ export function ComplianceManager() {
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] min-h-0">
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-slate-900 pb-3 mb-4 shrink-0">
+      <div className="flex gap-1 border-b border-border pb-3 mb-4 shrink-0">
         <button
           type="button"
           onClick={() => setTab("rules")}
           className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-            tab === "rules" ? "bg-indigo-600/10 text-indigo-300 border border-indigo-500/30" : "text-slate-500 hover:text-slate-300"
+            tab === "rules" ? "bg-primary/10 text-primary border border-indigo-500/30" : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <ShieldCheck className="h-3.5 w-3.5 inline mr-1.5" />
@@ -541,7 +541,7 @@ export function ComplianceManager() {
             type="button"
             onClick={() => setTab("stream")}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              tab === "stream" ? "bg-indigo-600/10 text-indigo-300 border border-indigo-500/30" : "text-slate-500 hover:text-slate-300"
+              tab === "stream" ? "bg-primary/10 text-primary border border-indigo-500/30" : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Terminal className="h-3.5 w-3.5 inline mr-1.5" />
@@ -551,7 +551,7 @@ export function ComplianceManager() {
       </div>
 
       {tab === "rules" && (
-        <div className="flex-1 overflow-y-auto space-y-6 pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+        <div className="flex-1 overflow-y-auto space-y-6 pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-muted">
           {status && (
             <div className={`flex items-center gap-2 rounded-xl border p-3 text-xs ${
               status.type === "success" ? "border-emerald-500/25 bg-emerald-500/5 text-emerald-400" : "border-red-500/25 bg-red-500/5 text-red-400"
@@ -562,12 +562,12 @@ export function ComplianceManager() {
           )}
 
           {/* Compliance Framework Presets */}
-          <div className="rounded-2xl border border-slate-900 bg-slate-950/20 p-4 space-y-3">
+          <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div>
-                  <h3 className="text-sm font-bold text-white">Compliance Framework Presets</h3>
-                  <p className="text-[10px] text-slate-500">Toggle frameworks to auto-configure entity masking rules.</p>
+                  <h3 className="text-sm font-bold text-foreground">Compliance Framework Presets</h3>
+                  <p className="text-[10px] text-muted-foreground">Toggle frameworks to auto-configure entity masking rules.</p>
                 </div>
                 <HelpTooltip content="Framework Presets auto-configure entity rules for regulatory standards (HIPAA, PCI-DSS, GDPR/CCPA). Toggle a preset to automatically enforce its entity masking strategies across the pipeline." side="right" />
               </div>
@@ -575,7 +575,7 @@ export function ComplianceManager() {
                 <button
                   type="button"
                   onClick={() => setImportModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-800/50 text-slate-300 hover:text-white text-xs font-bold transition-all"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-muted/50 hover:bg-muted text-foreground hover:text-foreground text-xs font-bold transition-all"
                 >
                   <Upload className="h-3.5 w-3.5" />
                   Import Custom Framework
@@ -592,13 +592,13 @@ export function ComplianceManager() {
                       onClick={() => toggleFramework(fw.key)}
                       className={`px-4 py-2.5 rounded-l-xl text-xs font-bold border border-r-0 transition-all ${
                         active
-                          ? "bg-indigo-600/10 border-indigo-500/40 text-indigo-300 shadow-sm shadow-indigo-600/5"
-                          : "bg-slate-900/30 border-slate-800 text-slate-500 hover:border-slate-700"
+                          ? "bg-primary/10 border-indigo-500/40 text-primary shadow-sm shadow-indigo-600/5"
+                          : "bg-muted/30 border-border text-muted-foreground hover:border-border"
                       }`}
                     >
                       <div className="text-left">
                         <div>{fw.label}</div>
-                        <div className="text-[8px] font-normal text-slate-500 mt-0.5">{fw.description}</div>
+                        <div className="text-[8px] font-normal text-muted-foreground mt-0.5">{fw.description}</div>
                       </div>
                     </button>
                     <button
@@ -607,8 +607,8 @@ export function ComplianceManager() {
                       title="Inspect Scope"
                       className={`px-2 rounded-r-xl border text-xs font-bold transition-all ${
                         active
-                          ? "bg-indigo-600/10 border-indigo-500/40 text-indigo-400 hover:text-indigo-200 border-l-0"
-                          : "bg-slate-900/30 border-slate-800 text-slate-600 hover:text-slate-300 border-l-0"
+                          ? "bg-primary/10 border-indigo-500/40 text-primary hover:text-indigo-200 border-l-0"
+                          : "bg-muted/30 border-border text-muted-foreground hover:text-foreground border-l-0"
                       }`}
                     >
                       <Info className="h-3.5 w-3.5" />
@@ -626,12 +626,12 @@ export function ComplianceManager() {
                       className={`px-4 py-2.5 rounded-l-xl text-xs font-bold border border-r-0 transition-all ${
                         active
                           ? "bg-emerald-600/10 border-emerald-500/40 text-emerald-300 shadow-sm shadow-emerald-600/5"
-                          : "bg-slate-900/30 border-slate-800 text-slate-500 hover:border-slate-700"
+                          : "bg-muted/30 border-border text-muted-foreground hover:border-border"
                       }`}
                     >
                       <div className="text-left">
                         <div>{fw.name}</div>
-                        <div className="text-[8px] font-normal text-slate-500 mt-0.5">{fw.regulatory_reference}</div>
+                        <div className="text-[8px] font-normal text-muted-foreground mt-0.5">{fw.regulatory_reference}</div>
                       </div>
                     </button>
                     <button
@@ -641,7 +641,7 @@ export function ComplianceManager() {
                       className={`px-2 rounded-r-xl border text-xs font-bold transition-all ${
                         active
                           ? "bg-emerald-600/10 border-emerald-500/40 text-emerald-400 hover:text-emerald-200 border-l-0"
-                          : "bg-slate-900/30 border-slate-800 text-slate-600 hover:text-slate-300 border-l-0"
+                          : "bg-muted/30 border-border text-muted-foreground hover:text-foreground border-l-0"
                       }`}
                     >
                       <Info className="h-3.5 w-3.5" />
@@ -650,7 +650,7 @@ export function ComplianceManager() {
                       type="button"
                       onClick={() => removeImportedFramework(fw.framework_id)}
                       title="Remove imported framework"
-                      className="px-2 rounded-r-xl border border-l-0 bg-slate-900/30 border-slate-800 text-slate-600 hover:text-red-400 transition-all text-xs"
+                      className="px-2 rounded-r-xl border border-l-0 bg-muted/30 border-border text-muted-foreground hover:text-red-400 transition-all text-xs"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -661,24 +661,24 @@ export function ComplianceManager() {
           </div>
 
           {/* Standard Entity Grid */}
-          <div className="rounded-2xl border border-slate-900 bg-slate-950/20 p-4 space-y-3">
+          <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-white">Standard Entity Rules</h3>
+                <h3 className="text-sm font-bold text-foreground">Standard Entity Rules</h3>
                 <HelpTooltip content="Each entity type can be toggled on/off and assigned an action: Mask (replace with placeholder), Tokenize (replace with contextual token like <EMAIL_1>), or Block (reject the turn entirely). Active framework presets auto-enforce certain entities." side="right" />
               </div>
               {canCustomEntities && (
                 <button
                   type="button"
                   onClick={() => { setAddEntityModalOpen(true); }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-800/50 text-slate-300 hover:text-white text-xs font-bold transition-all"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-muted/50 hover:bg-muted text-foreground hover:text-foreground text-xs font-bold transition-all"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Add Standard Entity
                 </button>
               )}
             </div>
-            <p className="text-[10px] text-slate-500">Toggle entities and assign Mask / Tokenize / Block actions.</p>
+            <p className="text-[10px] text-muted-foreground">Toggle entities and assign Mask / Tokenize / Block actions.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {entityRules.map((rule) => {
                 const enforcingFrameworks = entityActiveFrameworks[rule.entity] || [];
@@ -686,7 +686,7 @@ export function ComplianceManager() {
                   <div
                     key={rule.entity}
                     className={`flex flex-col p-3 rounded-xl border transition-all ${
-                      rule.enabled ? "border-slate-800 bg-slate-900/30" : "border-slate-900 bg-slate-950/10 opacity-50"
+                      rule.enabled ? "border-border bg-muted/30" : "border-border bg-card opacity-50"
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -695,15 +695,15 @@ export function ComplianceManager() {
                           type="checkbox"
                           checked={rule.enabled}
                           onChange={() => toggleEntityEnabled(rule.entity)}
-                          className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-indigo-500 focus:ring-indigo-500/30 accent-indigo-500"
+                          className="h-4 w-4 rounded border-border bg-muted text-indigo-500 focus:ring-indigo-500/30 accent-indigo-500"
                         />
-                        <span className="text-xs font-semibold text-slate-300">{rule.label}</span>
+                        <span className="text-xs font-semibold text-foreground">{rule.label}</span>
                       </div>
                       <select
                         value={rule.action}
                         onChange={(e) => updateEntityAction(rule.entity, e.target.value as ComplianceEntityRule["action"])}
                         disabled={!rule.enabled}
-                        className="text-[10px] rounded-lg border border-slate-800 bg-[#0c0c16] py-1.5 px-2 text-white outline-none focus:border-indigo-500 disabled:opacity-40"
+                        className="text-[10px] rounded-lg border border-border bg-background py-1.5 px-2 text-foreground outline-none focus:border-indigo-500 disabled:opacity-40"
                       >
                         {ENTITY_ACTIONS.map((a) => (
                           <option key={a.value} value={a.value}>{a.label}</option>
@@ -713,7 +713,7 @@ export function ComplianceManager() {
                     {enforcingFrameworks.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2 ml-7">
                         {enforcingFrameworks.map((ef) => (
-                          <span key={ef} className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                          <span key={ef} className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-primary/10 text-primary border border-indigo-500/20">
                             Enforced by {ef}
                           </span>
                         ))}
@@ -726,12 +726,12 @@ export function ComplianceManager() {
           </div>
 
           {/* Custom Sensitive Keywords */}
-          <div className="rounded-2xl border border-slate-900 bg-slate-950/20 p-4 space-y-3">
+          <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-white">Custom Sensitive Keywords</h3>
+              <h3 className="text-sm font-bold text-foreground">Custom Sensitive Keywords</h3>
               <HelpTooltip content="Add proprietary business terms, project codenames, or internal identifiers. Each keyword can be assigned an action: Mask (replace with [KEYWORD_REDACTED]), Tokenize (replace with contextual token), or Block (reject the turn)." side="right" />
             </div>
-            <p className="text-[10px] text-slate-500">Add proprietary business terms with per-keyword action strategies.</p>
+            <p className="text-[10px] text-muted-foreground">Add proprietary business terms with per-keyword action strategies.</p>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -739,12 +739,12 @@ export function ComplianceManager() {
                 onChange={(e) => setKeywordInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addKeyword(); } }}
                 placeholder="e.g. Project_Cobalt"
-                className="flex-1 rounded-lg border border-slate-800 bg-slate-900/50 py-2 px-3 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500 font-mono"
+                className="flex-1 rounded-lg border border-border bg-muted/50 py-2 px-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500 font-mono"
               />
               <select
                 value={keywordAction}
                 onChange={(e) => setKeywordAction(e.target.value as "mask" | "tokenize" | "block")}
-                className="text-[10px] rounded-lg border border-slate-800 bg-[#0c0c16] py-2 px-2 text-white outline-none focus:border-indigo-500"
+                className="text-[10px] rounded-lg border border-border bg-background py-2 px-2 text-foreground outline-none focus:border-indigo-500"
               >
                 <option value="mask">Mask</option>
                 <option value="tokenize">Tokenize</option>
@@ -753,7 +753,7 @@ export function ComplianceManager() {
               <button
                 type="button"
                 onClick={addKeyword}
-                className="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all"
+                className="px-3 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all"
               >
                 <Plus className="h-3.5 w-3.5" />
               </button>
@@ -782,21 +782,21 @@ export function ComplianceManager() {
           </div>
 
           {/* Custom Regex Rules */}
-          <div className="rounded-2xl border border-slate-900 bg-slate-950/20 p-4 space-y-3">
+          <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-white">Custom Regex Rules</h3>
+              <h3 className="text-sm font-bold text-foreground">Custom Regex Rules</h3>
               <HelpTooltip content="Define advanced regex patterns for specialized entity detection. Use presets for common patterns or the AI Generator to create patterns from sample input strings." side="right" />
             </div>
-            <p className="text-[10px] text-slate-500">Optional advanced custom regex patterns for specialized entity detection.</p>
+            <p className="text-[10px] text-muted-foreground">Optional advanced custom regex patterns for specialized entity detection.</p>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] text-slate-500 font-semibold shrink-0">Presets:</span>
+              <span className="text-[10px] text-muted-foreground font-semibold shrink-0">Presets:</span>
               <div className="flex flex-wrap gap-1">
                 {REGEX_PRESETS.map((p) => (
                   <button
                     key={p.label}
                     type="button"
                     onClick={() => { setRegexLabel(p.label); setRegexPattern(p.pattern); }}
-                    className="px-2 py-1 rounded-md bg-slate-900 border border-slate-800 text-[9px] text-slate-400 hover:text-white hover:border-slate-700 transition-all font-mono"
+                    className="px-2 py-1 rounded-md bg-muted border border-border text-[9px] text-muted-foreground hover:text-foreground hover:border-border transition-all font-mono"
                   >
                     {p.label}
                   </button>
@@ -809,20 +809,20 @@ export function ComplianceManager() {
                 value={regexLabel}
                 onChange={(e) => setRegexLabel(e.target.value)}
                 placeholder="Label (e.g. Medical Record #)"
-                className="rounded-lg border border-slate-800 bg-slate-900/50 py-2 px-3 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500"
+                className="rounded-lg border border-border bg-muted/50 py-2 px-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500"
               />
               <input
                 type="text"
                 value={regexPattern}
                 onChange={(e) => setRegexPattern(e.target.value)}
                 placeholder="Pattern (e.g. \\bMRN-\\d{6}\\b)"
-                className="rounded-lg border border-slate-800 bg-slate-900/50 py-2 px-3 text-xs text-white font-mono placeholder-slate-600 outline-none focus:border-indigo-500"
+                className="rounded-lg border border-border bg-muted/50 py-2 px-3 text-xs text-foreground font-mono placeholder:text-muted-foreground outline-none focus:border-indigo-500"
               />
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={addRegex}
-                  className="flex-1 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all"
+                  className="flex-1 px-3 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all"
                 >
                   <Plus className="h-3.5 w-3.5 inline mr-1" /> Add Rule
                 </button>
@@ -839,12 +839,12 @@ export function ComplianceManager() {
             {customRegex.length > 0 && (
               <div className="space-y-1.5">
                 {customRegex.map((r, idx) => (
-                  <div key={idx} className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-900/20 border border-slate-900">
+                  <div key={idx} className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/20 border border-border">
                     <div>
-                      <span className="text-xs font-semibold text-slate-300">{r.label}</span>
-                      <span className="ml-2 text-[10px] font-mono text-slate-500">{r.pattern}</span>
+                      <span className="text-xs font-semibold text-foreground">{r.label}</span>
+                      <span className="ml-2 text-[10px] font-mono text-muted-foreground">{r.pattern}</span>
                     </div>
-                    <button type="button" onClick={() => removeRegex(idx)} className="text-slate-600 hover:text-red-400 transition-colors">
+                    <button type="button" onClick={() => removeRegex(idx)} className="text-muted-foreground hover:text-red-400 transition-colors">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -855,12 +855,12 @@ export function ComplianceManager() {
 
           {/* Save */}
           {canManageCompliance && (
-            <div className="sticky bottom-0 bg-slate-950 py-3 border-t border-slate-900">
+            <div className="sticky bottom-0 bg-card py-3 border-t border-border">
               <button
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {saving ? "Saving..." : "Save Compliance Configuration"}
@@ -874,22 +874,22 @@ export function ComplianceManager() {
         <div className="flex-1 flex flex-col min-h-0">
           <div className="flex items-center justify-between mb-3 shrink-0">
             <div className="flex items-center gap-2">
-              <Terminal className="h-4 w-4 text-indigo-400 animate-pulse" />
-              <span className="text-xs font-bold text-white uppercase tracking-wider font-mono">Live Masking Audit Stream</span>
+              <Terminal className="h-4 w-4 text-primary animate-pulse" />
+              <span className="text-xs font-bold text-foreground uppercase tracking-wider font-mono">Live Masking Audit Stream</span>
               <HelpTooltip content="Displays real-time masking events as the compliance engine processes LLM prompts. Each entry shows the operation type, affected entities, and which framework triggered the rule." side="right" />
             </div>
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 cursor-pointer select-none text-[10px] text-slate-400 font-semibold uppercase">
-                <input type="checkbox" checked={streamActive} onChange={(e) => setStreamActive(e.target.checked)} className="rounded border-slate-800 bg-slate-950 text-indigo-650 focus:ring-0 cursor-pointer" />
+              <label className="flex items-center gap-2 cursor-pointer select-none text-[10px] text-muted-foreground font-semibold uppercase">
+                <input type="checkbox" checked={streamActive} onChange={(e) => setStreamActive(e.target.checked)} className="rounded border-border bg-card text-indigo-650 focus:ring-0 cursor-pointer" />
                 Live Stream Logs
               </label>
-              <button type="button" onClick={fetchLogs} disabled={loadingLogs} className="p-1.5 rounded-lg border border-slate-850 hover:border-slate-750 bg-slate-900/50 text-slate-400 hover:text-white transition-all shrink-0" title="Force log refresh">
+              <button type="button" onClick={fetchLogs} disabled={loadingLogs} className="p-1.5 rounded-lg border border-border hover:border-border bg-muted/50 text-muted-foreground hover:text-foreground transition-all shrink-0" title="Force log refresh">
                 {loadingLogs ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
               </button>
             </div>
           </div>
 
-          <div className="flex-1 rounded-2xl border border-slate-900 bg-[#040408] p-4 font-mono text-[10px] text-slate-400 overflow-y-auto space-y-3 relative min-h-0 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-850">
+          <div className="flex-1 rounded-2xl border border-border bg-muted/30 p-4 font-mono text-[10px] text-muted-foreground overflow-y-auto space-y-3 relative min-h-0 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-muted">
             {auditLogs.length === 0 ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-700 gap-2">
                 <Activity className="h-6 w-6 text-slate-800 animate-pulse" />
@@ -897,12 +897,12 @@ export function ComplianceManager() {
               </div>
             ) : (
               auditLogs.map((log, idx) => (
-                <div key={idx} className="border-b border-slate-950/60 pb-2.5 last:border-0 hover:bg-slate-950/20 transition-all px-1.5 py-1 rounded">
+                <div key={idx} className="border-b border-border pb-2.5 last:border-0 hover:bg-card transition-all px-1.5 py-1 rounded">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-1 mb-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-600 font-bold">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
+                      <span className="text-muted-foreground font-bold">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
                       <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${
-                        log.operation === "mask" ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                        log.operation === "mask" ? "bg-primary/10 text-primary border border-indigo-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                       }`}>
                         {log.operation === "mask" ? "INCOMING_PII_MASKED" : "OUTGOING_HYDRATED"}
                       </span>
@@ -918,8 +918,8 @@ export function ComplianceManager() {
                   </div>
                   <div className="flex flex-wrap gap-1.5 pl-3">
                     {log.categories.map((c, cIdx) => (
-                      <span key={cIdx} className="px-2 py-0.5 rounded bg-slate-900 border border-slate-850 text-slate-500 text-[9px]">
-                        {c.label}: <strong className="text-indigo-400 font-bold font-mono">{c.count}</strong>
+                      <span key={cIdx} className="px-2 py-0.5 rounded bg-muted border border-border text-muted-foreground text-[9px]">
+                        {c.label}: <strong className="text-primary font-bold font-mono">{c.count}</strong>
                       </span>
                     ))}
                   </div>
@@ -931,15 +931,15 @@ export function ComplianceManager() {
         </div>
       )}
 
-      {/* ── Scope Info Modal ── */}
+      {/* â”€â”€ Scope Info Modal â”€â”€ */}
       {(scopeInfoFramework !== null || scopeInfoImported !== null) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60" onClick={() => { setScopeInfoFramework(null); setScopeInfoImported(null); }} />
-          <div className="relative bg-[#0a0a14] border border-slate-800 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
+          <div className="relative bg-background border border-border rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
             <button
               type="button"
               onClick={() => { setScopeInfoFramework(null); setScopeInfoImported(null); }}
-              className="absolute top-4 right-4 text-slate-600 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -951,37 +951,37 @@ export function ComplianceManager() {
                     <Eye className="h-4 w-4 text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">{scopeInfoImported.name}</h3>
-                    <p className="text-[10px] text-slate-500">{scopeInfoImported.description}</p>
+                    <h3 className="text-sm font-bold text-foreground">{scopeInfoImported.name}</h3>
+                    <p className="text-[10px] text-muted-foreground">{scopeInfoImported.description}</p>
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <div className="rounded-xl border border-slate-900 bg-slate-950/30 p-3">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Regulatory Reference</span>
-                    <p className="text-xs text-slate-300 mt-1 font-mono">{scopeInfoImported.regulatory_reference}</p>
+                  <div className="rounded-xl border border-border bg-card/30 p-3">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Regulatory Reference</span>
+                    <p className="text-xs text-foreground mt-1 font-mono">{scopeInfoImported.regulatory_reference}</p>
                   </div>
-                  <div className="rounded-xl border border-slate-900 bg-slate-950/30 p-3">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Covered Entities ({scopeInfoImported.entities.length})</span>
+                  <div className="rounded-xl border border-border bg-card/30 p-3">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Covered Entities ({scopeInfoImported.entities.length})</span>
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {scopeInfoImported.entities.map((ent) => (
-                        <span key={ent.entity_key} className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[10px] text-slate-300">
+                        <span key={ent.entity_key} className="px-2 py-1 rounded-lg bg-muted border border-border text-[10px] text-foreground">
                           {ent.label}
-                          <span className="ml-1.5 text-[8px] uppercase text-slate-500">({ent.default_action})</span>
+                          <span className="ml-1.5 text-[8px] uppercase text-muted-foreground">({ent.default_action})</span>
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-xl border border-slate-900 bg-slate-950/30 p-3">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Entity Patterns</span>
+                  <div className="rounded-xl border border-border bg-card/30 p-3">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Entity Patterns</span>
                     <div className="mt-2 space-y-1">
                       {scopeInfoImported.entities.filter(e => e.pattern).map((ent) => (
                         <div key={ent.entity_key} className="flex items-center gap-2">
-                          <span className="text-[10px] text-slate-400">{ent.label}:</span>
-                          <code className="text-[9px] font-mono text-indigo-400 bg-slate-900/50 px-1.5 py-0.5 rounded">{ent.pattern}</code>
+                          <span className="text-[10px] text-muted-foreground">{ent.label}:</span>
+                          <code className="text-[9px] font-mono text-primary bg-muted/50 px-1.5 py-0.5 rounded">{ent.pattern}</code>
                         </div>
                       ))}
                       {scopeInfoImported.entities.filter(e => !e.pattern).length === scopeInfoImported.entities.length && (
-                        <span className="text-[10px] text-slate-600 italic">No custom regex patterns defined — entity detection relies on label matching.</span>
+                        <span className="text-[10px] text-muted-foreground italic">No custom regex patterns defined â€” entity detection relies on label matching.</span>
                       )}
                     </div>
                   </div>
@@ -990,32 +990,32 @@ export function ComplianceManager() {
             ) : scopeInfoFramework && FRAMEWORK_SCOPE[scopeInfoFramework] && (
               <>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-8 w-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center">
-                    <ShieldCheck className="h-4 w-4 text-indigo-400" />
+                  <div className="h-8 w-8 rounded-lg bg-primary/20 border border-indigo-500/30 flex items-center justify-center">
+                    <ShieldCheck className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">{FRAMEWORKS.find(f => f.key === scopeInfoFramework)?.label}</h3>
-                    <p className="text-[10px] text-slate-500">{FRAMEWORKS.find(f => f.key === scopeInfoFramework)?.description}</p>
+                    <h3 className="text-sm font-bold text-foreground">{FRAMEWORKS.find(f => f.key === scopeInfoFramework)?.label}</h3>
+                    <p className="text-[10px] text-muted-foreground">{FRAMEWORKS.find(f => f.key === scopeInfoFramework)?.description}</p>
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <div className="rounded-xl border border-slate-900 bg-slate-950/30 p-3">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Regulatory Reference</span>
-                    <p className="text-xs text-slate-300 mt-1 font-mono">{FRAMEWORK_SCOPE[scopeInfoFramework].regulatoryReference}</p>
+                  <div className="rounded-xl border border-border bg-card/30 p-3">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Regulatory Reference</span>
+                    <p className="text-xs text-foreground mt-1 font-mono">{FRAMEWORK_SCOPE[scopeInfoFramework].regulatoryReference}</p>
                   </div>
-                  <div className="rounded-xl border border-slate-900 bg-slate-950/30 p-3">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Covered Entities ({FRAMEWORK_SCOPE[scopeInfoFramework].entities.length})</span>
+                  <div className="rounded-xl border border-border bg-card/30 p-3">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Covered Entities ({FRAMEWORK_SCOPE[scopeInfoFramework].entities.length})</span>
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {FRAMEWORK_SCOPE[scopeInfoFramework].entities.map((ent) => (
-                        <span key={ent.key} className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[10px] text-slate-300">
+                        <span key={ent.key} className="px-2 py-1 rounded-lg bg-muted border border-border text-[10px] text-foreground">
                           {ent.label}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-xl border border-slate-900 bg-slate-950/30 p-3">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Enforcement Strategy</span>
-                    <p className="text-xs text-slate-300 mt-1">{FRAMEWORK_SCOPE[scopeInfoFramework].enforcementStrategy}</p>
+                  <div className="rounded-xl border border-border bg-card/30 p-3">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Enforcement Strategy</span>
+                    <p className="text-xs text-foreground mt-1">{FRAMEWORK_SCOPE[scopeInfoFramework].enforcementStrategy}</p>
                   </div>
                 </div>
               </>
@@ -1024,24 +1024,24 @@ export function ComplianceManager() {
         </div>
       )}
 
-      {/* ── Import Framework Modal ── */}
+      {/* â”€â”€ Import Framework Modal â”€â”€ */}
       {importModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60" onClick={() => { setImportModalOpen(false); setImportError(null); setImportSuccess(null); }} />
-          <div className="relative bg-[#0a0a14] border border-slate-800 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
+          <div className="relative bg-background border border-border rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
             <button
               type="button"
               onClick={() => { setImportModalOpen(false); setImportError(null); setImportSuccess(null); }}
-              className="absolute top-4 right-4 text-slate-600 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
 
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-sm font-bold text-white">Import Custom Framework</h3>
+              <h3 className="text-sm font-bold text-foreground">Import Custom Framework</h3>
               <HelpTooltip content="Upload a JSON or CSV file defining entity rules for a custom compliance framework. JSON expects a 'framework' object with name and entities array. CSV expects columns: Entity,Action,Pattern." side="right" />
             </div>
-            <p className="text-[10px] text-slate-500 mb-4">Upload a <code className="text-indigo-400">.json</code> or <code className="text-indigo-400">.csv</code> file defining your custom compliance framework.</p>
+            <p className="text-[10px] text-muted-foreground mb-4">Upload a <code className="text-primary">.json</code> or <code className="text-primary">.csv</code> file defining your custom compliance framework.</p>
 
             {/* Drop zone */}
             <div
@@ -1051,8 +1051,8 @@ export function ComplianceManager() {
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
                 dragOver
-                  ? "border-indigo-500 bg-indigo-500/5"
-                  : "border-slate-800 bg-slate-950/30 hover:border-slate-700"
+                  ? "border-indigo-500 bg-primary/5"
+                  : "border-border bg-card/30 hover:border-border"
               }`}
             >
               <input
@@ -1062,31 +1062,31 @@ export function ComplianceManager() {
                 onChange={handleFileSelect}
                 className="hidden"
               />
-              <Upload className="h-8 w-8 mx-auto mb-2 text-slate-600" />
-              <p className="text-xs text-slate-400 font-semibold">Drag & drop your file here, or click to browse</p>
-              <p className="text-[10px] text-slate-600 mt-1">Supported formats: .json, .csv</p>
+              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground font-semibold">Drag & drop your file here, or click to browse</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Supported formats: .json, .csv</p>
             </div>
 
             {/* Sample template links */}
             <div className="flex items-center gap-3 mt-3 justify-center">
-              <button type="button" onClick={downloadSampleJson} className="flex items-center gap-1.5 text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors">
+              <button type="button" onClick={downloadSampleJson} className="flex items-center gap-1.5 text-[10px] text-primary hover:text-primary transition-colors">
                 <FileDown className="h-3 w-3" /> DPDP Act (JSON)
               </button>
               <span className="text-slate-700">|</span>
-              <button type="button" onClick={downloadSampleCsv} className="flex items-center gap-1.5 text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors">
+              <button type="button" onClick={downloadSampleCsv} className="flex items-center gap-1.5 text-[10px] text-primary hover:text-primary transition-colors">
                 <FileSpreadsheet className="h-3 w-3" /> SOC 2 (CSV)
               </button>
             </div>
 
             {/* Required schema info */}
-            <div className="mt-4 rounded-xl border border-slate-900 bg-slate-950/30 p-3">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Required Schema Fields</span>
+            <div className="mt-4 rounded-xl border border-border bg-card/30 p-3">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Required Schema Fields</span>
               <div className="mt-2 space-y-1 text-[10px] font-mono">
-                <div className="text-slate-400"><span className="text-indigo-400">framework_id</span> — Unique identifier</div>
-                <div className="text-slate-400"><span className="text-indigo-400">name</span> — Display name</div>
-                <div className="text-slate-400"><span className="text-indigo-400">regulatory_reference</span> — Governing standard</div>
-                <div className="text-slate-400"><span className="text-indigo-400">description</span> — Brief description</div>
-                <div className="text-slate-400"><span className="text-indigo-400">entities[]</span> — Array of entities with label, entity_key, default_action, and optional pattern</div>
+                <div className="text-muted-foreground"><span className="text-primary">framework_id</span> â€” Unique identifier</div>
+                <div className="text-muted-foreground"><span className="text-primary">name</span> â€” Display name</div>
+                <div className="text-muted-foreground"><span className="text-primary">regulatory_reference</span> â€” Governing standard</div>
+                <div className="text-muted-foreground"><span className="text-primary">description</span> â€” Brief description</div>
+                <div className="text-muted-foreground"><span className="text-primary">entities[]</span> â€” Array of entities with label, entity_key, default_action, and optional pattern</div>
               </div>
             </div>
 
@@ -1104,7 +1104,7 @@ export function ComplianceManager() {
             <button
               type="button"
               onClick={() => { setImportModalOpen(false); setImportError(null); setImportSuccess(null); }}
-              className="mt-4 w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all"
+              className="mt-4 w-full py-2.5 rounded-xl bg-muted hover:bg-slate-700 text-foreground text-xs font-bold transition-all"
             >
               Close
             </button>
@@ -1112,68 +1112,68 @@ export function ComplianceManager() {
         </div>
       )}
 
-      {/* ── Add Standard Entity Modal ── */}
+      {/* â”€â”€ Add Standard Entity Modal â”€â”€ */}
       {addEntityModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60" onClick={() => setAddEntityModalOpen(false)} />
-          <div className="relative bg-[#0a0a14] border border-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+          <div className="relative bg-background border border-border rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
             <button
               type="button"
               onClick={() => setAddEntityModalOpen(false)}
-              className="absolute top-4 right-4 text-slate-600 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
 
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-sm font-bold text-white">Add Standard Entity</h3>
+              <h3 className="text-sm font-bold text-foreground">Add Standard Entity</h3>
               <HelpTooltip content="Define a new entity type with a unique key, default masking action, and optional regex pattern for automatic detection." side="right" />
             </div>
-            <p className="text-[10px] text-slate-500 mb-4">Define a new entity type to include in the compliance masking rules.</p>
+            <p className="text-[10px] text-muted-foreground mb-4">Define a new entity type to include in the compliance masking rules.</p>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Label</label>
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Label</label>
                 <input
                   type="text"
                   value={newEntityLabel}
                   onChange={(e) => setNewEntityLabel(e.target.value)}
                   placeholder="e.g. Passport Number"
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900/50 py-2 px-3 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg border border-border bg-muted/50 py-2 px-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Entity Key</label>
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Entity Key</label>
                 <input
                   type="text"
                   value={newEntityKey}
                   onChange={(e) => setNewEntityKey(e.target.value)}
                   placeholder="e.g. passport_num"
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900/50 py-2 px-3 text-xs text-white font-mono placeholder-slate-600 outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg border border-border bg-muted/50 py-2 px-3 text-xs text-foreground font-mono placeholder:text-muted-foreground outline-none focus:border-indigo-500"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Default Action</label>
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Default Action</label>
                 <select
                   value={newEntityAction}
                   onChange={(e) => setNewEntityAction(e.target.value as "mask" | "tokenize" | "block")}
-                  className="w-full text-xs rounded-lg border border-slate-800 bg-[#0c0c16] py-2 px-3 text-white outline-none focus:border-indigo-500"
+                  className="w-full text-xs rounded-lg border border-border bg-background py-2 px-3 text-foreground outline-none focus:border-indigo-500"
                 >
-                  <option value="mask">Mask — Replace with [ENTITY_REDACTED]</option>
-                  <option value="tokenize">Tokenize — Replace with {'<ENTITY_N>'} token</option>
-                  <option value="block">Block — Reject the turn entirely</option>
+                  <option value="mask">Mask â€” Replace with [ENTITY_REDACTED]</option>
+                  <option value="tokenize">Tokenize â€” Replace with {'<ENTITY_N>'} token</option>
+                  <option value="block">Block â€” Reject the turn entirely</option>
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Optional Regex Pattern</label>
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Optional Regex Pattern</label>
                 <input
                   type="text"
                   value={newEntityPattern}
                   onChange={(e) => setNewEntityPattern(e.target.value)}
                   placeholder="e.g. \\bP[A-Z]\\d{8}\\b"
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900/50 py-2 px-3 text-xs text-white font-mono placeholder-slate-600 outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg border border-border bg-muted/50 py-2 px-3 text-xs text-foreground font-mono placeholder:text-muted-foreground outline-none focus:border-indigo-500"
                 />
-                <span className="text-[8px] text-slate-600 mt-1 block">If omitted, entity detection uses label-based matching only.</span>
+                <span className="text-[8px] text-muted-foreground mt-1 block">If omitted, entity detection uses label-based matching only.</span>
               </div>
             </div>
 
@@ -1181,7 +1181,7 @@ export function ComplianceManager() {
               <button
                 type="button"
                 onClick={() => setAddEntityModalOpen(false)}
-                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all"
+                className="flex-1 py-2.5 rounded-xl bg-muted hover:bg-slate-700 text-foreground text-xs font-bold transition-all"
               >
                 Cancel
               </button>
@@ -1189,7 +1189,7 @@ export function ComplianceManager() {
                 type="button"
                 onClick={handleAddEntity}
                 disabled={!newEntityLabel.trim() || !newEntityKey.trim() || entityRules.some((r) => r.entity === newEntityKey.trim())}
-                className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all disabled:opacity-50"
               >
                 Add Entity
               </button>
@@ -1198,15 +1198,15 @@ export function ComplianceManager() {
         </div>
       )}
 
-      {/* ── AI Regex Generator Modal ── */}
+      {/* â”€â”€ AI Regex Generator Modal â”€â”€ */}
       {aiRegexModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60" onClick={() => { setAiRegexModalOpen(false); setAiRegexResult(null); setAiRegexError(null); }} />
-          <div className="relative bg-[#0a0a14] border border-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+          <div className="relative bg-background border border-border rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
             <button
               type="button"
               onClick={() => { setAiRegexModalOpen(false); setAiRegexResult(null); setAiRegexError(null); }}
-              className="absolute top-4 right-4 text-slate-600 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -1216,30 +1216,30 @@ export function ComplianceManager() {
                 <WandSparkles className="h-4 w-4 text-violet-400" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white">AI Regex Pattern Generator</h3>
-                <p className="text-[10px] text-slate-500">Generate a regex pattern from a sample input string.</p>
+                <h3 className="text-sm font-bold text-foreground">AI Regex Pattern Generator</h3>
+                <p className="text-[10px] text-muted-foreground">Generate a regex pattern from a sample input string.</p>
               </div>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sample Input String</label>
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Sample Input String</label>
                 <input
                   type="text"
                   value={aiRegexSample}
                   onChange={(e) => setAiRegexSample(e.target.value)}
                   placeholder="e.g. EMP-12345"
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900/50 py-2 px-3 text-xs text-white font-mono placeholder-slate-600 outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg border border-border bg-muted/50 py-2 px-3 text-xs text-foreground font-mono placeholder:text-muted-foreground outline-none focus:border-indigo-500"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Label (optional)</label>
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Label (optional)</label>
                 <input
                   type="text"
                   value={aiRegexLabel}
                   onChange={(e) => setAiRegexLabel(e.target.value)}
                   placeholder="e.g. Employee ID Pattern"
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900/50 py-2 px-3 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg border border-border bg-muted/50 py-2 px-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500"
                 />
               </div>
 
@@ -1247,7 +1247,7 @@ export function ComplianceManager() {
                 type="button"
                 onClick={handleGenerateRegex}
                 disabled={!aiRegexSample.trim() || aiRegexGenerating}
-                className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:bg-slate-800 text-white text-xs font-bold transition-all flex items-center justify-center gap-2"
+                className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:bg-muted text-foreground text-xs font-bold transition-all flex items-center justify-center gap-2"
               >
                 {aiRegexGenerating ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</>
@@ -1268,16 +1268,16 @@ export function ComplianceManager() {
                     <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                     <span className="text-[10px] font-bold text-emerald-400 uppercase">Generated Pattern</span>
                   </div>
-                  <code className="block text-xs font-mono text-emerald-300 bg-slate-900/50 px-2 py-1.5 rounded-lg border border-slate-800 break-all">
+                  <code className="block text-xs font-mono text-emerald-300 bg-muted/50 px-2 py-1.5 rounded-lg border border-border break-all">
                     {aiRegexResult.pattern}
                   </code>
                   {aiRegexResult.explanation && (
-                    <p className="text-[10px] text-slate-400 italic">{aiRegexResult.explanation}</p>
+                    <p className="text-[10px] text-muted-foreground italic">{aiRegexResult.explanation}</p>
                   )}
                   <button
                     type="button"
                     onClick={applyAiRegex}
-                    className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                    className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs font-bold transition-all flex items-center justify-center gap-1.5"
                   >
                     <Braces className="h-3.5 w-3.5" /> Use This Pattern
                   </button>
@@ -1290,3 +1290,5 @@ export function ComplianceManager() {
     </div>
   );
 }
+
+

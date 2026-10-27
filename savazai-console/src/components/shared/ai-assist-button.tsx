@@ -145,11 +145,11 @@ export function AiAssistButton({ onGenerated, mode = "all", placeholder, domain 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60" onClick={() => { setModalOpen(false); setInput(""); setResult(null); setError(null); }} />
-          <div className="relative bg-[#0a0a14] border border-slate-800 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
+          <div className="relative bg-background border border-border rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
             <button
               type="button"
               onClick={() => { setModalOpen(false); setInput(""); setResult(null); setError(null); }}
-              className="absolute top-4 right-4 text-slate-600 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-slate-600 hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -159,8 +159,8 @@ export function AiAssistButton({ onGenerated, mode = "all", placeholder, domain 
                 <WandSparkles className="h-4 w-4 text-violet-400" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white">AI Assistant{domainLabel ? ` — ${domainLabel}` : ""}</h3>
-                <p className="text-[10px] text-slate-500">Generate, enhance, or summarize content using AI</p>
+                <h3 className="text-sm font-bold text-foreground">AI Assistant{domainLabel ? ` — ${domainLabel}` : ""}</h3>
+                <p className="text-[10px] text-muted-foreground">Generate, enhance, or summarize content using AI</p>
               </div>
             </div>
 
@@ -176,7 +176,7 @@ export function AiAssistButton({ onGenerated, mode = "all", placeholder, domain 
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
                         activeMode === m
                           ? "bg-violet-600/20 border border-violet-500/40 text-violet-300"
-                          : "bg-slate-900/30 border border-slate-800 text-slate-500 hover:text-slate-300"
+                          : "bg-muted/30 border border-border text-muted-foreground hover:text-muted-foreground"
                       }`}
                     >
                       <Icon className="h-3 w-3" />
@@ -197,7 +197,7 @@ export function AiAssistButton({ onGenerated, mode = "all", placeholder, domain 
 
             <div className="space-y-3">
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
                   {activeMode === "generate" ? "Topic / Description" : activeMode === "enhance" ? "Text to Enhance" : "Text to Summarize"}
                 </label>
                 <textarea
@@ -205,7 +205,7 @@ export function AiAssistButton({ onGenerated, mode = "all", placeholder, domain 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={resolvedPlaceholder}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500 resize-none font-mono"
+                  className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-xs text-foreground placeholder-slate-600 outline-none focus:border-indigo-500 resize-none font-mono"
                 />
               </div>
 
@@ -213,7 +213,7 @@ export function AiAssistButton({ onGenerated, mode = "all", placeholder, domain 
                 type="button"
                 onClick={handleGenerate}
                 disabled={!input.trim() || generating}
-                className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:bg-slate-800 text-white text-xs font-bold transition-all flex items-center justify-center gap-2"
+                className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:bg-slate-800 text-foreground text-xs font-bold transition-all flex items-center justify-center gap-2"
               >
                 {generating ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4" /> {MODE_LABELS[activeMode].label}</>}
               </button>
@@ -230,13 +230,13 @@ export function AiAssistButton({ onGenerated, mode = "all", placeholder, domain 
                     <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                     <span className="text-[10px] font-bold text-emerald-400 uppercase">Generated Content</span>
                   </div>
-                  <pre className="text-[10px] text-slate-300 font-mono bg-slate-900/50 px-2 py-1.5 rounded-lg border border-slate-800 max-h-40 overflow-y-auto whitespace-pre-wrap break-words">
+                  <pre className="text-[10px] text-muted-foreground font-mono bg-muted/30 px-2 py-1.5 rounded-lg border border-border max-h-40 overflow-y-auto whitespace-pre-wrap break-words">
                     {result}
                   </pre>
                   <button
                     type="button"
                     onClick={handleApply}
-                    className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all"
+                    className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs font-bold transition-all"
                   >
                     Apply to Field
                   </button>

@@ -1,6 +1,22 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useMemo } from "react";
+import { useTheme } from "next-themes";
+import {
+  ACCENT_PRESETS,
+  SURFACE_PRESETS,
+  RADIUS_OPTIONS,
+  FONT_OPTIONS,
+  PROMPT_SIZE_OPTIONS,
+  resolveTheme,
+  getSurfacePreset,
+  surfaceFromLegacyBackground,
+  DEFAULT_ACCENT,
+  DEFAULT_SURFACE,
+  DEFAULT_RADIUS,
+  DEFAULT_DENSITY,
+  type AppearanceConfig,
+} from "@/lib/theme/palette";
 import {
   updateSystemConfig,
   testProviderConnection,
@@ -316,22 +332,47 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
     return res;
   }, [storedProviders]);
 
+  const { setTheme: setNextTheme } = useTheme();
   const [appTitle, setAppTitle] = useState(initialConfig.appTitle);
   const [brandLogoUrl, setBrandLogoUrl] = useState(initialConfig.brandLogoUrl);
-  const [primaryColor, setPrimaryColor] = useState(tokens.primaryColor || "#4f46e5");
-  const [secondaryColor, setSecondaryColor] = useState(tokens.secondaryColor || "#06b6d4");
-  const [background, setBackground] = useState(tokens.background || "#06060b");
+  const [primaryColor, setPrimaryColor] = useState(tokens.primaryColor || "#c2410c");
+  const [secondaryColor, setSecondaryColor] = useState(tokens.secondaryColor || "#f1f5f9");
+  const [background, setBackground] = useState(tokens.background || "#f8fafc");
   const [themeMode, setThemeMode] = useState<"system" | "dark" | "light">(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("savazai_theme_mode");
-      if (saved === "light" || saved === "dark") return saved;
-    }
     return (tokens.themeMode as "system" | "dark" | "light") || "system";
   });
-  const [fontSans, setFontSans] = useState(tokens.fontSans || "Inter");
+  const [accentPreset, setAccentPreset] = useState<string>(
+    tokens.accentPreset || (tokens.primaryColor ? "custom" : DEFAULT_ACCENT)
+  );
+  const [accentCustom, setAccentCustom] = useState<string>(
+    tokens.accentCustom || tokens.primaryColor || "#c2410c"
+  );
+  const [surfaceTone, setSurfaceTone] = useState<string>(
+    tokens.surfaceTone ||
+      (tokens.background ? surfaceFromLegacyBackground(tokens.background) : DEFAULT_SURFACE)
+  );
+  const [radius, setRadius] = useState<string>(tokens.radius || DEFAULT_RADIUS);
+  const [density, setDensity] = useState<"comfortable" | "compact">(
+    tokens.density || DEFAULT_DENSITY
+  );
+  const [fontSans, setFontSans] = useState(tokens.fontSans || "jakarta");
   const [promptFontSize, setPromptFontSize] = useState(tokens.promptFontSize || "16px");
   const [promptFontFamily, setPromptFontFamily] = useState(tokens.promptFontFamily || "sans");
   const [showAgentWorkspace, setShowAgentWorkspace] = useState(tokens.showAgentWorkspace !== false);
+
+  const previewTheme = useMemo(() => {
+    const config: AppearanceConfig = {
+      themeMode,
+      accentPreset,
+      accentCustom,
+      surfaceTone,
+      radius,
+      density,
+      fontSans,
+      promptFontSize,
+    };
+    return resolveTheme(config);
+  }, [themeMode, accentPreset, accentCustom, surfaceTone, radius, density, fontSans, promptFontSize]);
 
   const [llmProviders, setLlmProviders] = useState<Record<string, LLMProviderConfig>>(mergedProviders);
   const [fetchingModels, setFetchingModels] = useState<Record<string, boolean>>({});
@@ -700,10 +741,15 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
     const result = await updateSystemConfig({
       appTitle,
       brandLogoUrl,
-      primaryColor,
+      primaryColor: accentCustom,
       secondaryColor,
       background,
       themeMode,
+      accentPreset,
+      accentCustom,
+      surfaceTone,
+      radius,
+      density,
       fontSans,
       promptFontSize,
       promptFontFamily,
@@ -1189,25 +1235,30 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-bold text-foreground mb-1 flex items-center gap-2">
-                    Appearance &amp; Theme Engine
-                    <HelpTooltip content="Customize global theme modes, typography, palette accents, and background contrast across the entire platform. Changes persist and apply immediately." side="right" />
+                    Appearance &amp; Theme Studio
+                    <HelpTooltip
+                      content="Configure enterprise theme modes, dynamic brand accents with mathematical WCAG AA contrast derivation, surface undertones, and layout scales. Changes persist globally."
+                      side="right"
+                    />
                   </h3>
-                  <p className="text-muted-foreground text-xs">Global Light/Dark theme engine, typography scales, brand accent palettes, and background surface contrast</p>
+                  <p className="text-muted-foreground text-xs">
+                    Universal Light/Dark theme engine, dynamic OKLCH brand contrast derivation, surface undertones, and spatial density
+                  </p>
                 </div>
 
                 {/* 1. Global Theme Mode Selector */}
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-5 space-y-3">
+                <div className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-xs">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-bold text-white mb-0.5">Platform Theme Mode</h4>
-                      <p className="text-xs text-slate-400">Choose between dark mode, high-contrast light mode, or system automatic</p>
+                      <h4 className="text-sm font-bold text-foreground mb-0.5">Platform Theme Mode</h4>
+                      <p className="text-xs text-muted-foreground">Select runtime appearance behavior across all platform modules</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {[
-                      { id: "dark", label: "Dark Mode", desc: "Onyx & midnight surfaces" },
-                      { id: "light", label: "Light Mode", desc: "Crisp white & neutral slate" },
-                      { id: "system", label: "System Default", desc: "Follow OS preference" },
+                      { id: "light", label: "Light Mode", desc: "Crisp white & neutral slate surfaces" },
+                      { id: "dark", label: "Dark Mode", desc: "Onyx & obsidian slate surfaces" },
+                      { id: "system", label: "System Default", desc: "Automatically sync with OS setting" },
                     ].map((modeItem) => {
                       const isCurrent = themeMode === modeItem.id;
                       return (
@@ -1217,222 +1268,398 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                           onClick={() => {
                             const newMode = modeItem.id as "system" | "dark" | "light";
                             setThemeMode(newMode);
-                            if (typeof window !== "undefined") {
-                              localStorage.setItem("savazai_theme_mode", newMode);
-                              document.documentElement.classList.remove("light", "dark");
-                              if (newMode === "light" || newMode === "dark") {
-                                document.documentElement.classList.add(newMode);
-                              } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
-                                document.documentElement.classList.add("light");
-                              } else {
-                                document.documentElement.classList.add("dark");
-                              }
-                            }
+                            setNextTheme(newMode);
                           }}
                           className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
                             isCurrent
-                              ? "border-primary bg-primary/10 text-white shadow-md shadow-primary/10"
-                              : "border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                              ? "border-primary bg-primary/10 text-foreground shadow-xs ring-1 ring-primary/40 font-bold"
+                              : "border-border bg-card/60 text-muted-foreground hover:border-border/80 hover:text-foreground hover:bg-muted/40"
                           }`}
                         >
-                          <div className="text-xs font-bold text-white mb-0.5">{modeItem.label}</div>
-                          <div className="text-[10px] text-slate-500">{modeItem.desc}</div>
+                          <div className="text-xs font-bold text-foreground mb-0.5">{modeItem.label}</div>
+                          <div className="text-[10px] text-muted-foreground">{modeItem.desc}</div>
                         </button>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* 2. Brand Identity & Typography */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Application Title</label>
-                    <input type="text" value={appTitle} onChange={(e) => setAppTitle(e.target.value)} placeholder="SavazAI Console"
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20" required />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Typography / Font Family</label>
-                    <select value={fontSans} onChange={(e) => setFontSans(e.target.value)}
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white outline-none focus:border-primary/50">
-                      <option value="Inter">Modern Sans (Inter / Default)</option>
-                      <option value="Roboto">Roboto (Google Clean)</option>
-                      <option value="Geist">Geist Sans (Vercel Clean)</option>
-                      <option value="Fira Code">Fira Code (Monospace Technical)</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* 3. Brand Accent Palette */}
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-5 space-y-3">
-                  <div className="flex items-center justify-between">
+                {/* 2. Brand Accent Palette with Real-time Contrast Validation */}
+                <div className="rounded-2xl border border-border bg-card p-5 space-y-4 shadow-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                      <h4 className="text-sm font-bold text-white mb-0.5">Brand Accent Color</h4>
-                      <p className="text-xs text-slate-400">Select an enterprise preset palette or pick a custom hex color</p>
+                      <h4 className="text-sm font-bold text-foreground mb-0.5">Brand Accent Palette</h4>
+                      <p className="text-xs text-muted-foreground">Select an enterprise preset palette or pick a custom hex color</p>
+                    </div>
+                    {/* Live Contrast Badge */}
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>
+                        WCAG AA Pass · Light: {previewTheme.accent.light.contrast.toFixed(1)}:1 · Dark: {previewTheme.accent.dark.contrast.toFixed(1)}:1
+                      </span>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    {[
-                      { label: "Indigo", hex: "#4f46e5" },
-                      { label: "Amber", hex: "#f59e0b" },
-                      { label: "Emerald", hex: "#10b981" },
-                      { label: "Sky", hex: "#0ea5e9" },
-                      { label: "Rose", hex: "#f43f5e" },
-                    ].map((c) => (
-                      <button
-                        key={c.hex}
-                        type="button"
-                        onClick={() => setPrimaryColor(c.hex)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-                          primaryColor.toLowerCase() === c.hex.toLowerCase()
-                            ? "border-white/80 bg-white/10 text-white shadow-sm"
-                            : "border-slate-800 bg-slate-900/40 text-slate-400 hover:text-white"
-                        }`}
-                      >
-                        <span className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: c.hex }} />
-                        {c.label}
-                      </button>
-                    ))}
-                    <div className="flex items-center gap-2 ml-auto">
-                      <input
-                        type="color"
-                        value={primaryColor}
-                        onChange={(e) => setPrimaryColor(e.target.value)}
-                        className="h-9 w-10 rounded-lg border border-slate-800 bg-slate-900 cursor-pointer p-0.5"
-                      />
+
+                  {/* Preset Pills */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {ACCENT_PRESETS.map((p) => {
+                      const isSelected = accentPreset === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => {
+                            setAccentPreset(p.id);
+                            setAccentCustom(p.light);
+                            setPrimaryColor(p.light);
+                          }}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                            isSelected
+                              ? "border-primary bg-primary/10 text-primary shadow-xs ring-1 ring-primary/30"
+                              : "border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          }`}
+                        >
+                          <span
+                            className="h-3.5 w-3.5 rounded-full shrink-0 border border-black/10 shadow-inner"
+                            style={{ backgroundColor: p.light }}
+                          />
+                          {p.label}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      type="button"
+                      onClick={() => setAccentPreset("custom")}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                        accentPreset === "custom"
+                          ? "border-primary bg-primary/10 text-primary shadow-xs ring-1 ring-primary/30"
+                          : "border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      <Palette className="h-3.5 w-3.5" />
+                      Custom Hex
+                    </button>
+                  </div>
+
+                  {/* Custom Hex Color Picker Input */}
+                  <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/20">
+                    <input
+                      type="color"
+                      value={accentCustom.startsWith("#") ? accentCustom : "#c2410c"}
+                      onChange={(e) => {
+                        setAccentPreset("custom");
+                        setAccentCustom(e.target.value);
+                        setPrimaryColor(e.target.value);
+                      }}
+                      className="h-9 w-10 rounded-lg border border-border bg-card cursor-pointer p-0.5"
+                    />
+                    <div className="flex-1">
+                      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                        Active Hex Code (Auto-computed for Light & Dark)
+                      </div>
                       <input
                         type="text"
-                        value={primaryColor}
-                        onChange={(e) => setPrimaryColor(e.target.value)}
-                        placeholder="#4f46e5"
-                        className="w-24 rounded-lg border border-slate-800 bg-slate-900/50 py-1.5 px-2.5 text-xs text-white font-mono"
+                        value={accentCustom}
+                        onChange={(e) => {
+                          setAccentPreset("custom");
+                          setAccentCustom(e.target.value);
+                          setPrimaryColor(e.target.value);
+                        }}
+                        placeholder="#c2410c"
+                        className="w-full max-w-xs rounded-lg border border-input bg-background py-1.5 px-3 text-xs text-foreground font-mono outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* 4. Canvas Background Contrast Presets */}
-                <div className="rounded-2xl border border-border bg-muted/20 p-5 space-y-3">
+                {/* 3. Surface Undertone & Elevation */}
+                <div className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-xs">
                   <div>
-                    <h4 className="text-sm font-bold text-foreground mb-0.5">Canvas Background Surface Contrast</h4>
-                    <p className="text-xs text-muted-foreground">Tailor dark surface depth or light surface warmth</p>
+                    <h4 className="text-sm font-bold text-foreground mb-0.5">Canvas &amp; Surface Undertones</h4>
+                    <p className="text-xs text-muted-foreground">Select neutral corporate undertones harmonizing cards and canvases</p>
                   </div>
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Dark Mode Surfaces</span>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { label: "Onyx (#06060b)", hex: "#06060b" },
-                        { label: "Slate (#0f172a)", hex: "#0f172a" },
-                        { label: "Midnight (#020617)", hex: "#020617" },
-                      ].map((b) => (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {SURFACE_PRESETS.map((s) => {
+                      const isSelected = surfaceTone === s.id;
+                      return (
                         <button
-                          key={b.hex}
+                          key={s.id}
                           type="button"
-                          onClick={() => setBackground(b.hex)}
-                          className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-2 ${
-                            background.toLowerCase() === b.hex.toLowerCase()
-                              ? "border-primary bg-primary/10 text-primary font-semibold"
-                              : "border-border bg-card text-foreground hover:bg-muted"
+                          onClick={() => setSurfaceTone(s.id)}
+                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                            isSelected
+                              ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary/40 font-bold shadow-xs"
+                              : "border-border bg-card/60 text-muted-foreground hover:border-border/80 hover:text-foreground hover:bg-muted/40"
                           }`}
                         >
-                          <span className="w-2.5 h-2.5 rounded-full border border-border shrink-0" style={{ backgroundColor: b.hex }} />
-                          {b.label}
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="w-3 h-3 rounded-full border border-border shadow-xs" style={{ backgroundColor: s.light.background }} />
+                            <span className="w-3 h-3 rounded-full border border-border shadow-xs" style={{ backgroundColor: s.dark.background }} />
+                            <span className="text-xs font-bold text-foreground ml-1">{s.label}</span>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">{s.description}</div>
                         </button>
-                      ))}
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Interactive Side-by-Side Dual-Preview Studio */}
+                <div className="rounded-2xl border border-border bg-muted/20 p-5 space-y-4 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground mb-0.5 flex items-center gap-2">
+                        <span>Live Dual-Theme Simulation Studio</span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                          Instant Reactive Preview
+                        </span>
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Real-time visualization of your configured brand accents, surfaces, and badges in both Light and Dark mode
+                      </p>
                     </div>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block pt-2">Light Mode Surfaces</span>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { label: "Pure White (#ffffff)", hex: "#ffffff" },
-                        { label: "Neutral Gray (#f8fafc)", hex: "#f8fafc" },
-                        { label: "Soft Cream (#fafaf9)", hex: "#fafaf9" },
-                      ].map((b) => (
-                        <button
-                          key={b.hex}
-                          type="button"
-                          onClick={() => setBackground(b.hex)}
-                          className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-2 ${
-                            background.toLowerCase() === b.hex.toLowerCase()
-                              ? "border-primary bg-primary/10 text-primary font-semibold"
-                              : "border-border bg-card text-foreground hover:bg-muted"
-                          }`}
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Light Preview Box */}
+                    <div
+                      className="rounded-2xl p-4 border shadow-sm transition-all text-xs space-y-3"
+                      style={{
+                        backgroundColor: previewTheme.light["--background"],
+                        color: previewTheme.light["--foreground"],
+                        borderColor: previewTheme.light["--border"],
+                      }}
+                    >
+                      <div className="flex items-center justify-between pb-2 border-b" style={{ borderColor: previewTheme.light["--border"] }}>
+                        <span className="font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+                          <span>☀</span> Light Mode Preview
+                        </span>
+                        <span
+                          className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                          style={{
+                            backgroundColor: previewTheme.light["--primary"],
+                            color: previewTheme.light["--primary-foreground"],
+                          }}
                         >
-                          <span className="w-2.5 h-2.5 rounded-full border border-border shrink-0" style={{ backgroundColor: b.hex }} />
-                          {b.label}
-                        </button>
-                      ))}
+                          Active Accent
+                        </span>
+                      </div>
+
+                      {/* Mini Assistant Message Bubble */}
+                      <div
+                        className="p-3 rounded-xl border shadow-xs space-y-1.5"
+                        style={{
+                          backgroundColor: previewTheme.light["--card"],
+                          borderColor: previewTheme.light["--border"],
+                          color: previewTheme.light["--card-foreground"],
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: previewTheme.light["--primary"] }} />
+                          <span className="font-bold text-[11px]">Assistant Response</span>
+                          <span className="text-[10px] text-muted-foreground ml-auto">12:00 PM</span>
+                        </div>
+                        <p className="text-[11px] leading-relaxed" style={{ color: previewTheme.light["--muted-foreground"] }}>
+                          Synthesized MCP tools and active agent nodes with verified WCAG contrast.
+                        </p>
+                      </div>
+
+                      {/* Mini Table Row */}
+                      <div
+                        className="flex items-center justify-between p-2 rounded-lg border text-[11px]"
+                        style={{
+                          backgroundColor: previewTheme.light["--card"],
+                          borderColor: previewTheme.light["--border"],
+                        }}
+                      >
+                        <span className="font-semibold">wedplan_vendor_sync</span>
+                        <span
+                          className="px-2 py-0.5 rounded text-[10px] font-bold"
+                          style={{
+                            backgroundColor: previewTheme.light["--primary"] + "18",
+                            color: previewTheme.light["--primary"],
+                          }}
+                        >
+                          MCP Binded
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Dark Preview Box */}
+                    <div
+                      className="rounded-2xl p-4 border shadow-sm transition-all text-xs space-y-3"
+                      style={{
+                        backgroundColor: previewTheme.dark["--background"],
+                        color: previewTheme.dark["--foreground"],
+                        borderColor: previewTheme.dark["--border"],
+                      }}
+                    >
+                      <div className="flex items-center justify-between pb-2 border-b" style={{ borderColor: previewTheme.dark["--border"] }}>
+                        <span className="font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+                          <span>☾</span> Dark Mode Preview
+                        </span>
+                        <span
+                          className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                          style={{
+                            backgroundColor: previewTheme.dark["--primary"],
+                            color: previewTheme.dark["--primary-foreground"],
+                          }}
+                        >
+                          Active Accent
+                        </span>
+                      </div>
+
+                      {/* Mini Assistant Message Bubble */}
+                      <div
+                        className="p-3 rounded-xl border shadow-xs space-y-1.5"
+                        style={{
+                          backgroundColor: previewTheme.dark["--card"],
+                          borderColor: previewTheme.dark["--border"],
+                          color: previewTheme.dark["--card-foreground"],
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: previewTheme.dark["--primary"] }} />
+                          <span className="font-bold text-[11px]">Assistant Response</span>
+                          <span className="text-[10px] text-muted-foreground ml-auto">12:00 PM</span>
+                        </div>
+                        <p className="text-[11px] leading-relaxed" style={{ color: previewTheme.dark["--muted-foreground"] }}>
+                          Synthesized MCP tools and active agent nodes with verified WCAG contrast.
+                        </p>
+                      </div>
+
+                      {/* Mini Table Row */}
+                      <div
+                        className="flex items-center justify-between p-2 rounded-lg border text-[11px]"
+                        style={{
+                          backgroundColor: previewTheme.dark["--card"],
+                          borderColor: previewTheme.dark["--border"],
+                        }}
+                      >
+                        <span className="font-semibold">wedplan_vendor_sync</span>
+                        <span
+                          className="px-2 py-0.5 rounded text-[10px] font-bold"
+                          style={{
+                            backgroundColor: previewTheme.dark["--primary"] + "22",
+                            color: previewTheme.dark["--primary"],
+                          }}
+                        >
+                          MCP Binded
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* 5. Prompt Typography Configuration Section */}
-                <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-5 space-y-4">
+                {/* 5. Typography Scale & Corner Geometry */}
+                <div className="rounded-2xl border border-border bg-card p-5 space-y-4 shadow-xs">
                   <div>
-                    <h4 className="text-sm font-bold text-white mb-1 flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-foreground mb-0.5">Typography &amp; Spatial Geometry</h4>
+                    <p className="text-xs text-muted-foreground">Configure font family pairings, corner radius rounding, and spatial density</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">UI Typography Font</label>
+                      <select
+                        value={fontSans}
+                        onChange={(e) => setFontSans(e.target.value)}
+                        className="w-full rounded-xl border border-input bg-background py-2.5 px-3 text-xs text-foreground outline-none focus:border-primary"
+                      >
+                        {FONT_OPTIONS.map((f) => (
+                          <option key={f.id} value={f.id}>
+                            {f.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Corner Rounding (Radius)</label>
+                      <select
+                        value={radius}
+                        onChange={(e) => setRadius(e.target.value)}
+                        className="w-full rounded-xl border border-input bg-background py-2.5 px-3 text-xs text-foreground outline-none focus:border-primary"
+                      >
+                        {RADIUS_OPTIONS.map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {r.label} ({r.value})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Spatial Density</label>
+                      <select
+                        value={density}
+                        onChange={(e) => setDensity(e.target.value as "comfortable" | "compact")}
+                        className="w-full rounded-xl border border-input bg-background py-2.5 px-3 text-xs text-foreground outline-none focus:border-primary"
+                      >
+                        <option value="comfortable">Comfortable (Enterprise Standard)</option>
+                        <option value="compact">Compact (High-Density Tables)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 6. Prompt Input Typography Configuration Section */}
+                <div className="rounded-2xl border border-border bg-card p-5 space-y-4 shadow-xs">
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground mb-1 flex items-center gap-2">
                       Prompt Input Typography Scale
                       <HelpTooltip content="Configure font size scale and typography applied to prompts across Capability Studio and Agent Workspace." side="right" />
                     </h4>
-                    <p className="text-xs text-slate-400">Controls prompt textarea readability for test prompts, agent instructions, and user chat</p>
+                    <p className="text-xs text-muted-foreground">Controls prompt textarea readability for test prompts, agent instructions, and user chat</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Font Size Scale</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Font Size Scale</label>
                       <select
                         value={promptFontSize}
                         onChange={(e) => setPromptFontSize(e.target.value)}
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-4 text-sm text-white outline-none focus:border-primary/50"
+                        className="w-full rounded-xl border border-input bg-background py-2.5 px-4 text-sm text-foreground outline-none focus:border-primary"
                       >
-                        <option value="14px">Compact (14px)</option>
-                        <option value="16px">Default (16px)</option>
-                        <option value="18px">Large (18px)</option>
+                        {PROMPT_SIZE_OPTIONS.map((opt) => (
+                          <option key={opt.id} value={opt.id}>
+                            {opt.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Prompt Font Family</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Prompt Font Family</label>
                       <select
                         value={promptFontFamily}
                         onChange={(e) => setPromptFontFamily(e.target.value)}
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-4 text-sm text-white outline-none focus:border-primary/50"
+                        className="w-full rounded-xl border border-input bg-background py-2.5 px-4 text-sm text-foreground outline-none focus:border-primary"
                       >
-                        <option value="sans">Modern Sans (Default)</option>
+                        <option value="sans">Plus Jakarta Sans (Default)</option>
                         <option value="system">System UI</option>
                         <option value="inter">Inter (SaaS Standard)</option>
-                        <option value="mono">Fira Code / Monospace</option>
+                        <option value="mono">JetBrains Mono (Code/Prompt)</option>
                       </select>
-                    </div>
-                  </div>
-
-                  {/* Live Visual Preview */}
-                  <div className="pt-2">
-                    <label className="block text-[11px] font-semibold text-indigo-300 uppercase tracking-wider mb-1.5">Live Typography Preview</label>
-                    <div
-                      className="p-4 rounded-xl border border-slate-800 bg-slate-900/90 text-white leading-relaxed"
-                      style={{
-                        fontSize: promptFontSize,
-                        fontFamily: promptFontFamily === "mono" ? "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" : promptFontFamily === "inter" ? "Inter, system-ui, sans-serif" : promptFontFamily === "system" ? "system-ui, -apple-system, sans-serif" : "var(--font-sans), system-ui, sans-serif"
-                      }}
-                    >
-                      Draft a comprehensive multi-agent workflow for our enterprise operations with step-by-step validation...
                     </div>
                   </div>
                 </div>
 
-                {/* Sidebar Navigation Visibility Section */}
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/20 p-5 space-y-3">
+                {/* 7. Sidebar Navigation Visibility Section */}
+                <div className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-xs">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-bold text-white mb-1 flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-foreground mb-1 flex items-center gap-2">
                         Sidebar Navigation &amp; Workspace Visibility
                         <HelpTooltip content="Enable or disable the Agent Workspace tab in the primary navigation sidebar." side="right" />
                       </h4>
-                      <p className="text-xs text-slate-400">Show or hide the &quot;Agent Workspace&quot; tab in the primary sidebar navigation</p>
+                      <p className="text-xs text-muted-foreground">Show or hide the &quot;Agent Workspace&quot; tab in the primary sidebar navigation</p>
                     </div>
                     <label className="flex items-center gap-2.5 cursor-pointer">
-                      <span className="text-xs font-semibold text-slate-300">{showAgentWorkspace ? "Enabled" : "Disabled"}</span>
+                      <span className="text-xs font-semibold text-foreground">{showAgentWorkspace ? "Enabled" : "Disabled"}</span>
                       <input
                         type="checkbox"
                         checked={showAgentWorkspace}
                         onChange={(e) => setShowAgentWorkspace(e.target.checked)}
-                        className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-primary focus:ring-primary/30 accent-primary"
+                        className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary/30 accent-primary cursor-pointer"
                       />
                     </label>
                   </div>
@@ -1444,21 +1671,21 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               <div className="space-y-5">
                 <div>
                   <h3 className="text-lg font-bold text-white mb-1">Branding Assets</h3>
-                  <p className="text-slate-400 text-xs">Core identity logos with live preview and canonical restoration</p>
+                  <p className="text-muted-foreground text-xs">Core identity logos with live preview and canonical restoration</p>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Platform Logo URL</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Platform Logo URL</label>
                   <input type="url" value={brandLogoUrl} onChange={(e) => setBrandLogoUrl(e.target.value)}
                     placeholder="https://example.com/logo.png"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20" required />
+                    className="w-full rounded-xl border border-border bg-muted/30 py-3 px-4 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20" required />
                 </div>
                 <div className="flex gap-4 items-center pt-2">
                   <button type="button" onClick={restoreLogoDefault}
-                    className="px-4 py-2 border border-slate-800 hover:border-slate-700 bg-slate-900/40 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition-all">
+                    className="px-4 py-2 border border-border hover:border-border bg-muted/30 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground transition-all">
                     Restore Canonical Logo
                   </button>
                   {brandLogoUrl && (
-                    <div className="rounded-xl border border-slate-900 bg-slate-950 p-2 ml-auto">
+                    <div className="rounded-xl border border-border bg-background p-2 ml-auto">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={brandLogoUrl} alt="Brand preview" className="h-10 max-w-[240px] object-contain brightness-115"
                         onError={(e) => { e.currentTarget.style.display = "none"; }} />
@@ -1475,7 +1702,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                     LLM Providers
                     <HelpTooltip content="Configure API keys, endpoints, and default models for each LLM provider. At least one provider must be active with a valid API key for AI features to work." side="right" />
                   </h3>
-                  <p className="text-slate-400 text-xs">Configure API keys, endpoints, and default models per provider</p>
+                  <p className="text-muted-foreground text-xs">Configure API keys, endpoints, and default models per provider</p>
                   <div className="mt-3 rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3 text-[10px] text-indigo-300 leading-relaxed space-y-1">
                     <p><strong className="text-indigo-200">How to set up a provider:</strong></p>
                     <ol className="list-decimal list-inside space-y-0.5 text-indigo-300/80">
@@ -1496,11 +1723,11 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   const prov = llmProviders[key] || DEFAULT_LLM_PROVIDERS[key];
                   const testRes = testResults[key];
                   return (
-                    <div key={key} className="rounded-2xl border border-slate-900 bg-slate-900/10 p-4 space-y-3">
+                    <div key={key} className="rounded-2xl border border-border bg-muted/30 p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${
-                            prov.active ? "bg-emerald-500/15 text-emerald-400" : "bg-slate-800/50 text-slate-500"
+                            prov.active ? "bg-emerald-500/15 text-emerald-400" : "bg-slate-800/50 text-muted-foreground"
                           }`}>
                             <Cpu className="h-3.5 w-3.5" />
                           </div>
@@ -1524,32 +1751,32 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                             </a>
                           )}
                           <label className="flex items-center gap-2 cursor-pointer">
-                            <span className="text-xs text-slate-500">Enabled</span>
+                            <span className="text-xs text-muted-foreground">Enabled</span>
                             <input type="checkbox" checked={prov.active} onChange={(e) => updateProvider(key, "active", e.target.checked)}
-                              className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-primary focus:ring-primary/30 accent-primary" />
+                              className="h-4 w-4 rounded border-border bg-slate-800 text-primary focus:ring-primary/30 accent-primary" />
                           </label>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div>
-                          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">API Endpoint</label>
+                          <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">API Endpoint</label>
                           <input type="text" value={prov.endpoint} onChange={(e) => updateProvider(key, "endpoint", e.target.value)}
                             placeholder={DEFAULT_LLM_PROVIDERS[key].endpoint}
-                            className="w-full rounded-lg border border-slate-800 bg-slate-900/50 py-2 px-3 text-xs text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                            className="w-full rounded-lg border border-border bg-muted/30 py-2 px-3 text-xs text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">API Key</label>
+                          <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">API Key</label>
                           <input type="password" value={prov.apiKey} onChange={(e) => updateProvider(key, "apiKey", e.target.value)}
                             placeholder="sk-..."
-                            className="w-full rounded-lg border border-slate-800 bg-slate-900/50 py-2 px-3 text-xs text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                            className="w-full rounded-lg border border-border bg-muted/30 py-2 px-3 text-xs text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Default Model</label>
+                          <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Default Model</label>
                           <select
                             value={prov.defaultModel}
                             onChange={(e) => updateProvider(key, "defaultModel", e.target.value)}
-                            className="w-full rounded-lg border border-slate-800 bg-slate-900/50 py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                            className="w-full rounded-lg border border-border bg-muted/30 py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
                           >
                             {getDiscoveredOrFallbackModels(key).map((m: string) => (
                               <option key={m} value={m}>{m}</option>
@@ -1561,9 +1788,9 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                         </div>
                       </div>
 
-                      <div className="border-t border-slate-900 pt-3 space-y-3">
+                      <div className="border-t border-border pt-3 space-y-3">
                         <div className="flex items-center justify-between">
-                          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Allowed Models for Agent Workflows</label>
+                          <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Allowed Models for Agent Workflows</label>
                           <div className="flex gap-2">
                             <button
                               type="button"
@@ -1606,14 +1833,14 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                                   className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all text-[10px] ${
                                     checked
                                       ? "border-indigo-500/40 bg-indigo-500/10 text-indigo-200"
-                                      : "border-slate-800 bg-slate-900/30 text-slate-400 hover:border-slate-700"
+                                      : "border-border bg-muted/30 text-muted-foreground hover:border-border"
                                   }`}
                                 >
                                   <input
                                     type="checkbox"
                                     checked={checked}
                                     onChange={(e) => toggleModel(key, m, e.target.checked)}
-                                    className="h-3.5 w-3.5 rounded border-slate-700 bg-slate-800 text-indigo-500 focus:ring-indigo-500/30 accent-indigo-500 shrink-0"
+                                    className="h-3.5 w-3.5 rounded border-border bg-slate-800 text-indigo-500 focus:ring-indigo-500/30 accent-indigo-500 shrink-0"
                                   />
                                   <span className="font-mono truncate">{m}</span>
                                 </label>
@@ -1625,7 +1852,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                         {/* Custom models added that are NOT in the catalog */}
                         {prov.models && prov.models.filter((m: string) => !getDiscoveredOrFallbackModels(key).includes(m)).length > 0 && (
                           <div className="space-y-1">
-                            <span className="text-[9px] font-semibold text-slate-500 uppercase">Custom Models</span>
+                            <span className="text-[9px] font-semibold text-muted-foreground uppercase">Custom Models</span>
                             <div className="flex flex-wrap gap-1.5">
                               {prov.models.filter((m: string) => !getDiscoveredOrFallbackModels(key).includes(m)).map((m: string) => (
                                 <span key={m} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-950/30 border border-amber-500/20 text-[10px] font-mono text-amber-300 group">
@@ -1651,7 +1878,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                             onChange={(e) => setModelInputs((prev) => ({ ...prev, [key]: e.target.value }))}
                             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addModel(key, modelInputs[key] || ""); } }}
                             placeholder="+ Add custom model ID"
-                            className="flex-1 rounded-lg border border-slate-800 bg-slate-900/50 py-1.5 px-3 text-[10px] text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono"
+                            className="flex-1 rounded-lg border border-border bg-muted/30 py-1.5 px-3 text-[10px] text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono"
                           />
                           <button
                             type="button"
@@ -1669,7 +1896,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
 
                       <div className="flex flex-wrap items-center gap-3">
                         <button type="button" onClick={() => handleTestConnection(key)} disabled={testingProvider === key || fetchingModels[key]}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/40 hover:bg-slate-900/70 text-xs font-semibold text-slate-300 hover:text-white transition-all disabled:opacity-50">
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-muted/30 hover:bg-muted/30 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all disabled:opacity-50">
                           {testingProvider === key ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plug className="h-3 w-3" />}
                           Test Connection
                         </button>
@@ -1699,7 +1926,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                       MCP Integration
                       <HelpTooltip content="Model Context Protocol (MCP) servers provide external tools and capabilities to agents. Each server is configured with a command, arguments, and optional environment variables." side="right" />
                     </h3>
-                    <p className="text-slate-400 text-xs">JSON-RPC 2.0 MCP server configurations for tool orchestration</p>
+                    <p className="text-muted-foreground text-xs">JSON-RPC 2.0 MCP server configurations for tool orchestration</p>
                   </div>
                   <button
                     type="button"
@@ -1713,7 +1940,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Raw JSON Configuration Editor</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Raw JSON Configuration Editor</label>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
                       isValidJson(mcpServers) ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
                     }`}>
@@ -1722,11 +1949,11 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   </div>
                   <textarea rows={4} value={mcpServers} onChange={(e) => setMcpServers(e.target.value)}
                     placeholder='{"mcpServers":{"playwright":{"command":"npx","args":["@playwright/mcp"],"env":{"KEY":"val"}}}}'
-                    className="w-full rounded-xl border border-slate-800 bg-[#0c0c16] py-2.5 px-3 text-xs text-white font-mono placeholder-slate-600 outline-none focus:border-primary/50" />
+                    className="w-full rounded-xl border border-border bg-background py-2.5 px-3 text-xs text-white font-mono placeholder-slate-600 outline-none focus:border-primary/50" />
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Configured Tool Servers</h4>
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Configured Tool Servers</h4>
                   {(() => {
                     const parsed = parseMcp();
                     const items = Object.entries(parsed);
@@ -1737,34 +1964,34 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                           const isActive = !(cfg.active === false || cfg.disabled === true);
                           const envCount = cfg.env ? Object.keys(cfg.env as Record<string, unknown>).length : 0;
                           return (
-                            <div key={name} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-slate-900 bg-[#0c0c1b]/60 gap-3 hover:border-slate-800 transition-all">
+                            <div key={name} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-border bg-background/60 gap-3 hover:border-border transition-all">
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm font-semibold text-white">{name}</span>
                                   <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ${
-                                    isActive ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-800 text-slate-400"
+                                    isActive ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-800 text-muted-foreground"
                                   }`}>
                                     {isActive ? "Active" : "Disabled"}
                                   </span>
                                   <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ${
-                                    cfg.workspaceEnabled !== false ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20" : "bg-slate-800 text-slate-500"
+                                    cfg.workspaceEnabled !== false ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20" : "bg-slate-800 text-muted-foreground"
                                   }`}>
                                     {cfg.workspaceEnabled !== false ? "Workspace: Chat Enabled" : "Workspace: Studio Only"}
                                   </span>
                                 </div>
-                                <div className="text-[11px] text-slate-400 font-mono">
+                                <div className="text-[11px] text-muted-foreground font-mono">
                                   <span className="text-indigo-400 font-bold">{String(cfg.command || "npx")}</span>
                                   {" "}{Array.isArray(cfg.args) ? (cfg.args as string[]).join(" ") : ""}
                                 </div>
                                 {envCount > 0 && (
-                                  <div className="text-[10px] text-slate-500 font-mono">
+                                  <div className="text-[10px] text-muted-foreground font-mono">
                                     Environment variables: <span className="text-cyan-400">{envCount} configured</span>
                                   </div>
                                 )}
                               </div>
                               <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-2 pr-2 border-r border-slate-800" title="Expose in Agent Workspace for direct chat">
-                                  <span className="text-[10px] text-slate-400 hidden sm:inline">Workspace Chat:</span>
+                                <div className="flex items-center gap-2 pr-2 border-r border-border" title="Expose in Agent Workspace for direct chat">
+                                  <span className="text-[10px] text-muted-foreground hidden sm:inline">Workspace Chat:</span>
                                   <label className="relative inline-flex items-center cursor-pointer select-none">
                                     <input
                                       type="checkbox"
@@ -1785,7 +2012,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                                 </div>
 
                                 <div className="flex items-center gap-2" title="Toggle active status">
-                                  <span className="text-[10px] text-slate-400 hidden sm:inline">Active:</span>
+                                  <span className="text-[10px] text-muted-foreground hidden sm:inline">Active:</span>
                                   <label className="relative inline-flex items-center cursor-pointer select-none">
                                     <input
                                       type="checkbox"
@@ -1800,7 +2027,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                                 <button
                                   type="button"
                                   onClick={() => openEditMcpModal(name)}
-                                  className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all cursor-pointer"
+                                  className="p-2 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground hover:border-border transition-all cursor-pointer"
                                   title="Edit Server"
                                 >
                                   <Edit className="h-3.5 w-3.5" />
@@ -1822,9 +2049,9 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   })()}
                 </div>
 
-                <div className="rounded-xl border border-slate-900 bg-slate-900/10 p-4 space-y-3">
-                  <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Enterprise System Presets</h4>
-                  <p className="text-[10px] text-slate-500 leading-normal">
+                <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Enterprise System Presets</h4>
+                  <p className="text-[10px] text-muted-foreground leading-normal">
                     Click a preset profile below to inject its preconfigured JSON definition directly into your MCP Servers configuration.
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -1833,10 +2060,10 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                         type="button"
                         key={key}
                         onClick={() => injectMcpPreset(key, config)}
-                        className="flex flex-col items-start gap-1 p-3 rounded-xl border border-slate-800 bg-[#0c0c16] text-left hover:border-indigo-500/50 hover:bg-[#0f0f1d] transition-all cursor-pointer"
+                        className="flex flex-col items-start gap-1 p-3 rounded-xl border border-border bg-background text-left hover:border-indigo-500/50 hover:bg-background transition-all cursor-pointer"
                       >
                         <span className="text-xs font-bold text-white capitalize">{key}</span>
-                        <span className="text-[9px] text-slate-500 font-mono block truncate w-full">
+                        <span className="text-[9px] text-muted-foreground font-mono block truncate w-full">
                           {config.args[0]}
                         </span>
                       </button>
@@ -1854,7 +2081,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                       Database Connections Hub
                       <HelpTooltip content="Register external database servers. These databases can be accessed dynamically by agent query tools." side="right" />
                     </h3>
-                    <p className="text-slate-400 text-xs">Manage active connections to external database services</p>
+                    <p className="text-muted-foreground text-xs">Manage active connections to external database services</p>
                   </div>
                   <button
                     type="button"
@@ -1878,31 +2105,31 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Configured Connections</h4>
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Configured Connections</h4>
                   {dbConnections.length === 0 ? (
-                    <div className="text-center py-8 rounded-xl border border-slate-900 bg-slate-950/20 text-slate-500 text-xs">
+                    <div className="text-center py-8 rounded-xl border border-border bg-muted/40 text-muted-foreground text-xs">
                       No external database connections registered yet. Click the button above to add one.
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 gap-3">
                       {dbConnections.map((conn, index) => (
-                        <div key={index} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-slate-900 bg-[#0c0c1b]/60 gap-3 hover:border-slate-800 transition-all">
+                        <div key={index} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-border bg-background/60 gap-3 hover:border-border transition-all">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-white">{conn.alias}</span>
                               <span className={`text-[9px] px-2 py-0.5 rounded-full font-mono capitalize ${
-                                conn.active ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-800 text-slate-400"
+                                conn.active ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-800 text-muted-foreground"
                               }`}>
                                 {conn.engine}
                               </span>
                               <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ${
-                                conn.active ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-800 text-slate-400"
+                                conn.active ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-800 text-muted-foreground"
                               }`}>
                                 {conn.active ? "Active" : "Inactive"}
                               </span>
                             </div>
-                            <div className="text-[11px] text-slate-400 font-mono">
-                              Host: <span className="text-slate-300">{conn.hostUri}</span>
+                            <div className="text-[11px] text-muted-foreground font-mono">
+                              Host: <span className="text-muted-foreground">{conn.hostUri}</span>
                               {conn.port && <>:{conn.port}</>}
                               {conn.database && <>{` (DB: ${conn.database})`}</>}
                             </div>
@@ -1921,7 +2148,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                             <button
                               type="button"
                               onClick={() => handleEditDbConnection(index)}
-                              className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all cursor-pointer"
+                              className="p-2 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground hover:border-border transition-all cursor-pointer"
                               title="Edit Connection"
                             >
                               <Edit className="h-3.5 w-3.5" />
@@ -1950,7 +2177,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                     API Services
                     <HelpTooltip content="Configure third-party API services for web search, local business lookup, email (Gmail / SendGrid), WhatsApp messaging, and compliance PII governance." side="right" />
                   </h3>
-                  <p className="text-slate-400 text-xs">Search indexing, local lookup, communication gateways, and PII regex</p>
+                  <p className="text-muted-foreground text-xs">Search indexing, local lookup, communication gateways, and PII regex</p>
                 </div>
 
                 <div>
@@ -1960,114 +2187,114 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Tavily API Key</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Tavily API Key</label>
                       <input type="password" value={tavilyApiKey} onChange={(e) => setTavilyApiKey(e.target.value)} placeholder="tvly-..."
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
                       <p className="mt-1 text-[10px] text-slate-600">Web search & content extraction</p>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Serper API Key</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Serper API Key</label>
                       <input type="password" value={serperApiKey} onChange={(e) => setSerperApiKey(e.target.value)} placeholder="serper-..."
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
                       <p className="mt-1 text-[10px] text-slate-600">Google search API integration</p>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Google Places API Key</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Google Places API Key</label>
                       <div className="relative">
                         <input type="password" value={googlePlacesApiKey} onChange={(e) => setGooglePlacesApiKey(e.target.value)} placeholder="AIza..."
-                          className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 pl-9 pr-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
-                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                          className="w-full rounded-xl border border-border bg-muted/30 py-2.5 pl-9 pr-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       </div>
                       <p className="mt-1 text-[10px] text-slate-600">Local business &amp; coordinate resolution</p>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Search Radius (meters)</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Search Radius (meters)</label>
                       <input type="number" value={googlePlacesRadius} onChange={(e) => setGooglePlacesRadius(e.target.value)} placeholder="5000"
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50" />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Yelp Client ID</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Yelp Client ID</label>
                       <div className="relative">
                         <input type="text" value={yelpClientId} onChange={(e) => setYelpClientId(e.target.value)} placeholder="..."
-                          className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 pl-9 pr-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
-                        <Star className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                          className="w-full rounded-xl border border-border bg-muted/30 py-2.5 pl-9 pr-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        <Star className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Yelp API Key</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Yelp API Key</label>
                       <input type="password" value={yelpApiKey} onChange={(e) => setYelpApiKey(e.target.value)} placeholder="..."
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
                     </div>
                   </div>
                 </div>
 
-                <div className="border-t border-slate-900 pt-5">
+                <div className="border-t border-border pt-5">
                   <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
                     <Mail className="h-4 w-4 text-cyan-400" />
                     Communication Gateways
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                      <p className="text-xs font-bold text-slate-300 mb-3 uppercase tracking-wider">Google Gmail OAuth</p>
+                      <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wider">Google Gmail OAuth</p>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Client ID</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Client ID</label>
                       <input type="text" value={gmailClientId} onChange={(e) => setGmailClientId(e.target.value)} placeholder="..."
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Client Secret</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Client Secret</label>
                       <input type="password" value={gmailClientSecret} onChange={(e) => setGmailClientSecret(e.target.value)} placeholder="..."
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Refresh Token</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Refresh Token</label>
                       <input type="password" value={gmailRefreshToken} onChange={(e) => setGmailRefreshToken(e.target.value)} placeholder="..."
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">SendGrid API Key</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">SendGrid API Key</label>
                       <div className="relative">
                         <input type="password" value={sendgridApiKey} onChange={(e) => setSendgridApiKey(e.target.value)} placeholder="SG...."
-                          className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 pl-9 pr-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
-                        <Send className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                          className="w-full rounded-xl border border-border bg-muted/30 py-2.5 pl-9 pr-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        <Send className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Sender Verification Email</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Sender Verification Email</label>
                       <input type="email" value={sendgridSenderEmail} onChange={(e) => setSendgridSenderEmail(e.target.value)} placeholder="sender@example.com"
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50" />
                     </div>
                   </div>
                 </div>
 
-                <div className="border-t border-slate-900 pt-5">
+                <div className="border-t border-border pt-5">
                   <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-emerald-400" />
                     Enterprise WhatsApp API
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">WABA ID (Business Account ID)</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">WABA ID (Business Account ID)</label>
                       <input type="text" value={wabaId} onChange={(e) => setWabaId(e.target.value)} placeholder="..."
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Phone Number ID</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Phone Number ID</label>
                       <input type="text" value={wabaPhoneNumberId} onChange={(e) => setWabaPhoneNumberId(e.target.value)} placeholder="..."
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Permanent System Access Token</label>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Permanent System Access Token</label>
                       <input type="password" value={wabaAccessToken} onChange={(e) => setWabaAccessToken(e.target.value)} placeholder="EAA..."
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
                     </div>
                   </div>
                 </div>
 
 
 
-                <div className="border-t border-slate-900 pt-5">
+                <div className="border-t border-border pt-5">
                   <div className="flex justify-between items-center mb-3">
                     <h4 className="text-sm font-bold text-white flex items-center gap-2">
                       <Plus className="h-4 w-4 text-primary" />
@@ -2083,13 +2310,13 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                         setNewApiCode(`// Custom API Script execution\n// Receive arguments in \`toolArgs\` variable\nconsole.log("Custom executing with args:", toolArgs);\nreturn { status: "success", received: toolArgs };`);
                         setIsAddCustomApiOpen(true);
                       }}
-                      className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs font-semibold hover:bg-slate-800 transition-all cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border border-border text-white text-xs font-semibold hover:bg-slate-800 transition-all cursor-pointer"
                     >
                       <Plus className="h-3.5 w-3.5 text-primary" />
                       Add Custom API
                     </button>
                   </div>
-                  <p className="text-[10px] text-slate-500 leading-relaxed mb-4">
+                  <p className="text-[10px] text-muted-foreground leading-relaxed mb-4">
                     Register custom API handlers, webhook connectors, and custom JS tasks. Once registered, these endpoints are automatically discovered by orchestrator agents under custom capability nodes.
                   </p>
                   
@@ -2098,16 +2325,16 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   ) : (
                     <div className="grid grid-cols-1 gap-2">
                       {customSkills.map((skill, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 rounded-xl border border-slate-900 bg-[#070710]/40">
+                        <div key={index} className="flex items-center justify-between p-3 rounded-xl border border-border bg-background/40">
                           <div>
-                            <div className="text-xs font-semibold text-slate-200">{skill.name}</div>
-                            <div className="text-[10px] text-slate-500">{skill.description || "No description provided."}</div>
+                            <div className="text-xs font-semibold text-foreground">{skill.name}</div>
+                            <div className="text-[10px] text-muted-foreground">{skill.description || "No description provided."}</div>
                           </div>
                           <div className="flex gap-2">
                             <button
                               type="button"
                               onClick={() => handleEditCustomApi(index)}
-                              className="p-1.5 rounded bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer"
+                              className="p-1.5 rounded bg-card border border-border text-muted-foreground hover:text-foreground transition-all cursor-pointer"
                             >
                               <Edit className="h-3 w-3" />
                             </button>
@@ -2133,83 +2360,83 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-bold text-white mb-1">Usage & Spend</h3>
-                  <p className="text-slate-400 text-xs">Real-time harness metrics, token usage, spend stats, and tool performance</p>
+                  <p className="text-muted-foreground text-xs">Real-time harness metrics, token usage, spend stats, and tool performance</p>
                 </div>
 
                 {loadingAnalytics ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-slate-500 text-sm gap-2">
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground text-sm gap-2">
                     <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     <span>Analyzing telemetry logs...</span>
                   </div>
                 ) : !analyticsData ? (
-                  <div className="text-center py-12 text-slate-500 text-sm">
+                  <div className="text-center py-12 text-muted-foreground text-sm">
                     No telemetry log data found. Run chat interactions to collect telemetry logs.
                   </div>
                 ) : (
                   <div className="space-y-6">
                     {/* Core Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 space-y-1">
-                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Total Model Runs</span>
+                      <div className="rounded-2xl border border-border bg-muted/30 p-5 space-y-1">
+                        <span className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">Total Model Runs</span>
                         <div className="text-2xl font-bold text-white font-mono">{analyticsData.totalRuns}</div>
                       </div>
-                      <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 space-y-1">
-                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Accumulated Spend</span>
+                      <div className="rounded-2xl border border-border bg-muted/30 p-5 space-y-1">
+                        <span className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">Accumulated Spend</span>
                         <div className="text-2xl font-bold text-emerald-400 font-mono">${analyticsData.totalSpend.toFixed(5)}</div>
                       </div>
-                      <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 space-y-1">
-                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Tool Success Rate</span>
+                      <div className="rounded-2xl border border-border bg-muted/30 p-5 space-y-1">
+                        <span className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">Tool Success Rate</span>
                         <div className="text-2xl font-bold text-cyan-400 font-mono">{analyticsData.successRate}%</div>
                       </div>
                     </div>
 
                     {/* Token Breakdown */}
-                    <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 space-y-4">
+                    <div className="rounded-2xl border border-border bg-muted/30 p-5 space-y-4">
                       <h4 className="text-sm font-bold text-white uppercase tracking-wider">Token Aggregates</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-slate-400 text-xs">
-                        <div className="bg-slate-950/30 rounded-xl p-3">
-                          <div className="text-slate-500 mb-0.5 font-semibold">Input Tokens</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-muted-foreground text-xs">
+                        <div className="bg-muted/40 rounded-xl p-3">
+                          <div className="text-muted-foreground mb-0.5 font-semibold">Input Tokens</div>
                           <div className="text-white font-mono font-bold text-sm">{analyticsData.totalInputTokens.toLocaleString()}</div>
                         </div>
-                        <div className="bg-slate-950/30 rounded-xl p-3">
-                          <div className="text-slate-500 mb-0.5 font-semibold">Output Tokens</div>
+                        <div className="bg-muted/40 rounded-xl p-3">
+                          <div className="text-muted-foreground mb-0.5 font-semibold">Output Tokens</div>
                           <div className="text-white font-mono font-bold text-sm">{analyticsData.totalOutputTokens.toLocaleString()}</div>
                         </div>
-                        <div className="bg-slate-950/30 rounded-xl p-3">
-                          <div className="text-slate-500 mb-0.5 font-semibold">Reasoning Tokens</div>
+                        <div className="bg-muted/40 rounded-xl p-3">
+                          <div className="text-muted-foreground mb-0.5 font-semibold">Reasoning Tokens</div>
                           <div className="text-white font-mono font-bold text-sm">{analyticsData.totalReasoningTokens.toLocaleString()}</div>
                         </div>
                       </div>
                     </div>
 
                     {/* Granular Usage Logs */}
-                    <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 space-y-4">
+                    <div className="rounded-2xl border border-border bg-muted/30 p-5 space-y-4">
                       <h4 className="text-sm font-bold text-white uppercase tracking-wider">Granular Usage Logs</h4>
                       
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-slate-950/20 border border-slate-900 rounded-xl p-3.5 text-xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-muted/40 border border-border rounded-xl p-3.5 text-xs">
                         <div className="flex flex-wrap items-center gap-3">
                           {/* Date range picker */}
-                          <div className="flex items-center gap-2 bg-slate-900/40 border border-slate-800 rounded-lg px-2.5 py-1.5">
-                            <span className="text-slate-500 font-semibold text-[10px] uppercase">Start:</span>
+                          <div className="flex items-center gap-2 bg-muted/30 border border-border rounded-lg px-2.5 py-1.5">
+                            <span className="text-muted-foreground font-semibold text-[10px] uppercase">Start:</span>
                             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-                              className="bg-transparent text-slate-200 outline-none w-28 text-center font-mono cursor-pointer" />
-                            <span className="text-slate-500 font-semibold text-[10px] uppercase ml-1">End:</span>
+                              className="bg-transparent text-foreground outline-none w-28 text-center font-mono cursor-pointer" />
+                            <span className="text-muted-foreground font-semibold text-[10px] uppercase ml-1">End:</span>
                             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-                              className="bg-transparent text-slate-200 outline-none w-28 text-center font-mono cursor-pointer" />
+                              className="bg-transparent text-foreground outline-none w-28 text-center font-mono cursor-pointer" />
                           </div>
 
                           {/* Provider Filter Dropdown */}
                           <div className="relative">
                             <button type="button" onClick={() => setIsProviderDropdownOpen(!isProviderDropdownOpen)}
-                              className="flex items-center justify-between gap-2 bg-slate-900/40 border border-slate-800 hover:border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 min-w-[140px] h-[32px] text-left">
+                              className="flex items-center justify-between gap-2 bg-muted/30 border border-border hover:border-border rounded-lg px-3 py-1.5 text-foreground min-w-[140px] h-[32px] text-left">
                               <span className="truncate">{selectedProviders.length === 0 ? "All Providers" : `${selectedProviders.length} Selected`}</span>
-                              <span className="text-slate-500 text-[8px]">▼</span>
+                              <span className="text-muted-foreground text-[8px]">▼</span>
                             </button>
                             {isProviderDropdownOpen && (
                               <>
                                 <div className="fixed inset-0 z-30" onClick={() => setIsProviderDropdownOpen(false)} />
-                                <div className="absolute left-0 mt-2 w-48 rounded-xl border border-slate-800 bg-slate-950 p-2.5 shadow-xl z-40 space-y-1.5">
-                                  <div className="text-[10px] uppercase font-bold text-slate-500 px-1.5 pb-1 border-b border-slate-900">Filter Provider</div>
+                                <div className="absolute left-0 mt-2 w-48 rounded-xl border border-border bg-background p-2.5 shadow-xl z-40 space-y-1.5">
+                                  <div className="text-[10px] uppercase font-bold text-muted-foreground px-1.5 pb-1 border-b border-border">Filter Provider</div>
                                   {uniqueProviders.length === 0 ? (
                                     <div className="text-[10px] text-slate-600 px-1.5 py-1">No providers found</div>
                                   ) : (
@@ -2217,14 +2444,14 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                                       const lowProv = prov.toLowerCase();
                                       const isChecked = selectedProviders.includes(lowProv);
                                       return (
-                                        <label key={prov} className="flex items-center gap-2 px-1.5 py-1 hover:bg-slate-900 rounded-lg cursor-pointer text-slate-300 select-none">
+                                        <label key={prov} className="flex items-center gap-2 px-1.5 py-1 hover:bg-card rounded-lg cursor-pointer text-muted-foreground select-none">
                                           <input type="checkbox" checked={isChecked} onChange={() => {
                                             if (isChecked) {
                                               setSelectedProviders(selectedProviders.filter((p) => p !== lowProv));
                                             } else {
                                               setSelectedProviders([...selectedProviders, lowProv]);
                                             }
-                                          }} className="rounded border-slate-800 text-primary focus:ring-0 bg-slate-900 h-3 w-3" />
+                                          }} className="rounded border-border text-primary focus:ring-0 bg-card h-3 w-3" />
                                           {prov}
                                         </label>
                                       );
@@ -2232,7 +2459,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                                   )}
                                   {selectedProviders.length > 0 && (
                                     <button type="button" onClick={() => setSelectedProviders([])}
-                                      className="w-full text-center text-[10px] text-primary hover:underline pt-1 border-t border-slate-900 block">
+                                      className="w-full text-center text-[10px] text-primary hover:underline pt-1 border-t border-border block">
                                       Clear Filter
                                     </button>
                                   )}
@@ -2244,29 +2471,29 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                           {/* Model Filter Dropdown */}
                           <div className="relative">
                             <button type="button" onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
-                              className="flex items-center justify-between gap-2 bg-slate-900/40 border border-slate-800 hover:border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 min-w-[140px] h-[32px] text-left">
+                              className="flex items-center justify-between gap-2 bg-muted/30 border border-border hover:border-border rounded-lg px-3 py-1.5 text-foreground min-w-[140px] h-[32px] text-left">
                               <span className="truncate">{selectedModels.length === 0 ? "All Models" : `${selectedModels.length} Selected`}</span>
-                              <span className="text-slate-500 text-[8px]">▼</span>
+                              <span className="text-muted-foreground text-[8px]">▼</span>
                             </button>
                             {isModelDropdownOpen && (
                               <>
                                 <div className="fixed inset-0 z-30" onClick={() => setIsModelDropdownOpen(false)} />
-                                <div className="absolute left-0 mt-2 w-56 rounded-xl border border-slate-800 bg-slate-950 p-2.5 shadow-xl z-40 space-y-1.5 max-h-60 overflow-y-auto">
-                                  <div className="text-[10px] uppercase font-bold text-slate-500 px-1.5 pb-1 border-b border-slate-900">Filter Model</div>
+                                <div className="absolute left-0 mt-2 w-56 rounded-xl border border-border bg-background p-2.5 shadow-xl z-40 space-y-1.5 max-h-60 overflow-y-auto">
+                                  <div className="text-[10px] uppercase font-bold text-muted-foreground px-1.5 pb-1 border-b border-border">Filter Model</div>
                                   {uniqueModels.length === 0 ? (
                                     <div className="text-[10px] text-slate-600 px-1.5 py-1">No models found</div>
                                   ) : (
                                     uniqueModels.map((model) => {
                                       const isChecked = selectedModels.includes(model);
                                       return (
-                                        <label key={model} className="flex items-center gap-2 px-1.5 py-1 hover:bg-slate-900 rounded-lg cursor-pointer text-slate-300 select-none text-[11px] font-mono">
+                                        <label key={model} className="flex items-center gap-2 px-1.5 py-1 hover:bg-card rounded-lg cursor-pointer text-muted-foreground select-none text-[11px] font-mono">
                                           <input type="checkbox" checked={isChecked} onChange={() => {
                                             if (isChecked) {
                                               setSelectedModels(selectedModels.filter((m) => m !== model));
                                             } else {
                                               setSelectedModels([...selectedModels, model]);
                                             }
-                                          }} className="rounded border-slate-800 text-primary focus:ring-0 bg-slate-900 h-3 w-3" />
+                                          }} className="rounded border-border text-primary focus:ring-0 bg-card h-3 w-3" />
                                           <span className="truncate">{model}</span>
                                         </label>
                                       );
@@ -2274,7 +2501,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                                   )}
                                   {selectedModels.length > 0 && (
                                     <button type="button" onClick={() => setSelectedModels([])}
-                                      className="w-full text-center text-[10px] text-primary hover:underline pt-1 border-t border-slate-900 block">
+                                      className="w-full text-center text-[10px] text-primary hover:underline pt-1 border-t border-border block">
                                       Clear Filter
                                     </button>
                                   )}
@@ -2284,25 +2511,25 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                           </div>
 
                           {/* Model Search Input */}
-                          <div className="relative flex items-center bg-slate-900/40 border border-slate-800 rounded-lg px-2.5 py-1 w-48 h-[32px]">
-                            <Search className="h-3 w-3 text-slate-500 mr-1.5 flex-shrink-0" />
+                          <div className="relative flex items-center bg-muted/30 border border-border rounded-lg px-2.5 py-1 w-48 h-[32px]">
+                            <Search className="h-3 w-3 text-muted-foreground mr-1.5 flex-shrink-0" />
                             <input type="text" placeholder="Search model..." value={modelSearch} onChange={(e) => setModelSearch(e.target.value)}
-                              className="bg-transparent text-slate-200 placeholder-slate-500 outline-none text-xs w-full font-mono" />
+                              className="bg-transparent text-foreground placeholder-slate-500 outline-none text-xs w-full font-mono" />
                           </div>
                         </div>
 
                         {/* CSV Export Button */}
                         <button type="button" onClick={handleExportCSV} disabled={sortedLogs.length === 0}
-                          className="flex items-center justify-center gap-1.5 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-200 px-3.5 py-1.5 shadow-sm transition-all hover:scale-[1.01] disabled:opacity-40 disabled:cursor-not-allowed font-semibold h-[32px]">
+                          className="flex items-center justify-center gap-1.5 rounded-lg bg-muted/30 border border-border hover:border-border hover:bg-card text-foreground px-3.5 py-1.5 shadow-sm transition-all hover:scale-[1.01] disabled:opacity-40 disabled:cursor-not-allowed font-semibold h-[32px]">
                           <span>Export to CSV</span>
                         </button>
                       </div>
 
                       {/* Ledger Table */}
-                      <div className="overflow-x-auto border border-slate-900/40 rounded-xl bg-slate-950/20">
+                      <div className="overflow-x-auto border border-border/40 rounded-xl bg-muted/40">
                         <table className="w-full text-left text-xs border-collapse">
                           <thead>
-                            <tr className="border-b border-slate-900 text-slate-500 font-semibold uppercase tracking-wider bg-slate-950/40">
+                            <tr className="border-b border-border text-muted-foreground font-semibold uppercase tracking-wider bg-muted/40">
                               <th onClick={() => {
                                 if (sortColumn === "date") {
                                   setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -2310,7 +2537,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                                   setSortColumn("date");
                                   setSortDirection("desc");
                                 }
-                              }} className="py-2.5 px-4 cursor-pointer hover:text-slate-300 select-none font-bold whitespace-nowrap">
+                              }} className="py-2.5 px-4 cursor-pointer hover:text-muted-foreground select-none font-bold whitespace-nowrap">
                                 Date {sortColumn === "date" && (sortDirection === "asc" ? " ▲" : " ▼")}
                               </th>
                               <th className="py-2.5 px-4 font-bold">Provider</th>
@@ -2325,30 +2552,30 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                                   setSortColumn("spend");
                                   setSortDirection("desc");
                                 }
-                              }} className="py-2.5 px-4 cursor-pointer hover:text-slate-300 select-none font-bold text-right whitespace-nowrap">
+                              }} className="py-2.5 px-4 cursor-pointer hover:text-muted-foreground select-none font-bold text-right whitespace-nowrap">
                                 Spend ($) {sortColumn === "spend" && (sortDirection === "asc" ? " ▲" : " ▼")}
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-900/40 text-slate-300 font-mono">
+                          <tbody className="divide-y divide-slate-900/40 text-muted-foreground font-mono">
                             {sortedLogs.length === 0 ? (
                               <tr>
-                                <td colSpan={7} className="py-6 text-center text-slate-500 text-xs">
+                                <td colSpan={7} className="py-6 text-center text-muted-foreground text-xs">
                                   No matching transaction records found.
                                 </td>
                               </tr>
                             ) : (
                               sortedLogs.map((log, idx) => (
-                                <tr key={idx} className="hover:bg-slate-900/20">
-                                  <td className="py-2.5 px-4 text-slate-400 whitespace-nowrap">
+                                <tr key={idx} className="hover:bg-muted/30">
+                                  <td className="py-2.5 px-4 text-muted-foreground whitespace-nowrap">
                                     {new Date(log.createdAt).toLocaleString()}
                                   </td>
                                   <td className="py-2.5 px-4 whitespace-nowrap">
-                                    <span className="bg-slate-950/40 border border-slate-900 px-2 py-0.5 rounded-md text-[10px] uppercase font-bold text-slate-400">
+                                    <span className="bg-muted/40 border border-border px-2 py-0.5 rounded-md text-[10px] uppercase font-bold text-muted-foreground">
                                       {log.provider}
                                     </span>
                                   </td>
-                                  <td className="py-2.5 px-4 text-slate-200 max-w-[180px] truncate" title={log.modelName}>
+                                  <td className="py-2.5 px-4 text-foreground max-w-[180px] truncate" title={log.modelName}>
                                     {log.modelName}
                                   </td>
                                   <td className="py-2.5 px-4">{log.inputTokens.toLocaleString()}</td>
@@ -2366,7 +2593,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                     </div>
 
                     {/* Tool Breakdown Table */}
-                    <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 space-y-4">
+                    <div className="rounded-2xl border border-border bg-muted/30 p-5 space-y-4">
                       <h4 className="text-sm font-bold text-white uppercase tracking-wider">Tool Calls breakdown</h4>
                       {analyticsData.toolBreakdown.length === 0 ? (
                         <p className="text-xs text-slate-600">No MCP tool invocations recorded yet</p>
@@ -2374,16 +2601,16 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                         <div className="overflow-x-auto">
                           <table className="w-full text-left text-xs border-collapse">
                             <thead>
-                              <tr className="border-b border-slate-900 text-slate-500 font-semibold uppercase tracking-wider">
+                              <tr className="border-b border-border text-muted-foreground font-semibold uppercase tracking-wider">
                                 <th className="py-2.5">Tool Name</th>
                                 <th className="py-2.5">Total Invocations</th>
                                 <th className="py-2.5">Avg Latency</th>
                                 <th className="py-2.5">Success Rate</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-900 text-slate-300 font-mono">
+                            <tbody className="divide-y divide-slate-900 text-muted-foreground font-mono">
                               {analyticsData.toolBreakdown.map((tool, idx) => (
-                                <tr key={idx} className="hover:bg-slate-900/20">
+                                <tr key={idx} className="hover:bg-muted/30">
                                   <td className="py-2.5 pr-4 text-slate-100 font-semibold">{tool.name}</td>
                                   <td className="py-2.5 pr-4">{tool.total}</td>
                                   <td className="py-2.5 pr-4">{tool.avgLatencyMs}ms</td>
@@ -2409,14 +2636,14 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                     <Share2 className="h-5 w-5 text-indigo-400" />
                     Social Media Integration Hub
                   </h3>
-                  <p className="text-slate-400 text-xs">
+                  <p className="text-muted-foreground text-xs">
                     Link social media accounts and configure dynamic API connectors for automated posting and feed sync.
                   </p>
                 </div>
 
-                <div className="flex justify-between items-center bg-slate-900/10 border border-slate-900 rounded-2xl p-4">
-                  <div className="text-xs text-slate-400">
-                    <span className="font-bold text-slate-200 block mb-0.5">Active Social Channels</span>
+                <div className="flex justify-between items-center bg-muted/30 border border-border rounded-2xl p-4">
+                  <div className="text-xs text-muted-foreground">
+                    <span className="font-bold text-foreground block mb-0.5">Active Social Channels</span>
                     Manage connection credentials and API hooks used by autonomous agents.
                   </div>
                   <button
@@ -2440,7 +2667,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {socialConnections.length === 0 ? (
-                    <div className="col-span-2 rounded-2xl border border-dashed border-slate-800 bg-slate-950/20 p-8 text-center text-slate-500 text-xs space-y-2">
+                    <div className="col-span-2 rounded-2xl border border-dashed border-border bg-muted/40 p-8 text-center text-muted-foreground text-xs space-y-2">
                       <p>No social media integrations connected yet.</p>
                       <p className="text-[10px] text-slate-600">Connect a channel to expose tools like posting and analytics to agent graph workflows.</p>
                     </div>
@@ -2448,19 +2675,19 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                     socialConnections.map((conn, idx) => (
                       <div
                         key={idx}
-                        className={`rounded-2xl border bg-slate-950/20 p-4 space-y-3 transition-all ${
-                          conn.active ? "border-slate-800" : "border-slate-950 opacity-60"
+                        className={`rounded-2xl border bg-muted/40 p-4 space-y-3 transition-all ${
+                          conn.active ? "border-border" : "border-slate-950 opacity-60"
                         }`}
                       >
                         <div className="flex items-start justify-between">
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-bold text-white">{conn.name}</span>
-                              <span className="bg-slate-900 border border-slate-800 px-2 py-0.5 rounded text-[8px] uppercase font-bold text-slate-400">
+                              <span className="bg-card border border-border px-2 py-0.5 rounded text-[8px] uppercase font-bold text-muted-foreground">
                                 {conn.preset}
                               </span>
                             </div>
-                            <span className="text-[10px] text-slate-500 font-mono mt-0.5 block truncate max-w-[200px]">
+                            <span className="text-[10px] text-muted-foreground font-mono mt-0.5 block truncate max-w-[200px]">
                               API endpoint: {conn.baseEndpoint || "None"}
                             </span>
                           </div>
@@ -2472,7 +2699,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                               className={`px-2 py-1 rounded-lg border text-[10px] font-bold uppercase transition-all ${
                                 conn.active
                                   ? "border-emerald-500/20 text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10"
-                                  : "border-slate-800 text-slate-400 bg-slate-900/40 hover:bg-slate-800"
+                                  : "border-border text-muted-foreground bg-muted/30 hover:bg-slate-800"
                               }`}
                             >
                               {conn.active ? "Active" : "Disabled"}
@@ -2480,7 +2707,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                             <button
                               type="button"
                               onClick={() => handleEditSocialConnection(idx)}
-                              className="text-slate-400 hover:text-white p-1.5 hover:bg-slate-900 rounded-lg transition-all"
+                              className="text-muted-foreground hover:text-foreground p-1.5 hover:bg-card rounded-lg transition-all"
                               title="Edit Credentials"
                             >
                               <Edit className="h-3.5 w-3.5" />
@@ -2496,20 +2723,20 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-900 text-[10px]">
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border text-[10px]">
                           <div>
-                            <span className="text-slate-500 block">App ID / Client Key</span>
-                            <span className="text-slate-300 font-mono truncate block">{conn.appId || "—"}</span>
+                            <span className="text-muted-foreground block">App ID / Client Key</span>
+                            <span className="text-muted-foreground font-mono truncate block">{conn.appId || "—"}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500 block">API Secret / OAuth Token</span>
-                            <span className="text-slate-300 font-mono block">••••••••••••••••</span>
+                            <span className="text-muted-foreground block">API Secret / OAuth Token</span>
+                            <span className="text-muted-foreground font-mono block">••••••••••••••••</span>
                           </div>
                         </div>
 
                         {conn.scopes && (
-                          <div className="bg-slate-900/40 border border-slate-900 rounded-lg p-2 text-[9px] font-mono text-slate-400">
-                            <span className="font-bold text-slate-500 block uppercase tracking-wider mb-0.5">Granted Scopes</span>
+                          <div className="bg-muted/30 border border-border rounded-lg p-2 text-[9px] font-mono text-muted-foreground">
+                            <span className="font-bold text-muted-foreground block uppercase tracking-wider mb-0.5">Granted Scopes</span>
                             {conn.scopes}
                           </div>
                         )}
@@ -2569,29 +2796,29 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
             
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Server Key Name</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Server Key Name</label>
                 <input
                   type="text"
                   value={mcpServerNameInput}
                   onChange={(e) => setMcpServerNameInput(e.target.value)}
                   placeholder="e.g. sap-prod"
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-sm text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-sm text-white outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">JSON Configuration Settings</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">JSON Configuration Settings</label>
                 <textarea
                   rows={6}
                   value={mcpServerUrlInput}
                   onChange={(e) => setMcpServerUrlInput(e.target.value)}
                   placeholder={`{\n  "command": "npx",\n  "args": ["@modelcontextprotocol/server-postgres"],\n  "env": {\n    "DATABASE_URL": "postgresql://..."\n  }\n}`}
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2.5 px-3 text-xs text-white font-mono outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2.5 px-3 text-xs text-white font-mono outline-none focus:border-primary/50"
                 />
               </div>
 
-              <div className="flex items-center justify-between py-2 border-t border-slate-800">
-                <span className="text-xs font-semibold text-slate-300">Active Status Enabled</span>
+              <div className="flex items-center justify-between py-2 border-t border-border">
+                <span className="text-xs font-semibold text-muted-foreground">Active Status Enabled</span>
                 <label className="relative inline-flex items-center cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -2603,10 +2830,10 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                 </label>
               </div>
 
-              <div className="flex items-center justify-between py-2 border-t border-slate-800">
+              <div className="flex items-center justify-between py-2 border-t border-border">
                 <div>
-                  <span className="text-xs font-semibold text-slate-300 block">Expose in Agent Workspace</span>
-                  <span className="text-[10px] text-slate-500">Allow direct ad-hoc chat with this MCP in /dashboard</span>
+                  <span className="text-xs font-semibold text-muted-foreground block">Expose in Agent Workspace</span>
+                  <span className="text-[10px] text-muted-foreground">Allow direct ad-hoc chat with this MCP in /dashboard</span>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer select-none">
                   <input
@@ -2624,7 +2851,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               <button
                 type="button"
                 onClick={() => setIsEditMcpOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-card border border-border hover:bg-slate-800 text-muted-foreground text-xs font-semibold transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -2653,22 +2880,22 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Connection Alias</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Connection Alias</label>
                 <input
                   type="text"
                   value={newDbAlias}
                   onChange={(e) => setNewDbAlias(e.target.value)}
                   placeholder="e.g. sap-db-dev"
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Engine Type</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Engine Type</label>
                 <select
                   value={newDbEngine}
                   onChange={(e) => setNewDbEngine(e.target.value as "postgres" | "mysql" | "mariadb" | "mongodb" | "sqlite" | "oracle")}
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
                 >
                   <option value="postgres">PostgreSQL</option>
                   <option value="mysql">MySQL</option>
@@ -2680,66 +2907,66 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Host / Connection URI</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Host / Connection URI</label>
                 <input
                   type="text"
                   value={newDbHostUri}
                   onChange={(e) => setNewDbHostUri(e.target.value)}
                   placeholder={newDbEngine === "sqlite" ? "/path/to/database.sqlite" : "mongodb://... or host ip"}
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
               {newDbEngine !== "sqlite" && (
                 <>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Port</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Port</label>
                     <input
                       type="text"
                       value={newDbPort}
                       onChange={(e) => setNewDbPort(e.target.value)}
                       placeholder="e.g. 5432"
-                      className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Database Name</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Database Name</label>
                     <input
                       type="text"
                       value={newDbDatabase}
                       onChange={(e) => setNewDbDatabase(e.target.value)}
                       placeholder="e.g. users_db"
-                      className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">User / Role</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">User / Role</label>
                     <input
                       type="text"
                       value={newDbUser}
                       onChange={(e) => setNewDbUser(e.target.value)}
                       placeholder="username"
-                      className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Password / Key</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Password / Key</label>
                     <input
                       type="password"
                       value={newDbPasswordKey}
                       onChange={(e) => setNewDbPasswordKey(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
                     />
                   </div>
                 </>
               )}
 
-              <div className="md:col-span-2 flex items-center justify-between py-2 border-t border-slate-800">
-                <span className="text-xs font-semibold text-slate-300">Active Connection Switch</span>
+              <div className="md:col-span-2 flex items-center justify-between py-2 border-t border-border">
+                <span className="text-xs font-semibold text-muted-foreground">Active Connection Switch</span>
                 <label className="relative inline-flex items-center cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -2756,7 +2983,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               <button
                 type="button"
                 onClick={() => setIsAddDbOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-card border border-border hover:bg-slate-800 text-muted-foreground text-xs font-semibold transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -2785,46 +3012,46 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
 
             <div className="space-y-3 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">API Name (hyphenated-only)</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">API Name (hyphenated-only)</label>
                 <input
                   type="text"
                   value={newApiName}
                   onChange={(e) => setNewApiName(e.target.value)}
                   placeholder="e.g. send-customer-sms"
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Description</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Description</label>
                 <input
                   type="text"
                   value={newApiDesc}
                   onChange={(e) => setNewApiDesc(e.target.value)}
                   placeholder="Explain what this dynamic integration accomplishes"
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Arguments JSON Schema</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Arguments JSON Schema</label>
                 <textarea
                   rows={4}
                   value={newApiSchema}
                   onChange={(e) => setNewApiSchema(e.target.value)}
                   placeholder={`{\n  "type": "object",\n  "properties": {\n    "param1": { "type": "string" }\n  },\n  "required": ["param1"]\n}`}
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white font-mono outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white font-mono outline-none focus:border-primary/50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">JavaScript Execution Script Code</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">JavaScript Execution Script Code</label>
                 <textarea
                   rows={6}
                   value={newApiCode}
                   onChange={(e) => setNewApiCode(e.target.value)}
                   placeholder={`// Execute custom API tasks\n// Received parameters: toolArgs\nconsole.log(toolArgs);\nreturn { status: "completed" };`}
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2.5 px-3 text-xs text-white font-mono outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2.5 px-3 text-xs text-white font-mono outline-none focus:border-primary/50"
                 />
               </div>
             </div>
@@ -2833,7 +3060,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               <button
                 type="button"
                 onClick={() => setIsAddCustomApiOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-card border border-border hover:bg-slate-800 text-muted-foreground text-xs font-semibold transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -2862,22 +3089,22 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Connection Name</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Connection Name</label>
                 <input
                   type="text"
                   value={newSocialName}
                   onChange={(e) => setNewSocialName(e.target.value)}
                   placeholder="e.g. My Marketing Channel"
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Channel Type / Preset</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Channel Type / Preset</label>
                 <select
                   value={newSocialPreset}
                   onChange={(e) => setNewSocialPreset(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
                 >
                   <option value="youtube">YouTube preset</option>
                   <option value="instagram">Instagram preset</option>
@@ -2891,51 +3118,51 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">App ID / Client ID (Optional)</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">App ID / Client ID (Optional)</label>
                 <input
                   type="text"
                   value={newSocialAppId}
                   onChange={(e) => setNewSocialAppId(e.target.value)}
                   placeholder="e.g. cli-928374928"
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">OAuth Token / API Key</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">OAuth Token / API Key</label>
                 <input
                   type="password"
                   value={newSocialTokenOrKey}
                   onChange={(e) => setNewSocialTokenOrKey(e.target.value)}
                   placeholder="••••••••••••••••"
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Base Endpoint URL</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Base Endpoint URL</label>
                 <input
                   type="text"
                   value={newSocialBaseEndpoint}
                   onChange={(e) => setNewSocialBaseEndpoint(e.target.value)}
                   placeholder="e.g. https://api.twitter.com/2"
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">OAuth Scopes (Comma or space separated)</label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">OAuth Scopes (Comma or space separated)</label>
                 <input
                   type="text"
                   value={newSocialScopes}
                   onChange={(e) => setNewSocialScopes(e.target.value)}
                   placeholder="e.g. tweet.read, tweet.write"
-                  className="w-full rounded-xl border border-slate-800 bg-[#070710] py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
-              <div className="md:col-span-2 flex items-center justify-between py-2 border-t border-slate-800">
-                <span className="text-xs font-semibold text-slate-300">Active Toggle Switch</span>
+              <div className="md:col-span-2 flex items-center justify-between py-2 border-t border-border">
+                <span className="text-xs font-semibold text-muted-foreground">Active Toggle Switch</span>
                 <label className="relative inline-flex items-center cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -2952,7 +3179,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               <button
                 type="button"
                 onClick={() => setIsAddSocialOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-card border border-border hover:bg-slate-800 text-muted-foreground text-xs font-semibold transition-all cursor-pointer"
               >
                 Cancel
               </button>

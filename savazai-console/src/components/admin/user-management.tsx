@@ -446,7 +446,7 @@ export function UserManagement() {
               fetchRoles();
             }}
             disabled={loading || rolesLoading}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-900 text-slate-300 text-xs font-medium transition-all"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border bg-muted/30 hover:bg-card text-muted-foreground text-xs font-medium transition-all"
             title="Refresh user list"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -479,7 +479,7 @@ export function UserManagement() {
               setFormError(null);
               setIsCreateOpen(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-semibold shadow-lg shadow-primary/25 transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-foreground text-xs font-semibold shadow-lg shadow-primary/25 transition-all"
           >
             <UserPlus className="h-3.5 w-3.5" />
             Create User
@@ -505,7 +505,7 @@ export function UserManagement() {
           onClick={() => setActiveTab("pending")}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
             activeTab === "pending"
-              ? "bg-amber-600 text-white shadow-sm shadow-amber-600/25"
+              ? "bg-amber-600 text-foreground shadow-sm shadow-amber-600/25"
               : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
         >
@@ -596,7 +596,7 @@ export function UserManagement() {
                 <tbody className="divide-y divide-slate-900/60">
                   {loading ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-slate-500">
+                      <td colSpan={5} className="py-12 text-center text-muted-foreground">
                         <div className="flex items-center justify-center gap-2">
                           <Loader2 className="h-4 w-4 animate-spin text-primary" />
                           <span>Loading users directory...</span>
@@ -605,7 +605,7 @@ export function UserManagement() {
                     </tr>
                   ) : filteredActiveUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-slate-500">
+                      <td colSpan={5} className="py-12 text-center text-muted-foreground">
                         <span>No active users matching criteria.</span>
                       </td>
                     </tr>
@@ -617,7 +617,7 @@ export function UserManagement() {
                       return (
                         <tr
                           key={user.id}
-                          className={`group hover:bg-slate-900/40 transition-colors ${
+                          className={`group hover:bg-muted/30 transition-colors ${
                             isSelf ? "bg-primary/5" : ""
                           }`}
                         >
@@ -627,14 +627,14 @@ export function UserManagement() {
                                 className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
                                   isSuperAdmin
                                     ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
-                                    : "bg-slate-800 text-slate-300 border border-slate-700"
+                                    : "bg-slate-800 text-muted-foreground border border-border"
                                 }`}
                               >
                                 {user.name ? user.name.charAt(0).toUpperCase() : "U"}
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <span className="font-semibold text-white group-hover:text-primary transition-colors">
+                                  <span className="font-semibold text-foreground group-hover:text-primary transition-colors">
                                     {user.name}
                                   </span>
                                   {isSelf && (
@@ -643,7 +643,7 @@ export function UserManagement() {
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-slate-400 font-mono text-[11px]">{user.email}</div>
+                                <div className="text-muted-foreground font-mono text-[11px]">{user.email}</div>
                               </div>
                             </div>
                           </td>
@@ -674,7 +674,7 @@ export function UserManagement() {
                             </span>
                           </td>
 
-                          <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
+                          <td className="py-3.5 px-4 text-muted-foreground font-mono text-[11px]">
                             {new Date(user.createdAt).toLocaleDateString(undefined, {
                               year: "numeric",
                               month: "short",
@@ -694,7 +694,7 @@ export function UserManagement() {
                                   setFormError(null);
                                   setIsEditOpen(true);
                                 }}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-slate-800 transition-colors"
                                 title="Edit profile & assigned role"
                               >
                                 <Edit3 className="h-3.5 w-3.5" />
@@ -708,7 +708,7 @@ export function UserManagement() {
                                   setFormError(null);
                                   setIsPasswordOpen(true);
                                 }}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-amber-500/10 transition-colors"
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-amber-300 hover:bg-amber-500/10 transition-colors"
                                 title="Change or force password reset"
                               >
                                 <Key className="h-3.5 w-3.5" />
@@ -721,7 +721,7 @@ export function UserManagement() {
                                     setFormError(null);
                                     setIsDeleteOpen(true);
                                   }}
-                                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                  className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
                                   title="Delete user"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
@@ -768,25 +768,25 @@ export function UserManagement() {
                 <tbody className="divide-y divide-border">
                   {pendingUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="py-12 text-center text-slate-500">
+                      <td colSpan={4} className="py-12 text-center text-muted-foreground">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <CheckCircle2 className="h-8 w-8 text-emerald-400/40" />
-                          <span className="font-semibold text-slate-400">Approvals Queue is Clear</span>
+                          <span className="font-semibold text-muted-foreground">Approvals Queue is Clear</span>
                           <span className="text-[11px] text-slate-600">No quarantined accounts awaiting administrator review.</span>
                         </div>
                       </td>
                     </tr>
                   ) : (
                     pendingUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-slate-900/40 transition-colors">
+                      <tr key={user.id} className="hover:bg-muted/30 transition-colors">
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center justify-center font-bold text-xs">
                               {user.name ? user.name.charAt(0).toUpperCase() : "Q"}
                             </div>
                             <div>
-                              <div className="font-semibold text-white">{user.name}</div>
-                              <div className="text-slate-400 font-mono text-[11px]">{user.email}</div>
+                              <div className="font-semibold text-foreground">{user.name}</div>
+                              <div className="text-muted-foreground font-mono text-[11px]">{user.email}</div>
                             </div>
                           </div>
                         </td>
@@ -798,7 +798,7 @@ export function UserManagement() {
                           </span>
                         </td>
 
-                        <td className="py-4 px-4 text-slate-400 font-mono text-[11px]">
+                        <td className="py-4 px-4 text-muted-foreground font-mono text-[11px]">
                           {new Date(user.createdAt).toLocaleString(undefined, {
                             dateStyle: "medium",
                             timeStyle: "short",
@@ -816,7 +816,7 @@ export function UserManagement() {
                                 setFormError(null);
                                 setIsApproveOpen(true);
                               }}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all"
                             >
                               <UserCheck className="h-3.5 w-3.5" />
                               Approve &amp; Assign Profile
@@ -828,7 +828,7 @@ export function UserManagement() {
                                 setFormError(null);
                                 setIsDeleteOpen(true);
                               }}
-                              className="p-1.5 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                              className="p-1.5 rounded-xl text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
                               title="Reject & Purge Request"
                             >
                               <UserX className="h-4 w-4" />
@@ -851,11 +851,11 @@ export function UserManagement() {
           {/* Header & Create Role Button */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-indigo-400" />
                 Predefined System Roles &amp; Dynamic RBAC Matrix
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 The platform enforces 53 granular permissions grouped across 7 operational modules.
               </p>
             </div>
@@ -868,7 +868,7 @@ export function UserManagement() {
                 setFormError(null);
                 setIsCreateRoleOpen(true);
               }}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/25 transition-all w-fit"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-foreground text-xs font-semibold shadow-lg shadow-indigo-600/25 transition-all w-fit"
             >
               <Sparkles className="h-3.5 w-3.5" />
               + Create Custom Profile
@@ -880,11 +880,11 @@ export function UserManagement() {
             {roles.map((r) => (
               <div
                 key={r.id}
-                className="rounded-2xl border border-slate-900 bg-slate-900/40 p-5 hover:border-slate-800 transition-all flex flex-col justify-between"
+                className="rounded-2xl border border-border bg-muted/30 p-5 hover:border-border transition-all flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <h3 className="text-sm font-bold text-white tracking-wide">{r.name}</h3>
+                    <h3 className="text-sm font-bold text-foreground tracking-wide">{r.name}</h3>
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
                         r.isSystem
@@ -895,14 +895,14 @@ export function UserManagement() {
                       {r.isSystem ? "System Profile" : "Custom"}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                     {r.description || "No description provided."}
                   </p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs font-mono text-slate-400">
+                <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs font-mono text-muted-foreground">
                   <span>Authorized Capabilities:</span>
-                  <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded-md">
+                  <span className="font-bold text-foreground bg-slate-800 px-2 py-0.5 rounded-md">
                     {r.permissions?.length || 0} / {PERMISSION_REGISTRY.length}
                   </span>
                 </div>
@@ -950,12 +950,12 @@ export function UserManagement() {
                         </tr>
 
                         {catPerms.map((perm) => (
-                          <tr key={`${perm.resource}:${perm.action}`} className="hover:bg-slate-900/30">
+                          <tr key={`${perm.resource}:${perm.action}`} className="hover:bg-muted/30">
                             <td className="py-2.5 px-4">
-                              <div className="font-medium text-white font-mono text-[11px]">
+                              <div className="font-medium text-foreground font-mono text-[11px]">
                                 {perm.action.replace(/_/g, " ").toUpperCase()}
                               </div>
-                              <div className="text-[10px] text-slate-400 truncate max-w-sm">
+                              <div className="text-[10px] text-muted-foreground truncate max-w-sm">
                                 {perm.description}
                               </div>
                             </td>
@@ -972,7 +972,7 @@ export function UserManagement() {
                                       <Check className="h-3 w-3 stroke-[3]" />
                                     </div>
                                   ) : (
-                                    <div className="inline-flex p-1 rounded-md bg-slate-900 text-slate-600">
+                                    <div className="inline-flex p-1 rounded-md bg-card text-slate-600">
                                       <Lock className="h-3 w-3" />
                                     </div>
                                   )}
@@ -1020,9 +1020,9 @@ export function UserManagement() {
               </div>
             )}
 
-            <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/50 space-y-1 text-xs">
-              <div className="font-semibold text-white">{selectedUser.name}</div>
-              <div className="text-slate-400 font-mono text-[11px]">{selectedUser.email}</div>
+            <div className="p-3.5 rounded-xl border border-border bg-muted/30 space-y-1 text-xs">
+              <div className="font-semibold text-foreground">{selectedUser.name}</div>
+              <div className="text-muted-foreground font-mono text-[11px]">{selectedUser.email}</div>
               <div className="text-emerald-400 text-[10px] font-semibold flex items-center gap-1 mt-1">
                 <CheckCircle2 className="h-3 w-3" />
                 Email OTP Verified on Onboarding
@@ -1031,14 +1031,14 @@ export function UserManagement() {
 
             <form onSubmit={handleApproveSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                   Select RBAC Role Profile <span className="text-red-400">*</span>
                 </label>
                 <select
                   value={approveRoleId}
                   onChange={(e) => setApproveRoleId(e.target.value)}
                   required
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-foreground outline-none focus:border-primary/50"
                 >
                   <option value="" disabled>
                     -- Choose an Access Profile --
@@ -1050,24 +1050,24 @@ export function UserManagement() {
                   ))}
                 </select>
                 {approveRoleId && (
-                  <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed bg-slate-900/40 p-2.5 rounded-lg border border-slate-800/60">
+                  <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed bg-muted/30 p-2.5 rounded-lg border border-border">
                     {roles.find((r) => r.id === approveRoleId)?.description}
                   </p>
                 )}
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-900">
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setIsApproveOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs font-semibold shadow-lg shadow-emerald-600/20"
                 >
                   {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Approve &amp; Activate Account
@@ -1112,7 +1112,7 @@ export function UserManagement() {
             {!inviteGeneratedUrl ? (
               <form onSubmit={handleGenerateInvite} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                     Invitee Email Address
                   </label>
                   <input
@@ -1121,21 +1121,21 @@ export function UserManagement() {
                     onChange={(e) => setInviteEmail(e.target.value)}
                     placeholder="operator@company.com"
                     required
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-primary/50"
+                    className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-foreground placeholder-slate-500 outline-none focus:border-primary/50"
                   />
-                  <p className="text-[11px] text-slate-500 mt-1">
+                  <p className="text-[11px] text-muted-foreground mt-1">
                     The registration form will be locked strictly to this verified email address.
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                     Link Expiration Duration
                   </label>
                   <select
                     value={inviteExpiryHours}
                     onChange={(e) => setInviteExpiryHours(e.target.value)}
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
+                    className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-foreground outline-none focus:border-primary/50"
                   >
                     <option value="24">24 Hours (Recommended)</option>
                     <option value="48">48 Hours</option>
@@ -1144,10 +1144,10 @@ export function UserManagement() {
                   </select>
                 </div>
 
-                <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+                <div className="flex items-center justify-between rounded-xl border border-border bg-muted/30 p-3">
                   <div>
-                    <span className="text-xs font-medium text-slate-300">Dispatch Email Directly</span>
-                    <p className="text-[11px] text-slate-500">
+                    <span className="text-xs font-medium text-muted-foreground">Dispatch Email Directly</span>
+                    <p className="text-[11px] text-muted-foreground">
                       Send the invitation URL directly to invitee's inbox via configured SMTP.
                     </p>
                   </div>
@@ -1155,22 +1155,22 @@ export function UserManagement() {
                     type="checkbox"
                     checked={inviteSendDirectly}
                     onChange={(e) => setInviteSendDirectly(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-700 bg-slate-950 text-primary focus:ring-primary"
+                    className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary"
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-slate-900">
+                <div className="flex justify-end gap-2 pt-2 border-t border-border">
                   <button
                     type="button"
                     onClick={() => setIsInviteModalOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
+                    className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={formLoading}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-foreground text-xs font-semibold shadow-lg shadow-indigo-600/20"
                   >
                     {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                     Generate Secure Link
@@ -1213,7 +1213,7 @@ export function UserManagement() {
                 )}
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                     Pre-Authorized Onboarding URL
                   </label>
                   <div className="flex gap-2">
@@ -1221,7 +1221,7 @@ export function UserManagement() {
                       type="text"
                       readOnly
                       value={inviteGeneratedUrl}
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900/90 px-3.5 py-2.5 text-xs text-slate-300 font-mono select-all outline-none"
+                      className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-muted-foreground font-mono select-all outline-none"
                     />
                     <button
                       type="button"
@@ -1230,7 +1230,7 @@ export function UserManagement() {
                         setInviteCopied(true);
                         setTimeout(() => setInviteCopied(false), 3000);
                       }}
-                      className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary text-white text-xs font-semibold shrink-0 hover:bg-primary/90"
+                      className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary text-foreground text-xs font-semibold shrink-0 hover:bg-primary/90"
                     >
                       <Copy className="h-3.5 w-3.5" />
                       {inviteCopied ? "Copied!" : "Copy"}
@@ -1238,21 +1238,21 @@ export function UserManagement() {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-slate-900">
+                <div className="flex justify-end gap-2 pt-2 border-t border-border">
                   <button
                     type="button"
                     onClick={() => {
                       setInviteGeneratedUrl(null);
                       setInviteEmail("");
                     }}
-                    className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
+                    className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground"
                   >
                     Create Another
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsInviteModalOpen(false)}
-                    className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-white hover:bg-slate-800"
+                    className="px-4 py-2 rounded-xl bg-card border border-border text-xs font-semibold text-foreground hover:bg-slate-800"
                   >
                     Done
                   </button>
@@ -1286,33 +1286,33 @@ export function UserManagement() {
 
             <form onSubmit={handleEditSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Full Name</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Full Name</label>
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   required
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Email</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Email</label>
                 <input
                   type="email"
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
                   required
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Assigned Role Profile</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Assigned Role Profile</label>
                 <select
                   value={editRoleId}
                   onChange={(e) => setEditRoleId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50"
                 >
                   <option value="">-- No Profile Assigned (User Level) --</option>
                   {roles.map((r) => (
@@ -1324,29 +1324,29 @@ export function UserManagement() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Account Status</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Account Status</label>
                 <select
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50"
                 >
                   <option value="ACTIVE">ACTIVE</option>
                   <option value="SUSPENDED">SUSPENDED</option>
                 </select>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-900">
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setIsEditOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-foreground text-xs font-semibold"
                 >
                   {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Save Changes
@@ -1384,7 +1384,7 @@ export function UserManagement() {
             <form onSubmit={handleCreateRoleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Profile Name <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -1393,12 +1393,12 @@ export function UserManagement() {
                     onChange={(e) => setNewRoleName(e.target.value)}
                     placeholder="e.g. Compliance Auditor Lead"
                     required
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs text-white outline-none focus:border-primary/50"
+                    className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Description
                   </label>
                   <input
@@ -1406,23 +1406,23 @@ export function UserManagement() {
                     value={newRoleDesc}
                     onChange={(e) => setNewRoleDesc(e.target.value)}
                     placeholder="Purpose and duty boundary of this role"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs text-white outline-none focus:border-primary/50"
+                    className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-200 mb-2">
+                <label className="block text-xs font-bold text-foreground mb-2">
                   Select Granted Permissions ({newRolePerms.size} selected)
                 </label>
-                <div className="space-y-3 max-h-72 overflow-y-auto border border-slate-800 rounded-xl p-3 bg-slate-900/30">
+                <div className="space-y-3 max-h-72 overflow-y-auto border border-border rounded-xl p-3 bg-muted/30">
                   {categories.map((catKey) => {
                     const catLabel = CATEGORY_LABELS[catKey as keyof typeof CATEGORY_LABELS] || catKey;
                     const catPerms = PERMISSION_REGISTRY.filter((p) => p.category === catKey);
 
                     return (
                       <div key={catKey} className="space-y-1.5">
-                        <div className="text-[11px] font-bold text-indigo-400 uppercase tracking-wide border-b border-slate-800/80 pb-1">
+                        <div className="text-[11px] font-bold text-indigo-400 uppercase tracking-wide border-b border-border pb-1">
                           {catLabel}
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -1433,7 +1433,7 @@ export function UserManagement() {
                             return (
                               <label
                                 key={key}
-                                className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-800/40 cursor-pointer text-xs text-slate-300"
+                                className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-800/40 cursor-pointer text-xs text-muted-foreground"
                               >
                                 <input
                                   type="checkbox"
@@ -1444,7 +1444,7 @@ export function UserManagement() {
                                     else next.delete(key);
                                     setNewRolePerms(next);
                                   }}
-                                  className="h-3.5 w-3.5 rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-indigo-600"
+                                  className="h-3.5 w-3.5 rounded border-border bg-background text-indigo-600 focus:ring-indigo-600"
                                 />
                                 <span className="truncate text-[11px] font-mono">
                                   {p.action.replace(/_/g, " ")}
@@ -1459,18 +1459,18 @@ export function UserManagement() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-900">
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setIsCreateRoleOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-foreground text-xs font-semibold shadow-lg shadow-indigo-600/20"
                 >
                   {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Save Custom Profile
@@ -1502,48 +1502,48 @@ export function UserManagement() {
               </div>
             )}
 
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-muted-foreground">
               Reset password for <strong>{selectedUser.email}</strong>. Setting a temporary password will require the user to change it on their next login.
             </p>
 
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">New Password (Optional)</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">New Password (Optional)</label>
                 <input
                   type="password"
                   value={resetPassword}
                   onChange={(e) => setResetPassword(e.target.value)}
                   placeholder="Leave empty to only flag for password reset"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50"
                 />
               </div>
 
               {resetPassword && (
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Confirm Password</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">Confirm Password</label>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     placeholder="Confirm new password"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs text-white outline-none focus:border-primary/50"
+                    className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50"
                   />
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-900">
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setIsPasswordOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-foreground text-xs font-semibold"
                 >
                   {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Apply Reset
@@ -1648,35 +1648,35 @@ export function UserManagement() {
               className="space-y-4"
             >
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Full Name</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Full Name</label>
                 <input
                   type="text"
                   value={createName}
                   onChange={(e) => setCreateName(e.target.value)}
                   required
                   placeholder="Operator Name"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Email Address</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Email Address</label>
                 <input
                   type="email"
                   value={createEmail}
                   onChange={(e) => setCreateEmail(e.target.value)}
                   required
                   placeholder="operator@company.com"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Assigned Profile</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Assigned Profile</label>
                 <select
                   value={createRoleId}
                   onChange={(e) => setCreateRoleId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50"
                 >
                   <option value="">-- No Profile Assigned (Quarantined) --</option>
                   {roles.map((r) => (
@@ -1688,29 +1688,29 @@ export function UserManagement() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Initial Password</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Initial Password</label>
                 <input
                   type="password"
                   value={createPassword}
                   onChange={(e) => setCreatePassword(e.target.value)}
                   required
                   placeholder="Minimum 8 characters"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-900">
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-foreground text-xs font-semibold"
                 >
                   {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Create &amp; Provision

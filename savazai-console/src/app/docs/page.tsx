@@ -752,19 +752,19 @@ export default function DocsPage() {
   }, [filteredModules, activeModuleId]);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-slate-950 text-slate-100 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 bg-background text-slate-100 overflow-hidden">
       {/* Top Header & Search Bar */}
-      <div className="shrink-0 border-b border-slate-900 bg-slate-950/90 px-6 py-4 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="shrink-0 border-b border-border bg-muted/40 px-6 py-4 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
               <BookOpen className="h-4 w-4" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+              <h1 className="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
                 SavazAI Platform &amp; User Manual
               </h1>
-              <p className="text-slate-400 text-xs">
+              <p className="text-muted-foreground text-xs">
                 Comprehensive step-by-step guides, operational workflows, and feature walkthroughs
               </p>
             </div>
@@ -773,18 +773,18 @@ export default function DocsPage() {
 
         {/* Search input */}
         <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search guides, how-to steps, features..."
-            className="w-full pl-10 pr-12 py-2 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+            className="w-full pl-10 pr-12 py-2 bg-muted/30 border border-border rounded-xl text-xs text-foreground placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-slate-300 px-1.5 py-0.5 rounded bg-slate-800"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-muted-foreground px-1.5 py-0.5 rounded bg-slate-800"
             >
               Clear
             </button>
@@ -795,9 +795,9 @@ export default function DocsPage() {
       {/* Main Split Layout */}
       <div className="flex-1 flex flex-row min-h-0 overflow-hidden">
         {/* Navigation Sidebar */}
-        <aside className="w-72 shrink-0 border-r border-slate-900 bg-slate-950/60 overflow-y-auto p-4 space-y-6 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-900">
+        <aside className="w-72 shrink-0 border-r border-border bg-muted/40 overflow-y-auto p-4 space-y-6 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-card">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3 px-2">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3 px-2">
               User &amp; Operator Manual
             </div>
             <nav className="space-y-1">
@@ -816,17 +816,17 @@ export default function DocsPage() {
                       className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left ${
                         isActive
                           ? "bg-primary/20 text-primary border border-primary/30 font-bold"
-                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/40 border border-transparent"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/30 border border-transparent"
                       }`}
                     >
-                      <IconComponent className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : "text-slate-500"}`} />
+                      <IconComponent className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
                       <span className="truncate flex-1">{mod.shortTitle}</span>
                       {isActive && <ChevronRight className="h-3.5 w-3.5 shrink-0 text-primary" />}
                     </button>
 
                     {/* Sub-sections */}
                     {isActive && mod.sections.length > 0 && (
-                      <div className="ml-6 pl-2 border-l border-slate-800/80 space-y-0.5 py-1">
+                      <div className="ml-6 pl-2 border-l border-border space-y-0.5 py-1">
                         {mod.sections.map((sec) => (
                           <button
                             key={sec.id}
@@ -837,8 +837,8 @@ export default function DocsPage() {
                             }}
                             className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-medium truncate transition-all block ${
                               activeSectionId === sec.id
-                                ? "text-white bg-slate-900 font-semibold"
-                                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"
+                                ? "text-foreground bg-card font-semibold"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                             }`}
                           >
                             {sec.title}
@@ -857,7 +857,7 @@ export default function DocsPage() {
               <Sparkles className="h-4 w-4 text-cyan-400" />
               Need Personal Assistance?
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
               Explore our interactive workspace tabs or reach out to your organization&apos;s designated SavazAI administrator.
             </p>
           </div>
@@ -866,15 +866,15 @@ export default function DocsPage() {
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto p-6 md:p-10 space-y-10 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-800">
           {/* Module Banner */}
-          <div className="border-b border-slate-900 pb-6">
+          <div className="border-b border-border pb-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 mb-3">
               <activeModule.icon className="h-3.5 w-3.5" />
               User &amp; Operator Guide
             </div>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">
               {activeModule.title}
             </h2>
-            <p className="text-slate-400 text-sm mt-2 leading-relaxed max-w-4xl">
+            <p className="text-muted-foreground text-sm mt-2 leading-relaxed max-w-4xl">
               {activeModule.description}
             </p>
           </div>
@@ -885,11 +885,11 @@ export default function DocsPage() {
               <section
                 key={section.id}
                 id={section.id}
-                className="scroll-mt-6 p-6 md:p-8 rounded-3xl border border-slate-900 bg-slate-900/15 space-y-6"
+                className="scroll-mt-6 p-6 md:p-8 rounded-3xl border border-border bg-muted/30 space-y-6"
               >
                 {/* Section Header with Badge */}
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-900/80 pb-4">
-                  <h3 className="text-lg md:text-xl font-bold text-white flex items-center gap-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/80 pb-4">
+                  <h3 className="text-lg md:text-xl font-bold text-foreground flex items-center gap-2.5">
                     <span>{section.title}</span>
                   </h3>
                   {section.badge && (
@@ -914,14 +914,14 @@ export default function DocsPage() {
                 </div>
 
                 {/* Section Summary */}
-                <p className="text-slate-300 text-sm leading-relaxed">
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   {section.summary}
                 </p>
 
                 {/* Optional How-To Steps */}
                 {section.steps && section.steps.length > 0 && (
                   <div className="space-y-3 pt-2">
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
+                    <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                       Step-by-Step Instructions:
                     </div>
@@ -929,14 +929,14 @@ export default function DocsPage() {
                       {section.steps.map((st) => (
                         <div
                           key={st.step}
-                          className="flex items-start gap-3.5 p-4 rounded-2xl border border-slate-800 bg-slate-950/60"
+                          className="flex items-start gap-3.5 p-4 rounded-2xl border border-border bg-muted/40"
                         >
                           <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">
                             {st.step}
                           </div>
                           <div>
-                            <h4 className="text-xs font-bold text-white mb-0.5">{st.title}</h4>
-                            <p className="text-slate-400 text-xs leading-relaxed">{st.description}</p>
+                            <h4 className="text-xs font-bold text-foreground mb-0.5">{st.title}</h4>
+                            <p className="text-muted-foreground text-xs leading-relaxed">{st.description}</p>
                           </div>
                         </div>
                       ))}
@@ -950,13 +950,13 @@ export default function DocsPage() {
                     {section.highlights.map((h, hIdx) => (
                       <div
                         key={hIdx}
-                        className="p-4 rounded-2xl border border-slate-800/80 bg-slate-950/40 space-y-1.5"
+                        className="p-4 rounded-2xl border border-border bg-muted/40 space-y-1.5"
                       >
                         <h4 className="text-xs font-bold text-indigo-300 flex items-center gap-2">
                           <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
                           {h.label}
                         </h4>
-                        <p className="text-slate-400 text-xs leading-relaxed">
+                        <p className="text-muted-foreground text-xs leading-relaxed">
                           {h.description}
                         </p>
                       </div>
@@ -983,31 +983,31 @@ export default function DocsPage() {
                       <Info className="h-5 w-5 text-indigo-400 shrink-0 mt-0.5" />
                     )}
                     <div>
-                      <h4 className="text-xs font-bold mb-1 text-white">{section.callout.title}</h4>
-                      <p className="text-xs text-slate-300 leading-relaxed">{section.callout.message}</p>
+                      <h4 className="text-xs font-bold mb-1 text-foreground">{section.callout.title}</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{section.callout.message}</p>
                     </div>
                   </div>
                 )}
 
                 {/* Optional Comparison Table */}
                 {section.table && (
-                  <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/60 mt-4">
+                  <div className="overflow-x-auto rounded-2xl border border-border bg-muted/40 mt-4">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-900 text-slate-300 font-semibold border-b border-slate-800">
+                      <thead className="bg-card text-muted-foreground font-semibold border-b border-border">
                         <tr>
                           {section.table.headers.map((header, idx) => (
                             <th key={idx} className="px-4 py-3.5 font-bold">{header}</th>
                           ))}
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-900 text-slate-400">
+                      <tbody className="divide-y divide-slate-900 text-muted-foreground">
                         {section.table.rows.map((row, rIdx) => (
-                          <tr key={rIdx} className="hover:bg-slate-900/40 transition-colors">
+                          <tr key={rIdx} className="hover:bg-muted/30 transition-colors">
                             {row.map((cell, cIdx) => (
                               <td
                                 key={cIdx}
                                 className={`px-4 py-3.5 ${
-                                  cIdx === 0 ? "font-semibold text-slate-200" : ""
+                                  cIdx === 0 ? "font-semibold text-foreground" : ""
                                 } ${cIdx === 2 && cell.includes("No Access") ? "text-rose-400 font-semibold" : ""} ${
                                   cIdx === 3 && cell.includes("Full Access") ? "text-emerald-400 font-semibold" : ""
                                 }`}
@@ -1026,7 +1026,7 @@ export default function DocsPage() {
           </div>
 
           {/* Footer Guide Signoff */}
-          <div className="border-t border-slate-900 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <div className="border-t border-border pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
             <div>SavazAI Platform User Manual &bull; Designed for Enterprise Teams</div>
             <div className="flex items-center gap-3">
               <span>Need help? Contact your workspace administrator</span>

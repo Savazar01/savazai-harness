@@ -170,20 +170,20 @@ export function SystemAdminHub({
           System Administration &amp; Security Hub
           <HelpTooltip content="Configure transactional email delivery, CAPTCHA bot protection, security policies, and monitor real-time outbound delivery audit streams." side="right" />
         </h3>
-        <p className="text-slate-400 text-xs">
+        <p className="text-muted-foreground text-xs">
           SMTP relays, Cloudflare Turnstile bot verification, session controls, and tamper-evident audit logging.
         </p>
       </div>
 
       {/* Nested Sub-Tab Navigation Bar */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-900 pb-3">
+      <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
         <button
           type="button"
           onClick={() => setSubTab("email")}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             subTab === "email"
               ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
-              : "bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800/80"
+              : "bg-muted/30 text-muted-foreground hover:text-foreground border border-border/80"
           }`}
         >
           <Mail className="h-3.5 w-3.5" />
@@ -196,7 +196,7 @@ export function SystemAdminHub({
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             subTab === "captcha"
               ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
-              : "bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800/80"
+              : "bg-muted/30 text-muted-foreground hover:text-foreground border border-border/80"
           }`}
         >
           <ShieldCheck className="h-3.5 w-3.5" />
@@ -209,7 +209,7 @@ export function SystemAdminHub({
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             subTab === "logs"
               ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
-              : "bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800/80"
+              : "bg-muted/30 text-muted-foreground hover:text-foreground border border-border/80"
           }`}
         >
           <Activity className="h-3.5 w-3.5" />
@@ -222,7 +222,7 @@ export function SystemAdminHub({
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             subTab === "security"
               ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
-              : "bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800/80"
+              : "bg-muted/30 text-muted-foreground hover:text-foreground border border-border/80"
           }`}
         >
           <Lock className="h-3.5 w-3.5" />
@@ -260,7 +260,7 @@ export function SystemAdminHub({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Transporter Provider
                 </label>
                 <select
@@ -272,7 +272,7 @@ export function SystemAdminHub({
                       provider: e.target.value as "smtp" | "gmail" | "sendgrid",
                     }))
                   }
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
                 >
                   <option value="smtp">Standard SMTP Relay (Recommended: Host, Port, TLS, Auth)</option>
                   <option value="gmail">Google Gmail App Password (Service: Gmail)</option>
@@ -292,7 +292,7 @@ export function SystemAdminHub({
               {smtpSettings.provider === "smtp" && (
                 <>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                       SMTP Host Server
                     </label>
                     <input
@@ -301,12 +301,12 @@ export function SystemAdminHub({
                       value={smtpSettings.host}
                       onChange={(e) => setSmtpSettings((prev) => ({ ...prev, host: e.target.value }))}
                       placeholder="smtp.gmail.com or mail.enterprise.com"
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono"
+                      className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                       Port &amp; Encryption
                     </label>
                     <div className="flex gap-2">
@@ -316,16 +316,16 @@ export function SystemAdminHub({
                         value={smtpSettings.port}
                         onChange={(e) => setSmtpSettings((prev) => ({ ...prev, port: e.target.value }))}
                         placeholder="587"
-                        className="w-1/2 rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white font-mono outline-none focus:border-primary/50"
+                        className="w-1/2 rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white font-mono outline-none focus:border-primary/50"
                       />
-                      <label className="w-1/2 flex items-center justify-between px-3 py-2 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer">
-                        <span className="text-xs text-slate-300">SSL/TLS Secure</span>
+                      <label className="w-1/2 flex items-center justify-between px-3 py-2 rounded-xl border border-border bg-muted/30 cursor-pointer">
+                        <span className="text-xs text-muted-foreground">SSL/TLS Secure</span>
                         <input
                           type="checkbox"
                           disabled={!canManage}
                           checked={smtpSettings.secure}
                           onChange={(e) => setSmtpSettings((prev) => ({ ...prev, secure: e.target.checked }))}
-                          className="h-4 w-4 rounded border-slate-700 bg-slate-950 text-primary focus:ring-primary"
+                          className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary"
                         />
                       </label>
                     </div>
@@ -334,7 +334,7 @@ export function SystemAdminHub({
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   {smtpSettings.provider === "sendgrid" ? "SendGrid Username ('apikey')" : "SMTP Username / Email"}
                 </label>
                 <input
@@ -343,13 +343,13 @@ export function SystemAdminHub({
                   value={smtpSettings.user}
                   onChange={(e) => setSmtpSettings((prev) => ({ ...prev, user: e.target.value }))}
                   placeholder="user@domain.com or apikey"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     {smtpSettings.provider === "gmail"
                       ? "16-Char Google App Password"
                       : smtpSettings.provider === "sendgrid"
@@ -378,7 +378,7 @@ export function SystemAdminHub({
                         ? "Enter 16-char app password (e.g. abcd efgh ijkl mnop)"
                         : "••••••••••••••••"
                     }
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 pr-20 text-xs text-white font-mono outline-none focus:border-primary/50"
+                    className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 pr-20 text-xs text-white font-mono outline-none focus:border-primary/50"
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                     {smtpSettings.pass && smtpSettings.pass.includes("••••") ? (
@@ -386,7 +386,7 @@ export function SystemAdminHub({
                         type="button"
                         disabled={!canManage}
                         onClick={() => setSmtpSettings((prev) => ({ ...prev, pass: "" }))}
-                        className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] font-medium text-slate-300 transition-colors cursor-pointer"
+                        className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] font-medium text-muted-foreground transition-colors cursor-pointer"
                         title="Clear stored placeholder to enter a new password"
                       >
                         Change
@@ -395,7 +395,7 @@ export function SystemAdminHub({
                       <button
                         type="button"
                         onClick={() => setShowSmtpPass(!showSmtpPass)}
-                        className="p-1 rounded text-slate-400 hover:text-white cursor-pointer"
+                        className="p-1 rounded text-muted-foreground hover:text-foreground cursor-pointer"
                         title={showSmtpPass ? "Hide password" : "Show password"}
                       >
                         {showSmtpPass ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -406,7 +406,7 @@ export function SystemAdminHub({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Sender Display Name
                 </label>
                 <input
@@ -415,12 +415,12 @@ export function SystemAdminHub({
                   value={smtpSettings.fromName}
                   onChange={(e) => setSmtpSettings((prev) => ({ ...prev, fromName: e.target.value }))}
                   placeholder="SavazAI Platform Security"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Sender Email Address (From)
                 </label>
                 <input
@@ -429,7 +429,7 @@ export function SystemAdminHub({
                   value={smtpSettings.fromEmail}
                   onChange={(e) => setSmtpSettings((prev) => ({ ...prev, fromEmail: e.target.value }))}
                   placeholder="security@savazar.com"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50 font-mono"
                 />
               </div>
             </div>
@@ -453,7 +453,7 @@ export function SystemAdminHub({
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   CAPTCHA Challenge Provider
                 </label>
                 <select
@@ -465,7 +465,7 @@ export function SystemAdminHub({
                       provider: e.target.value as "turnstile" | "recaptcha_v3" | "disabled",
                     }))
                   }
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
                 >
                   <option value="turnstile">Cloudflare Turnstile (Recommended &bull; Privacy-Preserving)</option>
                   <option value="recaptcha_v3">Google reCAPTCHA v3 (Score-Based)</option>
@@ -476,7 +476,7 @@ export function SystemAdminHub({
               {captchaSettings.provider !== "disabled" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                       Site Key (Public)
                     </label>
                     <input
@@ -485,12 +485,12 @@ export function SystemAdminHub({
                       value={captchaSettings.siteKey}
                       onChange={(e) => setCaptchaSettings((prev) => ({ ...prev, siteKey: e.target.value }))}
                       placeholder="0x4AAAAAA..."
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white font-mono outline-none focus:border-primary/50"
+                      className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white font-mono outline-none focus:border-primary/50"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                       Secret Key (Private &bull; Encrypted)
                     </label>
                     <div className="relative">
@@ -500,12 +500,12 @@ export function SystemAdminHub({
                         value={captchaSettings.secretKey}
                         onChange={(e) => setCaptchaSettings((prev) => ({ ...prev, secretKey: e.target.value }))}
                         placeholder="0x4AAAAAA..."
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 pr-10 text-xs text-white font-mono outline-none focus:border-primary/50"
+                        className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 pr-10 text-xs text-white font-mono outline-none focus:border-primary/50"
                       />
                       <button
                         type="button"
                         onClick={() => setShowSecretKey(!showSecretKey)}
-                        className="absolute right-3 top-2.5 text-slate-500 hover:text-white"
+                        className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
                       >
                         {showSecretKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -536,7 +536,7 @@ export function SystemAdminHub({
                 type="button"
                 onClick={fetchEmailLogs}
                 disabled={emailLogsLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-muted/30 hover:bg-slate-800 text-muted-foreground text-xs font-semibold transition-all cursor-pointer"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${emailLogsLoading ? "animate-spin" : ""}`} />
                 Refresh Stream
@@ -544,13 +544,13 @@ export function SystemAdminHub({
             </div>
 
             {emailLogs.length === 0 ? (
-              <div className="text-center py-10 text-slate-500 text-xs">
+              <div className="text-center py-10 text-muted-foreground text-xs">
                 {emailLogsLoading ? "Loading audit stream..." : "No outbound email records logged yet."}
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-xl border border-slate-900">
-                <table className="w-full text-left text-xs text-slate-300">
-                  <thead className="bg-slate-900/60 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-900">
+              <div className="overflow-x-auto rounded-xl border border-border">
+                <table className="w-full text-left text-xs text-muted-foreground">
+                  <thead className="bg-muted/30 text-[10px] uppercase font-bold text-muted-foreground border-b border-border">
                     <tr>
                       <th className="px-3.5 py-2.5">Status</th>
                       <th className="px-3.5 py-2.5">Recipient</th>
@@ -561,7 +561,7 @@ export function SystemAdminHub({
                   </thead>
                   <tbody className="divide-y divide-slate-900">
                     {emailLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-slate-900/30 transition-colors">
+                      <tr key={log.id} className="hover:bg-muted/30 transition-colors">
                         <td className="px-3.5 py-2.5">
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
@@ -578,15 +578,15 @@ export function SystemAdminHub({
                             {log.status}
                           </span>
                         </td>
-                        <td className="px-3.5 py-2.5 font-mono text-slate-200">{log.recipient}</td>
+                        <td className="px-3.5 py-2.5 font-mono text-foreground">{log.recipient}</td>
                         <td className="px-3.5 py-2.5">
                           <span className="font-semibold text-white block">{log.purpose}</span>
-                          <span className="text-[10px] text-slate-500 truncate block max-w-xs">{log.subject}</span>
+                          <span className="text-[10px] text-muted-foreground truncate block max-w-xs">{log.subject}</span>
                         </td>
-                        <td className="px-3.5 py-2.5 text-slate-400 whitespace-nowrap">
+                        <td className="px-3.5 py-2.5 text-muted-foreground whitespace-nowrap">
                           {new Date(log.createdAt).toLocaleString()}
                         </td>
-                        <td className="px-3.5 py-2.5 text-[10px] font-mono text-slate-400">
+                        <td className="px-3.5 py-2.5 text-[10px] font-mono text-muted-foreground">
                           {log.error ? (
                             <span className="text-red-400 truncate block max-w-[200px]" title={log.error}>
                               {log.error}
@@ -621,14 +621,14 @@ export function SystemAdminHub({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Session Idle Expiration (Hours)
                 </label>
                 <select
                   value={securitySettings.sessionHours}
                   disabled={!canManage}
                   onChange={(e) => setSecuritySettings((prev) => ({ ...prev, sessionHours: e.target.value }))}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
                 >
                   <option value="8">8 Hours (High Security &bull; Finance / Gov)</option>
                   <option value="24">24 Hours (Standard Enterprise)</option>
@@ -638,14 +638,14 @@ export function SystemAdminHub({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Max Failed Login Attempts
                 </label>
                 <select
                   value={securitySettings.maxLoginAttempts}
                   disabled={!canManage}
                   onChange={(e) => setSecuritySettings((prev) => ({ ...prev, maxLoginAttempts: e.target.value }))}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
                 >
                   <option value="3">3 Attempts (Strict Rate-Limiting)</option>
                   <option value="5">5 Attempts (Balanced)</option>
@@ -654,7 +654,7 @@ export function SystemAdminHub({
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Quarantine Submission Alert Email
                 </label>
                 <input
@@ -663,9 +663,9 @@ export function SystemAdminHub({
                   value={securitySettings.quarantineNotificationEmail}
                   onChange={(e) => setSecuritySettings((prev) => ({ ...prev, quarantineNotificationEmail: e.target.value }))}
                   placeholder="security-team@savazar.com"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50 font-mono"
                 />
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-[11px] text-muted-foreground mt-1">
                   Receives notification digests whenever a pre-authorized applicant completes OTP and enters the quarantine approval queue.
                 </p>
               </div>
@@ -694,13 +694,13 @@ export function SystemAdminHub({
               <button
                 type="button"
                 onClick={() => setIsTestEmailOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white cursor-pointer"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-muted-foreground">
               Verify your active SMTP handshake by dispatching a real transactional message directly through Nodemailer.
             </p>
 
@@ -734,7 +734,7 @@ export function SystemAdminHub({
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
                   Target Recipient Email
                 </label>
                 <input
@@ -749,15 +749,15 @@ export function SystemAdminHub({
                     }
                   }}
                   placeholder="recipient@example.com"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-900">
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setIsTestEmailOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   Close
                 </button>

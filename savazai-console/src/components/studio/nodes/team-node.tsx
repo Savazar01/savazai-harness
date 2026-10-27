@@ -155,7 +155,7 @@ export function TeamNode({
               ? "border-indigo-400 bg-indigo-900/60 ring-4 ring-indigo-500/50 scale-[1.03]"
               : isSelected
               ? "border-indigo-500/80 bg-indigo-950/50 ring-2 ring-indigo-500/80 shadow-indigo-500/20"
-              : "border-indigo-500/30 bg-[#0c0d1e]/80 hover:border-indigo-400/50 hover:bg-[#101229]/80"
+              : "border-indigo-500/30 bg-background/80 hover:border-indigo-400/50 hover:bg-muted/80"
           }`}
         >
           <div className="flex items-center justify-between gap-2">
@@ -173,7 +173,7 @@ export function TeamNode({
                     onChange={(e) => setTitleInput(e.target.value)}
                     onKeyDown={handleTitleKeyDown}
                     onBlur={handleTitleSubmit}
-                    className="w-full text-xs font-bold text-white bg-slate-900 border border-indigo-500 rounded-lg px-2 py-0.5 outline-none font-sans"
+                    className="w-full text-xs font-bold text-white bg-card border border-indigo-500 rounded-lg px-2 py-0.5 outline-none font-sans"
                   />
                   <button
                     type="button"
@@ -188,7 +188,7 @@ export function TeamNode({
                       setTitleInput(node.label || "Specialist Team");
                       setIsEditingTitle(false);
                     }}
-                    className="p-1 rounded bg-slate-800 text-slate-400 hover:text-white"
+                    className="p-1 rounded bg-slate-800 text-muted-foreground hover:text-foreground"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -204,7 +204,7 @@ export function TeamNode({
                       e.stopPropagation();
                       setIsEditingTitle(true);
                     }}
-                    className="opacity-0 group-hover/title:opacity-100 p-0.5 rounded text-slate-400 hover:text-white transition-opacity"
+                    className="opacity-0 group-hover/title:opacity-100 p-0.5 rounded text-muted-foreground hover:text-foreground transition-opacity"
                     title="Rename Team"
                   >
                     <Pencil className="h-2.5 w-2.5" />
@@ -243,7 +243,7 @@ export function TeamNode({
                   e.stopPropagation();
                   onAddWorker();
                 }}
-                className="p-1 rounded-md bg-indigo-900/40 border border-indigo-500/30 text-indigo-300 hover:text-white hover:bg-indigo-800/50 transition-all"
+                className="p-1 rounded-md bg-indigo-900/40 border border-indigo-500/30 text-indigo-300 hover:text-foreground hover:bg-indigo-800/50 transition-all"
                 title="Add Worker to Team"
               >
                 <Plus className="h-3 w-3" />
@@ -319,7 +319,7 @@ export function TeamNode({
                   onChange={(e) => setTitleInput(e.target.value)}
                   onKeyDown={handleTitleKeyDown}
                   onBlur={handleTitleSubmit}
-                  className="text-xs font-bold text-white bg-slate-900 border border-indigo-500 rounded-lg px-2.5 py-1 outline-none w-64"
+                  className="text-xs font-bold text-white bg-card border border-indigo-500 rounded-lg px-2.5 py-1 outline-none w-64"
                 />
                 <button
                   type="button"
@@ -334,7 +334,7 @@ export function TeamNode({
                     setTitleInput(node.label || "Specialist Team");
                     setIsEditingTitle(false);
                   }}
-                  className="p-1 rounded bg-slate-800 text-slate-400 hover:text-white"
+                  className="p-1 rounded bg-slate-800 text-muted-foreground hover:text-foreground"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -350,7 +350,7 @@ export function TeamNode({
                     e.stopPropagation();
                     setIsEditingTitle(true);
                   }}
-                  className="opacity-0 group-hover/title:opacity-100 p-0.5 rounded text-slate-400 hover:text-white transition-opacity"
+                  className="opacity-0 group-hover/title:opacity-100 p-0.5 rounded text-muted-foreground hover:text-foreground transition-opacity"
                   title="Rename Team"
                 >
                   <Pencil className="h-3 w-3" />
@@ -382,7 +382,7 @@ export function TeamNode({
                 e.stopPropagation();
                 onToggleCollapse();
               }}
-              className="p-1.5 rounded-xl bg-indigo-900/40 hover:bg-indigo-800/60 border border-indigo-500/30 text-indigo-300 hover:text-white transition-all"
+              className="p-1.5 rounded-xl bg-indigo-900/40 hover:bg-indigo-800/60 border border-indigo-500/30 text-indigo-300 hover:text-foreground transition-all"
               title="Collapse Team Container"
             >
               <Minimize2 className="h-3.5 w-3.5" />
@@ -405,8 +405,8 @@ export function TeamNode({
         {workerCount === 0 && (
           <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-indigo-500/20 rounded-2xl m-3 bg-indigo-950/10 text-center p-6">
             <Users className="h-8 w-8 text-indigo-400/40 mb-2" />
-            <p className="text-xs font-bold text-slate-300">Team is currently empty</p>
-            <p className="text-[10px] text-slate-400 mt-1 max-w-sm">
+            <p className="text-xs font-bold text-muted-foreground">Team is currently empty</p>
+            <p className="text-[10px] text-muted-foreground mt-1 max-w-sm">
               Specialist workers reside inside this team. Click <span className="text-indigo-300 font-semibold">&lsquo;+ Add Worker&rsquo;</span> above to create your first specialist.
             </p>
           </div>
@@ -418,7 +418,7 @@ export function TeamNode({
           className={`absolute bottom-2 right-2 p-1.5 rounded-lg cursor-nwse-resize select-none transition-all z-30 ${
             isResizing
               ? "bg-indigo-600 text-white scale-125"
-              : "text-slate-500 hover:text-indigo-400 hover:bg-indigo-950/60"
+              : "text-muted-foreground hover:text-indigo-400 hover:bg-indigo-950/60"
           }`}
           title="Drag to resize team container width and height"
         >

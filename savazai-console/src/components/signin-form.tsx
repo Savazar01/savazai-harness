@@ -71,7 +71,7 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
   };
 
   return (
-    <div className="w-full max-w-md rounded-3xl border border-slate-900 bg-slate-950/80 p-8 shadow-2xl backdrop-blur-md relative overflow-hidden">
+    <div className="w-full max-w-md rounded-3xl border border-border bg-muted/40 p-8 shadow-2xl backdrop-blur-md relative overflow-hidden">
       <div className="absolute top-[-10%] right-[-10%] w-[30%] h-[30%] rounded-full bg-primary/10 blur-[50px] pointer-events-none" />
 
       <div className="flex flex-col items-center mb-8">
@@ -85,10 +85,10 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
               "https://savazar.com/wp-content/uploads/2023/10/cropped-Transparent_Image_2-300x100.png";
           }}
         />
-        <h2 className="text-2xl font-bold text-white tracking-tight">
+        <h2 className="text-2xl font-bold text-foreground tracking-tight">
           Sign In to {appTitle}
         </h2>
-        <p className="text-slate-400 text-xs mt-2 text-center">
+        <p className="text-muted-foreground text-xs mt-2 text-center">
           Zero-Trust Enterprise Control Plane — Role &amp; Permission Verified Access
         </p>
       </div>
@@ -102,7 +102,7 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
             Email Address
           </label>
           <div className="relative">
@@ -111,16 +111,16 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@example.com"
-              className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 pl-11 pr-4 text-sm text-white placeholder-slate-500 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
+              className="w-full rounded-xl border border-border bg-muted/30 py-3 pl-11 pr-4 text-sm text-foreground placeholder-slate-500 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
               required
               disabled={loading}
             />
-            <Mail className="absolute left-4 top-3.5 h-4 w-4 text-slate-500" />
+            <Mail className="absolute left-4 top-3.5 h-4 w-4 text-muted-foreground" />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
             Password
           </label>
           <div className="relative">
@@ -129,27 +129,27 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 pl-11 pr-4 text-sm text-white placeholder-slate-500 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
+              className="w-full rounded-xl border border-border bg-muted/30 py-3 pl-11 pr-4 text-sm text-foreground placeholder-slate-500 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
               required
               disabled={loading}
             />
-            <Lock className="absolute left-4 top-3.5 h-4 w-4 text-slate-500" />
+            <Lock className="absolute left-4 top-3.5 h-4 w-4 text-muted-foreground" />
           </div>
         </div>
 
         {/* Cloudflare Turnstile / Zero-Trust Bot Verification Widget */}
         <div
           onClick={() => setCaptchaVerified(!captchaVerified)}
-          className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3 cursor-pointer select-none hover:border-slate-700 transition-all"
+          className="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-4 py-3 cursor-pointer select-none hover:border-border transition-all"
         >
           <div className="flex items-center gap-3">
             <input
               type="checkbox"
               checked={captchaVerified}
               onChange={(e) => setCaptchaVerified(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-700 bg-slate-950 text-primary focus:ring-primary"
+              className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary"
             />
-            <span className="text-xs font-medium text-slate-300">
+            <span className="text-xs font-medium text-muted-foreground">
               Verify human operator (Cloudflare Turnstile Guard)
             </span>
           </div>
@@ -158,7 +158,7 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
 
         <button
           type="submit"
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary/95 transition-all focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01]"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-foreground shadow-lg shadow-primary/20 hover:bg-primary/95 transition-all focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01]"
           disabled={loading}
         >
           {loading ? (

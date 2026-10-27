@@ -417,29 +417,29 @@ export default function StudioPage() {
   const canvasData = getCanvasData(activeAgentflow);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-slate-950 p-4 sm:p-6 h-screen overflow-y-auto sm:overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground p-4 sm:p-6 h-screen overflow-y-auto sm:overflow-hidden">
       <div className="shrink-0 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">Capability Studio</h1>
-          <p className="text-slate-500 text-xs mt-1">Design pure agent-to-agent graphs, schedule autonomous agentflows, and compile to LangGraph pipelines</p>
+          <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Capability Studio</h1>
+          <p className="text-muted-foreground text-xs mt-1">Design pure agent-to-agent graphs, schedule autonomous agentflows, and compile to LangGraph pipelines</p>
         </div>
       </div>
 
       {/* Agentflow Selector Bar */}
-      <div className="shrink-0 mb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-900 pb-4">
+      <div className="shrink-0 mb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border pb-4">
         <div className="flex flex-wrap items-center gap-3">
-          <FolderKanban className="h-4 w-4 text-indigo-400 shrink-0" />
-          <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Active Workspace:</span>
+          <FolderKanban className="h-4 w-4 text-primary shrink-0" />
+          <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Active Workspace:</span>
           {loading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
           ) : agentflows.length === 0 ? (
-            <span className="text-xs text-slate-500">No agentflows</span>
+            <span className="text-xs text-muted-foreground">No agentflows</span>
           ) : (
             <div className="relative">
               <select
                 value={activeAgentflowId || ""}
                 onChange={(e) => handleSwitchAgentflow(e.target.value)}
-                className="bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-200 rounded-xl px-3 py-1.5 focus:border-indigo-500 outline-none transition-all cursor-pointer min-w-[200px]"
+                className="bg-card border border-input text-xs font-semibold text-foreground rounded-xl px-3 py-1.5 focus:border-primary outline-none transition-all cursor-pointer min-w-[200px]"
               >
                 {agentflows.map((wf) => (
                   <option key={wf.id} value={wf.id}>
@@ -456,7 +456,7 @@ export default function StudioPage() {
             <button
               type="button"
               onClick={() => handleExportJson(activeAgentflow)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/40 text-slate-355 hover:text-white hover:bg-slate-900 transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-all shadow-xs cursor-pointer"
             >
               <Download className="h-3.5 w-3.5" />
               Export JSON
@@ -466,7 +466,7 @@ export default function StudioPage() {
             <button
               type="button"
               onClick={() => { setImportError(null); setShowImportModal(true); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/40 text-slate-355 hover:text-white hover:bg-slate-900 transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-all shadow-xs cursor-pointer"
             >
               <Upload className="h-3.5 w-3.5" />
               Import JSON
@@ -475,7 +475,7 @@ export default function StudioPage() {
           <button
             type="button"
             onClick={() => setShowManageModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/40 text-slate-300 hover:text-white hover:bg-slate-900 transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-all shadow-xs cursor-pointer"
           >
             <FolderKanban className="h-3.5 w-3.5" />
             Manage Agentflows
@@ -484,7 +484,7 @@ export default function StudioPage() {
             <button
               type="button"
               onClick={() => { setCreateMode("scratch"); setShowCreateModal(true); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 shadow-xs transition-all cursor-pointer"
             >
               <Plus className="h-3.5 w-3.5" />
               New Agentflow
@@ -537,23 +537,23 @@ export default function StudioPage() {
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div onClick={() => setShowCreateModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in-95 duration-150">
+          <div className="relative bg-card border border-border text-card-foreground rounded-3xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-sm font-bold text-white">Create New Agentflow</h3>
-              <button onClick={() => setShowCreateModal(false)} className="text-slate-500 hover:text-white">
+              <button onClick={() => setShowCreateModal(false)} className="text-muted-foreground hover:text-foreground">
                 <X className="h-4 w-4" />
               </button>
             </div>
             
             {/* Mode selection tabs */}
-            <div className="flex bg-slate-900/60 border border-slate-800 rounded-xl p-0.5 mb-5">
+            <div className="flex bg-muted/30 border border-border rounded-xl p-0.5 mb-5">
               <button
                 type="button"
                 onClick={() => setCreateMode("scratch")}
                 className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   createMode === "scratch"
                     ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-slate-400 hover:text-white"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Start from Scratch
@@ -564,7 +564,7 @@ export default function StudioPage() {
                 className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   createMode === "import"
                     ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-slate-400 hover:text-white"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Import from JSON File
@@ -574,31 +574,31 @@ export default function StudioPage() {
             {createMode === "scratch" ? (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-200 uppercase tracking-wider mb-1.5">Agentflow Name</label>
+                  <label className="block text-[10px] font-semibold text-foreground uppercase tracking-wider mb-1.5">Agentflow Name</label>
                   <input
                     type="text"
                     value={createName}
                     onChange={(e) => setCreateName(e.target.value)}
                     placeholder="e.g. Wedding Planning Pipeline"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/20 py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500 placeholder-slate-400"
+                    className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500 placeholder-slate-400"
                     autoFocus
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-200 uppercase tracking-wider mb-1.5">Description (optional)</label>
+                  <label className="block text-[10px] font-semibold text-foreground uppercase tracking-wider mb-1.5">Description (optional)</label>
                   <textarea
                     rows={3}
                     value={createDesc}
                     onChange={(e) => setCreateDesc(e.target.value)}
                     placeholder="Brief description of this agentflow..."
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900/20 py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500 resize-none placeholder-slate-400"
+                    className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500 resize-none placeholder-slate-400"
                   />
                 </div>
                 <div className="flex gap-3 mt-6">
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="flex-1 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold transition-all"
+                    className="flex-1 py-2.5 rounded-xl border border-border hover:border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all"
                   >
                     Cancel
                   </button>
@@ -615,12 +615,12 @@ export default function StudioPage() {
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-200 uppercase tracking-wider mb-1.5">Select JSON Config File</label>
+                  <label className="block text-[10px] font-semibold text-foreground uppercase tracking-wider mb-1.5">Select JSON Config File</label>
                   <input
                     type="file"
                     accept=".json"
                     onChange={handleImportJson}
-                    className="w-full text-xs text-slate-200 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border file:border-slate-800 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800 cursor-pointer file:cursor-pointer"
+                    className="w-full text-xs text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border file:border-border file:text-xs file:font-semibold file:bg-card file:text-white hover:file:bg-slate-800 cursor-pointer file:cursor-pointer"
                   />
                 </div>
                 {importError && (
@@ -632,7 +632,7 @@ export default function StudioPage() {
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="flex-1 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold transition-all"
+                    className="flex-1 py-2.5 rounded-xl border border-border hover:border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all"
                   >
                     Cancel
                   </button>
@@ -647,21 +647,21 @@ export default function StudioPage() {
       {showImportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div onClick={() => setShowImportModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in-95 duration-150">
+          <div className="relative bg-card border border-border text-card-foreground rounded-3xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-sm font-bold text-white">Import Agentflow (JSON)</h3>
-              <button onClick={() => setShowImportModal(false)} className="text-slate-500 hover:text-white">
+              <button onClick={() => setShowImportModal(false)} className="text-muted-foreground hover:text-foreground">
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] font-semibold text-slate-200 uppercase tracking-wider mb-1.5">Select JSON Config File</label>
+                <label className="block text-[10px] font-semibold text-foreground uppercase tracking-wider mb-1.5">Select JSON Config File</label>
                 <input
                   type="file"
                   accept=".json"
                   onChange={handleImportJson}
-                  className="w-full text-xs text-slate-200 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border file:border-slate-800 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800 cursor-pointer file:cursor-pointer"
+                  className="w-full text-xs text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border file:border-border file:text-xs file:font-semibold file:bg-card file:text-white hover:file:bg-slate-800 cursor-pointer file:cursor-pointer"
                 />
               </div>
               {importError && (
@@ -674,7 +674,7 @@ export default function StudioPage() {
               <button
                 type="button"
                 onClick={() => setShowImportModal(false)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold transition-all"
+                className="flex-1 py-2.5 rounded-xl border border-border hover:border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all"
               >
                 Cancel
               </button>
@@ -687,33 +687,33 @@ export default function StudioPage() {
       {editingAgentflow && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div onClick={() => setEditingAgentflow(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in-95 duration-150">
+          <div className="relative bg-card border border-border text-card-foreground rounded-3xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-sm font-bold text-white">Rename Agentflow</h3>
-              <button onClick={() => setEditingAgentflow(null)} className="text-slate-505 hover:text-white">
+              <button onClick={() => setEditingAgentflow(null)} className="text-slate-505 hover:text-foreground">
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] font-semibold text-slate-200 uppercase tracking-wider mb-1.5">Agentflow Name</label>
+                <label className="block text-[10px] font-semibold text-foreground uppercase tracking-wider mb-1.5">Agentflow Name</label>
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   placeholder="e.g. Wedding Planning Pipeline"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/20 py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500 placeholder-slate-400"
+                  className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500 placeholder-slate-400"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-slate-200 uppercase tracking-wider mb-1.5">Description (optional)</label>
+                <label className="block text-[10px] font-semibold text-foreground uppercase tracking-wider mb-1.5">Description (optional)</label>
                 <textarea
                   rows={3}
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
                   placeholder="Brief description of this agentflow..."
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/20 py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500 resize-none placeholder-slate-400"
+                  className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500 resize-none placeholder-slate-400"
                 />
               </div>
             </div>
@@ -721,7 +721,7 @@ export default function StudioPage() {
               <button
                 type="button"
                 onClick={() => setEditingAgentflow(null)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold transition-all"
+                className="flex-1 py-2.5 rounded-xl border border-border hover:border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all"
               >
                 Cancel
               </button>
@@ -742,21 +742,21 @@ export default function StudioPage() {
       {deletingAgentflowId && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center animate-in fade-in duration-200">
           <div onClick={() => setDeletingAgentflowId(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
+          <div className="relative bg-card border border-border text-card-foreground rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-white">Delete Agentflow</h3>
-              <button onClick={() => setDeletingAgentflowId(null)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg">
+              <button onClick={() => setDeletingAgentflowId(null)} className="text-muted-foreground hover:text-foreground p-1 hover:bg-card rounded-lg">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-xs text-slate-200 mb-6 leading-relaxed">
+            <p className="text-xs text-foreground mb-6 leading-relaxed">
               Are you sure you want to delete this agentflow? This action is permanent and cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setDeletingAgentflowId(null)}
-                className="flex-1 py-2 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold bg-slate-900/40 transition-all"
+                className="flex-1 py-2 rounded-xl border border-border hover:border-border text-muted-foreground hover:text-foreground text-xs font-semibold bg-muted/30 transition-all"
               >
                 Cancel
               </button>
@@ -780,13 +780,13 @@ export default function StudioPage() {
       {showManageModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div onClick={() => setShowManageModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-4xl animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+          <div className="relative bg-card border border-border text-card-foreground rounded-3xl shadow-2xl p-6 w-full max-w-4xl animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-sm font-bold text-white">📂 Manage Agentflows</h3>
-                <p className="text-[10px] text-slate-300 mt-0.5">Search, duplicate, export, open, or delete saved agentflows</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Search, duplicate, export, open, or delete saved agentflows</p>
               </div>
-              <button onClick={() => setShowManageModal(false)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg">
+              <button onClick={() => setShowManageModal(false)} className="text-muted-foreground hover:text-foreground p-1 hover:bg-card rounded-lg">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -798,12 +798,12 @@ export default function StudioPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search agentflows by name..."
-                className="flex-1 rounded-xl border border-slate-900 bg-slate-900/30 py-2 px-3 text-xs text-white outline-none focus:border-indigo-500 placeholder-slate-400"
+                className="flex-1 rounded-xl border border-border bg-muted/30 py-2 px-3 text-xs text-white outline-none focus:border-indigo-500 placeholder-slate-400"
               />
               <button
                 type="button"
                 onClick={() => { setImportError(null); setShowImportModal(true); }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/40 text-slate-355 hover:text-white hover:bg-slate-900 transition-all shadow-sm shrink-0"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border border-border bg-muted/30 text-slate-355 hover:text-foreground hover:bg-card transition-all shadow-sm shrink-0"
               >
                 <Upload className="h-3.5 w-3.5" />
                 Import JSON
@@ -811,10 +811,10 @@ export default function StudioPage() {
             </div>
 
             {/* Table list */}
-            <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800 border border-slate-900 rounded-2xl bg-[#040408] p-1.5">
+            <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800 border border-border rounded-2xl bg-background p-1.5">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-900 text-[10px] font-bold text-slate-300 uppercase tracking-wider">
+                  <tr className="border-b border-border text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     <th className="py-2.5 px-3">Agentflow Name</th>
                     <th className="py-2.5 px-3">Status</th>
                     <th className="py-2.5 px-3">Last Updated</th>
@@ -827,9 +827,9 @@ export default function StudioPage() {
                     .map((wf) => {
                       const isActive = activeAgentflowId === wf.id;
                       return (
-                        <tr key={wf.id} className={`border-b border-slate-900/60 hover:bg-slate-900/10 transition-all ${isActive ? "bg-indigo-600/5" : ""}`}>
+                        <tr key={wf.id} className={`border-b border-border/60 hover:bg-muted/30 transition-all ${isActive ? "bg-indigo-600/5" : ""}`}>
                           <td className="py-3 px-3">
-                            <span className="font-semibold text-slate-200 block truncate max-w-[240px]">{wf.name}</span>
+                            <span className="font-semibold text-foreground block truncate max-w-[240px]">{wf.name}</span>
                             <span className="text-[10px] text-slate-350 truncate max-w-[240px] block mt-0.5">{wf.description || "No description provided"}</span>
                           </td>
                           <td className="py-3 px-3">
@@ -841,7 +841,7 @@ export default function StudioPage() {
                               {wf.status === "published" ? "Published" : "Draft"}
                             </span>
                           </td>
-                          <td className="py-3 px-3 text-[10px] text-slate-500 font-mono">
+                          <td className="py-3 px-3 text-[10px] text-muted-foreground font-mono">
                             {new Date(wf.updatedAt).toLocaleDateString()}
                           </td>
                           <td className="py-3 px-3 text-right">
@@ -852,8 +852,8 @@ export default function StudioPage() {
                                 disabled={isActive}
                                 className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all ${
                                   isActive
-                                    ? "bg-slate-900 border-slate-800 text-slate-500 cursor-not-allowed"
-                                    : "bg-indigo-600/10 border-indigo-500/30 text-indigo-400 hover:bg-indigo-600 hover:text-white"
+                                    ? "bg-card border-border text-muted-foreground cursor-not-allowed"
+                                    : "bg-indigo-600/10 border-indigo-500/30 text-indigo-400 hover:bg-indigo-600 hover:text-foreground"
                                 }`}
                               >
                                 Open
@@ -866,7 +866,7 @@ export default function StudioPage() {
                                     setEditName(wf.name);
                                     setEditDesc(wf.description || "");
                                   }}
-                                  className="px-2 py-1 rounded-lg text-[10px] font-semibold border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-white transition-all"
+                                  className="px-2 py-1 rounded-lg text-[10px] font-semibold border border-border text-muted-foreground hover:bg-card hover:text-foreground transition-all"
                                 >
                                   Rename
                                 </button>
@@ -875,7 +875,7 @@ export default function StudioPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleDuplicateAgentflow(wf)}
-                                  className="px-2 py-1 rounded-lg text-[10px] font-semibold border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-white transition-all"
+                                  className="px-2 py-1 rounded-lg text-[10px] font-semibold border border-border text-muted-foreground hover:bg-card hover:text-foreground transition-all"
                                 >
                                   Duplicate
                                 </button>
@@ -884,7 +884,7 @@ export default function StudioPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleExportJson(wf)}
-                                  className="px-2 py-1 rounded-lg text-[10px] font-semibold border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-white transition-all"
+                                  className="px-2 py-1 rounded-lg text-[10px] font-semibold border border-border text-muted-foreground hover:bg-card hover:text-foreground transition-all"
                                 >
                                   Export
                                 </button>
@@ -907,11 +907,11 @@ export default function StudioPage() {
               </table>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-900 text-right">
+            <div className="mt-4 pt-3 border-t border-border text-right">
               <button
                 type="button"
                 onClick={() => setShowManageModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-850 text-slate-400 hover:text-white text-xs font-semibold transition-all"
+                className="px-4 py-2 rounded-xl bg-card border border-slate-850 text-muted-foreground hover:text-foreground text-xs font-semibold transition-all"
               >
                 Close Dashboard
               </button>

@@ -57,8 +57,8 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 py-12 relative overflow-hidden">
-      <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-900/70 p-8 shadow-2xl backdrop-blur-md">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground px-4 py-12 relative overflow-hidden">
+      <div className="w-full max-w-md rounded-3xl border border-border bg-card p-8 shadow-2xl backdrop-blur-md">
         <div className="flex flex-col items-center text-center mb-6">
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-400">
             <KeyRound className="h-6 w-6" />
@@ -66,10 +66,10 @@ export default function ResetPasswordPage() {
           <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-2">
             Mandatory First-Time Security Step
           </span>
-          <h1 className="text-xl font-bold text-white tracking-tight">
+          <h1 className="text-xl font-bold text-foreground tracking-tight">
             Set Your Permanent Password
           </h1>
-          <p className="text-xs text-slate-400 mt-1.5">
+          <p className="text-xs text-muted-foreground mt-1.5">
             {user?.email
               ? `Account (${user.email}) has been approved. You must set a new policy-compliant password before accessing the platform.`
               : "You must update your initial or temporary password before accessing any SavazAI workspace."}
@@ -92,7 +92,7 @@ export default function ResetPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+            <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
               New Password
             </label>
             <div className="relative">
@@ -101,16 +101,16 @@ export default function ResetPasswordPage() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Min 8 chars, Uppercase, Lowercase, Digit"
-                className="w-full rounded-xl border border-slate-800 bg-slate-950/80 py-3 pl-10 pr-4 text-sm text-white placeholder-slate-500 outline-none focus:border-primary"
+                className="w-full rounded-xl border border-border bg-muted/40 py-3 pl-10 pr-4 text-sm text-foreground placeholder-slate-500 outline-none focus:border-primary"
                 required
                 disabled={loading || success}
               />
-              <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-500" />
+              <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
             </div>
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+            <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
               Confirm New Password
             </label>
             <div className="relative">
@@ -119,18 +119,18 @@ export default function ResetPasswordPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-enter new password"
-                className="w-full rounded-xl border border-slate-800 bg-slate-950/80 py-3 pl-10 pr-4 text-sm text-white placeholder-slate-500 outline-none focus:border-primary"
+                className="w-full rounded-xl border border-border bg-muted/40 py-3 pl-10 pr-4 text-sm text-foreground placeholder-slate-500 outline-none focus:border-primary"
                 required
                 disabled={loading || success}
               />
-              <ShieldCheck className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-500" />
+              <ShieldCheck className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
             </div>
           </div>
 
           <button
             type="submit"
             disabled={loading || success}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50"
           >
             {loading ? (
               <>

@@ -76,8 +76,8 @@ const STATUS_CONFIG: Record<
   archived: {
     label: "Archived",
     bg: "bg-slate-800/60",
-    text: "text-slate-400",
-    border: "border-slate-700",
+    text: "text-muted-foreground",
+    border: "border-border",
   },
 };
 
@@ -225,19 +225,19 @@ export function DemoRequestManagement() {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-slate-950 text-slate-100 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 bg-background text-slate-100 overflow-hidden">
       {/* Header Bar */}
-      <div className="shrink-0 border-b border-slate-900 bg-slate-950/90 px-6 py-5 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="shrink-0 border-b border-border bg-muted/40 px-6 py-5 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
               <CalendarCheck className="h-4 w-4" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+              <h1 className="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
                 Inbound Demo Requests &amp; Leads
               </h1>
-              <p className="text-slate-400 text-xs">
+              <p className="text-muted-foreground text-xs">
                 Track, coordinate, and manage prospective enterprise customer demo inquiries
               </p>
             </div>
@@ -248,7 +248,7 @@ export function DemoRequestManagement() {
           <button
             onClick={fetchRequests}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-800 transition-all disabled:opacity-50"
             title="Refresh Inbound Leads"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -286,12 +286,12 @@ export function DemoRequestManagement() {
 
         {/* Metrics Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-5 rounded-2xl border border-slate-850 bg-slate-900/30 space-y-1">
-            <div className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
-              <Inbox className="h-3.5 w-3.5 text-slate-400" />
+          <div className="p-5 rounded-2xl border border-slate-850 bg-muted/30 space-y-1">
+            <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <Inbox className="h-3.5 w-3.5 text-muted-foreground" />
               Total Inquiries
             </div>
-            <div className="text-2xl font-extrabold text-white">{metrics.total}</div>
+            <div className="text-2xl font-extrabold text-foreground">{metrics.total}</div>
           </div>
 
           <div className="p-5 rounded-2xl border border-amber-500/20 bg-amber-950/10 space-y-1">
@@ -320,7 +320,7 @@ export function DemoRequestManagement() {
         </div>
 
         {/* Filters & Search Controls */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 rounded-2xl border border-slate-900 bg-slate-900/20">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 rounded-2xl border border-border bg-muted/30">
           {/* Status Tabs */}
           <div className="flex flex-wrap items-center gap-1.5">
             {[
@@ -336,8 +336,8 @@ export function DemoRequestManagement() {
                 onClick={() => setStatusFilter(tab.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                   statusFilter === tab.id
-                    ? "bg-primary text-white shadow-md shadow-primary/20"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-850"
+                    ? "bg-primary text-foreground shadow-md shadow-primary/20"
+                    : "text-muted-foreground hover:text-foreground hover:bg-slate-850"
                 }`}
               >
                 {tab.label}
@@ -347,18 +347,18 @@ export function DemoRequestManagement() {
 
           {/* Search Bar */}
           <div className="relative w-full md:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name, company, email..."
-              className="w-full pl-9 pr-8 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+              className="w-full pl-9 pr-8 py-1.5 bg-background border border-border rounded-xl text-xs text-foreground placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground text-xs"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -367,17 +367,17 @@ export function DemoRequestManagement() {
         </div>
 
         {/* Leads Data Table */}
-        <div className="rounded-3xl border border-slate-900 bg-slate-900/20 overflow-hidden">
+        <div className="rounded-3xl border border-border bg-muted/30 overflow-hidden">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-3">
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground space-y-3">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
               <p className="text-xs">Loading inbound demo requests...</p>
             </div>
           ) : filteredRequests.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400 text-center space-y-2">
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground text-center space-y-2">
               <Inbox className="h-10 w-10 text-slate-600 mb-1" />
-              <h3 className="text-sm font-bold text-white">No Demo Requests Found</h3>
-              <p className="text-xs text-slate-500 max-w-sm">
+              <h3 className="text-sm font-bold text-foreground">No Demo Requests Found</h3>
+              <p className="text-xs text-muted-foreground max-w-sm">
                 {searchQuery || statusFilter !== "all"
                   ? "Try resetting your search filters or status selection."
                   : "Prospective customer demo requests submitted on the landing page will appear here."}
@@ -386,7 +386,7 @@ export function DemoRequestManagement() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-900/80 text-slate-300 font-semibold border-b border-slate-800">
+                <thead className="bg-muted/30 text-muted-foreground font-semibold border-b border-border">
                   <tr>
                     <th className="px-5 py-4">Prospective Lead &amp; Company</th>
                     <th className="px-5 py-4">Contact Info</th>
@@ -396,7 +396,7 @@ export function DemoRequestManagement() {
                     <th className="px-5 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-900 text-slate-300">
+                <tbody className="divide-y divide-slate-900 text-muted-foreground">
                   {filteredRequests.map((req) => {
                     const statusConf = STATUS_CONFIG[req.status] || STATUS_CONFIG.pending;
                     return (
@@ -407,19 +407,19 @@ export function DemoRequestManagement() {
                       >
                         {/* Name & Company */}
                         <td className="px-5 py-4">
-                          <div className="font-bold text-white group-hover:text-primary transition-colors">
+                          <div className="font-bold text-foreground group-hover:text-primary transition-colors">
                             {req.fullName}
                           </div>
-                          <div className="text-slate-400 flex items-center gap-1.5 mt-0.5">
-                            <Building2 className="h-3 w-3 text-slate-500" />
+                          <div className="text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                            <Building2 className="h-3 w-3 text-muted-foreground" />
                             {req.company}
                           </div>
                         </td>
 
                         {/* Contact */}
                         <td className="px-5 py-4 space-y-0.5">
-                          <div className="flex items-center gap-1.5 text-slate-300">
-                            <Mail className="h-3 w-3 text-slate-500" />
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <Mail className="h-3 w-3 text-muted-foreground" />
                             <a
                               href={`mailto:${req.email}`}
                               onClick={(e) => e.stopPropagation()}
@@ -428,8 +428,8 @@ export function DemoRequestManagement() {
                               {req.email}
                             </a>
                           </div>
-                          <div className="flex items-center gap-1.5 text-slate-400">
-                            <Phone className="h-3 w-3 text-slate-500" />
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <Phone className="h-3 w-3 text-muted-foreground" />
                             <a
                               href={`tel:${req.phone}`}
                               onClick={(e) => e.stopPropagation()}
@@ -442,9 +442,9 @@ export function DemoRequestManagement() {
 
                         {/* Industry & Timeline */}
                         <td className="px-5 py-4 space-y-0.5">
-                          <div className="font-medium text-slate-200">{req.industry}</div>
-                          <div className="text-slate-400 flex items-center gap-1 text-[11px]">
-                            <Clock className="h-3 w-3 text-slate-500" />
+                          <div className="font-medium text-foreground">{req.industry}</div>
+                          <div className="text-muted-foreground flex items-center gap-1 text-[11px]">
+                            <Clock className="h-3 w-3 text-muted-foreground" />
                             {req.timeline}
                           </div>
                         </td>
@@ -460,7 +460,7 @@ export function DemoRequestManagement() {
                         </td>
 
                         {/* Submitted Date */}
-                        <td className="px-5 py-4 text-slate-400 text-[11px]">
+                        <td className="px-5 py-4 text-muted-foreground text-[11px]">
                           {new Date(req.createdAt).toLocaleDateString(undefined, {
                             month: "short",
                             day: "numeric",
@@ -476,14 +476,14 @@ export function DemoRequestManagement() {
                           >
                             <button
                               onClick={() => handleOpenDetail(req)}
-                              className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 text-xs font-semibold transition-all"
+                              className="px-2.5 py-1 rounded-lg bg-slate-800 text-muted-foreground hover:text-foreground hover:bg-slate-700 text-xs font-semibold transition-all"
                             >
                               {canManageLeads ? "Manage" : "Inspect"}
                             </button>
                             {canManageLeads && (
                               <button
                                 onClick={() => setDeleteTarget(req)}
-                                className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                                className="p-1 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                                 title="Delete Record"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
@@ -503,12 +503,12 @@ export function DemoRequestManagement() {
 
       {/* Lead Detail & Management Modal */}
       {mounted && selectedRequest && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-2xl rounded-3xl border border-slate-800 bg-slate-900 shadow-2xl p-6 sm:p-8 text-slate-100 flex flex-col max-h-[90vh] overflow-hidden my-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-muted/40 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative w-full max-w-2xl rounded-3xl border border-border bg-card shadow-2xl p-6 sm:p-8 text-slate-100 flex flex-col max-h-[90vh] overflow-hidden my-auto">
             {/* Close Button */}
             <button
               onClick={() => setSelectedRequest(null)}
-              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-800 transition-colors"
+              className="absolute top-5 right-5 p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-slate-800 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -519,11 +519,11 @@ export function DemoRequestManagement() {
                 <CalendarCheck className="h-3.5 w-3.5" />
                 Inbound Lead Profile
               </div>
-              <h2 className="text-2xl font-bold text-white">
+              <h2 className="text-2xl font-bold text-foreground">
                 {selectedRequest.fullName}
               </h2>
-              <p className="text-xs text-slate-400 flex items-center gap-2">
-                <Building2 className="h-3.5 w-3.5 text-slate-400" />
+              <p className="text-xs text-muted-foreground flex items-center gap-2">
+                <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                 {selectedRequest.company} &bull; Submitted on{" "}
                 {new Date(selectedRequest.createdAt).toLocaleString()}
               </p>
@@ -532,13 +532,13 @@ export function DemoRequestManagement() {
             {/* Modal Body */}
             <div className="flex-1 overflow-y-auto space-y-5 pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
               {/* Quick Contact & Info Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl border border-slate-800 bg-slate-950/60">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl border border-border bg-muted/40">
                 <div className="space-y-1">
-                  <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Business Email
                   </div>
-                  <div className="text-xs font-semibold text-white flex items-center gap-1.5">
-                    <Mail className="h-3.5 w-3.5 text-slate-400" />
+                  <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                     <a
                       href={`mailto:${selectedRequest.email}`}
                       className="hover:text-primary transition-colors underline"
@@ -549,11 +549,11 @@ export function DemoRequestManagement() {
                 </div>
 
                 <div className="space-y-1">
-                  <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Phone Number
                   </div>
-                  <div className="text-xs font-semibold text-white flex items-center gap-1.5">
-                    <Phone className="h-3.5 w-3.5 text-slate-400" />
+                  <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                     <a
                       href={`tel:${selectedRequest.phone}`}
                       className="hover:text-primary transition-colors underline"
@@ -564,19 +564,19 @@ export function DemoRequestManagement() {
                 </div>
 
                 <div className="space-y-1">
-                  <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Industry Domain
                   </div>
-                  <div className="text-xs font-semibold text-white">
+                  <div className="text-xs font-semibold text-foreground">
                     {selectedRequest.industry}
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Target Timeline
                   </div>
-                  <div className="text-xs font-semibold text-white">
+                  <div className="text-xs font-semibold text-foreground">
                     {selectedRequest.timeline}
                   </div>
                 </div>
@@ -584,26 +584,26 @@ export function DemoRequestManagement() {
 
               {/* Workflow Goals Description */}
               <div className="space-y-1.5">
-                <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <MessageSquare className="h-3.5 w-3.5 text-slate-400" />
+                <div className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
                   Workflow &amp; Use Case Requirements
                 </div>
-                <div className="p-4 rounded-2xl border border-slate-800 bg-slate-950/80 text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+                <div className="p-4 rounded-2xl border border-border bg-muted/40 text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
                   {selectedRequest.description}
                 </div>
               </div>
 
               {/* Status Update & Internal Notes */}
-              <div className="space-y-4 pt-2 border-t border-slate-800">
+              <div className="space-y-4 pt-2 border-t border-border">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-slate-400" />
+                  <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground" />
                     Inquiry Lifecycle Status
                   </label>
                   <select
                     value={modalStatus}
                     onChange={(e) => setModalStatus(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                    className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-xs text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                   >
                     <option value="pending">Pending Review</option>
                     <option value="contacted">Contacted / In Discussion</option>
@@ -614,8 +614,8 @@ export function DemoRequestManagement() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                    <Edit3 className="h-3.5 w-3.5 text-slate-400" />
+                  <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
                     Internal Admin Follow-Up Notes
                   </label>
                   <textarea
@@ -623,14 +623,14 @@ export function DemoRequestManagement() {
                     value={modalNotes}
                     onChange={(e) => setModalNotes(e.target.value)}
                     placeholder="Add private notes for the sales & solutions team (e.g. Scheduled demo for Thursday at 2pm EST)..."
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none"
+                    className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-xs text-foreground placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none"
                   />
                 </div>
               </div>
             </div>
 
             {/* Footer Action Buttons */}
-            <div className="pt-5 border-t border-slate-800 flex items-center justify-between gap-3">
+            <div className="pt-5 border-t border-border flex items-center justify-between gap-3">
               {canManageLeads ? (
                 <button
                   type="button"
@@ -645,7 +645,7 @@ export function DemoRequestManagement() {
                 <button
                   type="button"
                   onClick={() => setSelectedRequest(null)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-semibold transition-all"
+                  className="px-4 py-2.5 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-slate-800 text-xs font-semibold transition-all"
                 >
                   {canManageLeads ? "Cancel" : "Close"}
                 </button>
@@ -654,7 +654,7 @@ export function DemoRequestManagement() {
                     type="button"
                     onClick={handleSaveDetails}
                     disabled={savingNotes}
-                    className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-primary text-white text-xs font-semibold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-primary text-foreground text-xs font-semibold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50"
                   >
                     {savingNotes ? (
                       <>
@@ -678,21 +678,21 @@ export function DemoRequestManagement() {
 
       {/* Delete Confirmation Dialog */}
       {mounted && deleteTarget && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-3xl border border-rose-500/30 bg-slate-900 p-6 text-slate-100 space-y-4 shadow-2xl my-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-muted/40 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-3xl border border-rose-500/30 bg-card p-6 text-slate-100 space-y-4 shadow-2xl my-auto">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-400 border border-rose-500/20">
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-white">Delete Lead Inquiry</h3>
-                <p className="text-xs text-slate-400">This action cannot be undone.</p>
+                <h3 className="text-base font-bold text-foreground">Delete Lead Inquiry</h3>
+                <p className="text-xs text-muted-foreground">This action cannot be undone.</p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Are you sure you want to permanently delete the demo request record for{" "}
-              <strong className="text-white">{deleteTarget.fullName}</strong> (
+              <strong className="text-foreground">{deleteTarget.fullName}</strong> (
               {deleteTarget.company})?
             </p>
 
@@ -700,7 +700,7 @@ export function DemoRequestManagement() {
               <button
                 type="button"
                 onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 rounded-xl border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-semibold transition-all"
+                className="px-4 py-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-slate-800 text-xs font-semibold transition-all"
               >
                 Cancel
               </button>
@@ -708,7 +708,7 @@ export function DemoRequestManagement() {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-semibold shadow-lg shadow-rose-600/20 hover:bg-rose-500 transition-all disabled:opacity-50 flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl bg-rose-600 text-foreground text-xs font-semibold shadow-lg shadow-rose-600/20 hover:bg-rose-500 transition-all disabled:opacity-50 flex items-center gap-1.5"
               >
                 {deleting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Confirm Delete

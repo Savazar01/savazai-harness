@@ -25,7 +25,7 @@ export default async function BusinessLayout({
     ctx.permissions.has("business_center:compliance_view");
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-950">
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
       <Sidebar />
       <main className="flex-1 flex flex-col min-w-0">
         {canView ? (

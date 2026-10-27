@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { 
@@ -636,17 +636,17 @@ export function OkfRegistry() {
   ];
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-slate-950/20 rounded-2xl border border-slate-900 overflow-hidden">
-      <div className="p-4 border-b border-slate-900 bg-slate-950/40 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+    <div className="flex-1 flex flex-col min-h-0 bg-card rounded-2xl border border-border overflow-hidden">
+      <div className="p-4 border-b border-border bg-card flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
         <div className="flex items-center gap-3">
-          <Layers className="h-5 w-5 text-indigo-400" />
+          <Layers className="h-5 w-5 text-primary" />
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono">Google OKF Concepts</h2>
+              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider font-mono">Google OKF Concepts</h2>
               <HelpTooltip content="Open Knowledge Framework (OKF) concepts provide structured SOPs, parameters, and compliance rules that workers ingest at runtime." side="right" />
             </div>
-            <span className="text-[11px] text-slate-500">
-              Total: <strong className="text-slate-300">{filteredConcepts.length}</strong> concepts persisted
+            <span className="text-[11px] text-muted-foreground">
+              Total: <strong className="text-foreground">{filteredConcepts.length}</strong> concepts persisted
             </span>
           </div>
         </div>
@@ -656,7 +656,7 @@ export function OkfRegistry() {
             <button
               type="button"
               onClick={handleExportCsv}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border hover:border-border bg-muted/50 hover:bg-muted text-foreground hover:text-foreground text-xs font-semibold transition-all shadow-sm cursor-pointer"
               title="Export all concepts to CSV"
             >
               <FileSpreadsheet className="h-4 w-4 text-emerald-400" /> Export CSV
@@ -666,16 +666,16 @@ export function OkfRegistry() {
             <button
               type="button"
               onClick={() => setIsIngestModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border hover:border-border bg-muted/50 hover:bg-muted text-foreground hover:text-foreground text-xs font-semibold transition-all shadow-sm cursor-pointer"
             >
-              <Upload className="h-4 w-4 text-slate-400" /> Ingest Bundle
+              <Upload className="h-4 w-4 text-muted-foreground" /> Ingest Bundle
             </button>
           )}
           {canCreateOkf && (
             <button
               type="button"
               onClick={handleOpenAuthorModal}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
             >
               <Plus className="h-4 w-4" /> + New Concept
             </button>
@@ -683,20 +683,20 @@ export function OkfRegistry() {
         </div>
       </div>
 
-      <div className="p-3.5 border-b border-slate-900 bg-slate-950/30 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shrink-0">
+      <div className="p-3.5 border-b border-border bg-card flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shrink-0">
         <div className="relative flex-1 max-w-md">
-          <Search className="h-4 w-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by key, title, tags, summary, namespace..."
-            className="w-full rounded-xl border border-slate-855 bg-slate-900/50 py-1.5 pl-9 pr-8 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500 transition-colors"
+            className="w-full rounded-xl border border-border bg-muted/50 py-1.5 pl-9 pr-8 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500 transition-colors"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -704,7 +704,7 @@ export function OkfRegistry() {
         </div>
 
         <div className="flex items-center gap-3 overflow-x-auto">
-          <div className="flex items-center gap-1.5 bg-slate-900/30 p-1 rounded-xl border border-slate-850">
+          <div className="flex items-center gap-1.5 bg-muted/30 p-1 rounded-xl border border-border">
             {typeFilterOptions.map((opt) => (
               <button
                 key={opt.value}
@@ -712,8 +712,8 @@ export function OkfRegistry() {
                 onClick={() => setSelectedTypeFilter(opt.value)}
                 className={`px-3 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all border cursor-pointer ${
                   selectedTypeFilter === opt.value
-                    ? "bg-indigo-600/20 border-indigo-500/50 text-indigo-300 shadow-sm"
-                    : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                    ? "bg-primary/20 border-indigo-500/50 text-primary shadow-sm"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 {opt.label}
@@ -722,11 +722,11 @@ export function OkfRegistry() {
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[10px] uppercase font-bold text-slate-500">Sort:</span>
+            <span className="text-[10px] uppercase font-bold text-muted-foreground">Sort:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-slate-900 border border-slate-800 text-xs text-slate-300 rounded-xl px-2.5 py-1.5 outline-none focus:border-indigo-500 cursor-pointer"
+              className="bg-muted border border-border text-xs text-foreground rounded-xl px-2.5 py-1.5 outline-none focus:border-indigo-500 cursor-pointer"
             >
               <option value="updated">Recently Updated</option>
               <option value="title">Title (A-Z)</option>
@@ -737,19 +737,19 @@ export function OkfRegistry() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+      <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-muted">
         {loading && concepts.length === 0 ? (
-          <div className="flex flex-col justify-center items-center py-24 text-slate-500 text-xs gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+          <div className="flex flex-col justify-center items-center py-24 text-muted-foreground text-xs gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <span>Loading OKF concept library...</span>
           </div>
         ) : filteredConcepts.length === 0 ? (
           <div className="text-center py-24 px-4 space-y-3">
             <FolderOpen className="h-10 w-10 text-slate-700 mx-auto" />
-            <p className="text-slate-300 text-sm font-semibold">
+            <p className="text-foreground text-sm font-semibold">
               {searchQuery || selectedTypeFilter !== "All" ? "No OKF concepts match your search filters." : "No concepts registered yet."}
             </p>
-            <p className="text-slate-500 text-xs max-w-sm mx-auto">
+            <p className="text-muted-foreground text-xs max-w-sm mx-auto">
               {searchQuery || selectedTypeFilter !== "All" 
                 ? "Try adjusting your search keywords or resetting the type filter." 
                 : "Author a new concept bundle or drop an existing policy .md or .json file."}
@@ -757,7 +757,7 @@ export function OkfRegistry() {
             <button
               type="button"
               onClick={handleOpenAuthorModal}
-              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-semibold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
             >
               <Plus className="h-4 w-4" /> Author New Concept
             </button>
@@ -765,7 +765,7 @@ export function OkfRegistry() {
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-850 bg-slate-950/60 text-[10px] uppercase font-bold text-slate-400 font-mono tracking-wider">
+              <tr className="border-b border-border bg-muted/50 text-[10px] uppercase font-bold text-muted-foreground font-mono tracking-wider">
                 <th className="py-3 px-4">Concept Title &amp; Key</th>
                 <th className="py-3 px-4">Concept Type</th>
                 <th className="py-3 px-4">Namespace Category</th>
@@ -781,14 +781,14 @@ export function OkfRegistry() {
                 return (
                   <tr 
                     key={item.id}
-                    className="group hover:bg-slate-900/30 transition-colors text-xs"
+                    className="group hover:bg-muted/30 transition-colors text-xs"
                   >
                     <td className="py-3.5 px-4">
                       <div className="flex flex-col gap-0.5">
-                        <span className="font-semibold text-slate-100 group-hover:text-indigo-300 transition-colors">
+                        <span className="font-semibold text-foreground group-hover:text-primary transition-colors">
                           {item.parsed.title || item.conceptKey}
                         </span>
-                        <span className="text-[10px] font-mono text-slate-500">
+                        <span className="text-[10px] font-mono text-muted-foreground">
                           {item.conceptKey}
                         </span>
                       </div>
@@ -797,7 +797,7 @@ export function OkfRegistry() {
                       {renderTypeBadge(item.parsed.conceptType)}
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[10px] text-slate-300 font-medium">
+                      <span className="px-2 py-0.5 rounded bg-muted border border-border text-[10px] text-foreground font-medium">
                         {item.category || "General Policy"}
                       </span>
                     </td>
@@ -806,23 +806,23 @@ export function OkfRegistry() {
                         {Array.isArray(item.parsed.tags) && item.parsed.tags.length > 0 ? (
                           <>
                             {item.parsed.tags.slice(0, 2).map((tag, idx) => (
-                              <span key={idx} className="text-[9px] bg-slate-900/80 text-slate-400 px-1.5 py-0.5 rounded border border-slate-850">
+                              <span key={idx} className="text-[9px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded border border-border">
                                 #{tag}
                               </span>
                             ))}
                             {item.parsed.tags.length > 2 && (
-                              <span className="text-[9px] text-slate-500 font-mono self-center">
+                              <span className="text-[9px] text-muted-foreground font-mono self-center">
                                 +{item.parsed.tags.length - 2}
                               </span>
                             )}
                           </>
                         ) : (
-                          <span className="text-slate-600 text-[10px]">—</span>
+                          <span className="text-muted-foreground text-[10px]">â€”</span>
                         )}
                       </div>
                     </td>
                     <td className="py-3.5 px-4 max-w-xs">
-                      <p className="text-slate-400 truncate text-[11px] leading-relaxed" title={item.parsed.description}>
+                      <p className="text-muted-foreground truncate text-[11px] leading-relaxed" title={item.parsed.description}>
                         {item.parsed.description || "No description summary provided."}
                       </p>
                     </td>
@@ -830,18 +830,18 @@ export function OkfRegistry() {
                       {boundAgents.length > 0 ? (
                         <div className="flex flex-wrap items-center gap-1">
                           {boundAgents.slice(0, 2).map((agent, idx) => (
-                            <span key={idx} className="text-[10px] bg-indigo-950/40 text-indigo-300 px-2 py-0.5 rounded-md border border-indigo-500/30 font-medium">
+                            <span key={idx} className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-md border border-primary/20 font-medium">
                               {agent}
                             </span>
                           ))}
                           {boundAgents.length > 2 && (
-                            <span className="text-[9px] text-slate-400 font-mono" title={boundAgents.slice(2).join(", ")}>
+                            <span className="text-[9px] text-muted-foreground font-mono" title={boundAgents.slice(2).join(", ")}>
                               +{boundAgents.length - 2}
                             </span>
                           )}
                         </div>
                       ) : (
-                        <span className="text-slate-600 text-[10px]">Unbound</span>
+                        <span className="text-muted-foreground text-[10px]">Unbound</span>
                       )}
                     </td>
                     <td className="py-3.5 px-4 text-right">
@@ -849,7 +849,7 @@ export function OkfRegistry() {
                         <button
                           type="button"
                           onClick={() => setViewingConcept(item)}
-                          className="p-1.5 rounded-lg border border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-850 text-slate-300 hover:text-white transition-all cursor-pointer"
+                          className="p-1.5 rounded-lg border border-border hover:border-border bg-muted/40 hover:bg-muted text-foreground hover:text-foreground transition-all cursor-pointer"
                           title="View Document"
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -858,7 +858,7 @@ export function OkfRegistry() {
                           <button
                             type="button"
                             onClick={() => handleOpenEditModal(item)}
-                            className="p-1.5 rounded-lg border border-slate-850 hover:border-indigo-500/40 bg-slate-900/40 hover:bg-indigo-950/20 text-slate-300 hover:text-indigo-300 transition-all cursor-pointer"
+                            className="p-1.5 rounded-lg border border-border hover:border-indigo-500/40 bg-muted/40 hover:bg-indigo-950/20 text-foreground hover:text-primary transition-all cursor-pointer"
                             title="Edit Concept"
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -869,24 +869,24 @@ export function OkfRegistry() {
                             <button
                               type="button"
                               onClick={() => setActiveExportMenuId(activeExportMenuId === item.id ? null : item.id)}
-                              className="p-1.5 rounded-lg border border-slate-855 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-850 text-slate-300 hover:text-white transition-all cursor-pointer"
+                              className="p-1.5 rounded-lg border border-border hover:border-border bg-muted/40 hover:bg-muted text-foreground hover:text-foreground transition-all cursor-pointer"
                               title="Export Options"
                             >
                               <Download className="h-3.5 w-3.5" />
                             </button>
                             {activeExportMenuId === item.id && (
-                              <div className="absolute right-0 top-full mt-1 w-32 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
+                              <div className="absolute right-0 top-full mt-1 w-32 bg-card border border-border rounded-xl shadow-2xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
                                 <button
                                   type="button"
                                   onClick={() => handleExportMarkdown(item)}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2 cursor-pointer"
+                                  className="w-full px-3 py-1.5 text-left text-xs text-foreground hover:text-foreground hover:bg-muted flex items-center gap-2 cursor-pointer"
                                 >
-                                  <FileText className="h-3.5 w-3.5 text-indigo-400" /> Export .md
+                                  <FileText className="h-3.5 w-3.5 text-primary" /> Export .md
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleExportJson(item)}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2 cursor-pointer"
+                                  className="w-full px-3 py-1.5 text-left text-xs text-foreground hover:text-foreground hover:bg-muted flex items-center gap-2 cursor-pointer"
                                 >
                                   <Code className="h-3.5 w-3.5 text-amber-400" /> Export JSON
                                 </button>
@@ -898,7 +898,7 @@ export function OkfRegistry() {
                           <button
                             type="button"
                             onClick={() => setDeletingConcept(item)}
-                            className="p-1.5 rounded-lg border border-slate-850 hover:border-red-500/40 bg-slate-900/40 hover:bg-red-950/20 text-slate-400 hover:text-red-400 transition-all cursor-pointer"
+                            className="p-1.5 rounded-lg border border-border hover:border-red-500/40 bg-muted/40 hover:bg-red-950/20 text-muted-foreground hover:text-red-400 transition-all cursor-pointer"
                             title="Delete Concept"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -917,26 +917,26 @@ export function OkfRegistry() {
       {isIngestModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div onClick={() => setIsIngestModalOpen(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-slate-900 flex justify-between items-center bg-slate-950/40">
+          <div className="relative bg-card border border-border rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-card">
               <div className="flex items-center gap-2.5">
-                <Upload className="h-4 w-4 text-indigo-400" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Ingest OKF Concept Bundle</h3>
+                <Upload className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Ingest OKF Concept Bundle</h3>
               </div>
-              <button onClick={() => setIsIngestModalOpen(false)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg cursor-pointer">
+              <button onClick={() => setIsIngestModalOpen(false)} className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-lg cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <label className="flex flex-col items-center justify-center border-2 border-dashed border-indigo-500/30 hover:border-indigo-500/60 bg-indigo-950/10 hover:bg-indigo-950/20 rounded-2xl p-8 cursor-pointer transition-all">
-                <Upload className="h-8 w-8 text-indigo-400 mb-2" />
-                <span className="text-sm text-slate-200 font-bold">Drop Policy Markdown / JSON Bundle (.md, .json)</span>
-                <span className="text-xs text-slate-500 mt-1">Automatically extracts metadata, tags, and policy instructions</span>
+              <label className="flex flex-col items-center justify-center border-2 border-dashed border-primary/20 hover:border-indigo-500/60 bg-indigo-950/10 hover:bg-indigo-950/20 rounded-2xl p-8 cursor-pointer transition-all">
+                <Upload className="h-8 w-8 text-primary mb-2" />
+                <span className="text-sm text-foreground font-bold">Drop Policy Markdown / JSON Bundle (.md, .json)</span>
+                <span className="text-xs text-muted-foreground mt-1">Automatically extracts metadata, tags, and policy instructions</span>
                 <input type="file" accept=".md,.json,.txt" onChange={handleIngestFile} className="hidden" />
               </label>
               <div className="relative my-2 text-center">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-855" /></div>
-                <span className="relative bg-slate-950 px-3 text-[10px] text-slate-500 uppercase font-bold tracking-wider">Or paste raw document or JSON</span>
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+                <span className="relative bg-card px-3 text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Or paste raw document or JSON</span>
               </div>
               <div className="space-y-3">
                 <textarea 
@@ -944,12 +944,12 @@ export function OkfRegistry() {
                   value={rawBundleMarkdown}
                   onChange={(e) => setRawBundleMarkdown(e.target.value)}
                   placeholder="---\ntype: sop\ntitle: Heritage Venue Governance\ndescription: Operational rules\ntags: [curfew, deposit]\n---\n\n# Policy Body..."
-                  className="w-full rounded-2xl border border-slate-855 bg-[#05050a] p-4 text-xs text-slate-300 font-mono placeholder-slate-650 outline-none focus:border-indigo-500"
+                  className="w-full rounded-2xl border border-border bg-muted/30 p-4 text-xs text-foreground font-mono placeholder-slate-650 outline-none focus:border-indigo-500"
                 />
                 <button 
                   type="button" 
                   onClick={handleParseRawBundle}
-                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
+                  className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
                 >
                   Parse &amp; Load Bundle
                 </button>
@@ -962,94 +962,94 @@ export function OkfRegistry() {
       {viewingConcept && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div onClick={() => setViewingConcept(null)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+          <div className="relative bg-card border border-border rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
             {(() => {
               const parsed = parseOkfFrontmatterAndBody(viewingConcept.yamlFrontmatter, viewingConcept.markdownBody);
               const boundAgents = agentUsageMap[viewingConcept.conceptKey.toLowerCase()] || agentUsageMap[`okf-${viewingConcept.conceptKey.toLowerCase()}`] || [];
               return (
                 <>
-                  <div className="px-6 py-4 border-b border-slate-900 flex justify-between items-center bg-slate-950/40 shrink-0">
+                  <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-card shrink-0">
                     <div className="flex items-center gap-3 min-w-0">
-                      <BookOpen className="h-5 w-5 text-indigo-400 shrink-0" />
+                      <BookOpen className="h-5 w-5 text-primary shrink-0" />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-base font-bold text-white truncate">{parsed.title || viewingConcept.conceptKey}</h3>
+                          <h3 className="text-base font-bold text-foreground truncate">{parsed.title || viewingConcept.conceptKey}</h3>
                           {renderTypeBadge(parsed.conceptType)}
                         </div>
-                        <span className="font-mono text-[10px] text-slate-500">{viewingConcept.conceptKey}</span>
+                        <span className="font-mono text-[10px] text-muted-foreground">{viewingConcept.conceptKey}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <button 
                         type="button" 
                         onClick={() => handleExportMarkdown(viewingConcept)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border hover:border-border bg-muted/50 text-foreground hover:text-foreground text-xs font-semibold transition-all cursor-pointer"
                       >
                         <Download className="h-3.5 w-3.5" /> .md
                       </button>
                       <button 
                         type="button" 
                         onClick={() => handleExportJson(viewingConcept)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border hover:border-border bg-muted/50 text-foreground hover:text-foreground text-xs font-semibold transition-all cursor-pointer"
                       >
                         <Download className="h-3.5 w-3.5" /> JSON
                       </button>
                       <button 
                         type="button" 
                         onClick={() => handleOpenEditModal(viewingConcept)}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
                       >
                         <Edit className="h-3.5 w-3.5" /> Edit Concept
                       </button>
-                      <button onClick={() => setViewingConcept(null)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg ml-2 cursor-pointer">
+                      <button onClick={() => setViewingConcept(null)} className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-lg ml-2 cursor-pointer">
                         <X className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-6 space-y-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-800">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/40 border border-slate-900 p-4 rounded-2xl text-xs">
+                  <div className="flex-1 overflow-y-auto p-6 space-y-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-muted">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-card border border-border p-4 rounded-2xl text-xs">
                       <div>
-                        <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold mb-0.5">Namespace Category</span>
-                        <span className="text-slate-200 font-medium">{viewingConcept.category || "General Policy"}</span>
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider block font-bold mb-0.5">Namespace Category</span>
+                        <span className="text-foreground font-medium">{viewingConcept.category || "General Policy"}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold mb-0.5">Concept Type</span>
-                        <span className="text-slate-200 font-medium">{parsed.conceptType}</span>
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider block font-bold mb-0.5">Concept Type</span>
+                        <span className="text-foreground font-medium">{parsed.conceptType}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold mb-0.5">External Resource</span>
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider block font-bold mb-0.5">External Resource</span>
                         {parsed.resource ? (
                           <a 
                             href={parsed.resource} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-indigo-400 hover:text-indigo-300 underline font-mono text-[11px] truncate block flex items-center gap-1"
+                            className="text-primary hover:text-primary underline font-mono text-[11px] truncate block flex items-center gap-1"
                           >
                             <span>Open URL</span> <ExternalLink className="h-3 w-3 inline shrink-0" />
                           </a>
                         ) : (
-                          <span className="text-slate-600">Internal Policy</span>
+                          <span className="text-muted-foreground">Internal Policy</span>
                         )}
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold mb-0.5">Bound In Agents</span>
-                        <span className="text-indigo-300 font-medium font-mono text-[11px]">
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider block font-bold mb-0.5">Bound In Agents</span>
+                        <span className="text-primary font-medium font-mono text-[11px]">
                           {boundAgents.length > 0 ? boundAgents.join(", ") : "None"}
                         </span>
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Description Summary</span>
-                      <div className="text-xs text-slate-300 leading-relaxed bg-slate-950/30 border border-slate-900 p-4 rounded-2xl">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Description Summary</span>
+                      <div className="text-xs text-foreground leading-relaxed bg-card border border-border p-4 rounded-2xl">
                         {parsed.description || "No description summary provided."}
                       </div>
                     </div>
                     {Array.isArray(parsed.tags) && parsed.tags.length > 0 && (
                       <div className="space-y-1.5">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tags</span>
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Tags</span>
                         <div className="flex flex-wrap gap-1.5">
                           {parsed.tags.map((tag, idx) => (
-                            <span key={idx} className="text-xs bg-slate-900/90 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-855">
+                            <span key={idx} className="text-xs bg-muted/90 text-foreground px-2.5 py-1 rounded-lg border border-border">
                               #{tag}
                             </span>
                           ))}
@@ -1058,17 +1058,17 @@ export function OkfRegistry() {
                     )}
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Policy Guidelines Body (Markdown)</span>
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Policy Guidelines Body (Markdown)</span>
                         <button
                           type="button"
                           onClick={() => handleCopyMarkdown(parsed.markdownBody || viewingConcept.markdownBody)}
-                          className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors bg-slate-900/60 hover:bg-slate-900 px-3 py-1 rounded-lg border border-slate-800 cursor-pointer"
+                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors bg-muted/60 hover:bg-muted px-3 py-1 rounded-lg border border-border cursor-pointer"
                         >
                           {copiedCode ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                           {copiedCode ? "Copied" : "Copy Raw Markdown"}
                         </button>
                       </div>
-                      <pre className="rounded-2xl border border-slate-900 bg-[#06060c] p-4 text-xs text-slate-300 font-mono overflow-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-800 whitespace-pre-wrap leading-relaxed max-h-[350px]">
+                      <pre className="rounded-2xl border border-border bg-muted/30 p-4 text-xs text-foreground font-mono overflow-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-muted whitespace-pre-wrap leading-relaxed max-h-[350px]">
                         {parsed.markdownBody || viewingConcept.markdownBody}
                       </pre>
                     </div>
@@ -1083,11 +1083,11 @@ export function OkfRegistry() {
       {isAuthorModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div onClick={() => setIsAuthorModalOpen(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-slate-900 flex justify-between items-center bg-slate-950/40 shrink-0">
+          <div className="relative bg-card border border-border rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-card shrink-0">
               <div className="flex items-center gap-2.5">
-                <Edit className="h-4 w-4 text-indigo-400" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                <Edit className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
                   {editingConcept ? `Edit OKF Concept: ${formKey}` : "Author OKF Concept Bundle"}
                 </h3>
               </div>
@@ -1095,7 +1095,7 @@ export function OkfRegistry() {
                 <button 
                   type="button" 
                   onClick={() => setIsAuthorModalOpen(false)}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-850 text-slate-400 hover:text-white text-xs font-semibold transition-all bg-slate-950/20 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl border border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all bg-card cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1103,21 +1103,21 @@ export function OkfRegistry() {
                   type="button" 
                   onClick={handleSaveConcept}
                   disabled={loading}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                   {editingConcept ? "Save Changes" : "Create Concept"}
                 </button>
-                <button onClick={() => setIsAuthorModalOpen(false)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg ml-2 cursor-pointer">
+                <button onClick={() => setIsAuthorModalOpen(false)} className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-lg ml-2 cursor-pointer">
                   <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-muted">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Concept Key</label>
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Concept Key</label>
                     <HelpTooltip content="A unique, snake_case key identifying this OKF concept. Immutable after creation." side="right" />
                   </div>
                   <input 
@@ -1125,13 +1125,13 @@ export function OkfRegistry() {
                     value={formKey}
                     onChange={(e) => setFormKey(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_"))}
                     placeholder="e.g. wedplan_enterprise_vendor_policy" 
-                    className="w-full rounded-xl border border-slate-850 bg-slate-900/20 py-2.5 px-4 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500 font-mono disabled:opacity-60"
+                    className="w-full rounded-xl border border-border bg-muted/20 py-2.5 px-4 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500 font-mono disabled:opacity-60"
                     disabled={Boolean(editingConcept)}
                   />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Namespace Category</label>
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Namespace Category</label>
                     <HelpTooltip content="The business or operational category this concept belongs to (e.g. Wedding Operations, Safety & Compliance)." side="right" />
                   </div>
                   <input 
@@ -1139,18 +1139,18 @@ export function OkfRegistry() {
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value)}
                     placeholder="e.g. Wedding Operations" 
-                    className="w-full rounded-xl border border-slate-850 bg-slate-900/20 py-2.5 px-4 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500"
+                    className="w-full rounded-xl border border-border bg-muted/20 py-2.5 px-4 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500"
                   />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Concept Type</label>
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Concept Type</label>
                     <HelpTooltip content="The governance classification of this concept." side="right" />
                   </div>
                   <select 
                     value={formType}
                     onChange={(e) => setFormType(e.target.value)}
-                    className="w-full rounded-xl border border-slate-850 bg-[#0d0d18] py-2.5 px-4 text-xs text-white outline-none focus:border-indigo-500 cursor-pointer"
+                    className="w-full rounded-xl border border-border bg-background py-2.5 px-4 text-xs text-foreground outline-none focus:border-indigo-500 cursor-pointer"
                   >
                     <option value="SOP Ruleset">SOP Ruleset</option>
                     <option value="Guideline Parameter">Guideline Parameter</option>
@@ -1161,39 +1161,39 @@ export function OkfRegistry() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Concept Title</label>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Concept Title</label>
                   <input 
                     type="text" 
                     value={formTitle}
                     onChange={(e) => setFormTitle(e.target.value)}
                     placeholder="e.g. Heritage Venue Governance Standard" 
-                    className="w-full rounded-xl border border-slate-850 bg-slate-900/20 py-2.5 px-4 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500"
+                    className="w-full rounded-xl border border-border bg-muted/20 py-2.5 px-4 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Resource URI (Optional)</label>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Resource URI (Optional)</label>
                   <input 
                     type="text" 
                     value={formResource}
                     onChange={(e) => setFormResource(e.target.value)}
                     placeholder="https://docs.company.com/sop" 
-                    className="w-full rounded-xl border border-slate-850 bg-slate-900/20 py-2.5 px-4 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500 font-mono text-[11px]"
+                    className="w-full rounded-xl border border-border bg-muted/20 py-2.5 px-4 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500 font-mono text-[11px]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Tags (Comma-separated)</label>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Tags (Comma-separated)</label>
                   <input 
                     type="text" 
                     value={formTags}
                     onChange={(e) => setFormTags(e.target.value)}
                     placeholder="curfew, deposit, staffing" 
-                    className="w-full rounded-xl border border-slate-850 bg-slate-900/20 py-2.5 px-4 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500"
+                    className="w-full rounded-xl border border-border bg-muted/20 py-2.5 px-4 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Description Summary</label>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Description Summary</label>
                   <HelpTooltip content="A concise summary of the policy ruleset for tool-call previews and synthesizer reports." side="right" />
                   <AiAssistButton
                     onGenerated={(text) => setFormDescription(text)}
@@ -1207,12 +1207,12 @@ export function OkfRegistry() {
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   placeholder="Summarize the core operational or compliance directives..." 
-                  className="w-full rounded-xl border border-slate-850 bg-slate-900/20 py-2.5 px-4 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500"
+                  className="w-full rounded-xl border border-border bg-muted/20 py-2.5 px-4 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-indigo-500"
                 />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 mb-2">
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Guidelines Body (Markdown)</label>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Guidelines Body (Markdown)</label>
                   <HelpTooltip content="The comprehensive operational instructions and SOP markdown body delivered directly to workers at runtime." side="right" />
                   <AiAssistButton
                     onGenerated={(text) => setFormMarkdown(text)}
@@ -1226,15 +1226,15 @@ export function OkfRegistry() {
                   value={formMarkdown}
                   onChange={(e) => setFormMarkdown(e.target.value)}
                   placeholder="# Mandatory Guidelines..." 
-                  className="w-full rounded-2xl border border-slate-855 bg-[#05050a] p-4 text-xs text-slate-300 font-mono outline-none resize-none focus:border-indigo-500 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-855 leading-relaxed"
+                  className="w-full rounded-2xl border border-border bg-muted/30 p-4 text-xs text-foreground font-mono outline-none resize-none focus:border-indigo-500 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-855 leading-relaxed"
                 />
               </div>
             </div>
-            <div className="px-6 py-3.5 border-t border-slate-900 bg-slate-950/60 flex justify-end items-center gap-2.5 shrink-0">
+            <div className="px-6 py-3.5 border-t border-border bg-muted/50 flex justify-end items-center gap-2.5 shrink-0">
               <button 
                 type="button" 
                 onClick={() => setIsAuthorModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-850 text-slate-400 hover:text-white text-xs font-semibold transition-all bg-slate-950/20 cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all bg-card cursor-pointer"
               >
                 Cancel
               </button>
@@ -1242,7 +1242,7 @@ export function OkfRegistry() {
                 type="button" 
                 onClick={handleSaveConcept}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {editingConcept ? "Save Changes" : "Create Concept"}
@@ -1255,28 +1255,28 @@ export function OkfRegistry() {
       {deletingConcept && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div onClick={() => setDeletingConcept(null)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
+          <div className="relative bg-card border border-border rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-white">Delete OKF Concept</h3>
-              <button onClick={() => setDeletingConcept(null)} className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg cursor-pointer">
+              <h3 className="text-sm font-bold text-foreground">Delete OKF Concept</h3>
+              <button onClick={() => setDeletingConcept(null)} className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-lg cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-xs text-slate-300 mb-6 leading-relaxed">
-              Are you sure you want to delete <strong className="text-white font-mono">{deletingConcept.conceptKey}</strong>? This will permanently remove these governance rules.
+            <p className="text-xs text-foreground mb-6 leading-relaxed">
+              Are you sure you want to delete <strong className="text-foreground font-mono">{deletingConcept.conceptKey}</strong>? This will permanently remove these governance rules.
             </p>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setDeletingConcept(null)}
-                className="flex-1 py-2 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold bg-slate-900/40 transition-all cursor-pointer"
+                className="flex-1 py-2 rounded-xl border border-border hover:border-border text-muted-foreground hover:text-foreground text-xs font-semibold bg-muted/40 transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => handleDeleteConcept(deletingConcept.id)}
-                className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all cursor-pointer"
+                className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-foreground text-xs font-bold transition-all cursor-pointer"
               >
                 Confirm Delete
               </button>
@@ -1287,3 +1287,5 @@ export function OkfRegistry() {
     </div>
   );
 }
+
+

@@ -76,13 +76,13 @@ export function ToolDataTable({
       {/* Top Controls: Search, Category Filters, Bulk Actions */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
+          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search tools by name, server, description..."
-            className="w-full rounded-xl border border-slate-800 bg-slate-900/60 pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500 transition-colors"
+            className="w-full rounded-xl border border-border bg-muted/30 pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500 transition-colors"
           />
         </div>
 
@@ -96,7 +96,7 @@ export function ToolDataTable({
               className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                 activeCategory === cat
                   ? "bg-indigo-600 text-white shadow-sm"
-                  : "bg-slate-900/40 text-slate-400 hover:text-slate-200 border border-slate-800/80"
+                  : "bg-muted/30 text-muted-foreground hover:text-foreground border border-border/80"
               }`}
             >
               {cat}
@@ -106,7 +106,7 @@ export function ToolDataTable({
       </div>
 
       {/* Bulk Actions Header */}
-      <div className="flex items-center justify-between px-1 text-[11px] text-slate-400">
+      <div className="flex items-center justify-between px-1 text-[11px] text-muted-foreground">
         <div>
           Showing <span className="text-white font-semibold">{filteredTools.length}</span> tools &middot;{" "}
           <span className="text-emerald-400 font-semibold">{activeCount}</span> currently active
@@ -123,7 +123,7 @@ export function ToolDataTable({
           <button
             type="button"
             onClick={() => onBulkToggle(filteredTools, false)}
-            className="text-[10px] text-slate-500 hover:text-slate-300 font-medium transition-colors cursor-pointer"
+            className="text-[10px] text-muted-foreground hover:text-muted-foreground font-medium transition-colors cursor-pointer"
           >
             Disable All Filtered
           </button>
@@ -131,10 +131,10 @@ export function ToolDataTable({
       </div>
 
       {/* Data Table */}
-      <div className="rounded-xl border border-slate-800 bg-slate-950/40 overflow-hidden shadow-inner">
+      <div className="rounded-xl border border-border bg-muted/40 overflow-hidden shadow-inner">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs divide-y divide-slate-800/80">
-            <thead className="bg-slate-900/80 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <thead className="bg-muted/30 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="py-2.5 px-3 w-12 text-center">Toggle</th>
                 <th className="py-2.5 px-3">Tool &amp; Server</th>
@@ -146,13 +146,13 @@ export function ToolDataTable({
             <tbody className="divide-y divide-slate-800/50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500 text-xs">
+                  <td colSpan={5} className="py-8 text-center text-muted-foreground text-xs">
                     Loading tool registry...
                   </td>
                 </tr>
               ) : filteredTools.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500 text-xs italic">
+                  <td colSpan={5} className="py-8 text-center text-muted-foreground text-xs italic">
                     {emptyMessage}
                   </td>
                 </tr>
@@ -163,7 +163,7 @@ export function ToolDataTable({
                     <tr
                       key={`${tool.serverId || tool.category}::${tool.name}`}
                       onClick={() => onToggleTool(tool)}
-                      className={`hover:bg-slate-900/50 transition-colors cursor-pointer select-none ${
+                      className={`hover:bg-muted/30 transition-colors cursor-pointer select-none ${
                         active ? "bg-emerald-500/[0.04]" : ""
                       }`}
                     >
@@ -186,7 +186,7 @@ export function ToolDataTable({
 
                       {/* Tool Name & Server */}
                       <td className="py-3 px-3">
-                        <div className="font-mono text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                        <div className="font-mono text-xs font-bold text-foreground flex items-center gap-1.5">
                           {tool.category === "mcp" ? (
                             <Server className="h-3 w-3 text-purple-400 shrink-0" />
                           ) : (
@@ -218,11 +218,11 @@ export function ToolDataTable({
 
                       {/* Description & Parameters */}
                       <td className="py-3 px-3">
-                        <div className="text-slate-400 text-[11px] leading-relaxed line-clamp-2">
+                        <div className="text-muted-foreground text-[11px] leading-relaxed line-clamp-2">
                           {tool.description || "No description provided."}
                         </div>
                         {tool.parametersSummary && (
-                          <div className="text-[9px] font-mono text-slate-500 mt-1">
+                          <div className="text-[9px] font-mono text-muted-foreground mt-1">
                             params: {tool.parametersSummary}
                           </div>
                         )}
@@ -234,7 +234,7 @@ export function ToolDataTable({
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                             active
                               ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
-                              : "bg-slate-800 text-slate-500 border-slate-700"
+                              : "bg-slate-800 text-muted-foreground border-border"
                           }`}
                         >
                           {active ? (
