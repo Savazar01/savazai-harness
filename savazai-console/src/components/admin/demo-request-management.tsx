@@ -51,31 +51,31 @@ const STATUS_CONFIG: Record<
 > = {
   pending: {
     label: "Pending Review",
-    bg: "bg-amber-500/15",
-    text: "text-amber-300",
+    bg: "bg-amber-500/10",
+    text: "text-amber-800 dark:text-amber-300",
     border: "border-amber-500/30",
   },
   contacted: {
     label: "Contacted",
-    bg: "bg-blue-500/15",
-    text: "text-blue-300",
-    border: "border-blue-500/30",
+    bg: "bg-sky-500/10",
+    text: "text-sky-800 dark:text-sky-300",
+    border: "border-sky-500/30",
   },
   scheduled: {
     label: "Demo Scheduled",
-    bg: "bg-purple-500/15",
-    text: "text-purple-300",
-    border: "border-purple-500/30",
+    bg: "bg-indigo-500/10",
+    text: "text-indigo-800 dark:text-indigo-300",
+    border: "border-indigo-500/30",
   },
   completed: {
     label: "Completed",
-    bg: "bg-emerald-500/15",
-    text: "text-emerald-300",
+    bg: "bg-emerald-500/10",
+    text: "text-emerald-800 dark:text-emerald-300",
     border: "border-emerald-500/30",
   },
   archived: {
     label: "Archived",
-    bg: "bg-slate-800/60",
+    bg: "bg-muted",
     text: "text-muted-foreground",
     border: "border-border",
   },
@@ -225,7 +225,7 @@ export function DemoRequestManagement() {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-background text-slate-100 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground overflow-hidden">
       {/* Header Bar */}
       <div className="shrink-0 border-b border-border bg-muted/40 px-6 py-5 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -248,7 +248,7 @@ export function DemoRequestManagement() {
           <button
             onClick={fetchRequests}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-800 transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-all disabled:opacity-50 shadow-xs"
             title="Refresh Inbound Leads"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -258,7 +258,7 @@ export function DemoRequestManagement() {
       </div>
 
       {/* Main Workspace */}
-      <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+      <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-muted">
         {/* Flash Notifications */}
         {errorMessage && (
           <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium flex items-center justify-between">
@@ -286,41 +286,41 @@ export function DemoRequestManagement() {
 
         {/* Metrics Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-5 rounded-2xl border border-slate-850 bg-muted/30 space-y-1">
-            <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-              <Inbox className="h-3.5 w-3.5 text-muted-foreground" />
+          <div className="p-5 rounded-2xl border border-border bg-card shadow-xs space-y-1">
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Inbox className="h-3.5 w-3.5 text-foreground/70" />
               Total Inquiries
             </div>
-            <div className="text-2xl font-extrabold text-foreground">{metrics.total}</div>
+            <div className="text-3xl font-extrabold text-foreground">{metrics.total}</div>
           </div>
 
-          <div className="p-5 rounded-2xl border border-amber-500/20 bg-amber-950/10 space-y-1">
-            <div className="text-xs font-medium text-amber-300 flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-amber-400" />
+          <div className="p-5 rounded-2xl border border-border bg-card shadow-xs space-y-1">
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
               Pending Review
             </div>
-            <div className="text-2xl font-extrabold text-amber-200">{metrics.pending}</div>
+            <div className="text-3xl font-extrabold text-foreground">{metrics.pending}</div>
           </div>
 
-          <div className="p-5 rounded-2xl border border-purple-500/20 bg-purple-950/10 space-y-1">
-            <div className="text-xs font-medium text-purple-300 flex items-center gap-1.5">
-              <CalendarCheck className="h-3.5 w-3.5 text-purple-400" />
+          <div className="p-5 rounded-2xl border border-border bg-card shadow-xs space-y-1">
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <CalendarCheck className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
               Scheduled Demos
             </div>
-            <div className="text-2xl font-extrabold text-purple-200">{metrics.scheduled}</div>
+            <div className="text-3xl font-extrabold text-foreground">{metrics.scheduled}</div>
           </div>
 
-          <div className="p-5 rounded-2xl border border-emerald-500/20 bg-emerald-950/10 space-y-1">
-            <div className="text-xs font-medium text-emerald-300 flex items-center gap-1.5">
-              <UserCheck className="h-3.5 w-3.5 text-emerald-400" />
+          <div className="p-5 rounded-2xl border border-border bg-card shadow-xs space-y-1">
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <UserCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
               Completed / Won
             </div>
-            <div className="text-2xl font-extrabold text-emerald-200">{metrics.completed}</div>
+            <div className="text-3xl font-extrabold text-foreground">{metrics.completed}</div>
           </div>
         </div>
 
         {/* Filters & Search Controls */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 rounded-2xl border border-border bg-muted/30">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 rounded-2xl border border-border bg-card shadow-xs">
           {/* Status Tabs */}
           <div className="flex flex-wrap items-center gap-1.5">
             {[
@@ -336,8 +336,8 @@ export function DemoRequestManagement() {
                 onClick={() => setStatusFilter(tab.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                   statusFilter === tab.id
-                    ? "bg-primary text-foreground shadow-md shadow-primary/20"
-                    : "text-muted-foreground hover:text-foreground hover:bg-slate-850"
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
                 }`}
               >
                 {tab.label}
@@ -353,7 +353,7 @@ export function DemoRequestManagement() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name, company, email..."
-              className="w-full pl-9 pr-8 py-1.5 bg-background border border-border rounded-xl text-xs text-foreground placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+              className="w-full pl-9 pr-8 py-1.5 bg-background border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
             />
             {searchQuery && (
               <button
@@ -367,7 +367,7 @@ export function DemoRequestManagement() {
         </div>
 
         {/* Leads Data Table */}
-        <div className="rounded-3xl border border-border bg-muted/30 overflow-hidden">
+        <div className="rounded-3xl border border-border bg-card overflow-hidden shadow-xs">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground space-y-3">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -375,7 +375,7 @@ export function DemoRequestManagement() {
             </div>
           ) : filteredRequests.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground text-center space-y-2">
-              <Inbox className="h-10 w-10 text-slate-600 mb-1" />
+              <Inbox className="h-10 w-10 text-muted-foreground mb-1" />
               <h3 className="text-sm font-bold text-foreground">No Demo Requests Found</h3>
               <p className="text-xs text-muted-foreground max-w-sm">
                 {searchQuery || statusFilter !== "all"
@@ -386,7 +386,7 @@ export function DemoRequestManagement() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-muted/30 text-muted-foreground font-semibold border-b border-border">
+                <thead className="bg-muted/40 text-foreground/80 font-bold border-b border-border uppercase tracking-wider text-[11px]">
                   <tr>
                     <th className="px-5 py-4">Prospective Lead &amp; Company</th>
                     <th className="px-5 py-4">Contact Info</th>
@@ -396,13 +396,13 @@ export function DemoRequestManagement() {
                     <th className="px-5 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-900 text-muted-foreground">
+                <tbody className="divide-y divide-border text-muted-foreground">
                   {filteredRequests.map((req) => {
                     const statusConf = STATUS_CONFIG[req.status] || STATUS_CONFIG.pending;
                     return (
                       <tr
                         key={req.id}
-                        className="hover:bg-slate-850/40 transition-colors group cursor-pointer"
+                        className="hover:bg-muted/30 transition-colors group cursor-pointer"
                         onClick={() => handleOpenDetail(req)}
                       >
                         {/* Name & Company */}
@@ -476,14 +476,14 @@ export function DemoRequestManagement() {
                           >
                             <button
                               onClick={() => handleOpenDetail(req)}
-                              className="px-2.5 py-1 rounded-lg bg-slate-800 text-muted-foreground hover:text-foreground hover:bg-slate-700 text-xs font-semibold transition-all"
+                              className="px-2.5 py-1 rounded-lg bg-card border border-border text-foreground hover:bg-muted text-xs font-semibold transition-all shadow-xs"
                             >
                               {canManageLeads ? "Manage" : "Inspect"}
                             </button>
                             {canManageLeads && (
                               <button
                                 onClick={() => setDeleteTarget(req)}
-                                className="p-1 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                                className="p-1 rounded-lg text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 transition-colors"
                                 title="Delete Record"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
@@ -504,18 +504,18 @@ export function DemoRequestManagement() {
       {/* Lead Detail & Management Modal */}
       {mounted && selectedRequest && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-muted/40 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-2xl rounded-3xl border border-border bg-card shadow-2xl p-6 sm:p-8 text-slate-100 flex flex-col max-h-[90vh] overflow-hidden my-auto">
+          <div className="relative w-full max-w-2xl rounded-3xl border border-border bg-card shadow-2xl p-6 sm:p-8 text-foreground flex flex-col max-h-[90vh] overflow-hidden my-auto">
             {/* Close Button */}
             <button
               onClick={() => setSelectedRequest(null)}
-              className="absolute top-5 right-5 p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-slate-800 transition-colors"
+              className="absolute top-5 right-5 p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
 
             {/* Header */}
             <div className="mb-6 space-y-1">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/20">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 border border-indigo-500/30">
                 <CalendarCheck className="h-3.5 w-3.5" />
                 Inbound Lead Profile
               </div>
@@ -530,7 +530,7 @@ export function DemoRequestManagement() {
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto space-y-5 pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+            <div className="flex-1 overflow-y-auto space-y-5 pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-muted">
               {/* Quick Contact & Info Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl border border-border bg-muted/40">
                 <div className="space-y-1">
@@ -588,7 +588,7 @@ export function DemoRequestManagement() {
                   <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
                   Workflow &amp; Use Case Requirements
                 </div>
-                <div className="p-4 rounded-2xl border border-border bg-muted/40 text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                <div className="p-4 rounded-2xl border border-border bg-muted/40 text-xs text-foreground/90 leading-relaxed whitespace-pre-wrap">
                   {selectedRequest.description}
                 </div>
               </div>
@@ -623,7 +623,7 @@ export function DemoRequestManagement() {
                     value={modalNotes}
                     onChange={(e) => setModalNotes(e.target.value)}
                     placeholder="Add private notes for the sales & solutions team (e.g. Scheduled demo for Thursday at 2pm EST)..."
-                    className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-xs text-foreground placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none"
+                    className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none"
                   />
                 </div>
               </div>
@@ -635,7 +635,7 @@ export function DemoRequestManagement() {
                 <button
                   type="button"
                   onClick={() => setDeleteTarget(selectedRequest)}
-                  className="px-4 py-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 text-xs font-semibold transition-all"
+                  className="px-4 py-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 text-xs font-semibold transition-all"
                 >
                   Delete Lead
                 </button>
@@ -645,7 +645,7 @@ export function DemoRequestManagement() {
                 <button
                   type="button"
                   onClick={() => setSelectedRequest(null)}
-                  className="px-4 py-2.5 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-slate-800 text-xs font-semibold transition-all"
+                  className="px-4 py-2.5 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted text-xs font-semibold transition-all"
                 >
                   {canManageLeads ? "Cancel" : "Close"}
                 </button>
@@ -654,7 +654,7 @@ export function DemoRequestManagement() {
                     type="button"
                     onClick={handleSaveDetails}
                     disabled={savingNotes}
-                    className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-primary text-foreground text-xs font-semibold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50"
                   >
                     {savingNotes ? (
                       <>
@@ -679,9 +679,9 @@ export function DemoRequestManagement() {
       {/* Delete Confirmation Dialog */}
       {mounted && deleteTarget && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-muted/40 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-3xl border border-rose-500/30 bg-card p-6 text-slate-100 space-y-4 shadow-2xl my-auto">
+          <div className="w-full max-w-md rounded-3xl border border-rose-500/30 bg-card p-6 text-foreground space-y-4 shadow-2xl my-auto">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-400 border border-rose-500/20">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-500 border border-rose-500/20">
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
@@ -700,7 +700,7 @@ export function DemoRequestManagement() {
               <button
                 type="button"
                 onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-slate-800 text-xs font-semibold transition-all"
+                className="px-4 py-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted text-xs font-semibold transition-all"
               >
                 Cancel
               </button>
@@ -708,7 +708,7 @@ export function DemoRequestManagement() {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="px-4 py-2 rounded-xl bg-rose-600 text-foreground text-xs font-semibold shadow-lg shadow-rose-600/20 hover:bg-rose-500 transition-all disabled:opacity-50 flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-semibold shadow-lg shadow-rose-600/20 hover:bg-rose-500 transition-all disabled:opacity-50 flex items-center gap-1.5"
               >
                 {deleting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Confirm Delete

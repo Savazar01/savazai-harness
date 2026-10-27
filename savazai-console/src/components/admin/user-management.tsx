@@ -464,9 +464,9 @@ export function UserManagement() {
               setFormError(null);
               setIsInviteModalOpen(true);
             }}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 text-xs font-semibold shadow-lg shadow-indigo-500/10 transition-all"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-800 dark:text-indigo-300 text-xs font-semibold shadow-lg shadow-indigo-500/10 transition-all"
           >
-            <LinkIcon className="h-3.5 w-3.5 text-indigo-400" />
+            <LinkIcon className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
             Generate Invite Link
           </button>
 
@@ -479,7 +479,7 @@ export function UserManagement() {
               setFormError(null);
               setIsCreateOpen(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-foreground text-xs font-semibold shadow-lg shadow-primary/25 transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-lg shadow-primary/25 transition-all"
           >
             <UserPlus className="h-3.5 w-3.5" />
             Create User
@@ -505,7 +505,7 @@ export function UserManagement() {
           onClick={() => setActiveTab("pending")}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
             activeTab === "pending"
-              ? "bg-amber-600 text-foreground shadow-sm shadow-amber-600/25"
+              ? "bg-amber-600 text-white shadow-sm shadow-amber-600/25"
               : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
         >
@@ -533,14 +533,14 @@ export function UserManagement() {
 
       {/* Feedback Alerts */}
       {errorMessage && (
-        <div className="flex items-center gap-3 p-4 rounded-2xl border border-red-500/20 bg-red-500/10 text-xs text-red-400">
+        <div className="flex items-center gap-3 p-4 rounded-2xl border border-red-500/20 bg-red-500/10 text-xs text-red-600 dark:text-red-400">
           <AlertTriangle className="h-5 w-5 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
 
       {successMessage && (
-        <div className="flex items-center gap-3 p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-300">
+        <div className="flex items-center gap-3 p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-800 dark:text-emerald-300">
           <CheckCircle2 className="h-5 w-5 shrink-0" />
           <span>{successMessage}</span>
         </div>
@@ -585,7 +585,7 @@ export function UserManagement() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold tracking-wider uppercase text-[10px]">
+                  <tr className="border-b border-border bg-muted/40 text-foreground/80 font-bold tracking-wider uppercase text-[11px]">
                     <th className="py-3 px-4">User</th>
                     <th className="py-3 px-4">Assigned Profile</th>
                     <th className="py-3 px-4">Status</th>
@@ -593,7 +593,7 @@ export function UserManagement() {
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-900/60">
+                <tbody className="divide-y divide-border">
                   {loading ? (
                     <tr>
                       <td colSpan={5} className="py-12 text-center text-muted-foreground">
@@ -626,8 +626,8 @@ export function UserManagement() {
                               <div
                                 className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
                                   isSuperAdmin
-                                    ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
-                                    : "bg-slate-800 text-muted-foreground border border-border"
+                                    ? "bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30"
+                                    : "bg-muted text-foreground border border-border"
                                 }`}
                               >
                                 {user.name ? user.name.charAt(0).toUpperCase() : "U"}
@@ -652,8 +652,8 @@ export function UserManagement() {
                             <span
                               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold tracking-wide ${
                                 isSuperAdmin
-                                  ? "bg-amber-500/10 text-amber-300 border border-amber-500/20"
-                                  : "bg-indigo-500/10 text-indigo-300 border border-indigo-500/20"
+                                  ? "bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/30"
+                                  : "bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 border border-indigo-500/30"
                               }`}
                             >
                               <ShieldCheck className="h-3.5 w-3.5" />
@@ -665,8 +665,8 @@ export function UserManagement() {
                             <span
                               className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border ${
                                 user.status === "ACTIVE"
-                                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                  : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                                  ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30"
+                                  : "bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/30"
                               }`}
                             >
                               <span className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -694,7 +694,7 @@ export function UserManagement() {
                                   setFormError(null);
                                   setIsEditOpen(true);
                                 }}
-                                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-slate-800 transition-colors"
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                                 title="Edit profile & assigned role"
                               >
                                 <Edit3 className="h-3.5 w-3.5" />
@@ -708,7 +708,7 @@ export function UserManagement() {
                                   setFormError(null);
                                   setIsPasswordOpen(true);
                                 }}
-                                className="p-1.5 rounded-lg text-muted-foreground hover:text-amber-300 hover:bg-amber-500/10 transition-colors"
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
                                 title="Change or force password reset"
                               >
                                 <Key className="h-3.5 w-3.5" />
@@ -721,7 +721,7 @@ export function UserManagement() {
                                     setFormError(null);
                                     setIsDeleteOpen(true);
                                   }}
-                                  className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                  className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                                   title="Delete user"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
@@ -743,13 +743,13 @@ export function UserManagement() {
       {/* ── TAB 2: PENDING APPROVALS QUEUE ── */}
       {activeTab === "pending" && (
         <div className="space-y-4">
-          <div className="p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-xs text-amber-300 flex items-start gap-3">
-            <Clock className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 flex items-start gap-3">
+            <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-amber-200 text-sm">Quarantine State Enforced</p>
-              <p className="text-amber-300/80 mt-1 leading-relaxed">
+              <p className="font-bold text-amber-900 dark:text-amber-200 text-sm">Quarantine State Enforced</p>
+              <p className="text-amber-800/90 dark:text-amber-300/90 mt-1 leading-relaxed text-xs">
                 The users below have completed 6-digit email OTP verification via an invitation link, but hold{" "}
-                <strong>ZERO permissions</strong>. An administrator must explicitly review and assign an RBAC Role Profile before they can sign in or access any workspace capabilities.
+                <strong className="text-amber-950 dark:text-amber-100 font-bold">ZERO permissions</strong>. An administrator must explicitly review and assign an RBAC Role Profile before they can sign in or access any workspace capabilities.
               </p>
             </div>
           </div>
@@ -758,7 +758,7 @@ export function UserManagement() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold tracking-wider uppercase text-[10px]">
+                  <tr className="border-b border-border bg-muted/40 text-foreground/80 font-bold tracking-wider uppercase text-[11px]">
                     <th className="py-3 px-4">Applicant</th>
                     <th className="py-3 px-4">Verification Status</th>
                     <th className="py-3 px-4">Requested At</th>
@@ -772,7 +772,7 @@ export function UserManagement() {
                         <div className="flex flex-col items-center justify-center gap-2">
                           <CheckCircle2 className="h-8 w-8 text-emerald-400/40" />
                           <span className="font-semibold text-muted-foreground">Approvals Queue is Clear</span>
-                          <span className="text-[11px] text-slate-600">No quarantined accounts awaiting administrator review.</span>
+                          <span className="text-[11px] text-muted-foreground">No quarantined accounts awaiting administrator review.</span>
                         </div>
                       </td>
                     </tr>
@@ -781,7 +781,7 @@ export function UserManagement() {
                       <tr key={user.id} className="hover:bg-muted/30 transition-colors">
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center justify-center font-bold text-xs">
+                            <div className="w-9 h-9 rounded-full bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/30 flex items-center justify-center font-bold text-xs">
                               {user.name ? user.name.charAt(0).toUpperCase() : "Q"}
                             </div>
                             <div>
@@ -792,8 +792,8 @@ export function UserManagement() {
                         </td>
 
                         <td className="py-4 px-4">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                             Email OTP Verified
                           </span>
                         </td>
@@ -816,7 +816,7 @@ export function UserManagement() {
                                 setFormError(null);
                                 setIsApproveOpen(true);
                               }}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all"
                             >
                               <UserCheck className="h-3.5 w-3.5" />
                               Approve &amp; Assign Profile
@@ -828,7 +828,7 @@ export function UserManagement() {
                                 setFormError(null);
                                 setIsDeleteOpen(true);
                               }}
-                              className="p-1.5 rounded-xl text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                              className="p-1.5 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                               title="Reject & Purge Request"
                             >
                               <UserX className="h-4 w-4" />
@@ -868,7 +868,7 @@ export function UserManagement() {
                 setFormError(null);
                 setIsCreateRoleOpen(true);
               }}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-foreground text-xs font-semibold shadow-lg shadow-indigo-600/25 transition-all w-fit"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/25 transition-all w-fit"
             >
               <Sparkles className="h-3.5 w-3.5" />
               + Create Custom Profile
@@ -880,7 +880,7 @@ export function UserManagement() {
             {roles.map((r) => (
               <div
                 key={r.id}
-                className="rounded-2xl border border-border bg-muted/30 p-5 hover:border-border transition-all flex flex-col justify-between"
+                className="rounded-2xl border border-border bg-card p-5 hover:border-border transition-all flex flex-col justify-between shadow-xs"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
@@ -888,8 +888,8 @@ export function UserManagement() {
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
                         r.isSystem
-                          ? "bg-indigo-500/10 text-indigo-300 border-indigo-500/30"
-                          : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                          ? "bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 border-indigo-500/30"
+                          : "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/30"
                       }`}
                     >
                       {r.isSystem ? "System Profile" : "Custom"}
@@ -902,7 +902,7 @@ export function UserManagement() {
 
                 <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs font-mono text-muted-foreground">
                   <span>Authorized Capabilities:</span>
-                  <span className="font-bold text-foreground bg-slate-800 px-2 py-0.5 rounded-md">
+                  <span className="font-bold text-foreground bg-muted border border-border px-2 py-0.5 rounded-md">
                     {r.permissions?.length || 0} / {PERMISSION_REGISTRY.length}
                   </span>
                 </div>
@@ -1181,31 +1181,31 @@ export function UserManagement() {
               <div className="space-y-4">
                 {/* Email Delivery Feedback Banner */}
                 {inviteSendDirectly && inviteEmailSent === true ? (
-                  <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 flex items-start gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-emerald-200">Invitation Email Dispatched</p>
-                      <p className="text-[11px] text-emerald-300/80 mt-0.5">
+                      <p className="font-semibold text-emerald-900 dark:text-emerald-200">Invitation Email Dispatched</p>
+                      <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80 mt-0.5">
                         Delivered successfully to <strong>{inviteEmail}</strong>. You may also copy the backup URL below.
                       </p>
                     </div>
                   </div>
                 ) : inviteSendDirectly && inviteEmailSent === false ? (
-                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-start gap-2.5">
-                    <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-amber-200">Email Delivery Issue</p>
-                      <p className="text-[11px] text-amber-300/80 mt-0.5">
+                      <p className="font-semibold text-amber-900 dark:text-amber-200">Email Delivery Issue</p>
+                      <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80 mt-0.5">
                         SMTP delivery failed: {inviteEmailError || "Check Command Center System Admin credentials"}. Please copy the secure link below and share it directly.
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 flex items-start gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
+                  <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-800 dark:text-indigo-300 flex items-start gap-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-indigo-200">Invitation Link Active</p>
-                      <p className="text-[11px] text-indigo-300/80 mt-0.5">
+                      <p className="font-semibold text-indigo-900 dark:text-indigo-200">Invitation Link Active</p>
+                      <p className="text-[11px] text-indigo-800/80 dark:text-indigo-300/80 mt-0.5">
                         Valid for <strong>{inviteEmail}</strong>. Provide this URL to the operator to complete onboarding.
                       </p>
                     </div>
@@ -1230,7 +1230,7 @@ export function UserManagement() {
                         setInviteCopied(true);
                         setTimeout(() => setInviteCopied(false), 3000);
                       }}
-                      className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary text-foreground text-xs font-semibold shrink-0 hover:bg-primary/90"
+                      className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shrink-0 hover:bg-primary/90"
                     >
                       <Copy className="h-3.5 w-3.5" />
                       {inviteCopied ? "Copied!" : "Copy"}
@@ -1252,7 +1252,7 @@ export function UserManagement() {
                   <button
                     type="button"
                     onClick={() => setIsInviteModalOpen(false)}
-                    className="px-4 py-2 rounded-xl bg-card border border-border text-xs font-semibold text-foreground hover:bg-slate-800"
+                    className="px-4 py-2 rounded-xl bg-card border border-border text-xs font-semibold text-foreground hover:bg-muted"
                   >
                     Done
                   </button>
@@ -1346,7 +1346,7 @@ export function UserManagement() {
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-foreground text-xs font-semibold"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
                 >
                   {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Save Changes
@@ -1433,7 +1433,7 @@ export function UserManagement() {
                             return (
                               <label
                                 key={key}
-                                className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-800/40 cursor-pointer text-xs text-muted-foreground"
+                                className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted cursor-pointer text-xs text-muted-foreground"
                               >
                                 <input
                                   type="checkbox"
@@ -1470,7 +1470,7 @@ export function UserManagement() {
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-foreground text-xs font-semibold shadow-lg shadow-indigo-600/20"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20"
                 >
                   {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Save Custom Profile
@@ -1543,7 +1543,7 @@ export function UserManagement() {
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-foreground text-xs font-semibold"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold"
                 >
                   {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Apply Reset
@@ -1710,7 +1710,7 @@ export function UserManagement() {
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-foreground text-xs font-semibold"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
                 >
                   {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Create &amp; Provision
