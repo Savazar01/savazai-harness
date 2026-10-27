@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Wrench, BookOpen, ShieldCheck, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Wrench, BookOpen, ShieldCheck, Mail, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { SkillsRegistry } from "@/components/business/skills-registry";
 import { OkfRegistry } from "@/components/business/okf-registry";
 import { ComplianceManager } from "@/components/business/compliance-manager";
+import { EmailTemplatesRegistry } from "@/components/business/email-templates-registry";
 import { usePermissions } from "@/lib/auth/use-permissions";
 
 export default function BusinessPage() {
@@ -13,8 +14,9 @@ export default function BusinessPage() {
   const canViewSkills = hasPermission("business_center", "skills_view") || hasPermission("business_center:skills_view") || loading;
   const canViewOkf = hasPermission("business_center", "okf_view") || hasPermission("business_center:okf_view") || loading;
   const canViewCompliance = hasPermission("business_center", "compliance_view") || hasPermission("business_center:compliance_view") || loading;
+  const canViewEmailTemplates = canViewSkills || canViewOkf || canViewCompliance || loading;
 
-  const [subTab, setSubTab] = useState<"skills" | "okf" | "governance">("skills");
+  const [subTab, setSubTab] = useState<"skills" | "okf" | "governance" | "templates">("skills");
 
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
 
@@ -120,6 +122,24 @@ export default function BusinessPage() {
               {!isNavCollapsed && <span>Compliance &amp; PII Rules</span>}
             </button>
           )}
+
+          {canViewEmailTemplates && (
+            <button
+              type="button"
+              onClick={() => setSubTab("templates")}
+              className={`flex items-center gap-3 w-full rounded-xl text-xs font-semibold tracking-wide transition-all text-left cursor-pointer ${
+                isNavCollapsed ? "px-2.5 py-3 justify-center" : "px-4 py-3"
+              } ${
+                subTab === "templates"
+                  ? "bg-primary/10 border border-primary/30 text-primary font-bold shadow-xs"
+                  : "border border-transparent text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+              title={isNavCollapsed ? "Email Message Templates" : undefined}
+            >
+              <Mail className={`h-4 w-4 shrink-0 ${subTab === "templates" ? "text-primary" : "text-muted-foreground"}`} />
+              {!isNavCollapsed && <span>Email Message Templates</span>}
+            </button>
+          )}
         </div>
 
         {/* Right dedicated workspace */}
@@ -127,6 +147,7 @@ export default function BusinessPage() {
           {subTab === "skills" && (canViewSkills || loading) && <SkillsRegistry />}
           {subTab === "okf" && (canViewOkf || loading) && <OkfRegistry />}
           {subTab === "governance" && (canViewCompliance || loading) && <ComplianceManager />}
+          {subTab === "templates" && canViewEmailTemplates && <EmailTemplatesRegistry />}
         </div>
       </div>
     </div>

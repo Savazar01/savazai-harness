@@ -25,8 +25,19 @@ import {
   Bot,
   Users,
   CheckSquare,
-  Square
+  Square,
+  AlertTriangle
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
 import { AiAssistButton } from "@/components/shared/ai-assist-button";
 import { MarkdownEditor } from "@/components/shared/markdown-editor";
@@ -198,6 +209,20 @@ export function SkillsRegistry() {
   const [isAuthorModalOpen, setIsAuthorModalOpen] = useState(false);
   const [isIngestModalOpen, setIsIngestModalOpen] = useState(false);
   const [activeExportMenuId, setActiveExportMenuId] = useState<string | null>(null);
+  const [pendingSkillTemplateKey, setPendingSkillTemplateKey] = useState<string | null>(null);
+  const [isConfirmSkillTemplateOpen, setIsConfirmSkillTemplateOpen] = useState(false);
+
+  const handleApplyPendingSkillTemplate = () => {
+    if (pendingSkillTemplateKey && SKILL_TEMPLATES[pendingSkillTemplateKey]) {
+      const t = SKILL_TEMPLATES[pendingSkillTemplateKey];
+      setFormInstructions(t.template);
+      if (t.category && !editingSkill) {
+        setFormCategory(t.category);
+      }
+    }
+    setPendingSkillTemplateKey(null);
+    setIsConfirmSkillTemplateOpen(false);
+  };
 
   // Agent Assignment Modal State
   const [assigningSkill, setAssigningSkill] = useState<Skill | null>(null);
@@ -1193,7 +1218,7 @@ export function SkillsRegistry() {
         </div>
       )}
 
-      {/* â”€â”€ 2. View / Inspect Modal â”€â”€ */}
+      {/* ── 2. View / Inspect Modal ── */}
       {viewingSkill && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div onClick={() => setViewingSkill(null)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
@@ -1296,7 +1321,7 @@ export function SkillsRegistry() {
         </div>
       )}
 
-      {/* â”€â”€ 3. Author / Edit Modal â”€â”€ */}
+      {/* ── 3. Author / Edit Modal ── */}
       {isAuthorModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div onClick={() => setIsAuthorModalOpen(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
@@ -1417,20 +1442,19 @@ export function SkillsRegistry() {
                     <span className="text-[10px] text-muted-foreground font-semibold">Template:</span>
                     <select
                       defaultValue=""
+                      value=""
                       onChange={(e) => {
                         const key = e.target.value;
                         if (!key || !SKILL_TEMPLATES[key]) return;
-                        if (
-                          formInstructions.trim() &&
-                          !window.confirm("Replace current instructions with the selected blueprint template?")
-                        ) {
-                          e.target.value = "";
-                          return;
-                        }
-                        const t = SKILL_TEMPLATES[key];
-                        setFormInstructions(t.template);
-                        if (t.category && !editingSkill) {
-                          setFormCategory(t.category);
+                        if (formInstructions.trim()) {
+                          setPendingSkillTemplateKey(key);
+                          setIsConfirmSkillTemplateOpen(true);
+                        } else {
+                          const t = SKILL_TEMPLATES[key];
+                          setFormInstructions(t.template);
+                          if (t.category && !editingSkill) {
+                            setFormCategory(t.category);
+                          }
                         }
                         e.target.value = "";
                       }}
@@ -1479,6 +1503,36 @@ export function SkillsRegistry() {
         </div>
       )}
 
+      {/* Styled AlertDialog for Template Confirmation */}
+      <AlertDialog open={isConfirmSkillTemplateOpen} onOpenChange={setIsConfirmSkillTemplateOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-amber-500/10 p-2 text-amber-500 border border-amber-500/20 shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <AlertDialogTitle>Replace Content with Template?</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription>
+              Loading this blueprint will replace your current editor content. This action cannot be undone unless manually reverted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setPendingSkillTemplateKey(null);
+                setIsConfirmSkillTemplateOpen(false);
+              }}
+            >
+              Keep Current Content
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleApplyPendingSkillTemplate}>
+              Apply Template
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* â”€â”€ 4. Delete Confirmation Modal â”€â”€ */}
       {deletingSkill && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -1513,7 +1567,7 @@ export function SkillsRegistry() {
         </div>
       )}
 
-      {/* â”€â”€ 5. Assign to Agents Modal â”€â”€ */}
+      {/* ── 5. Assign to Agents Modal ── */}
       {assigningSkill && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div onClick={() => setAssigningSkill(null)} className="absolute inset-0 bg-black/75 backdrop-blur-sm" />

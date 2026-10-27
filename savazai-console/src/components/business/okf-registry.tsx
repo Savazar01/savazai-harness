@@ -20,8 +20,19 @@ import {
   Layers,
   Eye,
   Code,
-  FileSpreadsheet
+  FileSpreadsheet,
+  AlertTriangle
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
 import { AiAssistButton } from "@/components/shared/ai-assist-button";
 import { MarkdownEditor } from "@/components/shared/markdown-editor";
@@ -240,6 +251,18 @@ export function OkfRegistry() {
   const [isAuthorModalOpen, setIsAuthorModalOpen] = useState(false);
   const [isIngestModalOpen, setIsIngestModalOpen] = useState(false);
   const [activeExportMenuId, setActiveExportMenuId] = useState<string | null>(null);
+  const [pendingConceptTemplateKey, setPendingConceptTemplateKey] = useState<string | null>(null);
+  const [isConfirmConceptTemplateOpen, setIsConfirmConceptTemplateOpen] = useState(false);
+
+  const handleApplyPendingConceptTemplate = () => {
+    if (pendingConceptTemplateKey && OKF_CONCEPT_TEMPLATES[pendingConceptTemplateKey]) {
+      const t = OKF_CONCEPT_TEMPLATES[pendingConceptTemplateKey];
+      setFormMarkdown(t.template);
+      setFormType(pendingConceptTemplateKey);
+    }
+    setPendingConceptTemplateKey(null);
+    setIsConfirmConceptTemplateOpen(false);
+  };
 
   const [rawBundleMarkdown, setRawBundleMarkdown] = useState("");
 
@@ -1361,19 +1384,18 @@ export function OkfRegistry() {
 
                     <select
                       defaultValue=""
+                      value=""
                       onChange={(e) => {
                         const key = e.target.value;
                         if (!key || !OKF_CONCEPT_TEMPLATES[key]) return;
-                        if (
-                          formMarkdown.trim() &&
-                          !window.confirm("Replace current guidelines markdown with the selected concept template?")
-                        ) {
-                          e.target.value = "";
-                          return;
+                        if (formMarkdown.trim()) {
+                          setPendingConceptTemplateKey(key);
+                          setIsConfirmConceptTemplateOpen(true);
+                        } else {
+                          const t = OKF_CONCEPT_TEMPLATES[key];
+                          setFormMarkdown(t.template);
+                          setFormType(key);
                         }
-                        const t = OKF_CONCEPT_TEMPLATES[key];
-                        setFormMarkdown(t.template);
-                        setFormType(key);
                         e.target.value = "";
                       }}
                       className="rounded-lg border border-border bg-card px-2.5 py-1 text-xs text-foreground outline-none focus:border-primary cursor-pointer shadow-xs"
@@ -1418,6 +1440,36 @@ export function OkfRegistry() {
           </div>
         </div>
       )}
+
+      {/* Styled AlertDialog for OKF Template Confirmation */}
+      <AlertDialog open={isConfirmConceptTemplateOpen} onOpenChange={setIsConfirmConceptTemplateOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-amber-500/10 p-2 text-amber-500 border border-amber-500/20 shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <AlertDialogTitle>Replace Content with Template?</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription>
+              Loading this blueprint will replace your current editor content. This action cannot be undone unless manually reverted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setPendingConceptTemplateKey(null);
+                setIsConfirmConceptTemplateOpen(false);
+              }}
+            >
+              Keep Current Content
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleApplyPendingConceptTemplate}>
+              Apply Template
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {deletingConcept && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">

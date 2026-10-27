@@ -213,4 +213,54 @@ export const emailAuditLogs = pgTable(
   ]
 );
 
+export interface OrganizationalData {
+  companyName: string;
+  taxIdOrRegistration?: string;
+  country: string;              // ISO-3166-1 alpha-2 (e.g., "US", "IN", "GB", "DE")
+  streetAddress: string;
+  suiteOrUnit?: string;
+  city: string;
+  stateOrRegion: string;
+  postalCode: string;
+  timezone: string;             // IANA (e.g., "Asia/Kolkata", "America/New_York")
+  defaultLanguage: string;      // ISO 639-1 (e.g., "en", "hi", "de")
+  corporatePhone: string;
+  corporateEmail: string;
+  websiteUrl?: string;
+}
+
+export const emailTemplates = pgTable("email_templates", {
+  id: text("id").primaryKey(), // UUID
+  templateKey: varchar("template_key", { length: 128 }).notNull().unique(), // e.g., "hitl_approval_request"
+  name: varchar("name", { length: 256 }).notNull(),
+  category: varchar("category", { length: 64 }).notNull(), // "approval", "notification", "workflow_result", "system_alert"
+  description: text("description"),
+  subject: text("subject").notNull(),
+  bodyHtml: text("body_html").notNull(),
+  bodyMarkdown: text("body_markdown"),
+  supportedVariables: jsonb("supported_variables").$type<string[]>(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const systemAuditLogs = pgTable(
+  "system_audit_logs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id"),
+    userEmail: text("user_email"),
+    action: varchar("action", { length: 128 }).notNull(),
+    resource: varchar("resource", { length: 128 }).notNull(),
+    details: jsonb("details").$type<Record<string, any>>().default({}),
+    ipAddress: text("ip_address"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("system_audit_action_idx").on(t.action),
+    index("system_audit_resource_idx").on(t.resource),
+    index("system_audit_created_at_idx").on(t.createdAt),
+  ]
+);
+
 

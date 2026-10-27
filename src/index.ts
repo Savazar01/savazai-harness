@@ -662,7 +662,11 @@ app.get("/api/settings", async (_req, res) => {
       active: cfg.active !== false,
       hasKeyConfigured: !!cfg.apiKey,
     }));
-    res.json({ llmProviders: masked });
+    res.json({
+      appTitle: configs[0].appTitle,
+      brandLogoUrl: configs[0].brandLogoUrl,
+      llmProviders: masked,
+    });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     res.status(500).json({ error: msg });

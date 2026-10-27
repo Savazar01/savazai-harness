@@ -23,6 +23,8 @@ import {
   fetchProviderModels,
   saveAgentsMd,
   getTelemetryAnalytics,
+  saveOrganizationalData,
+  type OrganizationalData,
 } from "@/app/admin/settings/actions";
 import { SystemConfig, LLMProviderConfig } from "@/components/theme-provider";
 import {
@@ -54,6 +56,9 @@ import {
   ShieldAlert,
   PanelLeftClose,
   PanelLeftOpen,
+  Building2,
+  Phone,
+  Clock,
 } from "lucide-react";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
 import {
@@ -231,6 +236,66 @@ const MCP_PRESETS: Record<string, { command: string; args: string[]; env: Record
   }
 };
 
+const ISO_COUNTRIES = [
+  { code: "US", name: "United States", flag: "🇺🇸", dialCode: "+1" },
+  { code: "IN", name: "India", flag: "🇮🇳", dialCode: "+91" },
+  { code: "GB", name: "United Kingdom", flag: "🇬🇧", dialCode: "+44" },
+  { code: "CA", name: "Canada", flag: "🇨🇦", dialCode: "+1" },
+  { code: "AU", name: "Australia", flag: "🇦🇺", dialCode: "+61" },
+  { code: "DE", name: "Germany", flag: "🇩🇪", dialCode: "+49" },
+  { code: "FR", name: "France", flag: "🇫🇷", dialCode: "+33" },
+  { code: "SG", name: "Singapore", flag: "🇸🇬", dialCode: "+65" },
+  { code: "JP", name: "Japan", flag: "🇯🇵", dialCode: "+81" },
+  { code: "AE", name: "United Arab Emirates", flag: "🇦🇪", dialCode: "+971" },
+  { code: "BR", name: "Brazil", flag: "🇧🇷", dialCode: "+55" },
+  { code: "CH", name: "Switzerland", flag: "🇨🇭", dialCode: "+41" },
+  { code: "NL", name: "Netherlands", flag: "🇳🇱", dialCode: "+31" },
+];
+
+const US_STATES = [
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia",
+  "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
+  "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
+  "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+  "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming", "District of Columbia"
+];
+
+const IN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana",
+  "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya",
+  "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+  "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi (NCT)", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+];
+
+const IANA_TIMEZONES = [
+  { value: "America/New_York", label: "America/New_York (Eastern Time, UTC-5/-4)" },
+  { value: "America/Chicago", label: "America/Chicago (Central Time, UTC-6/-5)" },
+  { value: "America/Denver", label: "America/Denver (Mountain Time, UTC-7/-6)" },
+  { value: "America/Los_Angeles", label: "America/Los_Angeles (Pacific Time, UTC-8/-7)" },
+  { value: "Europe/London", label: "Europe/London (Greenwich Mean Time, UTC+0/+1)" },
+  { value: "Europe/Paris", label: "Europe/Paris (Central European Time, UTC+1/+2)" },
+  { value: "Europe/Berlin", label: "Europe/Berlin (Central European Time, UTC+1/+2)" },
+  { value: "Asia/Dubai", label: "Asia/Dubai (Gulf Standard Time, UTC+4)" },
+  { value: "Asia/Kolkata", label: "Asia/Kolkata (Indian Standard Time, UTC+5:30)" },
+  { value: "Asia/Singapore", label: "Asia/Singapore (Singapore Time, UTC+8)" },
+  { value: "Asia/Tokyo", label: "Asia/Tokyo (Japan Standard Time, UTC+9)" },
+  { value: "Australia/Sydney", label: "Australia/Sydney (AEST, UTC+10/+11)" },
+  { value: "UTC", label: "UTC (Coordinated Universal Time)" },
+];
+
+const SYSTEM_LANGUAGES = [
+  { code: "en-US", name: "English (United States)" },
+  { code: "en-GB", name: "English (United Kingdom)" },
+  { code: "hi", name: "Hindi (हिन्दी)" },
+  { code: "es", name: "Spanish (Español)" },
+  { code: "fr", name: "French (Français)" },
+  { code: "de", name: "German (Deutsch)" },
+  { code: "ja", name: "Japanese (日本語)" },
+  { code: "pt-BR", name: "Portuguese (Português - Brasil)" },
+  { code: "ar", name: "Arabic (العربية)" },
+];
+
 function TabButton({
   tab,
   icon: Icon,
@@ -366,6 +431,44 @@ export function SettingsDashboard({ initialConfig, mode = "command_center" }: Se
   const [promptFontSize, setPromptFontSize] = useState(tokens.promptFontSize || "16px");
   const [promptFontFamily, setPromptFontFamily] = useState(tokens.promptFontFamily || "sans");
   const [showAgentWorkspace, setShowAgentWorkspace] = useState(tokens.showAgentWorkspace !== false);
+
+  const [organizationalData, setOrganizationalData] = useState<OrganizationalData>(() => {
+    const raw = (tokens.organizationalData as Record<string, any>) || {};
+    return {
+      companyName: raw.companyName || "",
+      taxIdOrRegistration: raw.taxIdOrRegistration || "",
+      country: raw.country || "US",
+      streetAddress: raw.streetAddress || "",
+      suiteOrUnit: raw.suiteOrUnit || "",
+      city: raw.city || "",
+      stateOrRegion: raw.stateOrRegion || "",
+      postalCode: raw.postalCode || "",
+      timezone: raw.timezone || "America/New_York",
+      defaultLanguage: raw.defaultLanguage || "en-US",
+      corporatePhone: raw.corporatePhone || "",
+      corporateEmail: raw.corporateEmail || "",
+      websiteUrl: raw.websiteUrl || "",
+    };
+  });
+  const [savingOrgData, setSavingOrgData] = useState(false);
+  const [orgDataStatus, setOrgDataStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  const handleSaveOrgData = async () => {
+    setSavingOrgData(true);
+    setOrgDataStatus(null);
+    try {
+      const res = await saveOrganizationalData(organizationalData);
+      if (res.success) {
+        setOrgDataStatus({ type: "success", message: "Organizational data updated successfully and audit record logged." });
+      } else {
+        setOrgDataStatus({ type: "error", message: res.error || "Failed to update organizational data." });
+      }
+    } catch (err: unknown) {
+      setOrgDataStatus({ type: "error", message: err instanceof Error ? err.message : "Failed to save." });
+    } finally {
+      setSavingOrgData(false);
+    }
+  };
 
   const previewTheme = useMemo(() => {
     const config: AppearanceConfig = {
@@ -829,6 +932,7 @@ export function SettingsDashboard({ initialConfig, mode = "command_center" }: Se
       smtpSettings: JSON.stringify(smtpSettings),
       captchaSettings: JSON.stringify(captchaSettings),
       securitySettings: JSON.stringify(securitySettings),
+      organizationalData: JSON.stringify(organizationalData),
     });
 
     if (typeof window !== "undefined") {
@@ -1737,11 +1841,31 @@ export function SettingsDashboard({ initialConfig, mode = "command_center" }: Se
             {activeTab === "branding" && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-foreground mb-1">Branding Assets</h3>
-                  <p className="text-muted-foreground text-xs">Configure platform logo and browser favicon with drag-and-drop file upload or manual URL</p>
+                  <h3 className="text-lg font-bold text-foreground mb-1">Branding Assets &amp; Corporate Identity</h3>
+                  <p className="text-muted-foreground text-xs">Configure application display name, platform logo, browser favicon, and organizational data hub</p>
                 </div>
 
-                {/* Platform Brand Logo */}
+                {/* 1. Application Name & Brand Title */}
+                <div className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground">Application Name &amp; Brand Title</h4>
+                      <p className="text-xs text-muted-foreground">Configures the display name shown across navigation headers, sidebar, and browser title</p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Application Name / Platform Title</label>
+                    <input
+                      type="text"
+                      value={appTitle}
+                      onChange={(e) => setAppTitle(e.target.value)}
+                      placeholder="e.g. SavazAI Console, Enterprise Agent Harness"
+                      className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+
+                {/* 2. Platform Brand Logo */}
                 <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -1803,7 +1927,7 @@ export function SettingsDashboard({ initialConfig, mode = "command_center" }: Se
                   </div>
                 </div>
 
-                {/* Browser Favicon */}
+                {/* 3. Browser Favicon */}
                 <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -1872,7 +1996,7 @@ export function SettingsDashboard({ initialConfig, mode = "command_center" }: Se
                 </div>
 
                 {/* Restoration Action */}
-                <div className="pt-2">
+                <div className="pt-1">
                   <button
                     type="button"
                     onClick={restoreBrandingDefaults}
@@ -1880,6 +2004,287 @@ export function SettingsDashboard({ initialConfig, mode = "command_center" }: Se
                   >
                     Restore Canonical Logo &amp; Favicon
                   </button>
+                </div>
+
+                {/* 4. Enterprise Organizational Data Hub */}
+                <div className="rounded-2xl border border-border bg-card p-5 space-y-5 shadow-xs">
+                  <div className="flex items-center justify-between border-b border-border pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                        <Building2 className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-foreground">Enterprise Organizational Data Hub</h4>
+                        <p className="text-xs text-muted-foreground">Legal entity identification, dynamic internationalized address conventions, and corporate coordinates</p>
+                      </div>
+                    </div>
+                    {orgDataStatus && (
+                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
+                        orgDataStatus.type === "success" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-destructive/10 text-destructive border-destructive/20"
+                      }`}>
+                        {orgDataStatus.message}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Section A: Legal Entity & Identity */}
+                  <div className="space-y-3">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Legal Entity Coordinates</span>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                      <div>
+                        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Company Legal Name *</label>
+                        <input
+                          type="text"
+                          value={organizationalData.companyName}
+                          onChange={(e) => setOrganizationalData((prev) => ({ ...prev, companyName: e.target.value }))}
+                          placeholder="e.g. SavazAI Technologies Inc."
+                          className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Tax ID / Business Reg</label>
+                        <input
+                          type="text"
+                          value={organizationalData.taxIdOrRegistration || ""}
+                          onChange={(e) => setOrganizationalData((prev) => ({ ...prev, taxIdOrRegistration: e.target.value }))}
+                          placeholder="e.g. EIN, GSTIN, VAT, or Commercial Reg"
+                          className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Website URL</label>
+                        <input
+                          type="url"
+                          value={organizationalData.websiteUrl || ""}
+                          onChange={(e) => setOrganizationalData((prev) => ({ ...prev, websiteUrl: e.target.value }))}
+                          placeholder="https://company.com"
+                          className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section B: Country, Timezone & System Language */}
+                  <div className="space-y-3 pt-2 border-t border-border/70">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Regional &amp; Localization Defaults</span>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                      <div>
+                        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Jurisdiction Country *</label>
+                        <select
+                          value={organizationalData.country}
+                          onChange={(e) => {
+                            const newCountry = e.target.value;
+                            setOrganizationalData((prev) => ({
+                              ...prev,
+                              country: newCountry,
+                              stateOrRegion: "",
+                            }));
+                          }}
+                          className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground outline-none focus:border-primary cursor-pointer"
+                        >
+                          {ISO_COUNTRIES.map((c) => (
+                            <option key={c.code} value={c.code}>
+                              {c.flag} {c.name} ({c.code})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Standard Timezone (IANA) *</label>
+                        <select
+                          value={organizationalData.timezone}
+                          onChange={(e) => setOrganizationalData((prev) => ({ ...prev, timezone: e.target.value }))}
+                          className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground outline-none focus:border-primary cursor-pointer"
+                        >
+                          {IANA_TIMEZONES.map((tz) => (
+                            <option key={tz.value} value={tz.value}>
+                              {tz.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Default Language *</label>
+                        <select
+                          value={organizationalData.defaultLanguage}
+                          onChange={(e) => setOrganizationalData((prev) => ({ ...prev, defaultLanguage: e.target.value }))}
+                          className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground outline-none focus:border-primary cursor-pointer"
+                        >
+                          {SYSTEM_LANGUAGES.map((l) => (
+                            <option key={l.code} value={l.code}>
+                              {l.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section C: Dynamic Internationalized Address */}
+                  <div className="space-y-3 pt-2 border-t border-border/70">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+                      Registered Address (Dynamic i18n Formatting)
+                    </span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Street Address</label>
+                        <input
+                          type="text"
+                          value={organizationalData.streetAddress}
+                          onChange={(e) => setOrganizationalData((prev) => ({ ...prev, streetAddress: e.target.value }))}
+                          placeholder="e.g. 548 Market St, Suite 100"
+                          className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Suite / Unit / Floor</label>
+                        <input
+                          type="text"
+                          value={organizationalData.suiteOrUnit || ""}
+                          onChange={(e) => setOrganizationalData((prev) => ({ ...prev, suiteOrUnit: e.target.value }))}
+                          placeholder="e.g. Suite 400 or Level 5"
+                          className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                      <div>
+                        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">City</label>
+                        <input
+                          type="text"
+                          value={organizationalData.city}
+                          onChange={(e) => setOrganizationalData((prev) => ({ ...prev, city: e.target.value }))}
+                          placeholder="e.g. San Francisco"
+                          className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
+                        />
+                      </div>
+
+                      {/* Dynamic State / Region */}
+                      <div>
+                        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                          {organizationalData.country === "US"
+                            ? "State *"
+                            : organizationalData.country === "IN"
+                            ? "State / UT *"
+                            : organizationalData.country === "GB"
+                            ? "County / Region"
+                            : "Region / Province"}
+                        </label>
+                        {organizationalData.country === "US" ? (
+                          <select
+                            value={organizationalData.stateOrRegion}
+                            onChange={(e) => setOrganizationalData((prev) => ({ ...prev, stateOrRegion: e.target.value }))}
+                            className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground outline-none focus:border-primary cursor-pointer"
+                          >
+                            <option value="">Select State...</option>
+                            {US_STATES.map((st) => (
+                              <option key={st} value={st}>
+                                {st}
+                              </option>
+                            ))}
+                          </select>
+                        ) : organizationalData.country === "IN" ? (
+                          <select
+                            value={organizationalData.stateOrRegion}
+                            onChange={(e) => setOrganizationalData((prev) => ({ ...prev, stateOrRegion: e.target.value }))}
+                            className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground outline-none focus:border-primary cursor-pointer"
+                          >
+                            <option value="">Select State / UT...</option>
+                            {IN_STATES.map((st) => (
+                              <option key={st} value={st}>
+                                {st}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={organizationalData.stateOrRegion}
+                            onChange={(e) => setOrganizationalData((prev) => ({ ...prev, stateOrRegion: e.target.value }))}
+                            placeholder={organizationalData.country === "GB" ? "e.g. Greater London" : "Region or Province"}
+                            className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
+                          />
+                        )}
+                      </div>
+
+                      {/* Dynamic Postal Code */}
+                      <div>
+                        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                          {organizationalData.country === "US"
+                            ? "ZIP Code"
+                            : organizationalData.country === "IN"
+                            ? "PIN Code (6 digits)"
+                            : organizationalData.country === "GB"
+                            ? "Postal Code"
+                            : "Postal / Area Code"}
+                        </label>
+                        <input
+                          type="text"
+                          value={organizationalData.postalCode}
+                          onChange={(e) => setOrganizationalData((prev) => ({ ...prev, postalCode: e.target.value }))}
+                          placeholder={
+                            organizationalData.country === "US"
+                              ? "e.g. 94103"
+                              : organizationalData.country === "IN"
+                              ? "e.g. 560001"
+                              : organizationalData.country === "GB"
+                              ? "e.g. EC1A 1BB"
+                              : "Postal code"
+                          }
+                          className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section D: Corporate Coordinates */}
+                  <div className="space-y-3 pt-2 border-t border-border/70">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Official Corporate Communications</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Corporate Phone Number</label>
+                        <div className="flex items-center gap-2">
+                          <span className="px-3 py-2.5 rounded-xl border border-border bg-muted/50 text-xs font-mono font-semibold text-foreground shrink-0">
+                            {ISO_COUNTRIES.find((c) => c.code === organizationalData.country)?.dialCode || "+1"}
+                          </span>
+                          <input
+                            type="tel"
+                            value={organizationalData.corporatePhone}
+                            onChange={(e) => setOrganizationalData((prev) => ({ ...prev, corporatePhone: e.target.value }))}
+                            placeholder="e.g. (415) 555-0199"
+                            className="flex-1 rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Corporate Email</label>
+                        <input
+                          type="email"
+                          value={organizationalData.corporateEmail}
+                          onChange={(e) => setOrganizationalData((prev) => ({ ...prev, corporateEmail: e.target.value }))}
+                          placeholder="e.g. contact@company.com"
+                          className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dedicated Action Button */}
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleSaveOrgData}
+                      disabled={savingOrgData}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold cursor-pointer shadow-xs disabled:opacity-50 transition-all"
+                    >
+                      {savingOrgData && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      <span>Save Organizational Coordinates</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

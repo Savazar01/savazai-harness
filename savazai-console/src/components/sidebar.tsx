@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   Settings,
   LogOut,
-  Bot,
   Menu,
   X,
   Plus,
@@ -83,14 +82,24 @@ export function Sidebar() {
     fetch("/api/settings")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data?.appTitle) setPlatformTitle(data.appTitle);
+        if (data?.appTitle) {
+          setPlatformTitle(data.appTitle);
+          if (typeof document !== "undefined") {
+            document.title = `${data.appTitle} Console`;
+          }
+        }
         if (data?.brandLogoUrl) setBrandLogoUrl(data.brandLogoUrl);
       })
       .catch(() => {});
 
     const handleBranding = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      if (detail?.appTitle) setPlatformTitle(detail.appTitle);
+      if (detail?.appTitle) {
+        setPlatformTitle(detail.appTitle);
+        if (typeof document !== "undefined") {
+          document.title = `${detail.appTitle} Console`;
+        }
+      }
       if (detail?.brandLogoUrl !== undefined) setBrandLogoUrl(detail.brandLogoUrl || null);
     };
     window.addEventListener("savazai-branding-updated", handleBranding);
@@ -217,11 +226,19 @@ export function Sidebar() {
             <img
               src={brandLogoUrl}
               alt={platformTitle}
-              className="h-7 w-auto max-w-[28px] max-h-[28px] object-contain shrink-0 brightness-110"
+              className="h-7 w-auto max-w-[140px] max-h-[30px] object-contain shrink-0"
               onError={() => setBrandLogoUrl(null)}
             />
           ) : (
-            <Bot className="h-7 w-7 text-primary shrink-0" />
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src="/savazar-logo.png"
+              alt={platformTitle}
+              className="h-7 w-7 rounded-lg object-contain shrink-0 shadow-xs border border-border"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
           )}
           {showFullContent && (
             <span className="text-lg font-bold text-foreground tracking-tight animate-in fade-in duration-200 truncate max-w-[140px]">

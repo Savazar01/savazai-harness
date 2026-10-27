@@ -11,6 +11,22 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+export interface OrganizationalData {
+  companyName: string;
+  taxIdOrRegistration?: string;
+  country: string;              // ISO-3166-1 alpha-2 (e.g., "US", "IN", "GB", "DE")
+  streetAddress: string;
+  suiteOrUnit?: string;
+  city: string;
+  stateOrRegion: string;
+  postalCode: string;
+  timezone: string;             // IANA (e.g., "Asia/Kolkata", "America/New_York")
+  defaultLanguage: string;      // ISO 639-1 (e.g., "en", "hi", "de")
+  corporatePhone: string;
+  corporateEmail: string;
+  websiteUrl?: string;
+}
+
 export interface UpdateSettingsInput {
   appTitle?: string;
   brandLogoUrl?: string;
@@ -63,6 +79,7 @@ export interface UpdateSettingsInput {
   smtpSettings?: string;
   captchaSettings?: string;
   securitySettings?: string;
+  organizationalData?: OrganizationalData | string;
 }
 
 export async function updateSystemConfig(input: UpdateSettingsInput) {
@@ -224,6 +241,18 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
           }
         })(),
       }),
+      ...(input.organizationalData !== undefined && {
+        organizationalData: (() => {
+          if (typeof input.organizationalData === "string") {
+            try {
+              return JSON.parse(input.organizationalData);
+            } catch {
+              return currentTokens.organizationalData;
+            }
+          }
+          return input.organizationalData;
+        })(),
+      }),
     };
 
     await pool.query(
@@ -240,8 +269,24 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
       ]
     );
 
+    if (input.organizationalData) {
+      const org = typeof input.organizationalData === "string" ? JSON.parse(input.organizationalData) : input.organizationalData;
+      pool.query(
+        `INSERT INTO system_audit_logs (user_id, user_email, action, resource, details)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          check.context?.userId || null,
+          check.context?.email || null,
+          "update_organizational_data",
+          "system_configurations",
+          JSON.stringify({ companyName: org.companyName, country: org.country }),
+        ]
+      ).catch((err) => console.warn("[system_audit_logs] Insert warning:", err));
+    }
+
     revalidatePath("/");
     revalidatePath("/admin/settings");
+    revalidatePath("/admin/system");
 
     return { success: true };
   } catch (err: unknown) {
@@ -250,6 +295,7 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
     return { success: false, error: errorMsg };
   }
 }
+
 
 export async function testProviderConnection(
   providerType: string,
@@ -647,4 +693,57 @@ export async function getTelemetryAnalytics() {
     return { success: false, error: errorMsg };
   }
 }
+
+export async function saveOrganizationalData(data: OrganizationalData) {
+  try {
+    const check = await requirePermission("branding", "update");
+    if (!check.authorized) {
+      const fallbackCheck = await requirePermission("command_center", "branding_manage");
+      if (!fallbackCheck.authorized) {
+        const sysCheck = await requirePermission("system_admin", "update");
+        if (!sysCheck.authorized) return { success: false, error: "Unauthorized" };
+      }
+    }
+
+    const configRes = await pool.query("SELECT id, design_tokens FROM system_configurations LIMIT 1");
+    if (configRes.rows.length === 0) {
+      return { success: false, error: "System configuration not found" };
+    }
+    const configId = configRes.rows[0].id;
+    const currentTokens = configRes.rows[0].design_tokens || {};
+    const updatedTokens = {
+      ...currentTokens,
+      organizationalData: data,
+    };
+
+    await pool.query(
+      `UPDATE system_configurations SET design_tokens = $1 WHERE id = $2`,
+      [JSON.stringify(updatedTokens), configId]
+    );
+
+    // Write audit log entry
+    await pool.query(
+      `INSERT INTO system_audit_logs (user_id, user_email, action, resource, details)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        check.context?.userId || null,
+        check.context?.email || null,
+        "update_organizational_data",
+        "system_configurations",
+        JSON.stringify({ companyName: data.companyName, country: data.country, timezone: data.timezone }),
+      ]
+    ).catch((err) => console.warn("[system_audit_logs] Insert warning:", err));
+
+    revalidatePath("/");
+    revalidatePath("/admin/system");
+    revalidatePath("/admin/settings");
+
+    return { success: true };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Internal server error";
+    console.error("[saveOrganizationalData] Failed:", err);
+    return { success: false, error: errorMsg };
+  }
+}
+
 

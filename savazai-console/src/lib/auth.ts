@@ -100,6 +100,36 @@ export async function ensureAdminProvisioned() {
       CREATE INDEX IF NOT EXISTS "email_audit_recipient_idx" ON "email_audit_logs"("recipient");
       CREATE INDEX IF NOT EXISTS "email_audit_created_at_idx" ON "email_audit_logs"("created_at");
 
+      CREATE TABLE IF NOT EXISTS "email_templates" (
+        "id" TEXT PRIMARY KEY,
+        "template_key" VARCHAR(128) NOT NULL UNIQUE,
+        "name" VARCHAR(256) NOT NULL,
+        "category" VARCHAR(64) NOT NULL,
+        "description" TEXT,
+        "subject" TEXT NOT NULL,
+        "body_html" TEXT NOT NULL,
+        "body_markdown" TEXT,
+        "supported_variables" JSONB DEFAULT '[]',
+        "is_active" BOOLEAN NOT NULL DEFAULT true,
+        "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
+        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS "email_templates_category_idx" ON "email_templates"("category");
+
+      CREATE TABLE IF NOT EXISTS "system_audit_logs" (
+        "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "user_id" TEXT,
+        "user_email" TEXT,
+        "action" VARCHAR(128) NOT NULL,
+        "resource" VARCHAR(128) NOT NULL,
+        "details" JSONB DEFAULT '{}',
+        "ip_address" TEXT,
+        "created_at" TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS "system_audit_action_idx" ON "system_audit_logs"("action");
+      CREATE INDEX IF NOT EXISTS "system_audit_resource_idx" ON "system_audit_logs"("resource");
+      CREATE INDEX IF NOT EXISTS "system_audit_created_at_idx" ON "system_audit_logs"("created_at");
+
       CREATE TABLE IF NOT EXISTS "session" (
         "id" TEXT PRIMARY KEY,
         "userId" TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
