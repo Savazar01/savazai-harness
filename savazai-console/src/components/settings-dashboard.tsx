@@ -124,6 +124,7 @@ interface TelemetryStats {
 
 interface SettingsDashboardProps {
   initialConfig: SystemConfig;
+  mode?: "command_center" | "system_admin";
 }
 
 type TabType = "appearance" | "branding" | "llm" | "mcp" | "database" | "api" | "capability" | "analytics" | "social" | "system_admin";
@@ -263,13 +264,14 @@ function TabButton({
   );
 }
 
-export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
+export function SettingsDashboard({ initialConfig, mode = "command_center" }: SettingsDashboardProps) {
+  const isSystemAdminMode = mode === "system_admin";
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
   const { hasPermission } = usePermissions();
-  const canViewAppearance = hasPermission("command_center", "appearance_view");
-  const canManageAppearance = hasPermission("command_center", "appearance_manage");
-  const canViewBranding = hasPermission("command_center", "branding_view");
-  const canManageBranding = hasPermission("command_center", "branding_manage");
+  const canViewAppearance = hasPermission("appearance", "update") || hasPermission("command_center", "appearance_view");
+  const canManageAppearance = hasPermission("appearance", "update") || hasPermission("command_center", "appearance_manage");
+  const canViewBranding = hasPermission("branding", "update") || hasPermission("command_center", "branding_view");
+  const canManageBranding = hasPermission("branding", "update") || hasPermission("command_center", "branding_manage");
   const canViewLlm = hasPermission("command_center", "llm_view");
   const canManageLlm = hasPermission("command_center", "llm_manage");
   const canViewMcp = hasPermission("command_center", "mcp_view");
@@ -282,10 +284,10 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
   const canExportSpend = hasPermission("command_center", "spend_export");
   const canViewSocial = hasPermission("command_center", "social_view");
   const canManageSocial = hasPermission("command_center", "social_manage");
-  const canViewSystemAdmin = hasPermission("command_center", "system_admin_view");
-  const canManageSystemAdmin = hasPermission("command_center", "system_admin_manage");
+  const canViewSystemAdmin = hasPermission("system_admin", "view") || hasPermission("command_center", "system_admin_view");
+  const canManageSystemAdmin = hasPermission("system_admin", "update") || hasPermission("command_center", "system_admin_manage");
 
-  const [activeTab, setActiveTab] = useState<TabType>("appearance");
+  const [activeTab, setActiveTab] = useState<TabType>(isSystemAdminMode ? "system_admin" : "llm");
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
@@ -838,6 +840,11 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
           detail: { promptFontSize, promptFontFamily, showAgentWorkspace },
         })
       );
+      window.dispatchEvent(
+        new CustomEvent("savazai-branding-updated", {
+          detail: { appTitle, brandLogoUrl, faviconUrl },
+        })
+      );
     }
 
     setSaving(false);
@@ -1224,8 +1231,14 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
     <div className="w-full max-w-[1400px] mx-auto py-6 px-4 flex flex-col min-h-0">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-6 border-b border-border pb-6 shrink-0">
         <div>
-          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">SavazAI Command Center</h1>
-          <p className="text-muted-foreground text-sm mt-1">Configure appearance, LLM providers, MCP servers, and API services</p>
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
+            {isSystemAdminMode ? "System Administration" : "SavazAI Command Center"}
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {isSystemAdminMode
+              ? "Enterprise governance, communications, platform theming & branding"
+              : "Manage foundation models, tool integrations, data gateways, and spend"}
+          </p>
         </div>
       </div>
 
@@ -1265,15 +1278,22 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               )}
             </button>
           </div>
-          {canViewAppearance && <TabButton tab="appearance" icon={Palette} activeTab={activeTab} setActiveTab={setActiveTab} label="Appearance" isCollapsed={isNavCollapsed} />}
-          {canViewBranding && <TabButton tab="branding" icon={ImageIcon} activeTab={activeTab} setActiveTab={setActiveTab} label="Branding" isCollapsed={isNavCollapsed} />}
-          {canViewLlm && <TabButton tab="llm" icon={Cpu} activeTab={activeTab} setActiveTab={setActiveTab} label="LLM Providers" isCollapsed={isNavCollapsed} />}
-          {canViewMcp && <TabButton tab="mcp" icon={Wrench} activeTab={activeTab} setActiveTab={setActiveTab} label="MCP Integration" isCollapsed={isNavCollapsed} />}
-          {canViewDb && <TabButton tab="database" icon={Database} activeTab={activeTab} setActiveTab={setActiveTab} label="Database Hub" isCollapsed={isNavCollapsed} />}
-          {canViewApi && <TabButton tab="api" icon={Globe} activeTab={activeTab} setActiveTab={setActiveTab} label="API Services" isCollapsed={isNavCollapsed} />}
-          {canViewSpend && <TabButton tab="analytics" icon={BarChart3} activeTab={activeTab} setActiveTab={setActiveTab} label="Usage & Spend" isCollapsed={isNavCollapsed} />}
-          {canViewSocial && <TabButton tab="social" icon={Share2} activeTab={activeTab} setActiveTab={setActiveTab} label="Social Media Hub" isCollapsed={isNavCollapsed} />}
-          {canViewSystemAdmin && <TabButton tab="system_admin" icon={ShieldAlert} activeTab={activeTab} setActiveTab={setActiveTab} label="System Admin" isCollapsed={isNavCollapsed} />}
+          {isSystemAdminMode ? (
+            <>
+              {canViewSystemAdmin && <TabButton tab="system_admin" icon={ShieldCheck} activeTab={activeTab} setActiveTab={setActiveTab} label="System Core" isCollapsed={isNavCollapsed} />}
+              {canViewAppearance && <TabButton tab="appearance" icon={Palette} activeTab={activeTab} setActiveTab={setActiveTab} label="Appearance" isCollapsed={isNavCollapsed} />}
+              {canViewBranding && <TabButton tab="branding" icon={ImageIcon} activeTab={activeTab} setActiveTab={setActiveTab} label="Branding" isCollapsed={isNavCollapsed} />}
+            </>
+          ) : (
+            <>
+              {canViewLlm && <TabButton tab="llm" icon={Cpu} activeTab={activeTab} setActiveTab={setActiveTab} label="LLM Providers" isCollapsed={isNavCollapsed} />}
+              {canViewMcp && <TabButton tab="mcp" icon={Wrench} activeTab={activeTab} setActiveTab={setActiveTab} label="MCP Integration" isCollapsed={isNavCollapsed} />}
+              {canViewDb && <TabButton tab="database" icon={Database} activeTab={activeTab} setActiveTab={setActiveTab} label="Database Hub" isCollapsed={isNavCollapsed} />}
+              {canViewApi && <TabButton tab="api" icon={Globe} activeTab={activeTab} setActiveTab={setActiveTab} label="API Services" isCollapsed={isNavCollapsed} />}
+              {canViewSpend && <TabButton tab="analytics" icon={BarChart3} activeTab={activeTab} setActiveTab={setActiveTab} label="Usage & Spend" isCollapsed={isNavCollapsed} />}
+              {canViewSocial && <TabButton tab="social" icon={Share2} activeTab={activeTab} setActiveTab={setActiveTab} label="Social Media Hub" isCollapsed={isNavCollapsed} />}
+            </>
+          )}
         </div>
 
         <form onSubmit={handleSave} className="flex-1 min-w-0 rounded-3xl border border-border bg-card p-6 relative flex flex-col min-h-0 text-card-foreground shadow-xs">

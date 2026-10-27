@@ -21,6 +21,7 @@ import {
   BookOpen,
   CalendarCheck,
   User,
+  ShieldCheck,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { usePermissions } from "@/lib/auth/use-permissions";
@@ -73,7 +74,28 @@ export function Sidebar() {
     }
     return true;
   });
+  const [platformTitle, setPlatformTitle] = useState("SavazAI");
+  const [brandLogoUrl, setBrandLogoUrl] = useState<string | null>(null);
   const isDashboard = pathname === "/dashboard";
+
+  // Dynamic Platform Brand & Header Identity
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.appTitle) setPlatformTitle(data.appTitle);
+        if (data?.brandLogoUrl) setBrandLogoUrl(data.brandLogoUrl);
+      })
+      .catch(() => {});
+
+    const handleBranding = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.appTitle) setPlatformTitle(detail.appTitle);
+      if (detail?.brandLogoUrl !== undefined) setBrandLogoUrl(detail.brandLogoUrl || null);
+    };
+    window.addEventListener("savazai-branding-updated", handleBranding);
+    return () => window.removeEventListener("savazai-branding-updated", handleBranding);
+  }, []);
 
   // Persistent sidebar state & window resize listener
   useEffect(() => {
@@ -114,6 +136,11 @@ export function Sidebar() {
   const canViewBusiness = hasAnyCategoryView("business_center");
   const canViewDocs = hasPermission("documentation", "view");
   const canViewCommandCenter = hasAnyCategoryView("command_center");
+  const canViewSystemAdmin =
+    hasPermission("system_admin", "view") ||
+    hasPermission("command_center", "system_admin_view") ||
+    hasPermission("appearance", "update") ||
+    hasPermission("branding", "update");
   const canViewDemoRequests = hasPermission("demo_requests", "view");
   const canViewUserAdmin = hasPermission("user_admin", "view");
 
@@ -123,6 +150,7 @@ export function Sidebar() {
     ...(canViewBusiness ? [{ href: "/business", label: "Business Center", icon: Library }] : []),
     ...(canViewDocs ? [{ href: "/docs", label: "Documentation", icon: BookOpen }] : []),
     ...(canViewCommandCenter ? [{ href: "/admin/settings", label: "Command Center", icon: Settings }] : []),
+    ...(canViewSystemAdmin ? [{ href: "/admin/system", label: "System Admin", icon: ShieldCheck }] : []),
     ...(canViewDemoRequests ? [{ href: "/admin/demo-requests", label: "Demo Requests", icon: CalendarCheck }] : []),
     ...(canViewUserAdmin ? [{ href: "/admin/users", label: "User Admin", icon: Users }] : []),
   ];
@@ -184,10 +212,20 @@ export function Sidebar() {
     <div className="flex flex-col h-full overflow-y-auto select-none bg-card text-card-foreground">
       <div className="flex items-center justify-between px-4 py-6 border-b border-border">
         <div className="flex items-center gap-3">
-          <Bot className="h-7 w-7 text-primary shrink-0" />
+          {brandLogoUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={brandLogoUrl}
+              alt={platformTitle}
+              className="h-7 w-auto max-w-[28px] max-h-[28px] object-contain shrink-0 brightness-110"
+              onError={() => setBrandLogoUrl(null)}
+            />
+          ) : (
+            <Bot className="h-7 w-7 text-primary shrink-0" />
+          )}
           {showFullContent && (
-            <span className="text-lg font-bold text-foreground tracking-tight animate-in fade-in duration-200">
-              SavazAI
+            <span className="text-lg font-bold text-foreground tracking-tight animate-in fade-in duration-200 truncate max-w-[140px]">
+              {platformTitle}
             </span>
           )}
         </div>

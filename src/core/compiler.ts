@@ -103,7 +103,7 @@ function createWorkerHandler(
 
 function createSynthesizerHandler(
   node: AgentNode,
-  globalPrompt?: string,
+  _globalPrompt?: string,
 ): (state: CompiledGraphState) => Promise<Partial<CompiledGraphState>> {
   return async (state) => {
     const rawOutputs = Object.values(state.nodeOutputs || {}).filter(Boolean);

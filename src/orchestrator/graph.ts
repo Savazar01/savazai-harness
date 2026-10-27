@@ -865,7 +865,7 @@ function formatToolIntrospectionResponse(
 
   const sections: string[] = [];
   for (const [groupName, groupTools] of Object.entries(groups)) {
-    let header = `### Available Tools (${groupName})`;
+    let header: string;
     if (groupName === "native") header = "### Native Tools";
     else if (groupName === "custom") header = "### Custom Skills";
     else header = `### Available Tools in \`${groupName}\` MCP`;
@@ -2087,7 +2087,7 @@ async function executeToolByName(
 
       const extractPhonesFromSnippet = (text: string): string[] => {
         if (!text) return [];
-        const phoneRegex = /(?:\+91[\-\s]?)?[6-9]\d{4}[\-\s]?\d{5}|\b0\d{2,4}[\-\s]?\d{6,8}\b|\b\d{5}[\-\s]?\d{5}\b|\+?\d{1,3}[-.\s]\(?\d{2,4}\)?[-.\s]\d{3,4}[-.\s]\d{3,4}/g;
+        const phoneRegex = /(?:\+91[-\s]?)?[6-9]\d{4}[-\s]?\d{5}|\b0\d{2,4}[-\s]?\d{6,8}\b|\b\d{5}[-\s]?\d{5}\b|\+?\d{1,3}[-.\s]\(?\d{2,4}\)?[-.\s]\d{3,4}[-.\s]\d{3,4}/g;
         const matches = text.match(phoneRegex) || [];
         return Array.from(new Set(matches.map((p) => p.trim()).filter((p) => !/^\d{4}$/.test(p))));
       };
@@ -3193,9 +3193,9 @@ ${customOrchestrationRules ? `Orchestration Rules:\n${customOrchestrationRules}\
 3. Aggressively convert all incoming raw JSON database strings, system tool metrics, and key-value blocks into beautiful, highly readable Markdown formats (clean bullet structures, bold headers, and proper Markdown Table matrices).
 4. Contact, Website, and Entity Table Formatting:
    - For business discovery & location tables, render standard matrix headers: | Business Name | ⭐ Rating | Review Count | Address | 📞 Contact / Email | 🌐 Website / Maps |
-   - Format phone numbers cleanly with clickable tel links where possible (e.g. \[📞 +91 70043 38655\](tel:+917004338655) or formatted numbers). If missing, display "Not listed".
-   - Format email addresses with mailto links (e.g. \[📧 name@domain.com\](mailto:email@domain.com)).
-   - Format websites and Google Maps as clean Markdown links (e.g. \[🌐 Website\](url) and \[🗺️ Google Maps\](url)).
+   - Format phone numbers cleanly with clickable tel links where possible (e.g. [📞 +91 70043 38655](tel:+917004338655) or formatted numbers). If missing, display "Not listed".
+   - Format email addresses with mailto links (e.g. [📧 name@domain.com](mailto:email@domain.com)).
+   - Format websites and Google Maps as clean Markdown links (e.g. [🌐 Website](url) and [🗺️ Google Maps](url)).
    - Display review counts (e.g. 497 reviews) and ratings (e.g. 4.9 ★) accurately from tool payloads.
 5. NEVER output raw JSON blocks, lists of brackets, or developer-facing debug strings.
 6. Return a complete, detailed conversational response in Markdown. Do not output JSON.`;

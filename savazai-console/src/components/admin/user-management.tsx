@@ -1148,7 +1148,7 @@ export function UserManagement() {
                   <div>
                     <span className="text-xs font-medium text-muted-foreground">Dispatch Email Directly</span>
                     <p className="text-[11px] text-muted-foreground">
-                      Send the invitation URL directly to invitee's inbox via configured SMTP.
+                      Send the invitation URL directly to invitee&apos;s inbox via configured SMTP.
                     </p>
                   </div>
                   <input

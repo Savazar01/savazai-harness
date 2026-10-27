@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { 
@@ -24,7 +24,71 @@ import {
 } from "lucide-react";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
 import { AiAssistButton } from "@/components/shared/ai-assist-button";
+import { MarkdownEditor } from "@/components/shared/markdown-editor";
 import { usePermissions } from "@/lib/auth/use-permissions";
+
+const OKF_CONCEPT_TEMPLATES: Record<string, { label: string; template: string; description: string }> = {
+  "SOP Ruleset": {
+    label: "SOP Ruleset (Standard Operating Procedure)",
+    description: "Defines strict execution boundaries and operating rules for agents",
+    template: `# Standard Operating Procedure: [Procedure Title]
+
+## Scope & Application
+Defines strict execution boundaries for agents operating within [Department/Domain].
+
+## Non-Negotiable Directives
+1. Agents MUST NOT promise discounts exceeding 15% without manager override.
+2. Customer PII must be scrubbed before sending diagnostic payloads to third-party endpoints.
+3. All generated contracts must include standard corporate liability disclaimers.
+
+## Escalation Triggers
+- Immediate supervisor intervention required if customer flags regulatory non-compliance.
+`,
+  },
+  "Shared Definition/Terminology": {
+    label: "Domain Glossary & Business Taxonomy",
+    description: "Canonical entity definitions and forbidden synonyms",
+    template: `# Domain Glossary & Business Taxonomy: [Domain]
+
+## Core Concepts
+- **Primary Entity**: Definition, attributes, and canonical lifecycle states.
+- **Secondary Term**: Semantic definition and relationship to operational workflows.
+
+## Forbidden Synonyms & Disambiguation Rules
+- Do NOT use "Client Record" when referring to "Master Account".
+- Always distinguish between "Gross Margin" and "Net Profit Contribution".
+`,
+  },
+  "Compliance Standard": {
+    label: "Security & Compliance Directive",
+    description: "Data residency, PII controls, and regulatory mandates",
+    template: `# Security & Compliance Directive: [Directive Name]
+
+## Regulatory Framework
+- Governed by: HIPAA / GDPR / SOC2 / Enterprise InfoSec Guidelines
+
+## Mandatory Data Handling Controls
+1. All outbound agent payloads must execute through the Data Masking Gateway.
+2. Encryption at rest (AES-256) enforced for all cached context tokens.
+3. Cross-tenant data retention is strictly prohibited.
+`,
+  },
+  "Guideline Parameter": {
+    label: "Operational Guideline Parameter",
+    description: "Operational thresholds, default configurations, and runtime limits",
+    template: `# Operational Guideline Parameter: [Parameter Name]
+
+## Operational Limits & Thresholds
+- Max Concurrency: 5 simultaneous worker executions
+- Rate Limit: 120 calls / minute
+- Human-in-the-Loop Approval Threshold: Actions impacting financial budgets >= $5,000
+
+## Failure Recovery Policy
+- Fallback tool: Local deterministic cache
+- Escalation path: Alert on-call operator via notification webhook
+`,
+  },
+};
 
 export interface OkfConcept {
   id: string;
@@ -263,9 +327,69 @@ export function OkfRegistry() {
     setFormResource("");
     setFormTags("");
     setFormDescription("");
-    setFormMarkdown("");
+    setFormMarkdown(OKF_CONCEPT_TEMPLATES["SOP Ruleset"]?.template || "");
     setEditingConcept(null);
     setIsAuthorModalOpen(true);
+  };
+
+  const handleUploadGoogleOkfTemplate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        if (!text) return;
+
+        if (file.name.endsWith(".json")) {
+          const json = JSON.parse(text);
+          if (json.conceptKey || json.key) setFormKey(String(json.conceptKey || json.key).toLowerCase().replace(/[^a-z0-9_]/g, "_"));
+          if (json.category || json.namespace) setFormCategory(String(json.category || json.namespace));
+          if (json.conceptType || json.type) setFormType(normalizeConceptType(json.conceptType || json.type));
+          if (json.title) setFormTitle(String(json.title));
+          if (json.description || json.summary) setFormDescription(String(json.description || json.summary));
+          if (json.resource || json.uri) setFormResource(String(json.resource || json.uri));
+          if (json.tags) setFormTags(Array.isArray(json.tags) ? json.tags.join(", ") : String(json.tags));
+          if (json.markdownBody || json.body || json.guidelines) {
+            setFormMarkdown(String(json.markdownBody || json.body || json.guidelines));
+          }
+        } else {
+          // Markdown with optional YAML frontmatter
+          const frontmatterMatch = text.match(/^---\r?\n([\s\S]+?)\r?\n---\r?\n?([\s\S]*)$/);
+          if (frontmatterMatch) {
+            const yaml = frontmatterMatch[1];
+            const body = frontmatterMatch[2];
+            setFormMarkdown(body.trim());
+
+            const keyMatch = yaml.match(/conceptKey:\s*([^\r\n]+)/);
+            const catMatch = yaml.match(/category:\s*([^\r\n]+)/);
+            const typeMatch = yaml.match(/conceptType:\s*([^\r\n]+)/);
+            const titleMatch = yaml.match(/title:\s*([^\r\n]+)/);
+            const descMatch = yaml.match(/description:\s*([^\r\n]+)/);
+            const uriMatch = yaml.match(/resource:\s*([^\r\n]+)/);
+            const tagsMatch = yaml.match(/tags:\s*\[?([^\r\n\]]+)\]?/);
+
+            if (keyMatch) setFormKey(keyMatch[1].trim().toLowerCase().replace(/[^a-z0-9_]/g, "_"));
+            if (catMatch) setFormCategory(catMatch[1].trim());
+            if (typeMatch) setFormType(normalizeConceptType(typeMatch[1].trim()));
+            if (titleMatch) setFormTitle(titleMatch[1].trim());
+            if (descMatch) setFormDescription(descMatch[1].trim());
+            if (uriMatch) setFormResource(uriMatch[1].trim());
+            if (tagsMatch) setFormTags(tagsMatch[1].trim());
+          } else {
+            setFormMarkdown(text.trim());
+            setFormTitle(file.name.replace(/\.(md|txt)$/i, ""));
+            setFormKey(file.name.replace(/\.(md|txt)$/i, "").toLowerCase().replace(/[^a-z0-9_]/g, "_"));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to parse uploaded OKF template:", err);
+        alert("Error parsing file. Please ensure it is valid Markdown with frontmatter or valid JSON.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
   };
 
   const handleOpenEditModal = (concept: OkfConcept) => {
@@ -675,7 +799,7 @@ export function OkfRegistry() {
             <button
               type="button"
               onClick={handleOpenAuthorModal}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md shadow-primary/20 cursor-pointer"
             >
               <Plus className="h-4 w-4" /> + New Concept
             </button>
@@ -757,7 +881,7 @@ export function OkfRegistry() {
             <button
               type="button"
               onClick={handleOpenAuthorModal}
-              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-semibold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-semibold transition-all shadow-md shadow-primary/20 cursor-pointer"
             >
               <Plus className="h-4 w-4" /> Author New Concept
             </button>
@@ -949,7 +1073,7 @@ export function OkfRegistry() {
                 <button 
                   type="button" 
                   onClick={handleParseRawBundle}
-                  className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
+                  className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md shadow-primary/20 cursor-pointer"
                 >
                   Parse &amp; Load Bundle
                 </button>
@@ -997,7 +1121,7 @@ export function OkfRegistry() {
                       <button 
                         type="button" 
                         onClick={() => handleOpenEditModal(viewingConcept)}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md shadow-primary/20 cursor-pointer"
                       >
                         <Edit className="h-3.5 w-3.5" /> Edit Concept
                       </button>
@@ -1103,7 +1227,7 @@ export function OkfRegistry() {
                   type="button" 
                   onClick={handleSaveConcept}
                   disabled={loading}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md shadow-primary/20 disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                   {editingConcept ? "Save Changes" : "Create Concept"}
@@ -1211,22 +1335,65 @@ export function OkfRegistry() {
                 />
               </div>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Guidelines Body (Markdown)</label>
-                  <HelpTooltip content="The comprehensive operational instructions and SOP markdown body delivered directly to workers at runtime." side="right" />
-                  <AiAssistButton
-                    onGenerated={(text) => setFormMarkdown(text)}
-                    mode="all"
-                    domain="okf-guideline"
-                    placeholder="Describe the SOP sections, operational thresholds, and compliance rules..."
-                  />
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Guidelines Body (Markdown)</label>
+                    <HelpTooltip content="The comprehensive operational instructions and SOP markdown body delivered directly to workers at runtime." side="right" />
+                    <AiAssistButton
+                      onGenerated={(text) => setFormMarkdown(text)}
+                      mode="all"
+                      domain="okf-guideline"
+                      placeholder="Describe the SOP sections, operational thresholds, and compliance rules..."
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="flex items-center gap-1.5 px-3 py-1 rounded-lg border border-border bg-card hover:bg-muted text-xs font-semibold text-foreground cursor-pointer shadow-xs transition-colors">
+                      <Upload className="h-3.5 w-3.5 text-primary" />
+                      <span>Upload Google OKF Template</span>
+                      <input
+                        type="file"
+                        accept=".md,.json,.txt"
+                        onChange={handleUploadGoogleOkfTemplate}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <select
+                      defaultValue=""
+                      onChange={(e) => {
+                        const key = e.target.value;
+                        if (!key || !OKF_CONCEPT_TEMPLATES[key]) return;
+                        if (
+                          formMarkdown.trim() &&
+                          !window.confirm("Replace current guidelines markdown with the selected concept template?")
+                        ) {
+                          e.target.value = "";
+                          return;
+                        }
+                        const t = OKF_CONCEPT_TEMPLATES[key];
+                        setFormMarkdown(t.template);
+                        setFormType(key);
+                        e.target.value = "";
+                      }}
+                      className="rounded-lg border border-border bg-card px-2.5 py-1 text-xs text-foreground outline-none focus:border-primary cursor-pointer shadow-xs"
+                    >
+                      <option value="" disabled>Load Concept Template...</option>
+                      {Object.entries(OKF_CONCEPT_TEMPLATES).map(([k, t]) => (
+                        <option key={k} value={k}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <textarea 
-                  rows={12} 
+
+                <MarkdownEditor 
                   value={formMarkdown}
-                  onChange={(e) => setFormMarkdown(e.target.value)}
-                  placeholder="# Mandatory Guidelines..." 
-                  className="w-full rounded-2xl border border-border bg-muted/30 p-4 text-xs text-foreground font-mono outline-none resize-none focus:border-indigo-500 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-855 leading-relaxed"
+                  onChange={setFormMarkdown}
+                  placeholder="# Mandatory Guidelines..."
+                  minHeight="320px"
+                  maxHeight="520px"
                 />
               </div>
             </div>
@@ -1242,7 +1409,7 @@ export function OkfRegistry() {
                 type="button" 
                 onClick={handleSaveConcept}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md shadow-primary/20 disabled:opacity-50 cursor-pointer"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {editingConcept ? "Save Changes" : "Create Concept"}

@@ -6,6 +6,7 @@ export interface PermissionDefinition {
     | "Capability Studio"
     | "Business Center"
     | "Command Center"
+    | "System Admin"
     | "Agent Workspace"
     | "Documentation"
     | "Demo Requests"
@@ -18,6 +19,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   "Capability Studio": "Capability Studio",
   "Business Center": "Business Center",
   "Command Center": "Command Center",
+  "System Admin": "System Administration",
   "Agent Workspace": "Agent Workspace",
   Documentation: "Documentation",
   "Demo Requests": "Demo Requests",
@@ -78,6 +80,12 @@ export const PERMISSION_REGISTRY: PermissionDefinition[] = [
   { resource: "command_center", action: "social_manage", label: "Manage Social Channels", category: "Command Center", subCategory: "Social Media Hub", description: "Configure social platform webhooks" },
   { resource: "command_center", action: "system_admin_view", label: "View System Admin", category: "Command Center", subCategory: "System Admin", description: "View bot defense, SMTP settings, and email audit logs" },
   { resource: "command_center", action: "system_admin_manage", label: "Manage System Admin", category: "Command Center", subCategory: "System Admin", description: "Configure bot defense, SMTP credentials, and send test emails" },
+
+  // System Administration (Dedicated Top-Level Category)
+  { resource: "system_admin", action: "view", label: "View System Administration", category: "System Admin", description: "Access System Administration module" },
+  { resource: "system_admin", action: "update", label: "Manage System Core", category: "System Admin", subCategory: "System Core", description: "Configure SMTP, Turnstile CAPTCHA, and security policies" },
+  { resource: "appearance", action: "update", label: "Manage Theme & Appearance", category: "System Admin", subCategory: "Appearance", description: "Configure dual-mode theme palettes, typography, and density" },
+  { resource: "branding", action: "update", label: "Manage Platform Branding", category: "System Admin", subCategory: "Branding", description: "Update platform logo, favicon, and title" },
 
   // Agent Workspace
   { resource: "agent_workspace", action: "view", label: "Access Workspace", category: "Agent Workspace", description: "Access Agent Workspace UI" },
@@ -154,10 +162,10 @@ export const SYSTEM_ROLES: PredefinedRoleSeed[] = [
   {
     id: "role_infrastructure_lead",
     name: "Infrastructure Lead",
-    description: "Full access to Command Center (Appearance, Branding, LLM Providers, MCPs, Databases, API Services, Social Media, Spend) and Documentation.",
+    description: "Full access to Command Center (LLM Providers, MCPs, Databases, API Services, Social Media, Spend) and System Admin (System Core, Appearance, Branding) and Documentation.",
     isSystem: true,
     permissions: [
-      ...PERMISSION_REGISTRY.filter((p) => p.resource === "command_center").map((p) => ({
+      ...PERMISSION_REGISTRY.filter((p) => p.category === "Command Center" || p.category === "System Admin").map((p) => ({
         resource: p.resource,
         action: p.action,
       })),

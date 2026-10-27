@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
@@ -20,7 +20,35 @@ import {
   WandSparkles,
   Braces,
   FileDown,
+  BookOpen,
 } from "lucide-react";
+
+const ENTERPRISE_REGEX_EXAMPLES = [
+  {
+    label: "Medical Record Number (MRN)",
+    pattern: "\\bMRN-[A-Z]{2}-\\d{6}\\b",
+    description: "Matches healthcare clinical charts and EHR patient IDs",
+    matchSample: "Matches: MRN-AB-123456",
+  },
+  {
+    label: "Internal Project Codewords",
+    pattern: "\\b(Project[_-]?(Titan|Apollo|Cobalt))\\b",
+    description: "Detects confidential corporate initiatives and internal program names",
+    matchSample: "Matches: Project-Titan, Project_Apollo",
+  },
+  {
+    label: "Enterprise Invoice Reference",
+    pattern: "\\bINV-\\d{4}-[A-Z0-9]{5}\\b",
+    description: "Validates SAP / ERP billing document numbers",
+    matchSample: "Matches: INV-2026-X89AB",
+  },
+  {
+    label: "Employee Badge / Token",
+    pattern: "\\bEMP\\d{5}\\b",
+    description: "Identifies HRMS staff tokens and personnel badges",
+    matchSample: "Matches: EMP98213",
+  },
+];
 import type { ComplianceConfig, ComplianceEntityRule, ImportedFramework, ImportedFrameworkEntity, KeywordRule } from "@/app/api/governance/compliance/route";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
 import { usePermissions } from "@/lib/auth/use-permissions";
@@ -163,6 +191,7 @@ export function ComplianceManager() {
   const [aiRegexGenerating, setAiRegexGenerating] = useState(false);
   const [aiRegexResult, setAiRegexResult] = useState<{ pattern: string; explanation?: string } | null>(null);
   const [aiRegexError, setAiRegexError] = useState<string | null>(null);
+  const [regexGuideModalOpen, setRegexGuideModalOpen] = useState(false);
 
   // Audit stream state
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
@@ -753,7 +782,7 @@ export function ComplianceManager() {
               <button
                 type="button"
                 onClick={addKeyword}
-                className="px-3 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all"
+                className="px-3 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-xs"
               >
                 <Plus className="h-3.5 w-3.5" />
               </button>
@@ -783,9 +812,19 @@ export function ComplianceManager() {
 
           {/* Custom Regex Rules */}
           <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-foreground">Custom Regex Rules</h3>
-              <HelpTooltip content="Define advanced regex patterns for specialized entity detection. Use presets for common patterns or the AI Generator to create patterns from sample input strings." side="right" />
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-foreground">Custom Regex Rules</h3>
+                <HelpTooltip content="Define advanced regex patterns for specialized entity detection. Use presets for common patterns or the AI Generator to create patterns from sample input strings." side="right" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setRegexGuideModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold transition-colors cursor-pointer"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>How to write custom regex patterns? 📖</span>
+              </button>
             </div>
             <p className="text-[10px] text-muted-foreground">Optional advanced custom regex patterns for specialized entity detection.</p>
             <div className="flex items-center gap-2 mb-2">
@@ -822,7 +861,7 @@ export function ComplianceManager() {
                 <button
                   type="button"
                   onClick={addRegex}
-                  className="flex-1 px-3 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all"
+                  className="flex-1 px-3 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-xs"
                 >
                   <Plus className="h-3.5 w-3.5 inline mr-1" /> Add Rule
                 </button>
@@ -860,7 +899,7 @@ export function ComplianceManager() {
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md shadow-primary/20 disabled:opacity-50"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {saving ? "Saving..." : "Save Compliance Configuration"}
@@ -1181,7 +1220,7 @@ export function ComplianceManager() {
               <button
                 type="button"
                 onClick={() => setAddEntityModalOpen(false)}
-                className="flex-1 py-2.5 rounded-xl bg-muted hover:bg-slate-700 text-foreground text-xs font-bold transition-all"
+                className="flex-1 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition-all"
               >
                 Cancel
               </button>
@@ -1189,7 +1228,7 @@ export function ComplianceManager() {
                 type="button"
                 onClick={handleAddEntity}
                 disabled={!newEntityLabel.trim() || !newEntityKey.trim() || entityRules.some((r) => r.entity === newEntityKey.trim())}
-                className="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all disabled:opacity-50"
               >
                 Add Entity
               </button>
@@ -1277,12 +1316,95 @@ export function ComplianceManager() {
                   <button
                     type="button"
                     onClick={applyAiRegex}
-                    className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                    className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5"
                   >
                     <Braces className="h-3.5 w-3.5" /> Use This Pattern
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Custom Regex Pattern Documentation Guide Modal ── */}
+      {regexGuideModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div onClick={() => setRegexGuideModalOpen(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative bg-card border border-border rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-card shrink-0">
+              <div className="flex items-center gap-2.5">
+                <BookOpen className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
+                  Custom Regex Pattern Guide for Enterprise PII &amp; Compliance
+                </h3>
+              </div>
+              <button onClick={() => setRegexGuideModalOpen(false)} className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-lg cursor-pointer">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-5 text-xs text-muted-foreground leading-relaxed">
+              {/* Overview */}
+              <div className="rounded-2xl border border-border bg-muted/20 p-4 space-y-2">
+                <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  Streaming Regex Matching Architecture
+                </h4>
+                <p>
+                  The SavazAI Data Masking Gateway inspects every inbound prompt token and downstream LLM completion in real-time. Matches are masked with cryptographic placeholder tokens (e.g. <code>[REDACTED_MRN]</code>) before sending to non-local frontier models, and re-hydrated only within protected database boundaries.
+                </p>
+              </div>
+
+              {/* Core Syntax Rules */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-foreground">Essential Construction Rules</h4>
+                <ul className="list-disc pl-4 space-y-1 text-[11px]">
+                  <li><strong>Escaped Backslashes:</strong> Always use double backslashes when writing literal tokens in JSON/UI fields (e.g. <code>\\d</code> for digits, <code>\\w</code> for alphanumeric, <code>\\s</code> for whitespace).</li>
+                  <li><strong>Word Boundaries:</strong> Wrap patterns with <code>\\b</code> (e.g. <code>\\bEMP\\d&#123;5&#125;\\b</code>) so numbers embedded in larger identifiers are not accidentally masked.</li>
+                  <li><strong>Case Insensitivity:</strong> Patterns evaluate with ignore-case flags, but explicit grouping <code>[A-Z]</code> ensures cross-engine portability.</li>
+                  <li><strong>Named/Capturing Groups:</strong> Parentheses <code>(pattern)</code> isolate target codewords and optional prefixes like <code>(Project[_-]?)</code>.</li>
+                </ul>
+              </div>
+
+              {/* Enterprise Examples */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-foreground">Enterprise Examples &amp; One-Click Ingestion</h4>
+                <div className="grid grid-cols-1 gap-2.5">
+                  {ENTERPRISE_REGEX_EXAMPLES.map((ex) => (
+                    <div key={ex.label} className="p-3.5 rounded-xl border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-primary/40 transition-colors shadow-xs">
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-bold text-foreground text-xs">{ex.label}</span>
+                          <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded border border-border">{ex.pattern}</span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">{ex.description} &bull; <span className="text-primary font-mono font-medium">{ex.matchSample}</span></p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRegexLabel(ex.label);
+                          setRegexPattern(ex.pattern);
+                          setRegexGuideModalOpen(false);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-xs font-semibold shrink-0 cursor-pointer shadow-xs transition-transform hover:scale-[1.02]"
+                      >
+                        Insert Example Pattern
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-3 border-t border-border bg-muted/40 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setRegexGuideModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-card border border-border hover:bg-muted text-foreground text-xs font-semibold cursor-pointer"
+              >
+                Close Guide
+              </button>
             </div>
           </div>
         </div>

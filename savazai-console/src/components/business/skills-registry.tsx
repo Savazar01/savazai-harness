@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { 
@@ -29,7 +29,135 @@ import {
 } from "lucide-react";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
 import { AiAssistButton } from "@/components/shared/ai-assist-button";
+import { MarkdownEditor } from "@/components/shared/markdown-editor";
 import { usePermissions } from "@/lib/auth/use-permissions";
+
+const SKILL_TEMPLATES: Record<string, { label: string; template: string; category?: Skill["category"] }> = {
+  business_process: {
+    label: "Standard Business Process Agent Skill (Default)",
+    category: "custom",
+    template: `# Business Process Skill: [Process Name]
+
+## 1. Operational Objective
+Explain what business outcome this skill delivers (e.g., Customer Credit Approval, Purchase Order Invoicing).
+
+## 2. Execution Prerequisites & Inputs
+- Required parameters: \`customerId\`, \`orderTotal\`, \`approvalLevel\`
+- Upstream system dependencies: ERP / CRM / Database connectors
+
+## 3. Deterministic Decision Rules
+1. If order total < $10,000 -> Auto-approve with standard audit log.
+2. If order total >= $10,000 -> Escalate to Financial Controller with generated approval memo.
+3. If credit score is missing -> Halt and request human operator review.
+
+## 4. Expected Output Schema & Artifacts
+- Status: \`APPROVED\` | \`REJECTED\` | \`ESCALATED\`
+- Summary JSON payload returned to supervisor agent.
+`,
+  },
+  custom_js: {
+    label: "Custom Local JS Snippet",
+    category: "custom",
+    template: `/**
+ * @name custom_data_processor
+ * @description Local sandboxed execution snippet for data transformation.
+ * @param {Record<string, unknown>} args - Input parameters from caller agent.
+ * @returns {Promise<{ success: boolean; data: unknown }>}
+ */
+async function execute(args) {
+  try {
+    const { items, threshold = 100 } = args;
+    if (!Array.isArray(items)) {
+      throw new Error("Missing or invalid 'items' array parameter");
+    }
+
+    const filtered = items.filter(item => (item.value || 0) >= threshold);
+
+    return {
+      success: true,
+      data: {
+        processedCount: filtered.length,
+        results: filtered,
+        timestamp: new Date().toISOString()
+      }
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message || "Execution failed"
+    };
+  }
+}
+`,
+  },
+  native_ts: {
+    label: "Native TypeScript Tool",
+    category: "native",
+    template: `import { z } from "zod";
+
+/**
+ * Tool Definition Contract
+ */
+export const InputSchema = z.object({
+  entityId: z.string().uuid().describe("Unique identifier of target entity"),
+  action: z.enum(["fetch", "sync", "archive"]).describe("Action to perform"),
+  payload: z.record(z.unknown()).optional().describe("Dynamic payload object")
+});
+
+export type ToolInput = z.infer<typeof InputSchema>;
+
+export interface ToolOutput {
+  status: "SUCCESS" | "FAILED";
+  recordsAffected: number;
+  message: string;
+}
+
+export async function run(input: ToolInput): Promise<ToolOutput> {
+  // Native execution logic
+  return {
+    status: "SUCCESS",
+    recordsAffected: 1,
+    message: \`Action \${input.action} executed for entity \${input.entityId}\`
+  };
+}
+`,
+  },
+  mcp_connector: {
+    label: "MCP-Bound Connector Skill",
+    category: "mcp",
+    template: `# MCP Tool Binding Specification
+
+## Server Connection
+- Server ID: \`mcp_server_identifier\`
+- Remote Method: \`tools/call\`
+- Transport: \`streamable-http\` | \`sse\` | \`stdio\`
+
+## Tool Signature
+- Method: \`execute_operation\`
+- Target Service: Internal Enterprise RPC
+
+## JSON-RPC 2.0 Mapping
+\`\`\`json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "target_tool_name",
+    "arguments": {
+      "workspaceId": "{workspaceId}",
+      "filter": "active"
+    }
+  }
+}
+\`\`\`
+
+## Resilience & Retry Strategy
+- Max Retries: 3
+- Timeout: 15000ms
+- Fallback: Emit degraded receipt to Synthesizer node
+`,
+  },
+};
 
 export interface Skill {
   id: string;
@@ -704,7 +832,7 @@ export function SkillsRegistry() {
             <button
               type="button"
               onClick={handleOpenAuthorModal}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md shadow-primary/20 cursor-pointer"
             >
               <Plus className="h-4 w-4" /> Author New Skill
             </button>
@@ -791,7 +919,7 @@ export function SkillsRegistry() {
             <button
               type="button"
               onClick={handleOpenAuthorModal}
-              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-semibold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-semibold transition-all shadow-md shadow-primary/20 cursor-pointer"
             >
               <Plus className="h-4 w-4" /> Author New Skill
             </button>
@@ -984,7 +1112,7 @@ export function SkillsRegistry() {
                   type="button"
                   onClick={() => setIngestTab("file")}
                   className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                    ingestTab === "file" ? "bg-primary text-foreground shadow" : "text-muted-foreground hover:text-foreground"
+                    ingestTab === "file" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Upload SKILL.md / JSON File
@@ -993,7 +1121,7 @@ export function SkillsRegistry() {
                   type="button"
                   onClick={() => setIngestTab("paste")}
                   className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                    ingestTab === "paste" ? "bg-primary text-foreground shadow" : "text-muted-foreground hover:text-foreground"
+                    ingestTab === "paste" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Paste Raw Markdown / JSON
@@ -1002,7 +1130,7 @@ export function SkillsRegistry() {
                   type="button"
                   onClick={() => setIngestTab("url")}
                   className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                    ingestTab === "url" ? "bg-primary text-foreground shadow" : "text-muted-foreground hover:text-foreground"
+                    ingestTab === "url" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Fetch from URL
@@ -1030,7 +1158,7 @@ export function SkillsRegistry() {
                   <button 
                     type="button" 
                     onClick={handleImportText}
-                    className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
+                    className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md shadow-primary/20 cursor-pointer"
                   >
                     Parse &amp; Load Blueprint
                   </button>
@@ -1051,7 +1179,7 @@ export function SkillsRegistry() {
                       type="button" 
                       onClick={handleFetchUrl} 
                       disabled={importing}
-                      className="px-4 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold shrink-0 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold shrink-0 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                     >
                       {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4" />}
                       Fetch
@@ -1104,7 +1232,7 @@ export function SkillsRegistry() {
                 <button 
                   type="button" 
                   onClick={() => handleOpenEditModal(viewingSkill)}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md shadow-primary/20 cursor-pointer"
                 >
                   <Edit className="h-3.5 w-3.5" /> Edit Skill
                 </button>
@@ -1193,7 +1321,7 @@ export function SkillsRegistry() {
                   type="button" 
                   onClick={handleSaveSkill}
                   disabled={loading}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md shadow-primary/20 disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                   {editingSkill ? "Publish & Increment Patch" : "Save Skill"}
@@ -1273,22 +1401,57 @@ export function SkillsRegistry() {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Instructions &amp; Schema body (SKILL.md Blueprint)</label>
-                  <HelpTooltip content="The full skill definition in SKILL.md format â€” YAML frontmatter for metadata followed by Markdown instructions for agent consumption." side="right" />
-                  <AiAssistButton
-                    onGenerated={(text) => setFormInstructions(text)}
-                    mode="all"
-                    domain="skill"
-                    placeholder="Describe the skill logic, tools, and behavior you want to define..."
-                  />
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Instructions &amp; Schema body (SKILL.md Blueprint)</label>
+                    <HelpTooltip content="The full skill definition in SKILL.md format — YAML frontmatter or Markdown instructions for agent consumption." side="right" />
+                    <AiAssistButton
+                      onGenerated={(text) => setFormInstructions(text)}
+                      mode="all"
+                      domain="skill"
+                      placeholder="Describe the skill logic, tools, and behavior you want to define..."
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground font-semibold">Template:</span>
+                    <select
+                      defaultValue=""
+                      onChange={(e) => {
+                        const key = e.target.value;
+                        if (!key || !SKILL_TEMPLATES[key]) return;
+                        if (
+                          formInstructions.trim() &&
+                          !window.confirm("Replace current instructions with the selected blueprint template?")
+                        ) {
+                          e.target.value = "";
+                          return;
+                        }
+                        const t = SKILL_TEMPLATES[key];
+                        setFormInstructions(t.template);
+                        if (t.category && !editingSkill) {
+                          setFormCategory(t.category);
+                        }
+                        e.target.value = "";
+                      }}
+                      className="rounded-lg border border-border bg-card px-2.5 py-1 text-xs text-foreground outline-none focus:border-primary cursor-pointer shadow-xs"
+                    >
+                      <option value="" disabled>Load Blueprint Template...</option>
+                      {Object.entries(SKILL_TEMPLATES).map(([k, t]) => (
+                        <option key={k} value={k}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <textarea 
-                  rows={12} 
+
+                <MarkdownEditor 
                   value={formInstructions}
-                  onChange={(e) => setFormInstructions(e.target.value)}
-                  placeholder="# SKILL BLUEPRINT..." 
-                  className="w-full rounded-2xl border border-border bg-muted/30 p-4 text-xs text-foreground font-mono outline-none resize-none focus:border-indigo-500 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-855 leading-relaxed"
+                  onChange={setFormInstructions}
+                  placeholder="# SKILL BLUEPRINT..."
+                  minHeight="320px"
+                  maxHeight="520px"
                 />
               </div>
             </div>
@@ -1298,7 +1461,7 @@ export function SkillsRegistry() {
               <button 
                 type="button" 
                 onClick={() => setIsAuthorModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all bg-card/20 cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all bg-card cursor-pointer"
               >
                 Cancel
               </button>
@@ -1306,7 +1469,7 @@ export function SkillsRegistry() {
                 type="button" 
                 onClick={handleSaveSkill}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md shadow-primary/20 disabled:opacity-50 cursor-pointer"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {editingSkill ? "Publish & Increment Patch" : "Save Skill"}
@@ -1493,7 +1656,7 @@ export function SkillsRegistry() {
                   type="button"
                   onClick={handleSaveAssignments}
                   disabled={savingAssignments}
-                  className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary hover:bg-primary text-foreground text-xs font-bold transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md shadow-primary/20 disabled:opacity-50 cursor-pointer"
                 >
                   {savingAssignments ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                   Save Assignments

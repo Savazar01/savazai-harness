@@ -55,10 +55,10 @@ export default async function Home() {
             <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-primary to-cyan-500">
               {config.appTitle}
             </span>
-            <ThemeToggle compact className="ml-1" />
           </div>
 
           <nav className="flex items-center gap-3">
+            <ThemeToggle compact className="mr-1" />
             {session ? (
               <Link
                 href={session.user.role === "admin" ? "/admin/settings" : "/dashboard"}
