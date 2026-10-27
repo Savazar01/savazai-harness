@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   X,
   Bot,
@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
 import { AiAssistButton } from "@/components/shared/ai-assist-button";
+import { ToolDataTable, ToolItem } from "./tool-data-table";
+import { MarkdownEditor } from "@/components/shared/markdown-editor";
 import { CanvasNode, ToolReference, AgentRole } from "./canvas-editor";
 
 interface Skill {
@@ -313,6 +315,46 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
     }
   };
 
+  const selectedToolKeys = useMemo(() => {
+    return new Set(
+      selectedTools.map((t) =>
+        t.mcpServerId ? `${t.mcpServerId}::${t.name}` : `${t.category}::${t.name}`
+      )
+    );
+  }, [selectedTools]);
+
+  const handleToggleToolItem = (tool: ToolItem) => {
+    handleToggleTool(tool.name, tool.category as any, tool.serverId);
+  };
+
+  const handleBulkToggleTools = (toolsToToggle: ToolItem[], enable: boolean) => {
+    if (enable) {
+      const newItems: ToolReference[] = [];
+      for (const tool of toolsToToggle) {
+        const key = tool.serverId ? `${tool.serverId}::${tool.name}` : `${tool.category}::${tool.name}`;
+        if (!selectedToolKeys.has(key)) {
+          newItems.push({
+            id: `tool-ref-${crypto.randomUUID()}`,
+            name: tool.name,
+            category: tool.category as any,
+            mcpServerId: tool.serverId,
+          });
+        }
+      }
+      setSelectedTools((prev) => [...prev, ...newItems]);
+    } else {
+      const keysToRemove = new Set(
+        toolsToToggle.map((t) => (t.serverId ? `${t.serverId}::${t.name}` : `${t.category}::${t.name}`))
+      );
+      setSelectedTools((prev) =>
+        prev.filter((t) => {
+          const key = t.mcpServerId ? `${t.mcpServerId}::${t.name}` : `${t.category}::${t.name}`;
+          return !keysToRemove.has(key);
+        })
+      );
+    }
+  };
+
   const handleAddCustomApiTool = () => {
     if (!customApiName || !customApiUrl) {
       setAlertMessage("Please enter both custom tool name and endpoint URL.");
@@ -588,12 +630,11 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                     </button>
                   </div>
                 </div>
-                <textarea
-                  rows={6}
+                <MarkdownEditor
                   value={systemPrompt}
-                  onChange={(e) => setSystemPrompt(e.target.value)}
-                  placeholder="Define the agent's role, behavior, and constraints..."
-                  className="w-full rounded-xl border border-slate-800 bg-[#06060b] p-4 text-xs text-slate-300 font-mono outline-none resize-none focus:border-indigo-500 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800"
+                  onChange={setSystemPrompt}
+                  minHeight="140px"
+                  placeholder="Define the agent's role, behavior, and operational constraints..."
                 />
               </div>
 
@@ -625,15 +666,12 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                       </div>
                     </div>
                     <div className="flex-1 flex flex-col relative min-h-0">
-                      <textarea
+                      <MarkdownEditor
                         value={systemPrompt}
-                        onChange={(e) => setSystemPrompt(e.target.value)}
+                        onChange={setSystemPrompt}
+                        minHeight="480px"
                         placeholder="Define the agent's role, behavior, tools, and operational constraints..."
-                        className="w-full h-full rounded-xl border border-slate-800 bg-[#06060b] p-4 text-xs text-slate-200 font-mono outline-none resize-none focus:border-indigo-500 leading-relaxed [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-800"
                       />
-                      <div className="absolute bottom-3 right-4 text-[10px] font-mono text-slate-500 bg-slate-950/80 px-2 py-1 rounded-md border border-slate-800 pointer-events-none">
-                        {systemPrompt.length} chars | {systemPrompt.split('\n').length} lines
-                      </div>
                     </div>
                     <div className="flex justify-end gap-2 pt-2 border-t border-slate-800 shrink-0">
                       <button
@@ -766,57 +804,28 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {loadingRegisteredTools && registeredTools.length === 0 ? (
-                    <div className="flex justify-center items-center py-4 bg-slate-900/10 border border-slate-900 rounded-xl text-slate-500 text-[10px] gap-2 md:col-span-2">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading tools...
-                    </div>
-                  ) : (() => {
-                    const filtered = registeredTools.filter(t => t.category === "native" || t.category === "custom" || t.category === "open");
-                    if (filtered.length === 0) return <p className="text-center text-slate-600 text-[10px] py-4 md:col-span-2">No native or dynamic tools found.</p>;
-                    return filtered.map((tool) => {
-                      const isChecked = selectedTools.some((t) => t.name === tool.name && t.category === tool.category);
-                      const isKeyConfigured = tool.status === "active";
-                      
-                      return (
-                        <div
-                          key={tool.name}
-                          onClick={() => handleToggleTool(tool.name, tool.category)}
-                          className={`flex flex-col gap-2 p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                            isChecked
-                              ? "bg-emerald-950/10 border-emerald-500/60 text-emerald-100"
-                              : "border-slate-900 bg-slate-950/20 hover:border-slate-800"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <Wrench className={`h-4 w-4 shrink-0 ${isChecked ? "text-emerald-400" : "text-slate-600"}`} />
-                              <span className="text-xs font-bold block truncate text-slate-200">{tool.label}</span>
-                            </div>
-                            {isChecked && (
-                              <Check className="h-3 w-3 text-emerald-400 shrink-0" />
-                            )}
-                          </div>
-                          <p className="text-[10px] text-slate-500 leading-normal line-clamp-2">
-                            {tool.description}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-1.5 pt-1 mt-auto">
-                            <span className="px-2 py-0.5 rounded-md border border-indigo-500/20 text-[8px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/5">
-                              {tool.category}
-                            </span>
-                            <span className={`px-2 py-0.5 rounded-md border text-[8px] font-bold uppercase tracking-wider ${
-                              isKeyConfigured
-                                ? "border-emerald-500/20 text-emerald-400 bg-emerald-500/5"
-                                : "border-amber-500/20 text-amber-400 bg-amber-500/5"
-                            }`}>
-                              {isKeyConfigured ? "Active" : "Needs API Key"}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
+                {(() => {
+                  const nativeToolsList: ToolItem[] = registeredTools
+                    .filter((t) => t.category === "native" || t.category === "custom" || t.category === "open")
+                    .map((t) => ({
+                      name: t.name,
+                      category: t.category,
+                      description: t.description,
+                      status: t.status === "active" ? "active" : "disabled",
+                    }));
+
+                  return (
+                    <ToolDataTable
+                      tools={nativeToolsList}
+                      selectedToolKeys={selectedToolKeys}
+                      onToggleTool={handleToggleToolItem}
+                      onBulkToggle={handleBulkToggleTools}
+                      isLoading={loadingRegisteredTools}
+                      filterCategories={["all", "native", "custom", "open"]}
+                      emptyMessage="No native or custom tools found."
+                    />
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -826,57 +835,28 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="space-y-3">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">External Database Connectors</span>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {loadingRegisteredTools && registeredTools.length === 0 ? (
-                    <div className="flex justify-center items-center py-4 bg-slate-900/10 border border-slate-900 rounded-xl text-slate-500 text-[10px] gap-2 md:col-span-2">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading databases...
-                    </div>
-                  ) : (() => {
-                    const filtered = registeredTools.filter(t => (t.category as string) === "database");
-                    if (filtered.length === 0) return <p className="text-left text-slate-600 text-[10px] py-2 md:col-span-2">No external database connections registered. Register them under settings to bind them here.</p>;
-                    return filtered.map((tool) => {
-                      const isChecked = selectedTools.some((t) => t.name === tool.name && t.category === tool.category);
-                      const isKeyConfigured = tool.status === "active";
-                      
-                      return (
-                        <div
-                          key={tool.name}
-                          onClick={() => handleToggleTool(tool.name, tool.category)}
-                          className={`flex flex-col gap-2 p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                            isChecked
-                              ? "bg-emerald-950/10 border-emerald-500/60 text-emerald-100"
-                              : "border-slate-900 bg-slate-950/20 hover:border-slate-800"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <Database className={`h-4 w-4 shrink-0 ${isChecked ? "text-emerald-400" : "text-slate-600"}`} />
-                              <span className="text-xs font-bold block truncate text-slate-200">{tool.label}</span>
-                            </div>
-                            {isChecked && (
-                              <Check className="h-3 w-3 text-emerald-400 shrink-0" />
-                            )}
-                          </div>
-                          <p className="text-[10px] text-slate-500 leading-normal line-clamp-2">
-                            {tool.description}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-1.5 pt-1 mt-auto">
-                            <span className="px-2 py-0.5 rounded-md border border-indigo-500/20 text-[8px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/5">
-                              {tool.category}
-                            </span>
-                            <span className={`px-2 py-0.5 rounded-md border text-[8px] font-bold uppercase tracking-wider ${
-                              isKeyConfigured
-                                ? "border-emerald-500/20 text-emerald-400 bg-emerald-500/5"
-                                : "border-slate-500/20 text-slate-400 bg-slate-500/5"
-                            }`}>
-                              {isKeyConfigured ? "Connected" : "Inactive"}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
+                {(() => {
+                  const dbToolsList: ToolItem[] = registeredTools
+                    .filter((t) => (t.category as string) === "database")
+                    .map((t) => ({
+                      name: t.name,
+                      category: "database",
+                      description: t.description,
+                      status: t.status === "active" ? "active" : "disabled",
+                    }));
+
+                  return (
+                    <ToolDataTable
+                      tools={dbToolsList}
+                      selectedToolKeys={selectedToolKeys}
+                      onToggleTool={handleToggleToolItem}
+                      onBulkToggle={handleBulkToggleTools}
+                      isLoading={loadingRegisteredTools}
+                      filterCategories={["all", "database"]}
+                      emptyMessage="No external database connections registered. Register them under settings to bind them here."
+                    />
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -886,57 +866,28 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="space-y-3">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Social Media Integration Hub</span>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {loadingRegisteredTools && registeredTools.length === 0 ? (
-                    <div className="flex justify-center items-center py-4 bg-slate-900/10 border border-slate-900 rounded-xl text-slate-500 text-[10px] gap-2 md:col-span-2">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading social connections...
-                    </div>
-                  ) : (() => {
-                    const filtered = registeredTools.filter(t => (t.category as string) === "social_media");
-                    if (filtered.length === 0) return <p className="text-left text-slate-600 text-[10px] py-2 md:col-span-2">No social media connections configured. Configure them under settings to bind them here.</p>;
-                    return filtered.map((tool) => {
-                      const isChecked = selectedTools.some((t) => t.name === tool.name && t.category === tool.category);
-                      const isKeyConfigured = tool.status === "active";
-                      
-                      return (
-                        <div
-                          key={tool.name}
-                          onClick={() => handleToggleTool(tool.name, tool.category)}
-                          className={`flex flex-col gap-2 p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                            isChecked
-                              ? "bg-emerald-950/10 border-emerald-500/60 text-emerald-100"
-                              : "border-slate-900 bg-slate-950/20 hover:border-slate-800"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <Share2 className={`h-4 w-4 shrink-0 ${isChecked ? "text-emerald-400" : "text-slate-600"}`} />
-                              <span className="text-xs font-bold block truncate text-slate-200">{tool.label}</span>
-                            </div>
-                            {isChecked && (
-                              <Check className="h-3 w-3 text-emerald-400 shrink-0" />
-                            )}
-                          </div>
-                          <p className="text-[10px] text-slate-500 leading-normal line-clamp-2">
-                            {tool.description}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-1.5 pt-1 mt-auto">
-                            <span className="px-2 py-0.5 rounded-md border border-indigo-500/20 text-[8px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/5">
-                              {tool.category.replace("_", " ")}
-                            </span>
-                            <span className={`px-2 py-0.5 rounded-md border text-[8px] font-bold uppercase tracking-wider ${
-                              isKeyConfigured
-                                ? "border-emerald-500/20 text-emerald-400 bg-emerald-500/5"
-                                : "border-slate-500/20 text-slate-400 bg-slate-500/5"
-                            }`}>
-                              {isKeyConfigured ? "Connected" : "Inactive"}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
+                {(() => {
+                  const socialToolsList: ToolItem[] = registeredTools
+                    .filter((t) => (t.category as string) === "social_media")
+                    .map((t) => ({
+                      name: t.name,
+                      category: "social_media",
+                      description: t.description,
+                      status: t.status === "active" ? "active" : "disabled",
+                    }));
+
+                  return (
+                    <ToolDataTable
+                      tools={socialToolsList}
+                      selectedToolKeys={selectedToolKeys}
+                      onToggleTool={handleToggleToolItem}
+                      onBulkToggle={handleBulkToggleTools}
+                      isLoading={loadingRegisteredTools}
+                      filterCategories={["all", "social_media"]}
+                      emptyMessage="No social media connections configured. Configure them under settings to bind them here."
+                    />
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -971,43 +922,28 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                       </select>
                     </div>
 
-                    <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
-                      {currentMcpTools.length === 0 ? (
-                        <p className="text-center text-slate-600 text-[10px] py-4">No tools discovered on this server.</p>
-                      ) : (
-                        currentMcpTools.map((tool) => {
-                          const isChecked = selectedTools.some(
-                            (t) => t.name === tool.name && t.category === "mcp" && t.mcpServerId === selectedMcpServer,
-                          );
-                          return (
-                            <div
-                              key={`${selectedMcpServer}::${tool.name}`}
-                              onClick={() => handleToggleTool(tool.name, "mcp", selectedMcpServer)}
-                              className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                                isChecked
-                                  ? "bg-emerald-950/20 border-emerald-500/80 text-emerald-100"
-                                  : "border-slate-900 bg-slate-950/20 hover:border-slate-800"
-                              }`}
-                            >
-                              <div className="min-w-0 flex-1">
-                                <span className="font-mono text-xs font-bold text-slate-200 block truncate">{tool.name}</span>
-                                <p className="text-[9px] text-slate-500 mt-0.5 leading-tight">{tool.description}</p>
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                {isChecked && (
-                                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[8px] font-bold">
-                                    <Check className="h-2.5 w-2.5" /> Active
-                                  </span>
-                                )}
-                                <span className="px-1.5 py-0.5 rounded border border-purple-500/30 text-[8px] font-semibold capitalize shrink-0 text-slate-100 bg-slate-800/80">
-                                  {selectedMcpServer}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
+                    {(() => {
+                      const mcpToolsList: ToolItem[] = currentMcpTools.map((t: any) => ({
+                        name: t.name,
+                        category: "mcp",
+                        serverId: selectedMcpServer,
+                        description: t.description,
+                        parametersSummary: t.inputSchema?.properties ? Object.keys(t.inputSchema.properties).join(", ") : undefined,
+                        status: "active",
+                      }));
+
+                      return (
+                        <ToolDataTable
+                          tools={mcpToolsList}
+                          selectedToolKeys={selectedToolKeys}
+                          onToggleTool={handleToggleToolItem}
+                          onBulkToggle={handleBulkToggleTools}
+                          isLoading={loadingMcp}
+                          filterCategories={["all", "mcp"]}
+                          emptyMessage="No tools discovered on this server."
+                        />
+                      );
+                    })()}
                   </div>
                 )}
               </div>

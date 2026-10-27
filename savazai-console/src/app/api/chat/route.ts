@@ -172,9 +172,47 @@ When asked for stock data, historical prices, market quantities, or server resou
 Once you receive the tool output, present the results clearly in clean, structured Markdown tables or lists with formatting.
 Do NOT make up data; rely strictly on tool execution results.`;
 
+          // Load prior thread turns from PostgreSQL for memory continuity
+          let priorTurns: ChatMessage[] = [];
+          if (threadId) {
+            try {
+              const memRes = await pool.query(
+                `SELECT role, content FROM agentflow_thread_memory 
+                 WHERE thread_id = $1 
+                 ORDER BY turn_number ASC, created_at ASC LIMIT 40`,
+                [threadId]
+              );
+              priorTurns = memRes.rows.map((r: { role: string; content: string }) => ({
+                role: r.role as "user" | "assistant" | "system",
+                content: r.content,
+              }));
+              if (priorTurns.length > 0) {
+                sendEvent({
+                  type: "trace",
+                  content: `[Thread Memory] Loaded ${priorTurns.length} prior message(s) from persistent memory`,
+                });
+              }
+            } catch (memErr) {
+              console.warn("[Direct MCP] Failed to load memory:", memErr);
+            }
+          }
+
           const conversation: ChatMessage[] = [
+            ...priorTurns,
             { role: "user", content: message },
           ];
+
+          // Persist user prompt to thread memory
+          if (threadId) {
+            try {
+              const userTurnNum = priorTurns.length;
+              await pool.query(
+                `INSERT INTO agentflow_thread_memory (id, thread_id, turn_number, role, content) 
+                 VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`,
+                [crypto.randomUUID(), threadId, userTurnNum, "user", message]
+              );
+            } catch {}
+          }
 
           // 4. Initial LLM Call with function tools
           sendEvent({
@@ -257,6 +295,17 @@ Do NOT make up data; rely strictly on tool execution results.`;
                 content: finalResponse.slice(i, i + chunkSize),
               });
             }
+
+            // Persist synthesized response to thread memory
+            if (threadId && finalResponse) {
+              try {
+                await pool.query(
+                  `INSERT INTO agentflow_thread_memory (id, thread_id, turn_number, role, content) 
+                   VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`,
+                  [crypto.randomUUID(), threadId, priorTurns.length + 1, "assistant", finalResponse]
+                );
+              } catch {}
+            }
           } else {
             // No tool call needed, stream the direct assistant text response
             const cleanContent = initialResponse.replace(/```json\s*\{[\s\S]*?\}\s*```/g, "").trim();
@@ -267,6 +316,17 @@ Do NOT make up data; rely strictly on tool execution results.`;
                 type: "content",
                 content: textToStream.slice(i, i + chunkSize),
               });
+            }
+
+            // Persist direct response to thread memory
+            if (threadId && textToStream) {
+              try {
+                await pool.query(
+                  `INSERT INTO agentflow_thread_memory (id, thread_id, turn_number, role, content) 
+                   VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`,
+                  [crypto.randomUUID(), threadId, priorTurns.length + 1, "assistant", textToStream]
+                );
+              } catch {}
             }
           }
 

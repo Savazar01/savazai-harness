@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { usePermissions } from "@/lib/auth/use-permissions";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
   { href: "/dashboard", label: "Agent Workspace", icon: LayoutDashboard },
@@ -283,6 +284,8 @@ export function Sidebar() {
       {!isDashboard && <div className="flex-1" />}
 
       <div className="px-2 py-3 border-t border-slate-900 shrink-0 space-y-1">
+        <ThemeToggle compact={!showFullContent} className={`flex items-center gap-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-900/60 transition-all ${!showFullContent ? "justify-center p-2.5 mx-2" : "w-full px-3 py-2"}`} />
+
         <Link
           href="/profile"
           className={`flex items-center gap-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-900/60 transition-all ${

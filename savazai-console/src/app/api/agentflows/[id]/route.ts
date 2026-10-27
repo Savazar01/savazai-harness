@@ -65,7 +65,10 @@ export async function PUT(
       if (!pubCheck.authorized) return pubCheck.response;
     } else {
       const editCheck = await requirePermission("capability_studio", ["save_draft", "edit_flow"]);
-      if (!editCheck.authorized) return editCheck.response;
+      if (!editCheck.authorized) {
+        const bizCheck = await requirePermission("business_center", "skills_edit");
+        if (!bizCheck.authorized) return editCheck.response;
+      }
     }
 
     const forwarded: Record<string, unknown> = {};
@@ -143,3 +146,5 @@ export async function DELETE(
     );
   }
 }
+
+export const PATCH = PUT;

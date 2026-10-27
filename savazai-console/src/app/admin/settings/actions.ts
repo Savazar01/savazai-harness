@@ -17,6 +17,7 @@ export interface UpdateSettingsInput {
   primaryColor?: string;
   secondaryColor?: string;
   background?: string;
+  themeMode?: string;
   fontSans?: string;
   promptFontSize?: string;
   promptFontFamily?: string;
@@ -112,6 +113,7 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
       ...(input.primaryColor !== undefined && { primaryColor: input.primaryColor }),
       ...(input.secondaryColor !== undefined && { secondaryColor: input.secondaryColor }),
       ...(input.background !== undefined && { background: input.background }),
+      ...(input.themeMode !== undefined && { themeMode: input.themeMode }),
       ...(input.fontSans !== undefined && { fontSans: input.fontSans }),
       ...(input.promptFontSize !== undefined && { promptFontSize: input.promptFontSize }),
       ...(input.promptFontFamily !== undefined && { promptFontFamily: input.promptFontFamily }),

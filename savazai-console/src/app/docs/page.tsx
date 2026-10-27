@@ -80,24 +80,24 @@ const DOCS_MODULES: DocModule[] = [
     title: "Module 1: Getting Started & SavazAI Overview",
     shortTitle: "1. Overview & Setup",
     icon: Compass,
-    description: "Welcome to SavazAI. Learn the fundamentals of our enterprise agentic AI platform, how to navigate the console, and how user roles function.",
+    description: "Welcome to SavazAI. Learn the fundamentals of our sovereign multi-agent OS, console navigation, tokenized invite onboarding, and RBAC security profiles.",
     sections: [
       {
         id: "what-is-savazai",
         title: "What is SavazAI?",
         badge: "Overview",
-        summary: "SavazAI is a sovereign, enterprise-grade multi-agent operating system designed to orchestrate autonomous AI workflows with total reliability and governance. Instead of simple chatbot responses, SavazAI coordinates specialized agents that can analyze data, execute tools, reference your company knowledge base, and carry out multi-step business procedures with human oversight.",
+        summary: "SavazAI is a sovereign, enterprise-grade multi-agent operating system designed to orchestrate autonomous AI workflows with total reliability, mathematical determinism, and Zero-Trust governance. Rather than simple conversational wrappers, SavazAI coordinates specialized agents that analyze data, invoke registered tools over Model Context Protocol (MCP), reference enterprise ground truth (OKF), and execute complex business SOPs with human oversight.",
         highlights: [
           {
             label: "Deterministic Multi-Agent Coordination",
             description: "Agents collaborate in structured teams: Supervisor agents formulate plans, Specialist workers execute designated tasks, and Synthesizers summarize results into executive reports."
           },
           {
-            label: "Enterprise Knowledge Grounding",
-            description: "Agents reference your verified organizational documentation (OKF) to ensure every response aligns strictly with corporate policies and domain truth."
+            label: "Enterprise Knowledge Grounding (OKF)",
+            description: "Agents reference verified organizational documentation to ensure every response aligns strictly with corporate policies and domain truth."
           },
           {
-            label: "Total Privacy & Data Protection",
+            label: "Total Privacy & Data Masking Gateway",
             description: "Built-in privacy gateways automatically sanitize and mask sensitive personal or financial information before communicating with external AI providers."
           }
         ],
@@ -115,15 +115,15 @@ const DOCS_MODULES: DocModule[] = [
         highlights: [
           {
             label: "Agent Workspace (/dashboard)",
-            description: "The primary interactive environment where you chat with multi-agent teams, inspect live reasoning, and track execution metrics in real-time."
+            description: "The primary interactive environment where you chat with multi-agent teams, inspect live system traces, and track execution telemetry in real-time."
           },
           {
             label: "Capability Studio (/studio)",
-            description: "The visual workflow studio where you explore agent skills, customize tools, and design drag-and-drop agent flow diagrams."
+            description: "The visual workflow studio where you build visual Agentflows, organize Collapsible Agent Teams, and bind skills with tabular tool selectors."
           },
           {
             label: "Business Center (/business)",
-            description: "The organizational knowledge hub where you upload company documents, manage corporate policy rules, and review compliance logs."
+            description: "The organizational knowledge hub where you manage Universal Skills, OKF Concepts, Compliance Logs, and assign skills to worker agents."
           },
           {
             label: "Documentation Hub (/docs)",
@@ -131,34 +131,82 @@ const DOCS_MODULES: DocModule[] = [
           },
           {
             label: "Command Center (/admin/settings)",
-            description: "Platform settings for prompt font sizing, interface themes, sidebar toggles, and encrypted AI provider connections."
+            description: "Platform settings for prompt font sizing, Light/Dark appearance, accent palettes, LLM providers, and System Admin email/CAPTCHA controls."
           },
           {
             label: "User Admin (/admin/users)",
-            description: "Administrative area for provisioning new team accounts, modifying roles, and managing security credentials (Restricted to Administrators)."
+            description: "Administrative 3-sub-tab hub for managing Active Users, Pending Approvals Queue, and Roles & Access Profiles (Restricted to Administrators)."
+          },
+          {
+            label: "Profile Hub (/profile)",
+            description: "Self-service settings for updating personal credentials, avatar upload, and inspecting assigned granular RBAC permissions."
           }
         ]
       },
       {
-        id: "understanding-roles",
-        title: "Understanding User Roles & Access Permissions",
+        id: "tokenized-onboarding-captcha",
+        title: "Obfuscated Tokenized Onboarding & CAPTCHA Bot Defense",
         badge: "Safety Rule",
-        summary: "SavazAI implements a clear two-tier permission model designed to keep platform administration secure while empowering team members to leverage autonomous AI capabilities freely.",
-        highlights: [
+        summary: "SavazAI enforces an attack-surface minimized onboarding architecture that completely eliminates open registration and automated bot account creation.",
+        steps: [
           {
-            label: "Standard User Role",
-            description: "Team members with User status have full access to chat with agents, create conversation threads, build and test agent workflows in Capability Studio, upload business documents in Business Center, and customize their personal prompt typography."
+            step: 1,
+            title: "Admin Generates Cryptographic Invitation",
+            description: "An administrator generates an invitation in User Admin with an optional expiry date and direct email dispatch toggle. The system creates a single-use SHA-256 token."
           },
           {
-            label: "Administrator Role",
-            description: "Platform Administrators hold elevated privileges. In addition to all standard user capabilities, admins configure encrypted AI provider API keys, manage corporate branding tokens, and provision or manage team accounts in the User Admin center."
+            step: 2,
+            title: "Candidate Accesses Secret Onboarding Route",
+            description: "The invitee receives a secure link (e.g. /access-portal/invitation?token=...) protected by Cloudflare Turnstile CAPTCHA bot verification."
+          },
+          {
+            step: 3,
+            title: "Email OTP Verification",
+            description: "Upon form submission, a 6-digit one-time password (OTP) is dispatched to their email via SMTP. The token is immediately invalidated once verified."
+          },
+          {
+            step: 4,
+            title: "Automatic Quarantine in Pending Approvals",
+            description: "The applicant's account is created with status = 'PENDING_APPROVAL' with zero system permissions until an administrator explicitly reviews and approves them."
           }
         ],
         callout: {
-          type: "important",
-          title: "Access Boundary Notice",
-          message: "Standard users who attempt to access administrative URLs directly are safely redirected or presented with an access restriction notice. Your company's AI keys and credential vaults remain strictly protected."
+          type: "admin",
+          title: "Zero Open Registration Invariant",
+          message: "Public /signup routes are permanently disabled. Unauthorized visitors attempting to create accounts directly receive 403 Forbidden responses."
         }
+      },
+      {
+        id: "understanding-roles",
+        title: "Understanding User Roles & Access Profiles",
+        badge: "Safety Rule",
+        summary: "SavazAI implements a fine-grained 53-permission Role-Based Access Control (RBAC) matrix grouped under 6 predefined enterprise profiles alongside custom profile support.",
+        highlights: [
+          {
+            label: "Super Administrator",
+            description: "Holds all 53 permissions across all platform modules, system settings, user provisioning, and credential vaults."
+          },
+          {
+            label: "Studio Flow Architect",
+            description: "Full read/write authoring access in Capability Studio, visual canvas editing, skill testing, and documentation."
+          },
+          {
+            label: "Workspace Operator",
+            description: "Operational access in Agent Workspace to execute published agentflows, approve HITL parameter cards, run Direct MCP queries, and review documentation."
+          },
+          {
+            label: "Business Policy Manager",
+            description: "Full management of Universal Skills, OKF Concepts, compliance audit logs, and agent assignment workflows in Business Center."
+          },
+          {
+            label: "Infrastructure Lead",
+            description: "Complete administration of Command Center: LLM provider vaults, MCP server configurations, system email/SMTP, and appearance tokens."
+          },
+          {
+            label: "Auditor",
+            description: "Strictly read-only inspection access across workspace telemetry, execution receipts, and compliance logs."
+          }
+        ]
       }
     ]
   },
@@ -214,46 +262,50 @@ const DOCS_MODULES: DocModule[] = [
         ]
       },
       {
-        id: "dynamic-mcp-workspace",
-        title: "Dynamic MCP Discovery & Workspace Exposure Control",
+        id: "system-trace-telemetry",
+        title: "Collapsible System Trace & Chunk Deduplication",
         badge: "How-To Guide",
-        summary: "SavazAI dynamically discovers tools from connected MCP servers across streamable-http, sse, and stdio transports.",
+        summary: "Inspect low-level agent routing, privacy masking, tool invocations, and synthesis events without cluttering your conversation message bubbles.",
         highlights: [
           {
-            label: "Live Granular Schema Hydration",
-            description: "External servers expose their full tool catalogs (e.g. 21 granular tools for NSE Bhavcopy, 15 tools for CM Market) with complete input schemas and descriptions."
+            label: "Collapsible Sidebar Panel",
+            description: "Click the toggle or the floating docked button to expand or collapse the System Trace panel. Your panel visibility state is automatically remembered in browser storage."
           },
           {
-            label: "Workspace Visibility Flag (workspaceEnabled)",
-            description: "Administrators can configure each MCP server in the Command Center with 'workspaceEnabled: true' (available in Agent Workspace chat) or 'workspaceEnabled: false' (exclusive to Capability Studio flows)."
+            label: "Stream Chunk Deduplication",
+            description: "Instead of dozens of repetitive 'LLM Chunk (64 chars received)' notifications, streaming chunks are consolidated into a live-updating counter: 'LLM Chunk Streaming (X total characters received)'."
           },
           {
-            label: "Resilient Offline & Fallback Caching",
-            description: "If an external remote endpoint experiences transient network latency, the aggregator retains known registered tool definitions rather than falling back to empty tool arrays."
+            label: "Structured Event Taxonomy",
+            description: "Traces are tagged with clean system badges: [ROUTING] for Supervisor dispatch, [MASKING] for PII tokenization, [TOOL_INVOCATION] for execution, [TOOL_OUTPUT] for payloads, and [SYNTHESIS] for executive summaries."
           }
         ]
       },
       {
-        id: "automated-context-resolution",
-        title: "Automated Technical Context Resolution",
-        badge: "Safety Rule",
-        summary: "End users should never need to look up or input internal technical IDs or database UUIDs.",
+        id: "multi-server-direct-mcp",
+        title: "Multi-Server Direct MCP Selector & Auto-Dismiss",
+        badge: "User Guide",
+        summary: "In Direct MCP mode, easily bind multiple remote MCP servers simultaneously with responsive dropdown controls.",
         highlights: [
           {
-            label: "Zero-UUID Guardrail",
-            description: "Clarification forms and chat prompts strip internal keys (such as weddingId, tenantId, workspaceId) from user-facing prompts."
+            label: "Click-Outside & Escape Auto-Close",
+            description: "The server selection dropdown automatically dismisses when you click anywhere outside the popup or press the Escape key."
           },
           {
-            label: "Intelligent Getter Resolution",
-            description: "Before tool execution, the engine queries active sessions and assigned getter tools (e.g. get_<entity> or list_<entity>) to resolve and bind the required primary and foreign keys automatically."
+            label: "Explicit 'Apply & Close' Action",
+            description: "Toggle servers via multi-select checkboxes and click '[ Apply & Close ]' to confirm active tool bindings immediately."
+          },
+          {
+            label: "Compact Multi-Server Badge",
+            description: "When multiple servers are selected, the trigger pill displays a concise summary such as 'MCP: 2 Active (nse-bhavcopy, cm-market)'."
           }
         ]
       },
       {
         id: "conversation-threads",
-        title: "Managing Conversation Threads & History",
+        title: "Managing Persistent Conversation Threads & History",
         badge: "User Guide",
-        summary: "SavazAI automatically organizes your work into distinct, persistent conversation threads so you can switch between tasks without losing context.",
+        summary: "Every turn in both Direct MCP mode and Published Agentflows is automatically stored in PostgreSQL thread memory (agentflow_thread_memory) for persistent task continuity.",
         steps: [
           {
             step: 1,
@@ -271,42 +323,6 @@ const DOCS_MODULES: DocModule[] = [
             description: "Hover over any conversation in the list and click the red trash icon to permanently remove the thread."
           }
         ]
-      },
-      {
-        id: "execution-timeline",
-        title: "Reading the Orchestrator Timeline & Telemetry",
-        badge: "Overview",
-        summary: "Every response in the Agent Workspace is accompanied by transparent, ground-truth execution telemetry so you know exactly how the AI arrived at its conclusions.",
-        highlights: [
-          {
-            label: "Supervisor Thought Visualizer",
-            description: "Click on the reasoning drawer to see how the lead agent broken down your prompt into discrete steps."
-          },
-          {
-            label: "Specialist Tool Execution Cards",
-            description: "View individual cards for each tool invocation (e.g. database lookups, document searches, email drafts) showing latency in milliseconds and execution status."
-          },
-          {
-            label: "Token Consumption & Cost Ledger",
-            description: "Inspect total input tokens, output tokens, and reasoning tokens consumed during the request, along with real-time dollar cost estimates."
-          }
-        ]
-      },
-      {
-        id: "chat-typography",
-        title: "Live Prompt Typography & Theme Personalization",
-        badge: "User Guide",
-        summary: "Tailor the text density and visual comfort of the Agent Workspace to match your reading preferences.",
-        highlights: [
-          {
-            label: "Adjustable Prompt Font Size",
-            description: "Slide font sizing from 14px (compact code view) up to 20px (large, high-readability text). The prompt input field updates instantly in real-time."
-          },
-          {
-            label: "Font Family Pairing",
-            description: "Switch seamlessly between modern Sans-serif, classic Serif, or technical Monospace typography."
-          }
-        ]
       }
     ]
   },
@@ -315,7 +331,7 @@ const DOCS_MODULES: DocModule[] = [
     title: "Module 3: Capability Studio (Building Skills & Flows)",
     shortTitle: "3. Capability Studio",
     icon: BrainCircuit,
-    description: "Discover how to inspect agent skills, customize tool capabilities, and visually construct automated multi-agent workflows.",
+    description: "Discover how to inspect agent skills, build visual Agentflows, coordinate Collapsible Agent Teams, and use tabular tool selectors.",
     sections: [
       {
         id: "what-are-skills",
@@ -334,25 +350,62 @@ const DOCS_MODULES: DocModule[] = [
         ]
       },
       {
-        id: "skills-catalog",
-        title: "Exploring the Universal Skills Catalog",
+        id: "collapsible-agent-teams",
+        title: "Collapsible Agent Teams & Bus Routing",
+        badge: "How-To Guide",
+        summary: "Organize complex multi-agent architectures into clean, modular containers on the visual canvas.",
+        highlights: [
+          {
+            label: "Team Container Nodes",
+            description: "Group multiple specialist workers into an expandable/collapsible team container to reduce visual clutter."
+          },
+          {
+            label: "Bus Pipeline Routing",
+            description: "Connections routed into a Team Container automatically distribute execution requests to member specialists based on tool capability."
+          },
+          {
+            label: "Custom Node Theming",
+            description: "Customize node border colors, glow effects, and visual badges (Emerald, Cyan, Indigo, Amber, Rose, Slate) for instant visual distinction."
+          }
+        ]
+      },
+      {
+        id: "tabular-tool-selectors",
+        title: "Tabular Tool & Knowledge Selectors (ToolDataTable)",
         badge: "User Guide",
-        summary: "Browse and inspect all registered capabilities available across your organization.",
-        steps: [
+        summary: "Manage agent tool bindings using clean, searchable, and filterable data tables rather than unwieldy card stacks.",
+        highlights: [
           {
-            step: 1,
-            title: "Open Capability Studio",
-            description: "Click 'Capability Studio' in the sidebar navigation or visit /studio."
+            label: "Search & Category Filters",
+            description: "Quickly filter tools across Native TS, Open Agents, MCP Servers, and Custom Webhooks with live text search."
           },
           {
-            step: 2,
-            title: "Browse Registered Skills",
-            description: "Review skill cards showing the skill name, functional description, and required parameters."
+            label: "Bulk Enable & Disable",
+            description: "Select multiple tools and toggle their active binding across specialist agents with one click."
           },
           {
-            step: 3,
-            title: "Inspect Input & Output Requirements",
-            description: "Click any skill card to review its parameter fields, validation rules, and expected response format."
+            label: "Interactive Toggle Switches",
+            description: "Turn individual tools on or off with tactile status indicators showing Active, Inactive, or Needs Key."
+          }
+        ]
+      },
+      {
+        id: "wysiwyg-prompt-editor",
+        title: "Universal Dual-Mode Markdown WYSIWYG Editor",
+        badge: "User Guide",
+        summary: "Author system directive prompts with rich formatting controls, live preview, and variable badge highlighting.",
+        highlights: [
+          {
+            label: "Rich Formatting Toolbar",
+            description: "Format prompts with Bold, Italic, Strikethrough, Headings (H1-H3), Bullet/Numbered Lists, Code Blocks, and Tables."
+          },
+          {
+            label: "Split / Edit / Preview Modes",
+            description: "Switch between raw Markdown editing, side-by-side split view, or rendered HTML preview to inspect prompt layout."
+          },
+          {
+            label: "Dynamic Variable Tagging",
+            description: "Dynamic runtime placeholders like {input}, {context}, or {user} are automatically styled with highlighted badge tags."
           }
         ]
       },
@@ -365,7 +418,7 @@ const DOCS_MODULES: DocModule[] = [
           {
             step: 1,
             title: "Create a New Agent Flow",
-            description: "Click '+ New Agentflow', enter a descriptive name (e.g. 'Customer Onboarding Pipeline'), and open the canvas editor."
+            description: "Click '+ New Agentflow', enter a descriptive name, and open the canvas editor."
           },
           {
             step: 2,
@@ -380,14 +433,9 @@ const DOCS_MODULES: DocModule[] = [
           {
             step: 4,
             title: "Test Interactively in the Playground",
-            description: "Click 'Test Flow' to run a live simulation with sample parameters and inspect the step-by-step execution trace before activating."
+            description: "Click 'Test Flow' to run a live simulation with sample parameters and inspect the step-by-step execution trace before publishing."
           }
-        ],
-        callout: {
-          type: "tip",
-          title: "Template Export & Import",
-          message: "You can export your completed Agentflows as clean JSON template files to share with teammates or import pre-built company workflows with one click."
-        }
+        ]
       }
     ]
   },
@@ -396,7 +444,7 @@ const DOCS_MODULES: DocModule[] = [
     title: "Module 4: Business Center (Enterprise Knowledge & Governance)",
     shortTitle: "4. Business Center",
     icon: Library,
-    description: "Manage organizational knowledge (OKF), upload corporate policy documents, and inspect compliance audit logs.",
+    description: "Manage organizational knowledge (OKF), author Universal Skills, assign skills to worker agents, and inspect compliance audit logs.",
     sections: [
       {
         id: "what-is-okf",
@@ -411,6 +459,29 @@ const DOCS_MODULES: DocModule[] = [
           {
             label: "Domain Namespacing",
             description: "Organize documents into clean business categories (such as 'HR Policies', 'Financial Audit Rules', 'Product Specs') so agents retrieve targeted context without confusion."
+          }
+        ]
+      },
+      {
+        id: "agent-assignment-hub",
+        title: "Agent Assignment Hub (Assign to Agents Modal)",
+        badge: "User Guide",
+        summary: "Seamlessly bind or unbind business skills across specialist agents in your published and draft flows directly from the Skills Registry table.",
+        steps: [
+          {
+            step: 1,
+            title: "Click 'Active in Agents' Badges",
+            description: "In the Universal Skills Registry table, click on any agent badge or the '+ Assign Agents' button."
+          },
+          {
+            step: 2,
+            title: "Select Worker Agents Across Flows",
+            description: "The interactive modal displays all published and draft agentflows. Check or uncheck specialist worker nodes to grant or revoke access to the skill."
+          },
+          {
+            step: 3,
+            title: "Save & Synchronize",
+            description: "Click 'Save Assignments'. The engine automatically updates the agentflow canvas definitions and saves them to PostgreSQL."
           }
         ]
       },
@@ -455,10 +526,6 @@ const DOCS_MODULES: DocModule[] = [
           {
             label: "Operational Audit Log",
             description: "Review comprehensive records detailing the exact date/time, model used, latency in milliseconds, tools invoked, and token expenditure for every user interaction."
-          },
-          {
-            label: "Policy Enforcement Verification",
-            description: "Ensure that all agent actions comply strictly with internal company guardrails and industry regulations (HIPAA, GDPR, SOC2)."
           }
         ]
       }
@@ -469,7 +536,7 @@ const DOCS_MODULES: DocModule[] = [
     title: "Module 5: Command Center (Platform Settings & Customization)",
     shortTitle: "5. Command Center",
     icon: Settings,
-    description: "Configure AI model providers, personalize workspace themes, adjust font typography, and manage interface layouts.",
+    description: "Configure AI model providers, personalize Light/Dark themes, adjust typography and colors, and manage System Admin email/CAPTCHA settings.",
     sections: [
       {
         id: "llm-provider-vault",
@@ -497,38 +564,49 @@ const DOCS_MODULES: DocModule[] = [
             title: "Save & Activate",
             description: "Click 'Save Changes'. Your key is encrypted with AES-256 military-grade encryption and models become available instantly across the workspace."
           }
-        ],
-        callout: {
-          type: "admin",
-          title: "Dynamic Model Discovery",
-          message: "When you add a provider key (e.g. Google Gemini), SavazAI automatically fetches all active generation models without requiring a server reboot."
-        }
+        ]
       },
       {
-        id: "appearance-typography-guide",
-        title: "Appearance, Theme & Typography Customization",
+        id: "system-admin-services",
+        title: "System Admin: Email SMTP, CAPTCHA Bot Defense & Audit Logs",
+        badge: "Admin Only",
+        summary: "Configure core infrastructure services in the dedicated System Admin sub-hub within Command Center.",
+        highlights: [
+          {
+            label: "Email & SMTP Service",
+            description: "Configure Custom SMTP, Gmail App Password, or SendGrid API with host, port, TLS toggle, and encrypted credentials. Includes an interactive 'Send Test Email' dialog with live Nodemailer verification."
+          },
+          {
+            label: "Cloudflare Turnstile CAPTCHA",
+            description: "Protect invitation onboarding routes from automated bot scripts by entering your Cloudflare Turnstile Site Key and Secret Key."
+          },
+          {
+            label: "Outbound Email & OTP Audit Log",
+            description: "Inspect chronological dispatch logs recording recipient addresses, template types (Invitation, OTP, Alert), message IDs, delivery status, and error diagnostics."
+          }
+        ]
+      },
+      {
+        id: "appearance-theme-engine",
+        title: "Global Light/Dark Theme Engine & Appearance Customizer",
         badge: "User Guide",
-        summary: "Customize the look and feel of the platform to match your branding or personal comfort.",
-        steps: [
+        summary: "Customize the visual appearance of the console with instant theme switching, typography pairings, font scale adjustments, and brand color presets.",
+        highlights: [
           {
-            step: 1,
-            title: "Open Appearance Settings",
-            description: "In Command Center (/admin/settings), select the 'Appearance' tab."
+            label: "Light / Dark / System Themes",
+            description: "Switch seamlessly between high-contrast Light mode and refined Dark mode via the sidebar toggle or Appearance settings, backed by anti-flicker head scripts."
           },
           {
-            step: 2,
-            title: "Adjust Prompt Font Size Slider",
-            description: "Drag the slider to set your chat input size between 14px (compact) and 20px (large). Preview the live text box below the slider."
+            label: "Typography & Font Scales",
+            description: "Choose between Sans, Serif, or Monospace typography and adjust the font size scale across Compact (13px), Standard (14px), Relaxed (15px), and Large (16px)."
           },
           {
-            step: 3,
-            title: "Choose Font Family & Theme Colors",
-            description: "Select your preferred font family (Sans, Serif, Monospace) and configure primary/secondary brand accent colors."
+            label: "Brand Accent Presets & Custom Hex",
+            description: "Select from curated brand palettes (Indigo, Amber, Emerald, Sky, Rose) or enter a custom hex color code to align the console with your corporate identity."
           },
           {
-            step: 4,
-            title: "Toggle Sidebar Tabs",
-            description: "Use the toggle switch to show or hide specific workspace modules (like 'Agent Workspace') for a tailored sidebar experience."
+            label: "Canvas Background Surface Shades",
+            description: "Tailor the workflow canvas background darkness or lightness to optimize visual clarity during extended design sessions."
           }
         ]
       }
@@ -536,87 +614,71 @@ const DOCS_MODULES: DocModule[] = [
   },
   {
     id: "user-admin",
-    title: "Module 6: User Administration (Admin Role Only)",
-    shortTitle: "6. User Admin",
+    title: "Module 6: Enterprise User Administration & RBAC Profiles",
+    shortTitle: "6. User Admin & RBAC",
     icon: Users,
-    description: "Step-by-step guide for administrators on user provisioning, role assignments, password resets, and account security.",
+    description: "Step-by-step guide for administrators on user provisioning, approving quarantined applicants, assigning RBAC profiles, and the self-service profile hub.",
     sections: [
       {
-        id: "admin-access-notice",
-        title: "User Administration Overview",
+        id: "modular-user-admin",
+        title: "Modular 3-Sub-Tab User Administration Hub",
         badge: "Admin Only",
-        summary: "The User Administration center (/admin/users) provides centralized Role-Based Access Control (RBAC) management. This module is strictly restricted to platform administrators.",
-        callout: {
-          type: "admin",
-          title: "Restricted to Administrators",
-          message: "Only team members with the 'admin' role can view, create, edit, or delete user accounts. Standard users cannot access this module."
-        }
+        summary: "User Administration (/admin/users) provides a comprehensive, segregated layout for managing identity and access governance.",
+        highlights: [
+          {
+            label: "Active Users Directory (Tab 1)",
+            description: "View and manage active and suspended operators with live status pills, role editing, account suspension, session revocation, and password resets."
+          },
+          {
+            label: "Pending Approvals Queue (Tab 2)",
+            description: "Isolates any applicant registered via tokenized invitation in a quarantined state with zero permissions. Features dynamic count badges and '[ Approve & Assign Profile ]' action."
+          },
+          {
+            label: "Roles & Access Profiles Matrix (Tab 3)",
+            description: "Inspect and manage the 6 predefined enterprise system profiles and create custom tailored profiles across the 53 platform permissions."
+          }
+        ]
       },
       {
-        id: "adding-users",
-        title: "How to Provision New Team Members",
+        id: "pending-approvals-workflow",
+        title: "Pending Approvals Queue & Profile Provisioning",
         badge: "Admin Only",
-        summary: "Add new employees, contractors, or administrators to your SavazAI workspace.",
+        summary: "Review, approve, and activate quarantined accounts with a single click.",
         steps: [
           {
             step: 1,
-            title: "Open User Administration",
-            description: "Click 'User Admin' in the sidebar or navigate to /admin/users."
+            title: "Inspect Pending Applicant",
+            description: "Open the 'Pending Approvals' tab in User Admin to review the applicant's name, email, request date, and invitation token source."
           },
           {
             step: 2,
-            title: "Click '+ Add New User'",
-            description: "Click the primary action button to open the user provisioning modal."
+            title: "Click 'Approve & Assign Profile'",
+            description: "Open the approval dialog to assign the applicant to one of the 6 system profiles (e.g. Workspace Operator, Studio Flow Architect) or a custom enterprise role."
           },
           {
             step: 3,
-            title: "Fill in Team Member Details",
-            description: "Enter their Full Name, valid Email Address, Role (User or Admin), and an initial secure Password (minimum 6 characters)."
-          },
-          {
-            step: 4,
-            title: "Confirm Creation",
-            description: "Click 'Create User'. The account is immediately created and ready for sign-in."
+            title: "Confirm Activation",
+            description: "Click 'Confirm & Activate Account'. The applicant's status updates to ACTIVE and their assigned permissions take effect immediately."
           }
         ]
       },
       {
-        id: "managing-users",
-        title: "Managing Existing Accounts, Roles & Password Resets",
-        badge: "Admin Only",
-        summary: "Modify permissions, update details, or perform password resets for existing members.",
+        id: "self-service-profile-hub",
+        title: "Self-Service Profile Hub (/profile)",
+        badge: "User Guide",
+        summary: "Every authenticated team member can manage their own personal profile, credentials, and inspect assigned permissions.",
         highlights: [
           {
-            label: "Role Elevations & Demotions",
-            description: "Click 'Edit' on any user row to elevate a standard User to Administrator or demote an admin to User."
+            label: "Personal Details & Avatar Upload",
+            description: "Maintain your display name, geographic region, and upload a custom avatar image."
           },
           {
-            label: "Secure Password Resets",
-            description: "Admins can input a new temporary password in the Edit dialog to reset credentials for a team member."
+            label: "Security & Password Management",
+            description: "Perform self-service password updates with current password verification, alongside OTP / 2FA status tracking."
           },
           {
-            label: "Account Deletions & Clean Cleanup",
-            description: "Click the red trash icon to delete an account when an employee leaves. The system automatically cleans up all associated sessions."
-          }
-        ]
-      },
-      {
-        id: "safety-safeguards",
-        title: "Anti-Lockout & Self-Preservation Safeguards",
-        badge: "Safety Rule",
-        summary: "SavazAI includes built-in safety invariants that protect organizations from accidental administrator lockouts.",
-        highlights: [
-          {
-            label: "Self-Demotion Prevention",
-            description: "An active administrator cannot demote their own account to 'User' while logged in, ensuring the platform always maintains administrative access."
-          },
-          {
-            label: "Self-Deletion Prevention",
-            description: "An active administrator cannot delete their own account from the User Admin table."
-          },
-          {
-            label: "Duplicate Email Protection",
-            description: "The system prevents creating duplicate accounts with identical email addresses to maintain clean user registries."
+            label: "My Access Profile Breakdown",
+            description: "Review a transparent, read-only matrix of granted permissions across all platform modules."
           }
         ]
       }
@@ -627,7 +689,7 @@ const DOCS_MODULES: DocModule[] = [
     title: "Module 7: Feature & Permissions Summary Reference",
     shortTitle: "7. Roles & Matrix",
     icon: ShieldCheck,
-    description: "Comprehensive summary table comparing exact permissions and capabilities available to Standard Users vs Platform Administrators.",
+    description: "Comprehensive summary table comparing exact permissions and capabilities available across the 6 Predefined System Profiles.",
     sections: [
       {
         id: "summary-table",
@@ -635,19 +697,21 @@ const DOCS_MODULES: DocModule[] = [
         badge: "Overview",
         summary: "Reference table outlining capabilities across all platform modules for standard team members versus platform administrators:",
         table: {
-          headers: ["Workspace Module", "Feature / Action", "Standard User", "Platform Administrator"],
+          headers: ["Platform Module", "Feature / Action", "Workspace Operator", "Studio Flow Architect", "Business Policy Mgr", "Super Admin"],
           rows: [
-            ["Agent Workspace", "Run AI agent workflows & live chat", "Yes (Full Access)", "Yes (Full Access)"],
-            ["Agent Workspace", "Manage personal conversation threads", "Yes (Full Access)", "Yes (Full Access)"],
-            ["Agent Workspace", "Inspect execution reasoning & latency", "Yes (Full Access)", "Yes (Full Access)"],
-            ["Capability Studio", "View & test agent skills and tools", "Yes (Full Access)", "Yes (Full Access)"],
-            ["Capability Studio", "Create, edit & test visual Agentflows", "Yes (Full Access)", "Yes (Full Access)"],
-            ["Business Center", "Upload documents & query OKF knowledge", "Yes (Full Access)", "Yes (Full Access)"],
-            ["Business Center", "View governance logs & cost tracking", "Yes (Full Access)", "Yes (Full Access)"],
-            ["Documentation Hub", "Read user guides & operational manuals", "Yes (Full Access)", "Yes (Full Access)"],
-            ["Command Center", "Customize prompt font size & themes", "Yes (Personal)", "Yes (Global & Personal)"],
-            ["Command Center", "Configure encrypted LLM provider API keys", "View Only", "Yes (Full Access)"],
-            ["User Admin", "Provision, edit, reset, or delete accounts", "No Access (Hidden / 403)", "Yes (Full Access)"]
+            ["Agent Workspace", "Run Published Agentflows & Chat", "Full Access", "Full Access", "Full Access", "Full Access"],
+            ["Agent Workspace", "HITL Plan-First Approval Card", "Full Access", "Full Access", "Full Access", "Full Access"],
+            ["Agent Workspace", "Direct MCP Chat & Tool Execution", "Full Access", "Full Access", "Full Access", "Full Access"],
+            ["Capability Studio", "View & Test Registered Skills", "Read Only", "Full Access", "Full Access", "Full Access"],
+            ["Capability Studio", "Canvas Flow Authoring & Publishing", "No Access", "Full Access", "No Access", "Full Access"],
+            ["Business Center", "Manage Universal Skills & OKF", "No Access", "Read Only", "Full Access", "Full Access"],
+            ["Business Center", "Assign Skills to Worker Agents", "No Access", "Full Access", "Full Access", "Full Access"],
+            ["Business Center", "Compliance Governance & Audit Trail", "No Access", "Read Only", "Full Access", "Full Access"],
+            ["Command Center", "Personal Theme, Font & Typography", "Personal", "Personal", "Personal", "Full Access"],
+            ["Command Center", "Encrypted LLM Provider Vaults", "No Access", "No Access", "No Access", "Full Access"],
+            ["Command Center", "System Admin (SMTP, CAPTCHA, Logs)", "No Access", "No Access", "No Access", "Full Access"],
+            ["User Admin", "Approve Quarantined Users & RBAC", "No Access", "No Access", "No Access", "Full Access"],
+            ["Profile Hub", "Self-Service Credentials & Avatar", "Personal", "Personal", "Personal", "Personal"]
           ]
         }
       }

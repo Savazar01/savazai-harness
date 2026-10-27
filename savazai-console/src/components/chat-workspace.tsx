@@ -96,7 +96,13 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [traceEvents, setTraceEvents] = useState<TraceEvent[]>([]);
-  const [traceOpen, setTraceOpen] = useState(true);
+  const [traceOpen, setTraceOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("system_trace_open");
+      if (saved !== null) return saved === "true";
+    }
+    return true;
+  });
   const [error, setError] = useState<string | null>(null);
   const [activeProvider, setActiveProvider] = useState(defaultProvider);
   const [activeModel, setActiveModel] = useState(defaultModel);
@@ -123,6 +129,8 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mcpDropdownRef = useRef<HTMLDivElement>(null);
+  const streamCharsRef = useRef(0);
   const [dynamicModels, setDynamicModels] = useState<Record<string, string[]>>({});
 
   // Dynamic Workspace Target: Published Agentflows vs Direct MCP
@@ -224,6 +232,35 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
     return () => window.removeEventListener("savazai-new-chat", handler);
   }, []);
 
+  // Click-outside and Escape key listener for MCP Dropdown
+  useEffect(() => {
+    if (!mcpDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (mcpDropdownRef.current && !mcpDropdownRef.current.contains(e.target as Node)) {
+        setMcpDropdownOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMcpDropdownOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [mcpDropdownOpen]);
+
+  const handleToggleTrace = useCallback(() => {
+    setTraceOpen((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("system_trace_open", String(next));
+      }
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     const handler = async (e: Event) => {
       const detail = (e as CustomEvent).detail;
@@ -237,14 +274,20 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
 
       try {
         const res = await fetch(`/api/chat/threads/${detail.threadId}`);
-        if (!res.ok) throw new Error(`Failed to load thread: ${res.status}`);
-        const data = await res.json();
-        setMessages(data.messages || []);
-        setThreadId(detail.threadId);
-        threadRegisteredRef.current = true;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load thread");
+        if (res.ok) {
+          const data = await res.json();
+          setMessages(data.messages || []);
+          setThreadId(detail.threadId);
+          threadRegisteredRef.current = true;
+        } else {
+          setMessages([]);
+          setThreadId(detail.threadId);
+          threadRegisteredRef.current = false;
+        }
+      } catch {
         setMessages([]);
+        setThreadId(detail.threadId);
+        threadRegisteredRef.current = false;
       }
 
       window.dispatchEvent(new CustomEvent("savazai-thread-activated", {
@@ -408,7 +451,19 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
             return;
           }
           if (event.type === "trace") {
-            addTrace("node", "System Trace", String(event.content || "Trace event"));
+            const contentStr = String(event.content || "Trace event");
+            const lower = contentStr.toLowerCase();
+            if (contentStr.startsWith("[Supervisor:") || lower.includes("routing") || lower.includes("supervisor") || lower.includes("plan")) {
+              addTrace("routing", "Supervisor Planning", contentStr.slice(0, 200));
+            } else if (lower.includes("synthesiz") || lower.includes("final response") || lower.includes("executive report")) {
+              addTrace("synthesis", "Response Synthesis", contentStr.slice(0, 200));
+            } else if (lower.includes("mask") || lower.includes("pii")) {
+              addTrace("masking", "PII Data Gateway", contentStr.slice(0, 200));
+            } else if (lower.includes("tool") || lower.includes("mcp")) {
+              addTrace("tool", "Tool Invocation", contentStr.slice(0, 200));
+            } else {
+              addTrace("node", "System Trace", contentStr.slice(0, 200));
+            }
             return;
           }
           if (event.type === "audit") {
@@ -456,10 +511,6 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
               });
             }
           }
-          if (event.type === "trace" && event.content) {
-            addTrace("node", "Trace", String(event.content).slice(0, 200));
-            return;
-          }
           if (event.type === "tool" || (event.node && event.node.includes("Tool"))) {
             addTrace("tool", event.node || "Tool Call", String(event.content || "Executing MCP operation").slice(0, 200));
             return;
@@ -475,7 +526,33 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
               addTrace("node", "Internal Trace", rawContent.slice(0, 200));
               return;
             }
-            addTrace("completion", "LLM Chunk", `${rawContent.length} chars received`);
+
+            // Deduplicate and aggregate repetitive LLM stream chunks into a single dynamic trace entry
+            streamCharsRef.current += rawContent.length;
+            const totalChars = streamCharsRef.current;
+            setTraceEvents((prev) => {
+              const last = prev[prev.length - 1];
+              if (last && last.type === "completion" && last.label === "LLM Chunk Streaming") {
+                const next = [...prev];
+                next[next.length - 1] = {
+                  ...last,
+                  detail: `${totalChars} total characters received`,
+                  timestamp: new Date().toISOString(),
+                };
+                return next;
+              }
+              return [
+                ...prev,
+                {
+                  id: traceId(),
+                  type: "completion",
+                  label: "LLM Chunk Streaming",
+                  detail: `${totalChars} total characters received`,
+                  timestamp: new Date().toISOString(),
+                },
+              ];
+            });
+
             setMessages((prev) => {
               const updated = [...prev];
               const last = updated[updated.length - 1];
@@ -517,6 +594,9 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
       setStreaming(false);
       abortRef.current = null;
       setAttachedFiles([]);
+      if (streamCharsRef.current > 0) {
+        addTrace("synthesis", "Synthesis Complete", `Successfully streamed final response (${streamCharsRef.current} characters)`);
+      }
     }
   }, [threadId, activeProvider, activeModel, attachedFiles, activeTools, executionTarget, selectedFlowId, executionModeOverride, addTrace]);
 
@@ -705,7 +785,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                 )}
               </div>
             ) : (
-              <div className="relative">
+              <div className="relative" ref={mcpDropdownRef}>
                 <button
                   onClick={() => setMcpDropdownOpen(!mcpDropdownOpen)}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-indigo-500/50 text-xs font-medium text-slate-200 hover:text-white transition-all shadow-sm"
@@ -716,55 +796,87 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                       ? `Select MCP Server (${discoveredServers.length} available)`
                       : activeTools.size === 1
                         ? `MCP: ${Array.from(activeTools)[0]} (${discoveredServers.find(s => s.serverId === Array.from(activeTools)[0])?.tools.length ?? 0} tools)`
-                        : `MCP Servers: ${activeTools.size} Active`}
+                        : `MCP: ${activeTools.size} Active (${Array.from(activeTools).join(", ")})`}
                   </span>
                   <ChevronDown className="h-3 w-3 text-slate-500 ml-1" />
                 </button>
                 {mcpDropdownOpen && (
-                  <>
-                    <div className="fixed inset-0 z-20" onClick={() => setMcpDropdownOpen(false)} />
-                    <div className="absolute right-0 top-full mt-1.5 z-30 w-80 rounded-2xl border border-slate-800 bg-[#14141f] shadow-2xl shadow-black/80 py-2 divide-y divide-slate-800/60">
-                      <div className="px-3 py-1.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        <span>Configured MCP Servers ({discoveredServers.length})</span>
-                        <span className="text-emerald-400 font-medium lowercase">live discovery</span>
-                      </div>
-                      <div className="py-1 max-h-72 overflow-y-auto">
-                        {discoveredServers.length === 0 ? (
-                          <div className="px-3 py-2 text-xs text-slate-500 italic">
-                            No MCP servers configured or reachable. Check Command Center settings.
-                          </div>
-                        ) : (
-                          discoveredServers.map((server) => {
-                            const isSelected = activeTools.has(server.serverId);
-                            return (
-                              <button
-                                key={server.serverId}
-                                onClick={() => toggleTool(server.serverId)}
-                                className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-800/50 transition-colors ${
-                                  isSelected ? "bg-emerald-500/10 text-emerald-300" : "text-slate-400"
-                                }`}
-                              >
-                                <div className="flex items-center gap-2.5">
-                                  <div className={`h-2 w-2 rounded-full ${isSelected ? "bg-emerald-400" : "bg-slate-600"}`} />
-                                  <div>
-                                    <div className="font-semibold text-white">{server.serverId}</div>
-                                    <div className="text-[10px] text-slate-500">
-                                      {server.tools.length} granular tool{server.tools.length !== 1 ? "s" : ""} registered
-                                    </div>
+                  <div className="absolute right-0 top-full mt-1.5 z-30 w-84 rounded-2xl border border-slate-800 bg-[#14141f] shadow-2xl shadow-black/80 py-2 divide-y divide-slate-800/60 animate-in fade-in zoom-in-95 duration-100">
+                    <div className="px-3 py-1.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      <span>Configured MCP Servers ({discoveredServers.length})</span>
+                      <span className="text-emerald-400 font-medium lowercase">live discovery</span>
+                    </div>
+                    <div className="py-1 max-h-72 overflow-y-auto">
+                      {discoveredServers.length === 0 ? (
+                        <div className="px-3 py-2 text-xs text-slate-500 italic">
+                          No MCP servers configured or reachable. Check Command Center settings.
+                        </div>
+                      ) : (
+                        discoveredServers.map((server) => {
+                          const isSelected = activeTools.has(server.serverId);
+                          return (
+                            <button
+                              key={server.serverId}
+                              type="button"
+                              onClick={() => toggleTool(server.serverId)}
+                              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-800/50 transition-colors ${
+                                isSelected ? "bg-emerald-500/10 text-emerald-300" : "text-slate-400"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  readOnly
+                                  className="h-3.5 w-3.5 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-0 cursor-pointer pointer-events-none"
+                                />
+                                <div>
+                                  <div className="font-semibold text-white">{server.serverId}</div>
+                                  <div className="text-[10px] text-slate-500">
+                                    {server.tools.length} granular tool{server.tools.length !== 1 ? "s" : ""} registered
                                   </div>
                                 </div>
-                                <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                                  isSelected ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-slate-800 text-slate-500 border-slate-700"
-                                }`}>
-                                  {isSelected ? "Active" : "Disabled"}
-                                </div>
-                              </button>
-                            );
-                          })
-                        )}
-                      </div>
+                              </div>
+                              <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                isSelected ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-slate-800 text-slate-500 border-slate-700"
+                              }`}>
+                                {isSelected ? "Active" : "Disabled"}
+                              </div>
+                            </button>
+                          );
+                        })
+                      )}
                     </div>
-                  </>
+                    <div className="px-3 py-2 border-t border-slate-800/80 bg-slate-900/60 flex items-center justify-between rounded-b-2xl">
+                      <div className="flex items-center gap-2 text-[10px]">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const all = new Set(discoveredServers.map(s => s.serverId));
+                            setActiveTools(all);
+                          }}
+                          className="text-indigo-400 hover:text-indigo-300 font-semibold"
+                        >
+                          Select All
+                        </button>
+                        <span className="text-slate-600">|</span>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTools(new Set())}
+                          className="text-slate-400 hover:text-slate-200"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setMcpDropdownOpen(false)}
+                        className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold shadow transition-all cursor-pointer"
+                      >
+                        Apply &amp; Close
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
@@ -1185,7 +1297,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
         </div>
       </div>
 
-      <SystemTrace events={traceEvents} isOpen={traceOpen} onToggle={() => setTraceOpen(!traceOpen)} />
+      <SystemTrace events={traceEvents} isOpen={traceOpen} onToggle={handleToggleTrace} />
     </div>
   );
 }

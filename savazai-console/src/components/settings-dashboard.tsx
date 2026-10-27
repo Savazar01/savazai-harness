@@ -320,8 +320,15 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
   const [brandLogoUrl, setBrandLogoUrl] = useState(initialConfig.brandLogoUrl);
   const [primaryColor, setPrimaryColor] = useState(tokens.primaryColor || "#4f46e5");
   const [secondaryColor, setSecondaryColor] = useState(tokens.secondaryColor || "#06b6d4");
-  const [background, setBackground] = useState(tokens.background || "#0a0a0a");
-  const [fontSans, setFontSans] = useState(tokens.fontSans || "Geist");
+  const [background, setBackground] = useState(tokens.background || "#06060b");
+  const [themeMode, setThemeMode] = useState<"system" | "dark" | "light">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("savazai_theme_mode");
+      if (saved === "light" || saved === "dark") return saved;
+    }
+    return (tokens.themeMode as "system" | "dark" | "light") || "system";
+  });
+  const [fontSans, setFontSans] = useState(tokens.fontSans || "Inter");
   const [promptFontSize, setPromptFontSize] = useState(tokens.promptFontSize || "16px");
   const [promptFontFamily, setPromptFontFamily] = useState(tokens.promptFontFamily || "sans");
   const [showAgentWorkspace, setShowAgentWorkspace] = useState(tokens.showAgentWorkspace !== false);
@@ -696,6 +703,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
       primaryColor,
       secondaryColor,
       background,
+      themeMode,
       fontSans,
       promptFontSize,
       promptFontFamily,
@@ -1178,14 +1186,64 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
         <form onSubmit={handleSave} className="flex-1 min-w-0 rounded-3xl border border-slate-900 bg-slate-950/40 p-6 relative flex flex-col min-h-0">
           <div className="max-h-[calc(100vh-260px)] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full">
             {activeTab === "appearance" && (
-              <div className="space-y-5">
+              <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
-                    Appearance Overrides
-                    <HelpTooltip content="Customize the platform look and feel — title, font pairing, and accent colors. Changes apply immediately after saving." side="right" />
+                    Appearance &amp; Theme Engine
+                    <HelpTooltip content="Customize global theme modes, typography, palette accents, and background contrast across the entire platform. Changes persist and apply immediately." side="right" />
                   </h3>
-                  <p className="text-slate-400 text-xs">Custom hex CSS properties, font pairings, and app title banners</p>
+                  <p className="text-slate-400 text-xs">Global Light/Dark theme engine, typography scales, brand accent palettes, and background surface contrast</p>
                 </div>
+
+                {/* 1. Global Theme Mode Selector */}
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-white mb-0.5">Platform Theme Mode</h4>
+                      <p className="text-xs text-slate-400">Choose between dark mode, high-contrast light mode, or system automatic</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { id: "dark", label: "Dark Mode", desc: "Onyx & midnight surfaces" },
+                      { id: "light", label: "Light Mode", desc: "Crisp white & neutral slate" },
+                      { id: "system", label: "System Default", desc: "Follow OS preference" },
+                    ].map((modeItem) => {
+                      const isCurrent = themeMode === modeItem.id;
+                      return (
+                        <button
+                          key={modeItem.id}
+                          type="button"
+                          onClick={() => {
+                            const newMode = modeItem.id as "system" | "dark" | "light";
+                            setThemeMode(newMode);
+                            if (typeof window !== "undefined") {
+                              localStorage.setItem("savazai_theme_mode", newMode);
+                              document.documentElement.classList.remove("light", "dark");
+                              if (newMode === "light" || newMode === "dark") {
+                                document.documentElement.classList.add(newMode);
+                              } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+                                document.documentElement.classList.add("light");
+                              } else {
+                                document.documentElement.classList.add("dark");
+                              }
+                            }
+                          }}
+                          className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                            isCurrent
+                              ? "border-primary bg-primary/10 text-white shadow-md shadow-primary/10"
+                              : "border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                          }`}
+                        >
+                          <div className="text-xs font-bold text-white mb-0.5">{modeItem.label}</div>
+                          <div className="text-[10px] text-slate-500">{modeItem.desc}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Brand Identity & Typography */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Application Title</label>
@@ -1193,61 +1251,137 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                       className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20" required />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Typography Pairing</label>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Typography / Font Family</label>
                     <select value={fontSans} onChange={(e) => setFontSans(e.target.value)}
                       className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white outline-none focus:border-primary/50">
-                      <option value="Geist">Geist (Modern Sans)</option>
-                      <option value="Inter">Inter (SaaS Standard)</option>
+                      <option value="Inter">Modern Sans (Inter / Default)</option>
                       <option value="Roboto">Roboto (Google Clean)</option>
-                      <option value="system-ui">System UI Fallback</option>
+                      <option value="Geist">Geist Sans (Vercel Clean)</option>
+                      <option value="Fira Code">Fira Code (Monospace Technical)</option>
                     </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Primary Color (HEX)</label>
-                    <div className="flex gap-2">
-                      <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)}
-                        className="h-11 w-14 rounded-xl border border-slate-800 bg-slate-900/50 p-1 cursor-pointer" />
-                      <input type="text" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} placeholder="#4f46e5"
-                        className="flex-1 rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Secondary Color (HEX)</label>
-                    <div className="flex gap-2">
-                      <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)}
-                        className="h-11 w-14 rounded-xl border border-slate-800 bg-slate-900/50 p-1 cursor-pointer" />
-                      <input type="text" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} placeholder="#06b6d4"
-                        className="flex-1 rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Background Color</label>
-                    <input type="text" value={background} onChange={(e) => setBackground(e.target.value)} placeholder="#0a0a0a"
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-3 px-4 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20" />
                   </div>
                 </div>
 
-                {/* Prompt Typography Configuration Section */}
+                {/* 3. Brand Accent Palette */}
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-white mb-0.5">Brand Accent Color</h4>
+                      <p className="text-xs text-slate-400">Select an enterprise preset palette or pick a custom hex color</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    {[
+                      { label: "Indigo", hex: "#4f46e5" },
+                      { label: "Amber", hex: "#f59e0b" },
+                      { label: "Emerald", hex: "#10b981" },
+                      { label: "Sky", hex: "#0ea5e9" },
+                      { label: "Rose", hex: "#f43f5e" },
+                    ].map((c) => (
+                      <button
+                        key={c.hex}
+                        type="button"
+                        onClick={() => setPrimaryColor(c.hex)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                          primaryColor.toLowerCase() === c.hex.toLowerCase()
+                            ? "border-white/80 bg-white/10 text-white shadow-sm"
+                            : "border-slate-800 bg-slate-900/40 text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        <span className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: c.hex }} />
+                        {c.label}
+                      </button>
+                    ))}
+                    <div className="flex items-center gap-2 ml-auto">
+                      <input
+                        type="color"
+                        value={primaryColor}
+                        onChange={(e) => setPrimaryColor(e.target.value)}
+                        className="h-9 w-10 rounded-lg border border-slate-800 bg-slate-900 cursor-pointer p-0.5"
+                      />
+                      <input
+                        type="text"
+                        value={primaryColor}
+                        onChange={(e) => setPrimaryColor(e.target.value)}
+                        placeholder="#4f46e5"
+                        className="w-24 rounded-lg border border-slate-800 bg-slate-900/50 py-1.5 px-2.5 text-xs text-white font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Canvas Background Contrast Presets */}
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-5 space-y-3">
+                  <div>
+                    <h4 className="text-sm font-bold text-white mb-0.5">Canvas Background Surface Contrast</h4>
+                    <p className="text-xs text-slate-400">Tailor dark surface depth or light surface warmth</p>
+                  </div>
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dark Mode Surfaces</span>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { label: "Onyx (#06060b)", hex: "#06060b" },
+                        { label: "Slate (#0f172a)", hex: "#0f172a" },
+                        { label: "Midnight (#020617)", hex: "#020617" },
+                      ].map((b) => (
+                        <button
+                          key={b.hex}
+                          type="button"
+                          onClick={() => setBackground(b.hex)}
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                            background.toLowerCase() === b.hex.toLowerCase()
+                              ? "border-primary bg-primary/10 text-white"
+                              : "border-slate-800 bg-slate-900/40 text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          {b.label}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block pt-2">Light Mode Surfaces</span>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { label: "Pure White (#ffffff)", hex: "#ffffff" },
+                        { label: "Neutral Gray (#f8fafc)", hex: "#f8fafc" },
+                        { label: "Soft Cream (#fafaf9)", hex: "#fafaf9" },
+                      ].map((b) => (
+                        <button
+                          key={b.hex}
+                          type="button"
+                          onClick={() => setBackground(b.hex)}
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                            background.toLowerCase() === b.hex.toLowerCase()
+                              ? "border-primary bg-primary/10 text-white"
+                              : "border-slate-800 bg-slate-900/40 text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          {b.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Prompt Typography Configuration Section */}
                 <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-5 space-y-4">
                   <div>
                     <h4 className="text-sm font-bold text-white mb-1 flex items-center gap-2">
-                      Prompt Input Typography
-                      <HelpTooltip content="Configure the default font size and font family applied to prompt inputs across Capability Studio Test Playground and Agent Workspace." side="right" />
+                      Prompt Input Typography Scale
+                      <HelpTooltip content="Configure font size scale and typography applied to prompts across Capability Studio and Agent Workspace." side="right" />
                     </h4>
                     <p className="text-xs text-slate-400">Controls prompt textarea readability for test prompts, agent instructions, and user chat</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Prompt Font Size</label>
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Font Size Scale</label>
                       <select
                         value={promptFontSize}
                         onChange={(e) => setPromptFontSize(e.target.value)}
                         className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-2.5 px-4 text-sm text-white outline-none focus:border-primary/50"
                       >
-                        <option value="14px">Small (14px)</option>
-                        <option value="16px">Medium (16px) - Default</option>
+                        <option value="14px">Compact (14px)</option>
+                        <option value="16px">Default (16px)</option>
                         <option value="18px">Large (18px)</option>
-                        <option value="20px">Extra Large (20px)</option>
                       </select>
                     </div>
                     <div>
@@ -1260,7 +1394,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                         <option value="sans">Modern Sans (Default)</option>
                         <option value="system">System UI</option>
                         <option value="inter">Inter (SaaS Standard)</option>
-                        <option value="mono">Monospace / Code</option>
+                        <option value="mono">Fira Code / Monospace</option>
                       </select>
                     </div>
                   </div>

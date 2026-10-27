@@ -21,7 +21,11 @@ import {
   Wrench, 
   Eye, 
   Sparkles,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Bot,
+  Users,
+  CheckSquare,
+  Square
 } from "lucide-react";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
 import { AiAssistButton } from "@/components/shared/ai-assist-button";
@@ -49,6 +53,7 @@ export function SkillsRegistry() {
 
   const [skills, setSkills] = useState<Skill[]>([]);
   const [agentUsageMap, setAgentUsageMap] = useState<Record<string, string[]>>({});
+  const [rawFlows, setRawFlows] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [deletingSkill, setDeletingSkill] = useState<Skill | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -65,6 +70,12 @@ export function SkillsRegistry() {
   const [isAuthorModalOpen, setIsAuthorModalOpen] = useState(false);
   const [isIngestModalOpen, setIsIngestModalOpen] = useState(false);
   const [activeExportMenuId, setActiveExportMenuId] = useState<string | null>(null);
+
+  // Agent Assignment Modal State
+  const [assigningSkill, setAssigningSkill] = useState<Skill | null>(null);
+  const [selectedAgentKeys, setSelectedAgentKeys] = useState<Set<string>>(new Set());
+  const [savingAssignments, setSavingAssignments] = useState(false);
+  const [assignSearchQuery, setAssignSearchQuery] = useState("");
 
   // Ingest tab state
   const [ingestTab, setIngestTab] = useState<"file" | "paste" | "url">("file");
@@ -102,8 +113,14 @@ export function SkillsRegistry() {
         const flows = await res.json();
         const usage: Record<string, Set<string>> = {};
         const flowList = Array.isArray(flows) ? flows : (flows.agentflows || []);
+        setRawFlows(flowList);
         for (const flow of flowList) {
-          const nodes = flow.canvasDefinition?.nodes || [];
+          let nodes = flow.canvasDefinition?.nodes || [];
+          if (typeof flow.canvasDefinition === "string") {
+            try {
+              nodes = JSON.parse(flow.canvasDefinition).nodes || [];
+            } catch {}
+          }
           for (const n of nodes) {
             const agentLabel = n.label || n.data?.label || "Agent";
             const tools = (n.tools || n.data?.tools || []).map((t: any) => typeof t === "string" ? t : (t?.name || ""));
@@ -152,6 +169,134 @@ export function SkillsRegistry() {
     setFormVersion("1.0.0");
     setEditingSkill(null);
     setIsAuthorModalOpen(true);
+  };
+
+  // Open Assign to Agents Modal
+  const handleOpenAssignModal = (skill: Skill) => {
+    setAssigningSkill(skill);
+    setAssignSearchQuery("");
+    const skillNameLower = skill.name.toLowerCase().trim();
+    const skillIdLower = skill.id.toLowerCase().trim();
+    const initialSelected = new Set<string>();
+
+    for (const flow of rawFlows) {
+      let parsedNodes: any[] = [];
+      if (typeof flow.canvasDefinition === "string") {
+        try {
+          parsedNodes = JSON.parse(flow.canvasDefinition).nodes || [];
+        } catch {}
+      } else if (flow.canvasDefinition?.nodes) {
+        parsedNodes = flow.canvasDefinition.nodes;
+      }
+
+      for (const node of parsedNodes) {
+        const tools = (node.tools || node.data?.tools || []).map((t: any) =>
+          (typeof t === "string" ? t : t?.name || "").toLowerCase().trim()
+        );
+        const skillsList = (node.skills || node.data?.skills || []).map((s: any) =>
+          String(s).toLowerCase().trim()
+        );
+        if (
+          tools.includes(skillNameLower) ||
+          tools.includes(skillIdLower) ||
+          skillsList.includes(skillNameLower) ||
+          skillsList.includes(skillIdLower)
+        ) {
+          initialSelected.add(`${flow.id}::${node.id}`);
+        }
+      }
+    }
+
+    setSelectedAgentKeys(initialSelected);
+  };
+
+  const handleToggleAgentAssignment = (flowId: string, nodeId: string) => {
+    const key = `${flowId}::${nodeId}`;
+    setSelectedAgentKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const handleSaveAssignments = async () => {
+    if (!assigningSkill) return;
+    setSavingAssignments(true);
+    try {
+      const skillNameLower = assigningSkill.name.toLowerCase().trim();
+      const skillIdLower = assigningSkill.id.toLowerCase().trim();
+      let updatedFlowCount = 0;
+
+      for (const flow of rawFlows) {
+        let canvasObj: any = {};
+        if (typeof flow.canvasDefinition === "string") {
+          try {
+            canvasObj = JSON.parse(flow.canvasDefinition);
+          } catch {
+            canvasObj = { nodes: [], edges: [] };
+          }
+        } else if (flow.canvasDefinition) {
+          canvasObj = JSON.parse(JSON.stringify(flow.canvasDefinition));
+        }
+
+        const nodes = canvasObj.nodes || [];
+        let flowModified = false;
+
+        for (const node of nodes) {
+          const key = `${flow.id}::${node.id}`;
+          const shouldHaveSkill = selectedAgentKeys.has(key);
+
+          const currentTools: any[] = node.tools || node.data?.tools || [];
+          const hasSkillInTools = currentTools.some((t: any) => {
+            const tName = (typeof t === "string" ? t : t?.name || "").toLowerCase().trim();
+            return tName === skillNameLower || tName === skillIdLower;
+          });
+
+          if (shouldHaveSkill && !hasSkillInTools) {
+            const newToolRef = {
+              id: `tool-ref-${crypto.randomUUID()}`,
+              name: assigningSkill.name,
+              category: assigningSkill.category,
+              mcpServerId: assigningSkill.mcpServerId,
+            };
+            node.tools = [...currentTools, newToolRef];
+            if (node.data) node.data.tools = node.tools;
+            flowModified = true;
+          } else if (!shouldHaveSkill && hasSkillInTools) {
+            node.tools = currentTools.filter((t: any) => {
+              const tName = (typeof t === "string" ? t : t?.name || "").toLowerCase().trim();
+              return tName !== skillNameLower && tName !== skillIdLower;
+            });
+            if (node.data) node.data.tools = node.tools;
+            flowModified = true;
+          }
+        }
+
+        if (flowModified) {
+          const res = await fetch(`/api/agentflows/${flow.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ canvasDefinition: canvasObj }),
+          });
+          if (res.ok) {
+            updatedFlowCount++;
+          }
+        }
+      }
+
+      setAlertMessage(`Skill assigned successfully across ${updatedFlowCount} agentflow(s).`);
+      setAssigningSkill(null);
+      await fetchAgentflows();
+    } catch (err) {
+      console.error("Failed to save skill assignments:", err);
+      setAlertMessage("Failed to update agent skill assignments. Please try again.");
+    } finally {
+      setSavingAssignments(false);
+    }
   };
 
   // Open Edit Modal
@@ -707,22 +852,34 @@ export function SkillsRegistry() {
                     </td>
 
                     {/* Active In Agents */}
-                    <td className="py-3.5 px-4 max-w-[200px]">
+                    <td className="py-3.5 px-4 max-w-[220px]">
                       {boundAgents.length > 0 ? (
-                        <div className="flex flex-wrap items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAssignModal(skill)}
+                          className="flex flex-wrap items-center gap-1 text-left group/badge cursor-pointer p-1 rounded-lg hover:bg-slate-800/50 transition-colors"
+                          title="Click to manage agent assignments"
+                        >
                           {boundAgents.slice(0, 2).map((agent, idx) => (
-                            <span key={idx} className="text-[10px] bg-indigo-950/40 text-indigo-300 px-2 py-0.5 rounded-md border border-indigo-500/30 font-medium">
+                            <span key={idx} className="text-[10px] bg-indigo-950/40 text-indigo-300 group-hover/badge:border-indigo-400 px-2 py-0.5 rounded-md border border-indigo-500/30 font-medium transition-colors">
                               {agent}
                             </span>
                           ))}
                           {boundAgents.length > 2 && (
-                            <span className="text-[9px] text-slate-400 font-mono" title={boundAgents.slice(2).join(", ")}>
+                            <span className="text-[9px] text-slate-400 font-mono group-hover/badge:text-slate-200" title={boundAgents.slice(2).join(", ")}>
                               +{boundAgents.length - 2}
                             </span>
                           )}
-                        </div>
+                        </button>
                       ) : (
-                        <span className="text-slate-600 text-[10px]">Unbound</span>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAssignModal(skill)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-dashed border-slate-750 text-slate-500 hover:text-indigo-300 hover:border-indigo-500/40 hover:bg-indigo-950/20 text-[10px] font-medium transition-all cursor-pointer"
+                          title="Assign this skill to specialist agents"
+                        >
+                          <Plus className="h-2.5 w-2.5" /> Assign Agents
+                        </button>
                       )}
                     </td>
 
@@ -1188,6 +1345,160 @@ export function SkillsRegistry() {
               >
                 Confirm Delete
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 5. Assign to Agents Modal ── */}
+      {assigningSkill && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div onClick={() => setAssigningSkill(null)} className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+          <div className="relative bg-slate-950 border border-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-2xl max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-900 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    Assign Skill to Agents
+                    <span className="font-mono text-indigo-400 font-normal">({assigningSkill.name})</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Bind or unbind this skill across worker agents in your published and draft flows.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAssigningSkill(null)}
+                className="text-slate-500 hover:text-white p-1 hover:bg-slate-900 rounded-lg cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Filter Search */}
+            <div className="py-3 border-b border-slate-900/60 shrink-0">
+              <div className="relative">
+                <Search className="h-3.5 w-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={assignSearchQuery}
+                  onChange={(e) => setAssignSearchQuery(e.target.value)}
+                  placeholder="Filter flows or agent names..."
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900/50 py-1.5 pl-8 pr-3 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            {/* Flows & Agents List */}
+            <div className="flex-1 overflow-y-auto py-3 space-y-4 pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+              {rawFlows.length === 0 ? (
+                <div className="text-center py-12 text-slate-500 text-xs">
+                  No agentflows found. Create an agentflow in Capability Studio to assign skills.
+                </div>
+              ) : (
+                rawFlows.map((flow) => {
+                  let nodes: any[] = [];
+                  if (typeof flow.canvasDefinition === "string") {
+                    try {
+                      nodes = JSON.parse(flow.canvasDefinition).nodes || [];
+                    } catch {}
+                  } else if (flow.canvasDefinition?.nodes) {
+                    nodes = flow.canvasDefinition.nodes;
+                  }
+
+                  const workerNodes = nodes.filter((n: any) => n.roleTemplate !== "team");
+                  if (workerNodes.length === 0) return null;
+
+                  const filteredNodes = workerNodes.filter((n: any) => {
+                    if (!assignSearchQuery.trim()) return true;
+                    const q = assignSearchQuery.toLowerCase();
+                    const flowMatch = (flow.name || "").toLowerCase().includes(q);
+                    const nodeMatch = (n.label || "").toLowerCase().includes(q);
+                    return flowMatch || nodeMatch;
+                  });
+
+                  if (filteredNodes.length === 0) return null;
+
+                  return (
+                    <div key={flow.id} className="rounded-2xl border border-slate-900 bg-slate-900/30 p-3.5 space-y-2.5">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-slate-850/60">
+                        <span className="text-xs font-bold text-slate-200 font-mono flex items-center gap-2">
+                          <Bot className="h-3.5 w-3.5 text-indigo-400" />
+                          {flow.name || "Untitled Agentflow"}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                          flow.status === "published"
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                        }`}>
+                          {flow.status || "draft"}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                        {filteredNodes.map((n: any) => {
+                          const key = `${flow.id}::${n.id}`;
+                          const isAssigned = selectedAgentKeys.has(key);
+
+                          return (
+                            <div
+                              key={n.id}
+                              onClick={() => handleToggleAgentAssignment(flow.id, n.id)}
+                              className={`flex items-center gap-2.5 p-2 rounded-xl border cursor-pointer transition-all ${
+                                isAssigned
+                                  ? "bg-indigo-950/30 border-indigo-500/50 text-white"
+                                  : "bg-slate-950/40 border-slate-850 text-slate-400 hover:border-slate-750 hover:text-slate-200"
+                              }`}
+                            >
+                              <div className={`p-1 rounded-md shrink-0 ${isAssigned ? "text-indigo-400" : "text-slate-600"}`}>
+                                {isAssigned ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <span className="text-xs font-semibold block truncate">
+                                  {n.label || "Specialist Worker"}
+                                </span>
+                                <span className="text-[9px] text-slate-500 uppercase tracking-wider block font-mono">
+                                  {n.roleTemplate || "worker"}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between pt-4 border-t border-slate-900 shrink-0">
+              <span className="text-xs text-slate-400">
+                Selected: <strong className="text-indigo-400 font-mono">{selectedAgentKeys.size}</strong> agent(s)
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAssigningSkill(null)}
+                  className="px-4 py-2 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-semibold bg-slate-900/40 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveAssignments}
+                  disabled={savingAssignments}
+                  className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer"
+                >
+                  {savingAssignments ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                  Save Assignments
+                </button>
+              </div>
             </div>
           </div>
         </div>

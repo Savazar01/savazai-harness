@@ -1,13 +1,36 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #06060b;
+  --foreground: #f8fafc;
 
   /* Custom tokens for database-driven branding & style overrides */
   --primary: 79 70 229; /* #4f46e5 */
   --secondary: 6 182 212; /* #06b6d4 */
   --brand-logo-url: url("https://savazar.com/wp-content/uploads/2023/10/cropped-Transparent_Image_2-300x100.png");
+
+  --card-bg: #0c0c16;
+  --card-border: #1e1e2f;
+  --muted-text: #94a3b8;
+  --sidebar-bg: #090912;
+}
+
+html.dark, :root:has(.dark) {
+  --background: #06060b;
+  --foreground: #f8fafc;
+  --card-bg: #0c0c16;
+  --card-border: #1e1e2f;
+  --muted-text: #94a3b8;
+  --sidebar-bg: #090912;
+}
+
+html.light {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --muted-text: #64748b;
+  --sidebar-bg: #ffffff;
 }
 
 @theme {
@@ -19,15 +42,49 @@
   --font-mono: "JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code", Menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Light mode overrides for high contrast without unreadable text or transparent borders */
+html.light .bg-slate-950 {
+  background-color: #f8fafc !important;
+}
+
+html.light .bg-slate-900,
+html.light .bg-slate-900\/50,
+html.light .bg-slate-900\/90,
+html.light .bg-\[\#14141f\],
+html.light .bg-\[\#0a0a14\],
+html.light .bg-\[\#0c0c14\],
+html.light .bg-\[\#0c0c16\] {
+  background-color: #ffffff !important;
+}
+
+html.light .border-slate-800,
+html.light .border-slate-850,
+html.light .border-slate-900,
+html.light .border-\[\#1f1f2e\] {
+  border-color: #e2e8f0 !important;
+}
+
+html.light .text-slate-200,
+html.light .text-slate-300,
+html.light .text-white {
+  color: #0f172a !important;
+}
+
+html.light .text-slate-400,
+html.light .text-slate-500 {
+  color: #475569 !important;
+}
+
+html.light input,
+html.light select,
+html.light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
 }
