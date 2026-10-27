@@ -1999,17 +1999,17 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                               return (
                                 <label
                                   key={m}
-                                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all text-[10px] ${
+                                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all text-xs font-medium ${
                                     checked
-                                      ? "border-indigo-500/40 bg-indigo-500/10 text-foreground"
-                                      : "border-border bg-muted/30 text-muted-foreground hover:border-border"
+                                      ? "border-primary/50 bg-primary/10 text-foreground font-semibold"
+                                      : "border-border bg-background text-foreground/80 hover:border-border hover:bg-muted/30"
                                   }`}
                                 >
                                   <input
                                     type="checkbox"
                                     checked={checked}
                                     onChange={(e) => toggleModel(key, m, e.target.checked)}
-                                    className="h-3.5 w-3.5 rounded border-border bg-slate-800 text-indigo-500 focus:ring-indigo-500/30 accent-indigo-500 shrink-0"
+                                    className="h-3.5 w-3.5 rounded border-border bg-background text-primary focus:ring-primary accent-primary shrink-0 cursor-pointer"
                                   />
                                   <span className="font-mono truncate">{m}</span>
                                 </label>
@@ -2024,12 +2024,12 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                             <span className="text-[9px] font-semibold text-muted-foreground uppercase">Custom Models</span>
                             <div className="flex flex-wrap gap-1.5">
                               {prov.models.filter((m: string) => !getDiscoveredOrFallbackModels(key).includes(m)).map((m: string) => (
-                                <span key={m} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-950/30 border border-amber-500/20 text-[10px] font-mono text-amber-300 group">
+                                <span key={m} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-100 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-500/30 text-xs font-mono text-amber-900 dark:text-amber-200 group">
                                   {m}
                                   <button
                                     type="button"
                                     onClick={() => removeModel(key, m)}
-                                    className="text-amber-500/60 hover:text-red-400 transition-colors"
+                                    className="text-amber-700/60 hover:text-destructive dark:text-amber-400/60 transition-colors cursor-pointer"
                                   >
                                     ×
                                   </button>
@@ -2047,19 +2047,19 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                             onChange={(e) => setModelInputs((prev) => ({ ...prev, [key]: e.target.value }))}
                             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addModel(key, modelInputs[key] || ""); } }}
                             placeholder="+ Add custom model ID"
-                            className="flex-1 rounded-lg border border-border bg-muted/30 py-1.5 px-3 text-[10px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono"
+                            className="flex-1 rounded-lg border border-border bg-background py-1.5 px-3 text-[10px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono"
                           />
                           <button
                             type="button"
                             onClick={() => addModel(key, modelInputs[key] || "")}
-                            className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-bold shadow-xs transition-all"
+                            className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-bold shadow-xs transition-all cursor-pointer"
                           >
                             Add
                           </button>
                         </div>
 
                         {(!prov.models || prov.models.length === 0) && (
-                          <p className="text-[10px] text-slate-600 italic">No models selected. All catalog models will be available in Agent Inspector.</p>
+                          <p className="text-[10px] text-muted-foreground italic">No models selected. All catalog models will be available in Agent Inspector.</p>
                         )}
                       </div>
 

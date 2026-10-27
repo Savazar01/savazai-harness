@@ -165,8 +165,8 @@ export function SystemAdminHub({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
-          <ShieldAlert className="h-5 w-5 text-indigo-400" />
+        <h3 className="text-lg font-bold text-foreground mb-1 flex items-center gap-2">
+          <ShieldAlert className="h-5 w-5 text-primary" />
           System Administration &amp; Security Hub
           <HelpTooltip content="Configure transactional email delivery, CAPTCHA bot protection, security policies, and monitor real-time outbound delivery audit streams." side="right" />
         </h3>
@@ -182,8 +182,8 @@ export function SystemAdminHub({
           onClick={() => setSubTab("email")}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             subTab === "email"
-              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
-              : "bg-muted/30 text-muted-foreground hover:text-foreground border border-border/80"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "bg-muted/30 text-muted-foreground hover:text-foreground border border-border"
           }`}
         >
           <Mail className="h-3.5 w-3.5" />
@@ -195,8 +195,8 @@ export function SystemAdminHub({
           onClick={() => setSubTab("captcha")}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             subTab === "captcha"
-              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
-              : "bg-muted/30 text-muted-foreground hover:text-foreground border border-border/80"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "bg-muted/30 text-muted-foreground hover:text-foreground border border-border"
           }`}
         >
           <ShieldCheck className="h-3.5 w-3.5" />
@@ -208,8 +208,8 @@ export function SystemAdminHub({
           onClick={() => setSubTab("logs")}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             subTab === "logs"
-              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
-              : "bg-muted/30 text-muted-foreground hover:text-foreground border border-border/80"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "bg-muted/30 text-muted-foreground hover:text-foreground border border-border"
           }`}
         >
           <Activity className="h-3.5 w-3.5" />
@@ -221,8 +221,8 @@ export function SystemAdminHub({
           onClick={() => setSubTab("security")}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             subTab === "security"
-              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
-              : "bg-muted/30 text-muted-foreground hover:text-foreground border border-border/80"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "bg-muted/30 text-muted-foreground hover:text-foreground border border-border"
           }`}
         >
           <Lock className="h-3.5 w-3.5" />
@@ -272,7 +272,7 @@ export function SystemAdminHub({
                       provider: e.target.value as "smtp" | "gmail" | "sendgrid",
                     }))
                   }
-                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground outline-none focus:border-primary/50"
                 >
                   <option value="smtp">Standard SMTP Relay (Recommended: Host, Port, TLS, Auth)</option>
                   <option value="gmail">Google Gmail App Password (Service: Gmail)</option>
@@ -281,9 +281,9 @@ export function SystemAdminHub({
               </div>
 
               {smtpSettings.provider === "gmail" ? (
-                <div className="md:col-span-2 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
-                  <p className="font-semibold text-amber-200">Google Workspace / Gmail Notice:</p>
-                  <p className="mt-1 text-[11px] text-amber-300/90 leading-relaxed">
+                <div className="md:col-span-2 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-900 dark:text-amber-200">
+                  <p className="font-semibold text-amber-950 dark:text-amber-100">Google Workspace / Gmail Notice:</p>
+                  <p className="mt-1 text-[11px] text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
                     Use your full Gmail address and a dedicated 16-character <strong>Google App Password</strong> (created via Google Account &rarr; Security &rarr; 2-Step Verification &rarr; App Passwords). Passwords are encrypted at rest with AES-256.
                   </p>
                 </div>
@@ -301,7 +301,7 @@ export function SystemAdminHub({
                       value={smtpSettings.host}
                       onChange={(e) => setSmtpSettings((prev) => ({ ...prev, host: e.target.value }))}
                       placeholder="smtp.gmail.com or mail.enterprise.com"
-                      className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono"
+                      className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono"
                     />
                   </div>
 
@@ -316,7 +316,7 @@ export function SystemAdminHub({
                         value={smtpSettings.port}
                         onChange={(e) => setSmtpSettings((prev) => ({ ...prev, port: e.target.value }))}
                         placeholder="587"
-                        className="w-1/2 rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white font-mono outline-none focus:border-primary/50"
+                        className="w-1/2 rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground font-mono outline-none focus:border-primary/50"
                       />
                       <label className="w-1/2 flex items-center justify-between px-3 py-2 rounded-xl border border-border bg-muted/30 cursor-pointer">
                         <span className="text-xs text-muted-foreground">SSL/TLS Secure</span>
@@ -343,7 +343,7 @@ export function SystemAdminHub({
                   value={smtpSettings.user}
                   onChange={(e) => setSmtpSettings((prev) => ({ ...prev, user: e.target.value }))}
                   placeholder="user@domain.com or apikey"
-                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
@@ -378,7 +378,7 @@ export function SystemAdminHub({
                         ? "Enter 16-char app password (e.g. abcd efgh ijkl mnop)"
                         : "••••••••••••••••"
                     }
-                    className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 pr-20 text-xs text-white font-mono outline-none focus:border-primary/50"
+                    className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 pr-20 text-xs text-foreground font-mono outline-none focus:border-primary/50"
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                     {smtpSettings.pass && smtpSettings.pass.includes("••••") ? (
@@ -386,7 +386,7 @@ export function SystemAdminHub({
                         type="button"
                         disabled={!canManage}
                         onClick={() => setSmtpSettings((prev) => ({ ...prev, pass: "" }))}
-                        className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] font-medium text-muted-foreground transition-colors cursor-pointer"
+                        className="px-2 py-1 rounded bg-muted hover:bg-muted/80 text-[11px] font-medium text-foreground transition-colors cursor-pointer"
                         title="Clear stored placeholder to enter a new password"
                       >
                         Change
@@ -415,7 +415,7 @@ export function SystemAdminHub({
                   value={smtpSettings.fromName}
                   onChange={(e) => setSmtpSettings((prev) => ({ ...prev, fromName: e.target.value }))}
                   placeholder="SavazAI Platform Security"
-                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground outline-none focus:border-primary/50"
                 />
               </div>
 
@@ -429,7 +429,7 @@ export function SystemAdminHub({
                   value={smtpSettings.fromEmail}
                   onChange={(e) => setSmtpSettings((prev) => ({ ...prev, fromEmail: e.target.value }))}
                   placeholder="security@savazar.com"
-                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground outline-none focus:border-primary/50 font-mono"
                 />
               </div>
             </div>
@@ -465,7 +465,7 @@ export function SystemAdminHub({
                       provider: e.target.value as "turnstile" | "recaptcha_v3" | "disabled",
                     }))
                   }
-                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground outline-none focus:border-primary/50"
                 >
                   <option value="turnstile">Cloudflare Turnstile (Recommended &bull; Privacy-Preserving)</option>
                   <option value="recaptcha_v3">Google reCAPTCHA v3 (Score-Based)</option>
@@ -485,7 +485,7 @@ export function SystemAdminHub({
                       value={captchaSettings.siteKey}
                       onChange={(e) => setCaptchaSettings((prev) => ({ ...prev, siteKey: e.target.value }))}
                       placeholder="0x4AAAAAA..."
-                      className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white font-mono outline-none focus:border-primary/50"
+                      className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground font-mono outline-none focus:border-primary/50"
                     />
                   </div>
 
@@ -500,7 +500,7 @@ export function SystemAdminHub({
                         value={captchaSettings.secretKey}
                         onChange={(e) => setCaptchaSettings((prev) => ({ ...prev, secretKey: e.target.value }))}
                         placeholder="0x4AAAAAA..."
-                        className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 pr-10 text-xs text-white font-mono outline-none focus:border-primary/50"
+                        className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 pr-10 text-xs text-foreground font-mono outline-none focus:border-primary/50"
                       />
                       <button
                         type="button"
@@ -580,7 +580,7 @@ export function SystemAdminHub({
                         </td>
                         <td className="px-3.5 py-2.5 font-mono text-foreground">{log.recipient}</td>
                         <td className="px-3.5 py-2.5">
-                          <span className="font-semibold text-white block">{log.purpose}</span>
+                          <span className="font-semibold text-foreground block">{log.purpose}</span>
                           <span className="text-[10px] text-muted-foreground truncate block max-w-xs">{log.subject}</span>
                         </td>
                         <td className="px-3.5 py-2.5 text-muted-foreground whitespace-nowrap">
@@ -592,7 +592,7 @@ export function SystemAdminHub({
                               {log.error}
                             </span>
                           ) : (
-                            <span className="text-emerald-400/80">Delivered via Authenticated Handshake</span>
+                            <span className="text-emerald-500 font-semibold">Delivered via Authenticated Handshake</span>
                           )}
                         </td>
                       </tr>
@@ -628,7 +628,7 @@ export function SystemAdminHub({
                   value={securitySettings.sessionHours}
                   disabled={!canManage}
                   onChange={(e) => setSecuritySettings((prev) => ({ ...prev, sessionHours: e.target.value }))}
-                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground outline-none focus:border-primary/50"
                 >
                   <option value="8">8 Hours (High Security &bull; Finance / Gov)</option>
                   <option value="24">24 Hours (Standard Enterprise)</option>
@@ -645,7 +645,7 @@ export function SystemAdminHub({
                   value={securitySettings.maxLoginAttempts}
                   disabled={!canManage}
                   onChange={(e) => setSecuritySettings((prev) => ({ ...prev, maxLoginAttempts: e.target.value }))}
-                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground outline-none focus:border-primary/50"
                 >
                   <option value="3">3 Attempts (Strict Rate-Limiting)</option>
                   <option value="5">5 Attempts (Balanced)</option>
@@ -663,7 +663,7 @@ export function SystemAdminHub({
                   value={securitySettings.quarantineNotificationEmail}
                   onChange={(e) => setSecuritySettings((prev) => ({ ...prev, quarantineNotificationEmail: e.target.value }))}
                   placeholder="security-team@savazar.com"
-                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground outline-none focus:border-primary/50 font-mono"
                 />
                 <p className="text-[11px] text-muted-foreground mt-1">
                   Receives notification digests whenever a pre-authorized applicant completes OTP and enters the quarantine approval queue.
@@ -749,7 +749,7 @@ export function SystemAdminHub({
                     }
                   }}
                   placeholder="recipient@example.com"
-                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
@@ -768,7 +768,7 @@ export function SystemAdminHub({
                     handleSendTestEmail(e);
                   }}
                   disabled={testEmailLoading}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary/95 text-white text-xs font-semibold shadow-lg shadow-primary/20 disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground text-xs font-semibold shadow-xs disabled:opacity-50 cursor-pointer"
                 >
                   {testEmailLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   {testEmailLoading ? "Dispatching..." : "Dispatch Test"}

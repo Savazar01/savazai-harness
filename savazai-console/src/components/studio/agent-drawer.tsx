@@ -74,14 +74,14 @@ const ROLE_TEMPLATES: { value: AgentRole; label: string; description: string }[]
 ];
 
 export const COLOR_PRESETS = [
-  { id: "default", label: "Default", bg: "bg-muted", border: "border-border", ring: "ring-slate-500", dot: "#64748b" },
-  { id: "emerald", label: "Emerald", bg: "bg-emerald-950", border: "border-emerald-500", ring: "ring-emerald-500", dot: "#10b981" },
-  { id: "cyan", label: "Cyan", bg: "bg-cyan-950", border: "border-cyan-500", ring: "ring-cyan-500", dot: "#06b6d4" },
-  { id: "indigo", label: "Indigo", bg: "bg-indigo-950", border: "border-indigo-500", ring: "ring-indigo-500", dot: "#6366f1" },
-  { id: "purple", label: "Purple", bg: "bg-purple-950", border: "border-purple-500", ring: "ring-purple-500", dot: "#a855f7" },
-  { id: "amber", label: "Amber", bg: "bg-amber-950", border: "border-amber-500", ring: "ring-amber-500", dot: "#f59e0b" },
-  { id: "rose", label: "Rose", bg: "bg-rose-950", border: "border-rose-500", ring: "ring-rose-500", dot: "#f43f5e" },
-  { id: "slate", label: "Slate", bg: "bg-slate-800", border: "border-slate-600", ring: "ring-slate-400", dot: "#94a3b8" },
+  { id: "default", label: "Default", bg: "bg-muted/60", border: "border-border", ring: "ring-primary/40", dot: "#64748b" },
+  { id: "emerald", label: "Emerald", bg: "bg-emerald-500/10 dark:bg-emerald-950/40", border: "border-emerald-500/40", ring: "ring-emerald-500/40", dot: "#10b981" },
+  { id: "cyan", label: "Cyan", bg: "bg-cyan-500/10 dark:bg-cyan-950/40", border: "border-cyan-500/40", ring: "ring-cyan-500/40", dot: "#06b6d4" },
+  { id: "indigo", label: "Indigo", bg: "bg-indigo-500/10 dark:bg-indigo-950/40", border: "border-indigo-500/40", ring: "ring-indigo-500/40", dot: "#6366f1" },
+  { id: "purple", label: "Purple", bg: "bg-purple-500/10 dark:bg-purple-950/40", border: "border-purple-500/40", ring: "ring-purple-500/40", dot: "#a855f7" },
+  { id: "amber", label: "Amber", bg: "bg-amber-500/10 dark:bg-amber-950/40", border: "border-amber-500/40", ring: "ring-amber-500/40", dot: "#f59e0b" },
+  { id: "rose", label: "Rose", bg: "bg-rose-500/10 dark:bg-rose-950/40", border: "border-rose-500/40", ring: "ring-rose-500/40", dot: "#f43f5e" },
+  { id: "slate", label: "Slate", bg: "bg-muted/70 dark:bg-muted/40", border: "border-border", ring: "ring-border", dot: "#94a3b8" },
 ];
 
 export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawerProps) {
@@ -451,10 +451,10 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`py-3.5 px-4 text-[10px] font-bold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap -mb-[2px] ${
+              className={`py-3.5 px-4 text-[10px] font-bold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap -mb-[2px] cursor-pointer ${
                 activeTab === tab
-                  ? "border-indigo-500 text-white"
-                  : "border-transparent text-muted-foreground hover:text-muted-foreground"
+                  ? "border-primary text-primary font-bold bg-primary/5"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40"
               }`}
             >
               {tab === "tools" ? "NATIVE & CUSTOM TOOLS" :
@@ -594,13 +594,13 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                       key={preset.id}
                       type="button"
                       onClick={() => setCustomColor(preset.id)}
-                      className={`flex items-center gap-2 px-2.5 py-2 rounded-xl border text-xs font-semibold transition-all ${
+                      className={`flex items-center gap-2 px-2.5 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
                         customColor === preset.id
-                          ? `border-white ring-2 ${preset.ring} ${preset.bg} text-white shadow-lg`
-                          : "border-border hover:border-border bg-muted/40 text-muted-foreground hover:text-slate-200"
+                          ? `border-primary ring-2 ${preset.ring} ${preset.bg} text-foreground shadow-xs font-bold`
+                          : "border-border hover:border-border bg-muted/40 text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      <span className="w-3 h-3 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: preset.dot }} />
+                      <span className="w-3 h-3 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: preset.dot }} />
                       <span className="truncate text-[11px] font-medium">{preset.label}</span>
                     </button>
                   ))}
@@ -1028,13 +1028,13 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                           onClick={() => handleToggleTool(toolPresetName, "native")}
                           className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                             isChecked
-                              ? "bg-indigo-500/5 border-indigo-500/30 text-white"
-                              : "border-border bg-muted/20 hover:border-border"
+                              ? "bg-primary/10 border-primary/40 text-foreground font-semibold"
+                              : "border-border bg-muted/20 hover:border-border text-foreground hover:bg-muted/30"
                           }`}
                         >
-                          <Check className={`h-4 w-4 shrink-0 ${isChecked ? "text-indigo-400" : "text-slate-700"}`} />
+                          <Check className={`h-4 w-4 shrink-0 ${isChecked ? "text-primary" : "text-muted-foreground/40"}`} />
                           <div className="min-w-0">
-                            <span className="font-mono text-xs font-bold block truncate">{c.conceptKey}</span>
+                            <span className="font-mono text-xs font-bold block truncate text-foreground">{c.conceptKey}</span>
                             <span className="text-[8px] font-medium text-muted-foreground uppercase">{c.category}</span>
                           </div>
                         </div>
@@ -1140,21 +1140,21 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
                           onClick={() => handleToggleTool(s.name, s.category)}
                           className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                             isChecked
-                              ? "bg-emerald-950/20 border-emerald-500/80 text-emerald-100"
-                              : "border-border bg-muted/20 hover:border-border"
+                              ? "bg-emerald-500/10 border-emerald-500/40 text-foreground"
+                              : "border-border bg-muted/20 hover:border-border text-foreground hover:bg-muted/30"
                           }`}
                         >
                           <div className="min-w-0 flex-1">
-                            <span className="font-mono text-xs font-bold text-slate-200 block truncate">{s.name}</span>
+                            <span className="font-mono text-xs font-bold text-foreground block truncate">{s.name}</span>
                             <p className="text-[9px] text-muted-foreground mt-0.5 leading-tight">{s.description}</p>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             {isChecked && (
-                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[8px] font-bold">
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 border border-emerald-300 dark:border-emerald-500/40 text-emerald-800 dark:text-emerald-300 text-[8px] font-bold">
                                 <Check className="h-2.5 w-2.5" /> Active
                               </span>
                             )}
-                            <span className="px-1.5 py-0.5 rounded border border-purple-500/30 text-[8px] font-semibold capitalize shrink-0 text-slate-100 bg-slate-800/80">
+                            <span className="px-1.5 py-0.5 rounded border border-border text-[8px] font-semibold capitalize shrink-0 text-muted-foreground bg-muted">
                               {s.category}
                             </span>
                           </div>

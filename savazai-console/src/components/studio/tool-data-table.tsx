@@ -108,22 +108,22 @@ export function ToolDataTable({
       {/* Bulk Actions Header */}
       <div className="flex items-center justify-between px-1 text-[11px] text-muted-foreground">
         <div>
-          Showing <span className="text-white font-semibold">{filteredTools.length}</span> tools &middot;{" "}
-          <span className="text-emerald-400 font-semibold">{activeCount}</span> currently active
+          Showing <span className="text-foreground font-semibold">{filteredTools.length}</span> tools &middot;{" "}
+          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{activeCount}</span> currently active
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => onBulkToggle(filteredTools, true)}
-            className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold transition-colors cursor-pointer"
+            className="text-[10px] text-primary hover:underline font-bold transition-colors cursor-pointer"
           >
             Enable All Filtered
           </button>
-          <span className="text-slate-700">|</span>
+          <span className="text-border">|</span>
           <button
             type="button"
             onClick={() => onBulkToggle(filteredTools, false)}
-            className="text-[10px] text-muted-foreground hover:text-muted-foreground font-medium transition-colors cursor-pointer"
+            className="text-[10px] text-muted-foreground hover:text-foreground font-medium transition-colors cursor-pointer"
           >
             Disable All Filtered
           </button>
@@ -173,7 +173,7 @@ export function ToolDataTable({
                           type="button"
                           onClick={() => onToggleTool(tool)}
                           className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                            active ? "bg-emerald-500" : "bg-slate-700"
+                            active ? "bg-emerald-500" : "bg-muted-foreground/30 border border-border"
                           }`}
                         >
                           <span
@@ -188,14 +188,14 @@ export function ToolDataTable({
                       <td className="py-3 px-3">
                         <div className="font-mono text-xs font-bold text-foreground flex items-center gap-1.5">
                           {tool.category === "mcp" ? (
-                            <Server className="h-3 w-3 text-purple-400 shrink-0" />
+                            <Server className="h-3 w-3 text-purple-600 dark:text-purple-400 shrink-0" />
                           ) : (
-                            <Wrench className="h-3 w-3 text-amber-400 shrink-0" />
+                            <Wrench className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />
                           )}
                           <span>{tool.name}</span>
                         </div>
                         {tool.serverId && (
-                          <div className="text-[10px] text-purple-400/80 font-mono mt-0.5">
+                          <div className="text-[10px] text-purple-700 dark:text-purple-300 font-mono mt-0.5 font-semibold">
                             server: {tool.serverId}
                           </div>
                         )}
@@ -206,10 +206,10 @@ export function ToolDataTable({
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
                             tool.category === "mcp"
-                              ? "bg-purple-500/10 text-purple-300 border-purple-500/20"
+                              ? "bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-500/30"
                               : tool.category === "native"
-                              ? "bg-amber-500/10 text-amber-300 border-amber-500/20"
-                              : "bg-cyan-500/10 text-cyan-300 border-cyan-500/20"
+                              ? "bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-500/30"
+                              : "bg-cyan-100 dark:bg-cyan-500/20 text-cyan-800 dark:text-cyan-300 border-cyan-200 dark:border-cyan-500/30"
                           }`}
                         >
                           {tool.category}
@@ -233,8 +233,8 @@ export function ToolDataTable({
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                             active
-                              ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
-                              : "bg-slate-800 text-muted-foreground border-border"
+                              ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/30"
+                              : "bg-muted text-muted-foreground border-border"
                           }`}
                         >
                           {active ? (

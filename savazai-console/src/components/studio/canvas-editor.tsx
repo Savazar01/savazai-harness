@@ -26,6 +26,10 @@ import {
   Pencil,
   ChevronLeft,
   LayoutGrid,
+  Copy,
+  Maximize2,
+  Minimize2,
+  MoveDiagonal2,
 } from "lucide-react";
 import { AgentDrawer } from "./agent-drawer";
 import { TestSandbox } from "./test-sandbox";
@@ -112,14 +116,94 @@ const ROLE_CONFIGS: Record<AgentRole, { icon: typeof Bot; label: string; border:
   scheduled: { icon: Clock, label: "Scheduled Autonomous Worker", border: "border-amber-500/40", bg: "bg-card", accent: "amber" },
 };
 
-const NODE_CUSTOM_COLORS: Record<string, { bg: string; border: string; accent: string; dot: string; ring: string }> = {
-  emerald: { bg: "bg-gradient-to-br from-emerald-950/60 via-slate-950/70 to-emerald-950/40", border: "border-emerald-500/60", accent: "emerald", dot: "#10b981", ring: "ring-emerald-500/40" },
-  cyan: { bg: "bg-gradient-to-br from-cyan-950/60 via-slate-950/70 to-cyan-950/40", border: "border-cyan-500/60", accent: "cyan", dot: "#06b6d4", ring: "ring-cyan-500/40" },
-  indigo: { bg: "bg-gradient-to-br from-indigo-950/60 via-slate-950/70 to-indigo-950/40", border: "border-indigo-500/60", accent: "indigo", dot: "#6366f1", ring: "ring-indigo-500/40" },
-  purple: { bg: "bg-gradient-to-br from-purple-950/60 via-slate-950/70 to-purple-950/40", border: "border-purple-500/60", accent: "purple", dot: "#a855f7", ring: "ring-purple-500/40" },
-  amber: { bg: "bg-gradient-to-br from-amber-950/60 via-slate-950/70 to-amber-950/40", border: "border-amber-500/60", accent: "amber", dot: "#f59e0b", ring: "ring-amber-500/40" },
-  rose: { bg: "bg-gradient-to-br from-rose-950/60 via-slate-950/70 to-rose-950/40", border: "border-rose-500/60", accent: "rose", dot: "#f43f5e", ring: "ring-rose-500/40" },
-  slate: { bg: "bg-gradient-to-br from-slate-900/80 via-slate-950/70 to-slate-900/60", border: "border-slate-600/60", accent: "slate", dot: "#94a3b8", ring: "ring-slate-500/40" },
+const NODE_CUSTOM_COLORS: Record<string, {
+  bg: string;
+  border: string;
+  accent: string;
+  dot: string;
+  ring: string;
+  badgeBg: string;
+  badgeText: string;
+  badgeBorder: string;
+  iconColor: string;
+}> = {
+  emerald: {
+    bg: "bg-emerald-50/70 dark:bg-emerald-950/30",
+    border: "border-emerald-500/50 dark:border-emerald-500/60",
+    accent: "emerald",
+    dot: "#10b981",
+    ring: "ring-emerald-500/40",
+    badgeBg: "bg-emerald-100 dark:bg-emerald-500/20",
+    badgeText: "text-emerald-800 dark:text-emerald-300",
+    badgeBorder: "border-emerald-300 dark:border-emerald-500/30",
+    iconColor: "text-emerald-600 dark:text-emerald-400"
+  },
+  cyan: {
+    bg: "bg-cyan-50/70 dark:bg-cyan-950/30",
+    border: "border-cyan-500/50 dark:border-cyan-500/60",
+    accent: "cyan",
+    dot: "#06b6d4",
+    ring: "ring-cyan-500/40",
+    badgeBg: "bg-cyan-100 dark:bg-cyan-500/20",
+    badgeText: "text-cyan-800 dark:text-cyan-300",
+    badgeBorder: "border-cyan-300 dark:border-cyan-500/30",
+    iconColor: "text-cyan-600 dark:text-cyan-400"
+  },
+  indigo: {
+    bg: "bg-indigo-50/70 dark:bg-indigo-950/30",
+    border: "border-indigo-500/50 dark:border-indigo-500/60",
+    accent: "indigo",
+    dot: "#6366f1",
+    ring: "ring-indigo-500/40",
+    badgeBg: "bg-indigo-100 dark:bg-indigo-500/20",
+    badgeText: "text-indigo-800 dark:text-indigo-300",
+    badgeBorder: "border-indigo-300 dark:border-indigo-500/30",
+    iconColor: "text-indigo-600 dark:text-indigo-400"
+  },
+  purple: {
+    bg: "bg-purple-50/70 dark:bg-purple-950/30",
+    border: "border-purple-500/50 dark:border-purple-500/60",
+    accent: "purple",
+    dot: "#a855f7",
+    ring: "ring-purple-500/40",
+    badgeBg: "bg-purple-100 dark:bg-purple-500/20",
+    badgeText: "text-purple-800 dark:text-purple-300",
+    badgeBorder: "border-purple-300 dark:border-purple-500/30",
+    iconColor: "text-purple-600 dark:text-purple-400"
+  },
+  amber: {
+    bg: "bg-amber-50/70 dark:bg-amber-950/30",
+    border: "border-amber-500/50 dark:border-amber-500/60",
+    accent: "amber",
+    dot: "#f59e0b",
+    ring: "ring-amber-500/40",
+    badgeBg: "bg-amber-100 dark:bg-amber-500/20",
+    badgeText: "text-amber-800 dark:text-amber-300",
+    badgeBorder: "border-amber-300 dark:border-amber-500/30",
+    iconColor: "text-amber-600 dark:text-amber-400"
+  },
+  rose: {
+    bg: "bg-rose-50/70 dark:bg-rose-950/30",
+    border: "border-rose-500/50 dark:border-rose-500/60",
+    accent: "rose",
+    dot: "#f43f5e",
+    ring: "ring-rose-500/40",
+    badgeBg: "bg-rose-100 dark:bg-rose-500/20",
+    badgeText: "text-rose-800 dark:text-rose-300",
+    badgeBorder: "border-rose-300 dark:border-rose-500/30",
+    iconColor: "text-rose-600 dark:text-rose-400"
+  },
+  slate: {
+    bg: "bg-muted/70 dark:bg-muted/40",
+    border: "border-border",
+    accent: "slate",
+    dot: "#64748b",
+    ring: "ring-border",
+    badgeBg: "bg-muted dark:bg-muted/60",
+    badgeText: "text-foreground",
+    badgeBorder: "border-border",
+    iconColor: "text-muted-foreground"
+  },
 };
 
 const ROLE_DEFAULT_PROMPTS: Record<AgentRole, string> = {
@@ -909,6 +993,47 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
     setNodes((prev) => prev.map((n) => (n.id === updatedNode.id ? updatedNode : n)));
   }, []);
 
+  const handleDuplicateNode = useCallback((nodeId: string) => {
+    const target = nodes.find((n) => n.id === nodeId);
+    if (!target) return;
+    const newId = `node-${target.roleTemplate}-${Date.now().toString(36)}`;
+    const duplicatedNode: CanvasNode = {
+      ...target,
+      id: newId,
+      label: `${target.label} (Copy)`,
+      x: target.x + 30,
+      y: target.y + 30,
+    };
+    setNodes((prev) => [...prev, duplicatedNode]);
+    setSelectedNodeId(newId);
+    setSelectedNodeIds([newId]);
+  }, [nodes]);
+
+  const handleAgentResizeMouseDown = useCallback((e: React.MouseEvent, nodeId: string, initialW: number, initialH: number) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const startX = e.clientX;
+    const startY = e.clientY;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const dx = (moveEvent.clientX - startX) / zoom;
+      const dy = (moveEvent.clientY - startY) / zoom;
+      const newWidth = Math.max(192, Math.min(440, Math.round(initialW + dx)));
+      const newHeight = Math.max(100, Math.min(360, Math.round(initialH + dy)));
+      setNodes((prev) =>
+        prev.map((n) => (n.id === nodeId ? { ...n, width: newWidth, height: newHeight } : n))
+      );
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  }, [zoom]);
+
   const handleDeleteEdge = useCallback((edgeId: string) => {
     setEdges((prev) => prev.filter((e) => e.id !== edgeId));
     setSelectedEdgeId(null);
@@ -1337,7 +1462,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
             <button
               type="button"
               onClick={() => setShowTestSandbox(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-emerald-800 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/30 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer"
             >
               <FlaskConical className="h-3.5 w-3.5" />
               Test
@@ -1347,9 +1472,9 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
           <button
             type="button"
             onClick={() => setShowJsonPanel(!showJsonPanel)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
               showJsonPanel
-                ? "bg-indigo-600/20 border-indigo-500/50 text-indigo-300"
+                ? "bg-primary/10 border-primary/40 text-primary font-bold"
                 : "border-border text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -1361,7 +1486,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
             <button
               type="button"
               onClick={() => onSave(nodes, edges)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all cursor-pointer"
             >
               Save Progress
             </button>
@@ -1372,7 +1497,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
               type="button"
               onClick={handlePublish}
               disabled={publishing}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 shadow-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
             >
               {publishing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
               {workflowType === "scheduled" ? "Publish Schedule" : "Publish"}
@@ -1383,17 +1508,17 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
 
       {/* Scheduled config bar */}
       {workflowType === "scheduled" && (
-        <div className="flex items-center gap-4 px-6 py-2 border-b border-border bg-purple-950/20 shrink-0">
+        <div className="flex items-center gap-4 px-6 py-2 border-b border-border bg-purple-500/10 dark:bg-purple-950/20 shrink-0">
           <div className="flex items-center gap-2">
-            <CalendarClock className="h-3.5 w-3.5 text-purple-400" />
-            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">Cron Schedule</span>
+            <CalendarClock className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+            <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider">Cron Schedule</span>
           </div>
           <input
             type="text"
             value={cronSchedule}
             onChange={(e) => setCronSchedule(e.target.value)}
             placeholder="0 8 * * *"
-            className="w-32 rounded-lg border border-purple-500/20 bg-muted/30 py-1 px-2.5 text-[10px] font-mono text-white outline-none focus:border-purple-500"
+            className="w-32 rounded-lg border border-purple-500/30 bg-background py-1 px-2.5 text-[10px] font-mono text-foreground outline-none focus:border-purple-500"
           />
           <span className="text-[9px] text-muted-foreground">e.g. 0 8 * * * (daily 8 AM)</span>
           <input
@@ -1401,7 +1526,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
             value={scheduledPrompt}
             onChange={(e) => setScheduledPrompt(e.target.value)}
             placeholder="Optional: Scheduled run instruction..."
-            className="flex-1 rounded-lg border border-border bg-muted/30 py-1 px-2.5 text-[10px] text-white outline-none focus:border-purple-500 placeholder-slate-400"
+            className="flex-1 rounded-lg border border-border bg-background py-1 px-2.5 text-[10px] text-foreground outline-none focus:border-purple-500 placeholder:text-muted-foreground"
           />
         </div>
       )}
@@ -1451,7 +1576,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
           onMouseUp={handleCanvasMouseUp}
           onMouseDown={handleCanvasMouseDown}
           onWheel={handleCanvasWheel}
-          className="flex-1 h-full bg-canvas relative overflow-hidden select-none cursor-grab active:cursor-grabbing"
+          className="flex-1 h-full bg-canvas relative overflow-hidden select-none canvas-cursor-grab active:canvas-cursor-grabbing"
           style={{
             backgroundImage: "radial-gradient(var(--canvas-grid) 1.5px, transparent 1.5px)",
             backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
@@ -1564,14 +1689,14 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                               <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); setRetargetEdgeId(edge.id); }}
-                                className="px-2 py-0.5 rounded bg-indigo-600/20 text-indigo-300 text-[8px] font-bold hover:bg-indigo-600/40 transition-all whitespace-nowrap"
+                                className="px-2 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary text-[8px] font-bold hover:bg-primary/20 transition-all whitespace-nowrap cursor-pointer"
                               >
                                 Re-target
                               </button>
                               <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); handleDeleteEdge(edge.id); }}
-                                className="px-2 py-0.5 rounded bg-red-600/20 text-red-300 text-[8px] font-bold hover:bg-red-600/40 transition-all whitespace-nowrap"
+                                className="px-2 py-0.5 rounded bg-destructive/10 border border-destructive/20 text-destructive text-[8px] font-bold hover:bg-destructive/20 transition-all whitespace-nowrap cursor-pointer"
                               >
                                 Remove
                               </button>
@@ -1707,7 +1832,11 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                       onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
                       onClick={() => { setSelectedNodeId(node.id); setSelectedEdgeId(null); }}
                       onDoubleClick={(e) => handleNodeDoubleClick(e, node.id)}
-                      className={`w-48 rounded-2xl border px-3.5 py-2.5 flex flex-col gap-1.5 transition-all select-none z-10 cursor-grab active:cursor-grabbing backdrop-blur-md shadow-md ${
+                      style={{
+                        width: node.width ? `${node.width}px` : "208px",
+                        minHeight: node.collapsed ? "auto" : (node.height ? `${node.height}px` : "120px")
+                      }}
+                      className={`relative rounded-2xl border px-3.5 py-2.5 flex flex-col gap-1.5 transition-all select-none z-10 canvas-cursor-grab active:canvas-cursor-grabbing backdrop-blur-md shadow-md ${
                         customTheme
                           ? `${customTheme.bg} ${customTheme.border} ${isSelected ? `ring-2 ${customTheme.ring}` : "hover:border-foreground/30"}`
                           : isSynth
@@ -1724,20 +1853,20 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                       }`}
                     >
                       {/* Header */}
-                      <div className="flex items-center justify-between w-full">
-                        <div className="relative">
+                      <div className="flex items-center justify-between w-full gap-2">
+                        <div className="relative flex items-center gap-2 min-w-0">
                           <div className={`p-1.5 rounded-lg border shrink-0 ${
                             customTheme
-                              ? `bg-muted/40 ${customTheme.border}`
+                              ? `${customTheme.badgeBg} ${customTheme.badgeBorder}`
                               : isSynth
-                              ? "bg-purple-100 dark:bg-purple-500/20 border-purple-200 dark:border-purple-500/30 text-purple-700 dark:text-purple-300"
+                              ? "bg-purple-100 dark:bg-purple-500/20 border-purple-200 dark:border-purple-500/30"
                               : isSupervisor
-                              ? "bg-indigo-100 dark:bg-indigo-500/20 border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300"
-                              : "bg-teal-100 dark:bg-teal-500/20 border-teal-200 dark:border-teal-500/30 text-teal-800 dark:text-teal-300"
+                              ? "bg-indigo-100 dark:bg-indigo-500/20 border-indigo-200 dark:border-indigo-500/30"
+                              : "bg-teal-100 dark:bg-teal-500/20 border-teal-200 dark:border-teal-500/30"
                           }`}>
                             <NodeIcon className={`h-3.5 w-3.5 ${
                               customTheme
-                                ? `text-${customTheme.accent}-600 dark:text-${customTheme.accent}-400`
+                                ? customTheme.iconColor
                                 : isSynth
                                 ? "text-purple-600 dark:text-purple-400 animate-pulse"
                                 : isSupervisor
@@ -1748,7 +1877,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                           {/* Status Ring */}
                           {canvasNodeStatus[node.label] && canvasNodeStatus[node.label] !== "idle" && (
                             <span
-                              className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-slate-950 ${
+                              className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-background ${
                                 canvasNodeStatus[node.label] === "running"
                                   ? "bg-amber-400 animate-pulse"
                                   : canvasNodeStatus[node.label] === "success"
@@ -1757,46 +1886,94 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                               }`}
                             />
                           )}
+                          {node.collapsed && (
+                            <div className="text-xs font-bold text-foreground truncate min-w-0">
+                              {node.label}
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setNodes((prev) =>
+                                prev.map((n) => (n.id === node.id ? { ...n, collapsed: !n.collapsed } : n))
+                              );
+                            }}
+                            className="p-1 rounded-md bg-card border border-border hover:bg-muted text-foreground/70 hover:text-foreground shadow-xs transition-all cursor-pointer"
+                            title={node.collapsed ? "Expand agent card" : "Collapse agent card"}
+                          >
+                            {node.collapsed ? <Maximize2 className="h-3 w-3" /> : <Minimize2 className="h-3 w-3" />}
+                          </button>
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); setSelectedNodeId(node.id); setDrawerOpen(true); }}
-                            className="p-1 rounded-md bg-slate-800 border border-border hover:border-slate-600 text-muted-foreground hover:text-foreground transition-all"
-                            title="Configure"
+                            className="p-1 rounded-md bg-card border border-border hover:bg-muted text-foreground/70 hover:text-foreground shadow-xs transition-all cursor-pointer"
+                            title="Configure Agent"
                           >
                             <Settings className="h-3 w-3" />
                           </button>
                           <button
                             type="button"
+                            onClick={(e) => { e.stopPropagation(); handleDuplicateNode(node.id); }}
+                            className="p-1 rounded-md bg-card border border-border hover:bg-muted text-foreground/70 hover:text-foreground shadow-xs transition-all cursor-pointer"
+                            title="Duplicate Agent"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
                             onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(node.id); }}
-                            className="p-1 rounded-md bg-red-950/50 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 transition-all"
-                            title="Delete"
+                            className="p-1 rounded-md bg-destructive/10 border border-destructive/20 hover:bg-destructive/20 text-destructive shadow-xs transition-all cursor-pointer"
+                            title="Delete Agent"
                           >
                             <Trash2 className="h-3 w-3" />
                           </button>
                         </div>
                       </div>
 
-                      <span className={`self-start px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
-                        customTheme
-                          ? `bg-${customTheme.accent}-500/20 text-${customTheme.accent}-700 dark:text-${customTheme.accent}-300 border ${customTheme.border}`
-                          : isSupervisor ? "bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30" :
-                          isSynth ? "bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30" :
-                          "bg-teal-100 dark:bg-teal-500/20 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-500/30"
-                      }`}>
-                        {config.label.replace(" Agent", "").replace(" Autonomous Worker", "").replace("Worker / ", "")}
-                      </span>
+                      {!node.collapsed && (
+                        <>
+                          <span className={`self-start px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider border ${
+                            customTheme
+                              ? `${customTheme.badgeBg} ${customTheme.badgeText} ${customTheme.badgeBorder}`
+                              : isSupervisor ? "bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30" :
+                              isSynth ? "bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30" :
+                              "bg-teal-100 dark:bg-teal-500/20 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-500/30"
+                          }`}>
+                            {config.label.replace(" Agent", "").replace(" Autonomous Worker", "").replace("Worker / ", "")}
+                          </span>
 
-                      <div className="text-xs font-bold text-foreground truncate max-w-full">
-                        {node.label}
-                      </div>
+                          <div className="text-xs font-bold text-foreground truncate max-w-full">
+                            {node.label}
+                          </div>
 
-                      <div className="flex items-center justify-between w-full mt-1 border-t border-border/60 pt-1 shrink-0">
-                        <span className="text-[8px] text-muted-foreground truncate max-w-full">
-                          {node.modelConfig?.provider}/{node.modelConfig?.model}
-                        </span>
-                      </div>
+                          <div className="flex items-center justify-between w-full mt-auto border-t border-border/60 pt-1 shrink-0">
+                            <span className="text-[8px] text-muted-foreground truncate max-w-full font-mono">
+                              {node.modelConfig?.provider}/{node.modelConfig?.model}
+                            </span>
+                            {node.tools && node.tools.length > 0 && (
+                              <span className="text-[8px] px-1 rounded bg-muted text-muted-foreground font-mono">
+                                {node.tools.length} tool{node.tools.length > 1 ? "s" : ""}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Resize corner handle */}
+                          {isSelected && (
+                            <div
+                              onMouseDown={(e) => handleAgentResizeMouseDown(e, node.id, node.width || 208, node.height || 120)}
+                              className="absolute -right-1.5 -bottom-1.5 w-4 h-4 cursor-nwse-resize z-30 flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground rounded-tl shadow-md transition-all group/resize"
+                              title="Drag to resize agent card"
+                            >
+                              <MoveDiagonal2 className="w-2.5 h-2.5 transition-transform group-hover/resize:scale-110" />
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 );
@@ -1910,8 +2087,8 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                           disabled={isCurrent}
                           className={`flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs text-left transition-all ${
                             isCurrent
-                              ? "bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 cursor-not-allowed"
-                              : "bg-card border border-border hover:border-border text-muted-foreground"
+                              ? "bg-primary/10 border border-primary/30 text-primary cursor-not-allowed font-medium"
+                              : "bg-card border border-border hover:border-border text-muted-foreground hover:text-foreground"
                           }`}
                         >
                           <ArrowRight className="h-3 w-3 shrink-0" />
@@ -2102,8 +2279,8 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
       {publishStatus && (
         <div className={`absolute bottom-6 right-6 border rounded-2xl p-4 text-xs shadow-xl backdrop-blur-md max-w-sm flex gap-3 items-start z-40 ${
           publishStatus.type === "success"
-            ? "border-emerald-500/30 bg-emerald-950/90 text-emerald-300"
-            : "border-red-500/30 bg-red-950/90 text-red-300"
+            ? "border-emerald-300 dark:border-emerald-500/30 bg-emerald-100 dark:bg-emerald-950/90 text-emerald-950 dark:text-emerald-200"
+            : "border-destructive/30 bg-destructive/10 dark:bg-red-950/90 text-destructive dark:text-red-300"
         }`}>
           <div className="flex-1">
             <span className="font-bold block mb-1">

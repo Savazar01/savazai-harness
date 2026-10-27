@@ -142,7 +142,7 @@ function ReportActionToolbar({ content }: { content: string }) {
       <button
         type="button"
         onClick={handleDownload}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-semibold text-xs hover:bg-emerald-500/30 hover:text-emerald-100 transition-all cursor-pointer shadow-sm active:scale-95"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 border border-emerald-300 dark:border-emerald-500/40 text-emerald-800 dark:text-emerald-300 font-semibold text-xs hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition-all cursor-pointer shadow-xs active:scale-95"
       >
         <Download className="w-3.5 h-3.5" />
         <span>Download CSV ({downloadFilename})</span>
@@ -151,7 +151,7 @@ function ReportActionToolbar({ content }: { content: string }) {
       <button
         type="button"
         onClick={handleCopy}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-border text-muted-foreground font-medium text-xs hover:bg-slate-700/80 hover:text-foreground transition-all cursor-pointer shadow-sm active:scale-95"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted border border-border text-foreground/80 font-medium text-xs hover:bg-muted/80 hover:text-foreground transition-all cursor-pointer shadow-xs active:scale-95"
       >
         {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
         <span>{copied ? "Copied to Clipboard!" : "Copy Table"}</span>
@@ -680,7 +680,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                                     e.stopPropagation();
                                     triggerCsvDownload(href, cleanName);
                                   }}
-                                  className="inline-flex items-center gap-1.5 my-1 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-semibold text-xs hover:bg-emerald-500/25 hover:text-emerald-200 transition-all cursor-pointer shadow-sm active:scale-95"
+                                  className="inline-flex items-center gap-1.5 my-1 px-3 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300 font-semibold text-xs hover:bg-emerald-200 dark:hover:bg-emerald-500/25 transition-all cursor-pointer shadow-xs active:scale-95"
                                 >
                                   <Download className="w-3.5 h-3.5" />
                                   <span>{children}</span>
@@ -694,7 +694,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                                 <a
                                   href={href}
                                   onClick={(e) => e.stopPropagation()}
-                                  className="text-cyan-400 hover:text-cyan-300 font-medium underline underline-offset-2 transition-colors"
+                                  className="text-cyan-700 dark:text-cyan-400 font-medium underline underline-offset-2 transition-colors"
                                 >
                                   {children}
                                 </a>
@@ -707,7 +707,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                                 <a
                                   href={href}
                                   onClick={(e) => e.stopPropagation()}
-                                  className="text-indigo-400 hover:text-indigo-300 font-medium underline underline-offset-2 transition-colors"
+                                  className="text-primary font-medium underline underline-offset-2 transition-colors"
                                 >
                                   {children}
                                 </a>
@@ -721,7 +721,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-emerald-400 hover:text-emerald-300 font-medium underline underline-offset-2 transition-colors"
+                                className="text-emerald-700 dark:text-emerald-400 font-medium underline underline-offset-2 transition-colors"
                               >
                                 {children}
                               </a>
@@ -795,7 +795,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                       <span className="text-xs font-bold text-foreground truncate">
                         Step {idx + 1}: {item.targetNode || item.nodeId}
                       </span>
-                      <span className="px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-bold text-indigo-300 shrink-0 capitalize">
+                      <span className="px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/10 border border-indigo-300 dark:border-indigo-500/20 text-[9px] font-bold text-indigo-800 dark:text-indigo-300 shrink-0 capitalize">
                         {String(item.actionVerb || item.allowedVerbs?.[0] || "Execute").toLowerCase()}
                       </span>
                     </div>
@@ -939,10 +939,10 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                         setExecutionModeOverride("inherit");
                         setExecutionModeDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors ${
+                      className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors cursor-pointer ${
                         executionModeOverride === "inherit"
-                          ? "bg-indigo-600/25 text-indigo-300 border-l-2 border-indigo-500 font-bold"
-                          : "text-muted-foreground hover:bg-slate-800 hover:text-foreground"
+                          ? "bg-primary/10 text-primary border-l-2 border-primary font-bold"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                     >
                       ⚙️ Inherit Agent Default
@@ -953,10 +953,10 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                         setExecutionModeOverride("plan_first");
                         setExecutionModeDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors ${
+                      className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors cursor-pointer ${
                         executionModeOverride === "plan_first"
-                          ? "bg-indigo-600/25 text-indigo-300 border-l-2 border-indigo-500 font-bold"
-                          : "text-muted-foreground hover:bg-slate-800 hover:text-foreground"
+                          ? "bg-primary/10 text-primary border-l-2 border-primary font-bold"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                     >
                       📋 Plan First
@@ -967,10 +967,10 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                         setExecutionModeOverride("direct");
                         setExecutionModeDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors ${
+                      className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors cursor-pointer ${
                         executionModeOverride === "direct"
-                          ? "bg-indigo-600/25 text-indigo-300 border-l-2 border-indigo-500 font-bold"
-                          : "text-muted-foreground hover:bg-slate-800 hover:text-foreground"
+                          ? "bg-primary/10 text-primary border-l-2 border-primary font-bold"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                     >
                       ⚡ Direct Execution
