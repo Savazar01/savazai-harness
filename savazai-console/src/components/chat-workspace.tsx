@@ -677,33 +677,33 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
   return (
     <div className="flex h-full">
       <div className="flex flex-col flex-1 min-w-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 border-b border-slate-900 bg-slate-950/60 backdrop-blur-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 border-b border-border bg-card/80 backdrop-blur-sm text-card-foreground">
           <div className="flex items-center gap-4">
             <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
                 Agent Workspace
-                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                   {executionTarget === "agentflow" ? "Workflow Graph" : "Direct MCP"}
                 </span>
               </h2>
             </div>
 
             {/* Mode Switcher Tabs */}
-            <div className="flex items-center p-0.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
+            <div className="flex items-center p-0.5 rounded-xl bg-muted border border-border text-xs">
               {canRunPublishedFlow && (
                 <button
                   onClick={() => setExecutionTarget("agentflow")}
                   className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all ${
                     executionTarget === "agentflow"
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-card/60"
                   }`}
                   title="Execute compiled multi-agent workflows"
                 >
                   <Zap className="h-3.5 w-3.5" />
                   <span>Published Agentflows</span>
                   {publishedFlows.length > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-900/60 text-indigo-300 ml-0.5">
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-primary/20 text-primary ml-0.5">
                       {publishedFlows.length}
                     </span>
                   )}
@@ -714,15 +714,15 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                   onClick={() => setExecutionTarget("mcp")}
                   className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all ${
                     executionTarget === "mcp"
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-card/60"
                   }`}
                   title="Execute direct queries with active MCP servers"
                 >
                   <Server className="h-3.5 w-3.5" />
                   <span>Direct MCP Chat</span>
                   {discoveredServers.length > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-900/60 text-indigo-300 ml-0.5">
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-primary/20 text-primary ml-0.5">
                       {discoveredServers.length}
                     </span>
                   )}
@@ -737,24 +737,24 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
               <div className="relative">
                 <button
                   onClick={() => setFlowDropdownOpen(!flowDropdownOpen)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-indigo-500/50 text-xs font-medium text-slate-200 hover:text-white transition-all shadow-sm"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-card border border-border hover:border-primary/50 text-xs font-medium text-foreground hover:bg-muted transition-all shadow-sm"
                 >
-                  <Layers className="h-3.5 w-3.5 text-indigo-400" />
+                  <Layers className="h-3.5 w-3.5 text-primary" />
                   <span className="max-w-[200px] truncate">
                     {publishedFlows.find((f) => f.id === selectedFlowId)?.name || (publishedFlows.length > 0 ? "Select Agentflow" : "No Published Flows")}
                   </span>
-                  <ChevronDown className="h-3 w-3 text-slate-500 ml-1" />
+                  <ChevronDown className="h-3 w-3 text-muted-foreground ml-1" />
                 </button>
                 {flowDropdownOpen && (
                   <>
                     <div className="fixed inset-0 z-20" onClick={() => setFlowDropdownOpen(false)} />
-                    <div className="absolute right-0 top-full mt-1.5 z-30 w-72 rounded-2xl border border-slate-800 bg-[#14141f] shadow-2xl shadow-black/80 py-2 divide-y divide-slate-800/60">
-                      <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <div className="absolute right-0 top-full mt-1.5 z-30 w-72 rounded-2xl border border-border bg-popover text-popover-foreground shadow-2xl py-2 divide-y divide-border">
+                      <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                         Published Agentflows ({publishedFlows.length})
                       </div>
                       <div className="py-1 max-h-60 overflow-y-auto">
                         {publishedFlows.length === 0 ? (
-                          <div className="px-3 py-2 text-xs text-slate-500 italic">
+                          <div className="px-3 py-2 text-xs text-muted-foreground italic">
                             No published flows found. Publish a flow in Capability Studio.
                           </div>
                         ) : (
@@ -765,16 +765,16 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                                 setSelectedFlowId(flow.id);
                                 setFlowDropdownOpen(false);
                               }}
-                              className={`w-full text-left px-3 py-2 text-xs flex flex-col gap-0.5 hover:bg-slate-800/50 transition-colors ${
-                                flow.id === selectedFlowId ? "bg-indigo-600/15 text-indigo-300" : "text-slate-300"
+                              className={`w-full text-left px-3 py-2 text-xs flex flex-col gap-0.5 hover:bg-muted transition-colors ${
+                                flow.id === selectedFlowId ? "bg-primary/10 text-primary font-medium" : "text-foreground"
                               }`}
                             >
                               <div className="flex items-center justify-between">
-                                <span className="font-semibold text-white">{flow.name}</span>
-                                {flow.id === selectedFlowId && <Check className="h-3.5 w-3.5 text-indigo-400" />}
+                                <span className="font-semibold text-foreground">{flow.name}</span>
+                                {flow.id === selectedFlowId && <Check className="h-3.5 w-3.5 text-primary" />}
                               </div>
                               {flow.description && (
-                                <span className="text-[11px] text-slate-400 line-clamp-1">{flow.description}</span>
+                                <span className="text-[11px] text-muted-foreground line-clamp-1">{flow.description}</span>
                               )}
                             </button>
                           ))
@@ -788,9 +788,9 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
               <div className="relative" ref={mcpDropdownRef}>
                 <button
                   onClick={() => setMcpDropdownOpen(!mcpDropdownOpen)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-indigo-500/50 text-xs font-medium text-slate-200 hover:text-white transition-all shadow-sm"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-card border border-border hover:border-primary/50 text-xs font-medium text-foreground hover:bg-muted transition-all shadow-sm"
                 >
-                  <Server className="h-3.5 w-3.5 text-emerald-400" />
+                  <Server className="h-3.5 w-3.5 text-emerald-500" />
                   <span>
                     {activeTools.size === 0
                       ? `Select MCP Server (${discoveredServers.length} available)`
@@ -798,17 +798,17 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                         ? `MCP: ${Array.from(activeTools)[0]} (${discoveredServers.find(s => s.serverId === Array.from(activeTools)[0])?.tools.length ?? 0} tools)`
                         : `MCP: ${activeTools.size} Active (${Array.from(activeTools).join(", ")})`}
                   </span>
-                  <ChevronDown className="h-3 w-3 text-slate-500 ml-1" />
+                  <ChevronDown className="h-3 w-3 text-muted-foreground ml-1" />
                 </button>
                 {mcpDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-1.5 z-30 w-84 rounded-2xl border border-slate-800 bg-[#14141f] shadow-2xl shadow-black/80 py-2 divide-y divide-slate-800/60 animate-in fade-in zoom-in-95 duration-100">
-                    <div className="px-3 py-1.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <div className="absolute right-0 top-full mt-1.5 z-30 w-84 rounded-2xl border border-border bg-popover text-popover-foreground shadow-2xl py-2 divide-y divide-border animate-in fade-in zoom-in-95 duration-100">
+                    <div className="px-3 py-1.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                       <span>Configured MCP Servers ({discoveredServers.length})</span>
-                      <span className="text-emerald-400 font-medium lowercase">live discovery</span>
+                      <span className="text-emerald-500 font-medium lowercase">live discovery</span>
                     </div>
                     <div className="py-1 max-h-72 overflow-y-auto">
                       {discoveredServers.length === 0 ? (
-                        <div className="px-3 py-2 text-xs text-slate-500 italic">
+                        <div className="px-3 py-2 text-xs text-muted-foreground italic">
                           No MCP servers configured or reachable. Check Command Center settings.
                         </div>
                       ) : (
@@ -819,8 +819,8 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                               key={server.serverId}
                               type="button"
                               onClick={() => toggleTool(server.serverId)}
-                              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-800/50 transition-colors ${
-                                isSelected ? "bg-emerald-500/10 text-emerald-300" : "text-slate-400"
+                              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-muted transition-colors ${
+                                isSelected ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" : "text-muted-foreground"
                               }`}
                             >
                               <div className="flex items-center gap-2.5">
@@ -828,17 +828,17 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                                   type="checkbox"
                                   checked={isSelected}
                                   readOnly
-                                  className="h-3.5 w-3.5 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-0 cursor-pointer pointer-events-none"
+                                  className="h-3.5 w-3.5 rounded border-border bg-card text-emerald-500 focus:ring-0 cursor-pointer pointer-events-none"
                                 />
                                 <div>
-                                  <div className="font-semibold text-white">{server.serverId}</div>
-                                  <div className="text-[10px] text-slate-500">
+                                  <div className="font-semibold text-foreground">{server.serverId}</div>
+                                  <div className="text-[10px] text-muted-foreground">
                                     {server.tools.length} granular tool{server.tools.length !== 1 ? "s" : ""} registered
                                   </div>
                                 </div>
                               </div>
                               <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                                isSelected ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-slate-800 text-slate-500 border-slate-700"
+                                isSelected ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" : "bg-muted text-muted-foreground border-border"
                               }`}>
                                 {isSelected ? "Active" : "Disabled"}
                               </div>
@@ -847,7 +847,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                         })
                       )}
                     </div>
-                    <div className="px-3 py-2 border-t border-slate-800/80 bg-slate-900/60 flex items-center justify-between rounded-b-2xl">
+                    <div className="px-3 py-2 border-t border-border bg-muted/40 flex items-center justify-between rounded-b-2xl">
                       <div className="flex items-center gap-2 text-[10px]">
                         <button
                           type="button"
@@ -855,15 +855,15 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                             const all = new Set(discoveredServers.map(s => s.serverId));
                             setActiveTools(all);
                           }}
-                          className="text-indigo-400 hover:text-indigo-300 font-semibold"
+                          className="text-primary hover:underline font-semibold"
                         >
                           Select All
                         </button>
-                        <span className="text-slate-600">|</span>
+                        <span className="text-muted-foreground">|</span>
                         <button
                           type="button"
                           onClick={() => setActiveTools(new Set())}
-                          className="text-slate-400 hover:text-slate-200"
+                          className="text-muted-foreground hover:text-foreground"
                         >
                           Clear
                         </button>
@@ -871,7 +871,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                       <button
                         type="button"
                         onClick={() => setMcpDropdownOpen(false)}
-                        className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold shadow transition-all cursor-pointer"
+                        className="px-3 py-1 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-bold shadow transition-all cursor-pointer"
                       >
                         Apply &amp; Close
                       </button>
@@ -889,9 +889,9 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
         >
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="rounded-3xl border border-slate-900 bg-slate-900/10 p-8 max-w-md">
-                <h3 className="text-lg font-bold text-white mb-2">Welcome to the Agent Workspace</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
+              <div className="rounded-3xl border border-border bg-card p-8 max-w-md shadow-xs">
+                <h3 className="text-lg font-bold text-foreground mb-2">Welcome to the Agent Workspace</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   Send a message to start a conversation with the SavazAI multi-agent orchestrator.
                   Your request passes through supervisor, agents, and verification nodes.
                 </p>
@@ -907,61 +907,61 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
           ))}
 
           {pendingInterrupt && executionTarget === "agentflow" && (
-            <div className="rounded-2xl border border-indigo-500/30 bg-[#0b0b14] p-5 shadow-xl max-w-3xl w-full mx-auto my-4 space-y-4 animate-in fade-in duration-200">
+            <div className="rounded-2xl border border-primary/30 bg-card text-card-foreground p-5 shadow-xl max-w-3xl w-full mx-auto my-4 space-y-4 animate-in fade-in duration-200">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 shrink-0">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary shrink-0">
                   <span className="text-base">📋</span>
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">Execution Plan Approval Required</h4>
-                  <p className="text-[10px] text-slate-400">The supervisor has formulated the following plan. Please review prior to execution.</p>
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">Execution Plan Approval Required</h4>
+                  <p className="text-[10px] text-muted-foreground">The supervisor has formulated the following plan. Please review prior to execution.</p>
                 </div>
               </div>
 
-              <div className="space-y-3 border border-slate-900 bg-slate-950/40 rounded-xl p-3.5 max-h-72 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+              <div className="space-y-3 border border-border bg-muted/30 rounded-xl p-3.5 max-h-72 overflow-y-auto">
                 {pendingInterrupt.clarificationPrompt && (
-                  <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3.5 text-xs text-amber-200 leading-relaxed font-sans font-medium mb-3">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-2 flex items-center gap-1.5">
+                  <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3.5 text-xs text-amber-700 dark:text-amber-200 leading-relaxed font-sans font-medium mb-3">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-2 flex items-center gap-1.5">
                       <span>⚠️</span> Information Required To Perform Action
                     </div>
-                    <div className="whitespace-pre-wrap text-slate-100 text-xs font-mono bg-slate-950/70 p-3 rounded-lg border border-amber-500/20 leading-relaxed">
+                    <div className="whitespace-pre-wrap text-foreground text-xs font-mono bg-card p-3 rounded-lg border border-amber-500/20 leading-relaxed">
                       {pendingInterrupt.clarificationPrompt}
                     </div>
                   </div>
                 )}
                 {pendingInterrupt.planSummary && (
-                  <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-3 text-xs text-indigo-200 leading-relaxed font-sans font-medium mb-3">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1 flex items-center gap-1">
+                  <div className="rounded-xl border border-primary/30 bg-primary/10 p-3 text-xs text-primary leading-relaxed font-sans font-medium mb-3">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1 flex items-center gap-1">
                       <span>💡</span> Implementation Strategy Summary
                     </div>
                     {pendingInterrupt.planSummary}
                   </div>
                 )}
                 {pendingInterrupt.plan.map((item, idx) => (
-                  <div key={idx} className="flex flex-col gap-1 border-b border-slate-900 pb-2 last:border-0 last:pb-0">
+                  <div key={idx} className="flex flex-col gap-1 border-b border-border pb-2 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-slate-200 truncate">
+                      <span className="text-xs font-bold text-foreground truncate">
                         Step {idx + 1}: {item.targetNode || item.nodeId}
                       </span>
-                      <span className="px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-bold text-indigo-300 shrink-0 capitalize">
+                      <span className="px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-[9px] font-bold text-primary shrink-0 capitalize">
                         {String(item.actionVerb || item.allowedVerbs?.[0] || "Execute").toLowerCase()}
                       </span>
                     </div>
                     {item.targetEntity && (
-                      <div className="text-[10px] text-slate-400">
-                        Target: <span className="text-slate-300">{item.targetEntity}</span>
+                      <div className="text-[10px] text-muted-foreground">
+                        Target: <span className="text-foreground">{item.targetEntity}</span>
                       </div>
                     )}
                     {item.parameters && Object.keys(item.parameters).length > 0 && (
-                      <div className="text-[10px] text-slate-400 mt-1">
-                        <span className="block text-[9px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Parameters:</span>
-                        <pre className="text-[9px] text-cyan-400 font-mono bg-slate-950 p-2 rounded overflow-x-auto [&::-webkit-scrollbar]:h-0.5 [&::-webkit-scrollbar-thumb]:bg-slate-800">
+                      <div className="text-[10px] text-muted-foreground mt-1">
+                        <span className="block text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Parameters:</span>
+                        <pre className="text-[9px] text-primary font-mono bg-muted/60 p-2 rounded overflow-x-auto border border-border/50">
                           {JSON.stringify(item.parameters, null, 2)}
                         </pre>
                       </div>
                     )}
                     {item.warning && (
-                      <div className="text-[10px] text-amber-400 mt-1.5 bg-amber-500/5 border border-amber-500/15 px-2 py-1 rounded flex items-start gap-1">
+                      <div className="text-[10px] text-amber-600 dark:text-amber-400 mt-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded flex items-start gap-1">
                         <span className="shrink-0">⚠️</span>
                         <span>{item.warning}</span>
                       </div>
@@ -970,10 +970,10 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                 ))}
               </div>
 
-              <div className="space-y-2 border-t border-slate-900/80 pt-4">
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+              <div className="space-y-2 border-t border-border pt-4">
+                <div className="flex items-center justify-between text-xs font-semibold text-foreground">
                   <span>Provide or adjust execution parameters below:</span>
-                  <span className="text-[11px] font-normal text-indigo-400">💡 Edit bracketed choices or type details</span>
+                  <span className="text-[11px] font-normal text-primary">💡 Edit bracketed choices or type details</span>
                 </div>
                 <textarea
                   value={feedbackInput}
@@ -985,7 +985,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                     }
                   }}
                   placeholder="Type execution parameters or instructions here (e.g. date: 2026-10-09, symbol: INFY)..."
-                  className="w-full rounded-xl border-2 border-indigo-500/40 bg-[#06060b] p-4 text-base text-slate-100 placeholder-slate-500 outline-none resize-y focus:border-indigo-500 font-mono leading-relaxed transition-all min-h-[140px] shadow-inner"
+                  className="w-full rounded-xl border-2 border-primary/40 bg-background p-4 text-sm text-foreground placeholder:text-muted-foreground outline-none resize-y focus:border-primary font-mono leading-relaxed transition-all min-h-[140px] shadow-inner"
                   rows={Math.max(4, (feedbackInput.match(/\n/g) || []).length + 1)}
                 />
                 {canHitlApprove ? (
@@ -993,7 +993,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                     <button
                       onClick={handleRejectReplan}
                       disabled={streaming}
-                      className="px-3.5 py-2 rounded-xl bg-rose-900/60 hover:bg-rose-800 border border-rose-500/30 text-rose-200 font-semibold text-xs flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow"
+                      className="px-3.5 py-2 rounded-xl bg-destructive/15 hover:bg-destructive/25 border border-destructive/30 text-destructive font-semibold text-xs flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
                     >
                       <span>❌</span> Reject &amp; Re-Plan
                     </button>
@@ -1002,7 +1002,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                       <button
                         onClick={handleEditReplan}
                         disabled={streaming}
-                        className="px-3.5 py-2 rounded-xl bg-amber-900/60 hover:bg-amber-800 border border-amber-500/30 text-amber-200 font-semibold text-xs flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow"
+                        className="px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-700 dark:text-amber-300 font-semibold text-xs flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
                       >
                         <span>📝</span> Adjust &amp; Re-Plan
                       </button>
@@ -1011,7 +1011,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                     <button
                       onClick={handleSendFeedback}
                       disabled={!feedbackInput.trim() || streaming}
-                      className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed shadow transition-colors"
+                      className="px-3.5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed shadow transition-colors"
                     >
                       <span>✨</span> Submit Details &amp; Execute
                     </button>
@@ -1025,7 +1025,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                     </button>
                   </div>
                 ) : (
-                  <div className="text-xs text-amber-300 bg-amber-950/30 border border-amber-500/30 rounded-xl p-3">
+                  <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
                     Requires permission <code className="font-mono">agent_workspace:hitl_approve</code> to approve or adjust execution plans.
                   </div>
                 )}
@@ -1036,23 +1036,23 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
 
         {error && (
           <div className="px-6 py-2">
-            <div className="rounded-xl border border-red-500/25 bg-red-500/5 px-4 py-2 text-xs text-red-400">{error}</div>
+            <div className="rounded-xl border border-destructive/25 bg-destructive/10 px-4 py-2 text-xs text-destructive">{error}</div>
           </div>
         )}
 
-        <div className="px-4 py-3 border-t border-slate-900 bg-slate-950/20">
-          <div className="bg-[#14141f]/90 border border-[#1f1f2e] focus-within:border-indigo-500/50 rounded-2xl p-3 flex flex-col gap-2.5 transition-all max-w-3xl mx-auto shadow-lg shadow-black/20">
+        <div className="px-4 py-3 border-t border-border bg-card/40">
+          <div className="bg-card border border-border focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 rounded-2xl p-3 flex flex-col gap-2.5 transition-all max-w-3xl mx-auto shadow-lg shadow-black/5 dark:shadow-black/20">
             {attachedFiles.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {attachedFiles.map((f, i) => (
                   <div
                     key={`${f.name}-${i}`}
-                    className="flex items-center gap-1.5 rounded-xl bg-slate-800/60 border border-slate-700/50 pl-2.5 pr-1.5 py-1 text-xs text-slate-300"
+                    className="flex items-center gap-1.5 rounded-xl bg-muted border border-border pl-2.5 pr-1.5 py-1 text-xs text-foreground"
                   >
                     <span className="truncate max-w-28">{f.name}</span>
                     <button
                       onClick={() => removeFile(i)}
-                      className="p-0.5 rounded-full hover:bg-slate-700/80 text-slate-500 hover:text-slate-300 transition-colors"
+                      className="p-0.5 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -1069,7 +1069,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
               placeholder="Type your message..."
               rows={1}
               disabled={streaming}
-              className="w-full bg-transparent border-0 outline-none resize-none text-white placeholder-slate-500 disabled:opacity-50 py-1 leading-relaxed"
+              className="w-full bg-transparent border-0 outline-none resize-none text-foreground placeholder:text-muted-foreground disabled:opacity-50 py-1 leading-relaxed"
               style={{
                 minHeight: "28px",
                 maxHeight: "160px",
@@ -1087,7 +1087,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center justify-center w-8 h-8 rounded-xl bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all"
+                  className="flex items-center justify-center w-8 h-8 rounded-xl bg-muted hover:bg-accent border border-border text-muted-foreground hover:text-foreground transition-all"
                   disabled={streaming}
                   title="Attach file"
                 >
@@ -1103,15 +1103,15 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                 />
 
                 {executionTarget === "agentflow" ? (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[11px] font-medium ml-1">
-                    <Zap className="h-3 w-3 text-indigo-400 shrink-0" />
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[11px] font-medium ml-1">
+                    <Zap className="h-3 w-3 text-primary shrink-0" />
                     <span className="truncate max-w-[200px]">
                       {publishedFlows.find((f) => f.id === selectedFlowId)?.name || "Workflow Active"}
                     </span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium ml-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-medium ml-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
                     <span>
                       {activeTools.size === 0
                         ? "0 MCP Servers Active"
@@ -1130,28 +1130,28 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                       setProfileDropdownOpen(!profileDropdownOpen);
                       setProviderDropdownOpen(false);
                     }}
-                    className="flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-800/40 border border-slate-700/40 text-[11px] font-medium text-slate-300 hover:text-white transition-all whitespace-nowrap"
+                    className="flex items-center gap-1 px-2 py-1 rounded-xl bg-muted hover:bg-accent border border-border text-[11px] font-medium text-muted-foreground hover:text-foreground transition-all whitespace-nowrap"
                     title={`Capability: ${CAPABILITY_PROFILES[capabilityProfile]?.label || capabilityProfile}`}
                   >
                     {CAPABILITY_PROFILES[capabilityProfile]?.label || capabilityProfile}
-                    <ChevronDown className="h-3 w-3 text-slate-500" />
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
                   </button>
                   {profileDropdownOpen && (
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setProfileDropdownOpen(false)} />
-                      <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[160px] rounded-xl border border-slate-700/50 bg-[#1a1a28] shadow-xl shadow-black/30 py-1">
+                      <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[160px] rounded-xl border border-border bg-popover text-popover-foreground shadow-xl py-1">
                         {Object.entries(CAPABILITY_PROFILES).map(([key, cfg]) => (
                           <button
                             key={key}
                             onClick={() => handleProfileChange(key)}
                             className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
                               key === capabilityProfile
-                                ? "bg-indigo-500/15 text-indigo-300"
-                                : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
+                                ? "bg-primary/10 text-primary font-medium"
+                                : "text-foreground hover:bg-muted"
                             }`}
                           >
                             {cfg.label}
-                            <span className="block text-[10px] text-slate-500">Temp: {cfg.temp} &middot; Max: {cfg.maxTokens}</span>
+                            <span className="block text-[10px] text-muted-foreground">Temp: {cfg.temp} &middot; Max: {cfg.maxTokens}</span>
                           </button>
                         ))}
                       </div>
@@ -1164,19 +1164,19 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                       setProviderDropdownOpen(!providerDropdownOpen);
                       setProfileDropdownOpen(false);
                     }}
-                    className="flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-800/40 border border-slate-700/40 text-[11px] font-medium text-slate-300 hover:text-white transition-all max-w-[160px]"
+                    className="flex items-center gap-1 px-2 py-1 rounded-xl bg-muted hover:bg-accent border border-border text-[11px] font-medium text-muted-foreground hover:text-foreground transition-all max-w-[160px]"
                     title={`${PROVIDER_LABELS[activeProvider] || activeProvider} / ${activeModel || "—"}`}
                   >
                     <span className="truncate">{PROVIDER_LABELS[activeProvider] || activeProvider} &gt; {activeModel || "—"}</span>
-                    <ChevronDown className="h-3 w-3 text-slate-500 shrink-0" />
+                    <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
                   </button>
                   {providerDropdownOpen && (
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setProviderDropdownOpen(false)} />
-                      <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[200px] max-h-64 overflow-y-auto rounded-xl border border-slate-700/50 bg-[#1a1a28] shadow-xl shadow-black/30 py-1">
+                      <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[200px] max-h-64 overflow-y-auto rounded-xl border border-border bg-popover text-popover-foreground shadow-xl py-1">
                         {enabledProviders.map((key) => (
                           <div key={key}>
-                            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-900/40">
+                            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/50">
                               {PROVIDER_LABELS[key] || key}
                             </div>
                             {(dynamicModels[key] || MODEL_PRESETS[key] || []).map((m) => (
@@ -1190,8 +1190,8 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                                 }}
                                 className={`w-full text-left px-3 py-1 text-xs transition-colors ${
                                   key === activeProvider && m === activeModel
-                                    ? "bg-indigo-500/15 text-indigo-300"
-                                    : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
+                                    ? "bg-primary/10 text-primary font-medium"
+                                    : "text-foreground hover:bg-muted"
                                 }`}
                               >
                                 {m}
@@ -1211,7 +1211,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                       setProfileDropdownOpen(false);
                       setProviderDropdownOpen(false);
                     }}
-                    className="flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-800/40 border border-slate-700/40 text-[11px] font-medium text-slate-300 hover:text-white transition-all whitespace-nowrap"
+                    className="flex items-center gap-1 px-2 py-1 rounded-xl bg-muted hover:bg-accent border border-border text-[11px] font-medium text-muted-foreground hover:text-foreground transition-all whitespace-nowrap"
                     title={`Execution: ${
                       executionModeOverride === "inherit" ? "Inherit Default" :
                       executionModeOverride === "plan_first" ? "Plan First" : "Direct Execution"
@@ -1220,12 +1220,12 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                     {executionModeOverride === "inherit" && "⚙️ Inherit Default"}
                     {executionModeOverride === "plan_first" && "📋 Plan First"}
                     {executionModeOverride === "direct" && "⚡ Direct"}
-                    <ChevronDown className="h-3 w-3 text-slate-500" />
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
                   </button>
                   {executionModeDropdownOpen && (
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setExecutionModeDropdownOpen(false)} />
-                      <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[180px] rounded-xl border border-slate-700/50 bg-[#1a1a28] shadow-xl shadow-black/30 py-1">
+                      <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[180px] rounded-xl border border-border bg-popover text-popover-foreground shadow-xl py-1">
                         <button
                           onClick={() => {
                             setExecutionModeOverride("inherit");
@@ -1233,8 +1233,8 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                           }}
                           className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
                             executionModeOverride === "inherit"
-                              ? "bg-indigo-500/15 text-indigo-300"
-                              : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
+                              ? "bg-primary/10 text-primary font-medium"
+                              : "text-foreground hover:bg-muted"
                           }`}
                         >
                           ⚙️ Inherit Agent Default
@@ -1246,8 +1246,8 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                           }}
                           className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
                             executionModeOverride === "plan_first"
-                              ? "bg-indigo-500/15 text-indigo-300"
-                              : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
+                              ? "bg-primary/10 text-primary font-medium"
+                              : "text-foreground hover:bg-muted"
                           }`}
                         >
                           📋 Plan First
@@ -1259,8 +1259,8 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                           }}
                           className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
                             executionModeOverride === "direct"
-                              ? "bg-indigo-500/15 text-indigo-300"
-                              : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
+                              ? "bg-primary/10 text-primary font-medium"
+                              : "text-foreground hover:bg-muted"
                           }`}
                         >
                           ⚡ Direct Execution
@@ -1273,7 +1273,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                 <button
                   onClick={handleSend}
                   disabled={!input.trim() || streaming}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 hover:bg-indigo-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   title="Send"
                 >
                   <Send className="h-4 w-4" />
@@ -1281,7 +1281,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                 {streaming && (
                   <button
                     onClick={() => abortRef.current?.abort()}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-600 text-white shadow-lg shadow-red-600/25 hover:bg-red-500 transition-all"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md hover:bg-destructive/90 transition-all"
                     title="Stop Execution"
                   >
                     <Square className="h-4 w-4" />
@@ -1290,7 +1290,7 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
               </div>
             </div>
           </div>
-          <p className="mt-1.5 text-[10px] text-slate-600 text-center">
+          <p className="mt-1.5 text-[10px] text-muted-foreground text-center">
             {PROVIDER_LABELS[activeProvider] || activeProvider} / {activeModel || "—"} &middot;
             NDJSON streaming &middot; PII gateway active
           </p>

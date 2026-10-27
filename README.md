@@ -40,6 +40,7 @@ SavazAI strictly separates orchestration execution, control plane UI, and state 
 
 * **Frontend Console (`./savazai-console`)**:
   * Built with **Next.js 16 App Router**, **React 19**, **Better-Auth**, **Tailwind CSS v4**, and **Shadcn UI**.
+  * Governed by **`DESIGN.md`** semantic design token contract ensuring high-contrast Light/Dark mode parity and WCAG AA compliance.
   * Runs on container/host port **`3056`**.
   * Provides the unified workspace: Agent Workspace (`/dashboard`), Capability Studio (`/studio`), Business Center (`/business`), In-App Documentation (`/docs`), Command Center (`/admin/settings`), and User Admin (`/admin/users`).
 

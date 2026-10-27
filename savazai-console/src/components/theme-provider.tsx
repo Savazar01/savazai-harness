@@ -112,6 +112,18 @@ function hexToRgbComponents(hex: string): string {
   }
 }
 
+function isDarkHex(hex?: string): boolean {
+  if (!hex || typeof hex !== "string" || !hex.startsWith("#")) return true;
+  const clean = hex.replace("#", "");
+  const rgb = parseInt(clean.length === 3 ? clean.split("").map((x) => x + x).join("") : clean, 16);
+  if (isNaN(rgb)) return true;
+  const r = (rgb >> 16) & 255;
+  const g = (rgb >> 8) & 255;
+  const b = rgb & 255;
+  const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luma < 128;
+}
+
 export async function ThemeProvider({ children }: { children: React.ReactNode }) {
   const config = await getSystemConfig();
   const { primaryColor, secondaryColor, background, fontSans, promptFontSize, promptFontFamily } = config.designTokens || {};
@@ -127,16 +139,25 @@ export async function ThemeProvider({ children }: { children: React.ReactNode })
     return promptFontFamily;
   })();
 
+  const isDarkBg = background ? isDarkHex(background) : true;
+  const backgroundOverride = background
+    ? isDarkBg
+      ? `html.dark { --background: ${background}; }`
+      : `html.light { --background: ${background}; }`
+    : "";
+
   const cssVariables = `
     :root {
-      --primary: ${primaryRgb};
-      --secondary: ${secondaryRgb};
-      ${background ? `--background: ${background};` : ""}
+      --primary: ${primaryColor || "#4f46e5"};
+      --primary-rgb: ${primaryRgb};
+      --secondary: ${secondaryColor || "#06b6d4"};
+      --secondary-rgb: ${secondaryRgb};
       ${fontSans ? `--font-sans: ${fontSans};` : ""}
       --prompt-font-size: ${promptFontSize || "16px"};
       --prompt-font-family: ${resolvedFontFamily};
       --brand-logo-url: url("${config.brandLogoUrl}");
     }
+    ${backgroundOverride}
   `;
 
   return (

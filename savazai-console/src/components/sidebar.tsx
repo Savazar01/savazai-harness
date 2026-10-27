@@ -181,12 +181,12 @@ export function Sidebar() {
   const showFullContent = !isCollapsed || mobileOpen;
 
   const sidebarContent = (
-    <div className="flex flex-col h-full overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-900 select-none">
-      <div className="flex items-center justify-between px-4 py-6 border-b border-slate-900">
+    <div className="flex flex-col h-full overflow-y-auto select-none bg-card text-card-foreground">
+      <div className="flex items-center justify-between px-4 py-6 border-b border-border">
         <div className="flex items-center gap-3">
           <Bot className="h-7 w-7 text-primary shrink-0" />
           {showFullContent && (
-            <span className="text-lg font-bold text-white tracking-tight animate-in fade-in duration-200">
+            <span className="text-lg font-bold text-foreground tracking-tight animate-in fade-in duration-200">
               SavazAI
             </span>
           )}
@@ -198,7 +198,7 @@ export function Sidebar() {
               setIsCollapsed(nextVal);
               localStorage.setItem("savazai_sidebar_collapsed", String(nextVal));
             }}
-            className="hidden md:flex p-1 rounded hover:bg-slate-900 text-slate-400 hover:text-white transition-colors"
+            className="hidden md:flex p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
             {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -218,8 +218,8 @@ export function Sidebar() {
                 !showFullContent ? "justify-center p-2.5 mx-2" : "px-3 py-2.5"
               } ${
                 isActive
-                  ? "bg-primary text-white shadow-lg shadow-primary/20"
-                  : "text-slate-400 hover:text-white hover:bg-slate-900/40"
+                  ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
               title={!showFullContent ? item.label : undefined}
             >
@@ -233,22 +233,22 @@ export function Sidebar() {
       </nav>
 
       {isDashboard && showFullContent && (
-        <div className="flex flex-col flex-1 min-h-0 border-t border-slate-900 pt-3">
+        <div className="flex flex-col flex-1 min-h-0 border-t border-border pt-3">
           <div className="flex items-center justify-between px-3 mb-2 shrink-0">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Chat Conversations
             </span>
             <button
               onClick={handleNewChat}
-              className="flex items-center justify-center w-6 h-6 rounded-lg hover:bg-slate-800/60 text-slate-400 hover:text-white transition-all"
+              className="flex items-center justify-center w-6 h-6 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
               title="New Chat"
             >
               <Plus className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto px-2 space-y-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-900">
+          <div className="flex-1 overflow-y-auto px-2 space-y-1">
             {threads.length === 0 ? (
-              <p className="text-[11px] text-slate-600 text-center py-6">
+              <p className="text-[11px] text-muted-foreground text-center py-6">
                 No conversations yet
               </p>
             ) : (
@@ -258,17 +258,17 @@ export function Sidebar() {
                   onClick={() => window.dispatchEvent(new CustomEvent("savazai-select-thread", { detail: { threadId: t.threadId } }))}
                   className={`group flex items-center gap-2 px-2.5 py-2 rounded-xl transition-all cursor-pointer ${
                     activeThreadId === t.threadId
-                      ? "bg-indigo-500/10 border border-indigo-500/20"
-                      : "hover:bg-slate-900/40"
+                      ? "bg-primary/10 border border-primary/20 text-primary font-medium"
+                      : "hover:bg-muted text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  <MessageSquare className="h-3.5 w-3.5 shrink-0 text-slate-500" />
-                  <span className="flex-1 truncate text-xs text-slate-400 group-hover:text-slate-200 transition-colors">
+                  <MessageSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <span className="flex-1 truncate text-xs transition-colors">
                     {t.title}
                   </span>
                   <button
                     onClick={(e) => handleDeleteThread(e, t.threadId)}
-                    className="shrink-0 p-0.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-500/15 text-slate-500 hover:text-red-400 transition-all"
+                    className="shrink-0 p-0.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-all"
                     title="Delete conversation"
                   >
                     <Trash2 className="h-3 w-3" />
@@ -283,13 +283,13 @@ export function Sidebar() {
       {/* Spacer to push signout down if dashboard is not active */}
       {!isDashboard && <div className="flex-1" />}
 
-      <div className="px-2 py-3 border-t border-slate-900 shrink-0 space-y-1">
-        <ThemeToggle compact={!showFullContent} className={`flex items-center gap-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-900/60 transition-all ${!showFullContent ? "justify-center p-2.5 mx-2" : "w-full px-3 py-2"}`} />
+      <div className="px-2 py-3 border-t border-border shrink-0 space-y-1">
+        <ThemeToggle compact={!showFullContent} className={`flex items-center gap-3 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-all ${!showFullContent ? "justify-center p-2.5 mx-2" : "w-full px-3 py-2"}`} />
 
         <Link
           href="/profile"
-          className={`flex items-center gap-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-900/60 transition-all ${
-            pathname === "/profile" ? "bg-primary/10 text-primary border border-primary/20" : ""
+          className={`flex items-center gap-3 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-all ${
+            pathname === "/profile" ? "bg-primary/10 text-primary border border-primary/20 font-medium" : ""
           } ${
             !showFullContent ? "justify-center p-2.5 mx-2" : "w-full px-3 py-2"
           }`}
@@ -304,8 +304,8 @@ export function Sidebar() {
           </div>
           {showFullContent && (
             <div className="flex-1 truncate text-left animate-in fade-in duration-200">
-              <div className="truncate text-white font-medium text-xs">{session?.user?.name || "My Profile"}</div>
-              <div className="text-[10px] text-slate-500 truncate">Account &amp; Security</div>
+              <div className="truncate text-foreground font-medium text-xs">{session?.user?.name || "My Profile"}</div>
+              <div className="text-[10px] text-muted-foreground truncate">Account &amp; Security</div>
             </div>
           )}
         </Link>
@@ -322,7 +322,7 @@ export function Sidebar() {
               console.error("[sidebar] Sign out failed:", err);
             }
           }}
-          className={`flex items-center gap-3 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-500/10 transition-all ${
+          className={`flex items-center gap-3 rounded-xl text-xs font-semibold text-destructive hover:bg-destructive/10 transition-all ${
             !showFullContent ? "justify-center p-2.5 mx-2" : "w-full px-3 py-2"
           }`}
           title={!showFullContent ? "Sign Out" : undefined}
@@ -341,7 +341,7 @@ export function Sidebar() {
       {/* Mobile Menu trigger */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-350 hover:text-white shadow-lg shadow-black/40"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-xl bg-card border border-border text-foreground hover:bg-muted shadow-lg shadow-black/10"
         aria-label="Toggle sidebar"
       >
         {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -349,7 +349,7 @@ export function Sidebar() {
 
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden md:flex flex-col border-r border-slate-900 bg-slate-950/60 transition-all duration-300 ${
+        className={`hidden md:flex flex-col border-r border-border bg-card transition-all duration-300 ${
           isCollapsed ? "w-16" : "w-60"
         }`}
       >
@@ -363,7 +363,7 @@ export function Sidebar() {
             className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="relative w-60 max-w-[75vw] bg-slate-950 border-r border-slate-900 shadow-2xl flex flex-col h-full animate-in slide-in-from-left duration-250">
+          <aside className="relative w-60 max-w-[75vw] bg-card border-r border-border shadow-2xl flex flex-col h-full animate-in slide-in-from-left duration-250">
             {sidebarContent}
           </aside>
         </div>

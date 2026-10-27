@@ -236,8 +236,8 @@ function TabButton({
         isCollapsed ? "justify-center px-2 py-3" : "gap-3 px-4 py-3"
       } w-full rounded-xl text-sm font-semibold transition-all cursor-pointer ${
         activeTab === tab
-          ? "bg-primary text-white shadow-lg shadow-primary/20"
-          : "text-slate-400 hover:text-white hover:bg-slate-900/40"
+          ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted"
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -1129,10 +1129,10 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
 
   return (
     <div className="w-full max-w-[1400px] mx-auto py-6 px-4 flex flex-col min-h-0">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-6 border-b border-slate-900 pb-6 shrink-0">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-6 border-b border-border pb-6 shrink-0">
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">SavazAI Command Center</h1>
-          <p className="text-slate-400 text-sm mt-1">Configure appearance, LLM providers, MCP servers, and API services</p>
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">SavazAI Command Center</h1>
+          <p className="text-muted-foreground text-sm mt-1">Configure appearance, LLM providers, MCP servers, and API services</p>
         </div>
       </div>
 
@@ -1155,14 +1155,14 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
         >
           <div className="flex items-center justify-between px-1 mb-1">
             {!isNavCollapsed && (
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                 Navigation
               </span>
             )}
             <button
               type="button"
               onClick={() => setIsNavCollapsed((prev) => !prev)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition-colors cursor-pointer ml-auto"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer ml-auto"
               title={isNavCollapsed ? "Expand sub-navigation" : "Collapse sub-navigation"}
             >
               {isNavCollapsed ? (
@@ -1183,16 +1183,16 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
           {canViewSystemAdmin && <TabButton tab="system_admin" icon={ShieldAlert} activeTab={activeTab} setActiveTab={setActiveTab} label="System Admin" isCollapsed={isNavCollapsed} />}
         </div>
 
-        <form onSubmit={handleSave} className="flex-1 min-w-0 rounded-3xl border border-slate-900 bg-slate-950/40 p-6 relative flex flex-col min-h-0">
-          <div className="max-h-[calc(100vh-260px)] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full">
+        <form onSubmit={handleSave} className="flex-1 min-w-0 rounded-3xl border border-border bg-card p-6 relative flex flex-col min-h-0 text-card-foreground shadow-xs">
+          <div className="max-h-[calc(100vh-260px)] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
             {activeTab === "appearance" && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-foreground mb-1 flex items-center gap-2">
                     Appearance &amp; Theme Engine
                     <HelpTooltip content="Customize global theme modes, typography, palette accents, and background contrast across the entire platform. Changes persist and apply immediately." side="right" />
                   </h3>
-                  <p className="text-slate-400 text-xs">Global Light/Dark theme engine, typography scales, brand accent palettes, and background surface contrast</p>
+                  <p className="text-muted-foreground text-xs">Global Light/Dark theme engine, typography scales, brand accent palettes, and background surface contrast</p>
                 </div>
 
                 {/* 1. Global Theme Mode Selector */}
@@ -1311,13 +1311,13 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                 </div>
 
                 {/* 4. Canvas Background Contrast Presets */}
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-5 space-y-3">
+                <div className="rounded-2xl border border-border bg-muted/20 p-5 space-y-3">
                   <div>
-                    <h4 className="text-sm font-bold text-white mb-0.5">Canvas Background Surface Contrast</h4>
-                    <p className="text-xs text-slate-400">Tailor dark surface depth or light surface warmth</p>
+                    <h4 className="text-sm font-bold text-foreground mb-0.5">Canvas Background Surface Contrast</h4>
+                    <p className="text-xs text-muted-foreground">Tailor dark surface depth or light surface warmth</p>
                   </div>
                   <div className="space-y-2">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dark Mode Surfaces</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Dark Mode Surfaces</span>
                     <div className="flex flex-wrap gap-2">
                       {[
                         { label: "Onyx (#06060b)", hex: "#06060b" },
@@ -1328,17 +1328,18 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                           key={b.hex}
                           type="button"
                           onClick={() => setBackground(b.hex)}
-                          className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-2 ${
                             background.toLowerCase() === b.hex.toLowerCase()
-                              ? "border-primary bg-primary/10 text-white"
-                              : "border-slate-800 bg-slate-900/40 text-slate-400 hover:text-white"
+                              ? "border-primary bg-primary/10 text-primary font-semibold"
+                              : "border-border bg-card text-foreground hover:bg-muted"
                           }`}
                         >
+                          <span className="w-2.5 h-2.5 rounded-full border border-border shrink-0" style={{ backgroundColor: b.hex }} />
                           {b.label}
                         </button>
                       ))}
                     </div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block pt-2">Light Mode Surfaces</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block pt-2">Light Mode Surfaces</span>
                     <div className="flex flex-wrap gap-2">
                       {[
                         { label: "Pure White (#ffffff)", hex: "#ffffff" },
@@ -1349,12 +1350,13 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                           key={b.hex}
                           type="button"
                           onClick={() => setBackground(b.hex)}
-                          className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-2 ${
                             background.toLowerCase() === b.hex.toLowerCase()
-                              ? "border-primary bg-primary/10 text-white"
-                              : "border-slate-800 bg-slate-900/40 text-slate-400 hover:text-white"
+                              ? "border-primary bg-primary/10 text-primary font-semibold"
+                              : "border-border bg-card text-foreground hover:bg-muted"
                           }`}
                         >
+                          <span className="w-2.5 h-2.5 rounded-full border border-border shrink-0" style={{ backgroundColor: b.hex }} />
                           {b.label}
                         </button>
                       ))}
@@ -2540,10 +2542,10 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
             (activeTab === "social" && canManageSocial) ||
             (activeTab === "system_admin" && canManageSystemAdmin)
           ) && (
-            <div className="sticky bottom-0 z-10 bg-[#0c0c12]/95 py-4 border-t border-[#1f1f2e] mt-4 -mx-6 px-6 rounded-b-3xl">
+            <div className="sticky bottom-0 z-10 bg-card/95 backdrop-blur-md py-4 border-t border-border mt-4 -mx-6 px-6 rounded-b-3xl">
               <div className="flex justify-end">
                 <button type="submit"
-                  className="flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary/95 transition-all hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/95 transition-all hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={saving}>
                   {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving changes...</> : <><Save className="h-4 w-4" /> Save Configuration</>}
                 </button>
@@ -2557,12 +2559,12 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
       {/* ── Modal: Add / Edit MCP Server Instance ── */}
       {isEditMcpOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-[#0f0f1d] border border-slate-800 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="bg-card border border-border text-card-foreground rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
             <div>
-              <h3 className="text-lg font-bold text-white mb-1">
+              <h3 className="text-lg font-bold text-foreground mb-1">
                 {editingMcpKey ? "Edit MCP Server" : "Add MCP Server Instance"}
               </h3>
-              <p className="text-slate-400 text-xs">Configure a dynamic Model Context Protocol connector profile.</p>
+              <p className="text-muted-foreground text-xs">Configure a dynamic Model Context Protocol connector profile.</p>
             </div>
             
             <div className="space-y-3">
@@ -2641,12 +2643,12 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
       {/* ── Modal: Add / Edit Database Connection ── */}
       {isAddDbOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-[#0f0f1d] border border-slate-800 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="bg-card border border-border text-card-foreground rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
             <div>
-              <h3 className="text-lg font-bold text-white mb-1">
+              <h3 className="text-lg font-bold text-foreground mb-1">
                 {editingDbIndex !== null ? "Edit Database Connection" : "Add Database Connection"}
               </h3>
-              <p className="text-slate-400 text-xs">Configure connection variables to register an external database.</p>
+              <p className="text-muted-foreground text-xs">Configure connection variables to register an external database.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
@@ -2773,12 +2775,12 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
       {/* ── Modal: Add / Edit Dynamic Custom API ── */}
       {isAddCustomApiOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-[#0f0f1d] border border-slate-800 rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="bg-card border border-border text-card-foreground rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
             <div>
-              <h3 className="text-lg font-bold text-white mb-1">
+              <h3 className="text-lg font-bold text-foreground mb-1">
                 {editingApiIndex !== null ? "Edit Custom API" : "Add Dynamic Custom API"}
               </h3>
-              <p className="text-slate-400 text-xs">Define a custom JavaScript script execution block to register a dynamic native tool.</p>
+              <p className="text-muted-foreground text-xs">Define a custom JavaScript script execution block to register a dynamic native tool.</p>
             </div>
 
             <div className="space-y-3 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
@@ -2849,13 +2851,13 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
       {/* ── Modal: Add / Edit Social Connection ── */}
       {isAddSocialOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-[#0f0f1d] border border-slate-800 rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="bg-card border border-border text-card-foreground rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
             <div>
-              <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
-                <Share2 className="h-5 w-5 text-indigo-400" />
+              <h3 className="text-lg font-bold text-foreground mb-1 flex items-center gap-2">
+                <Share2 className="h-5 w-5 text-primary" />
                 {editingSocialIndex !== null ? "Edit Social Connection" : "Add Social Connection"}
               </h3>
-              <p className="text-slate-400 text-xs">Configure OAuth or API keys for a dynamic social media publisher channel.</p>
+              <p className="text-muted-foreground text-xs">Configure OAuth or API keys for a dynamic social media publisher channel.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">

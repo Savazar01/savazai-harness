@@ -233,14 +233,14 @@ export function SystemAdminHub({
       {/* ── Sub-Tab A: Email & SMTP Service ── */}
       {subTab === "email" && (
         <div className="space-y-5">
-          <div className="rounded-2xl border border-slate-800 bg-[#070710] p-5 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-900">
+          <div className="rounded-2xl border border-border bg-card p-5 space-y-4 text-card-foreground shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
               <div>
-                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                   <Mail className="h-4 w-4 text-primary" />
                   Transactional Email &amp; SMTP Transporter
                 </h4>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Powers 6-digit OTP delivery, admin invitations, and platform notifications.
                 </p>
               </div>
@@ -440,13 +440,13 @@ export function SystemAdminHub({
       {/* ── Sub-Tab B: Bot Defense & CAPTCHA ── */}
       {subTab === "captcha" && (
         <div className="space-y-5">
-          <div className="rounded-2xl border border-slate-800 bg-[#070710] p-5 space-y-4">
-            <div className="pb-3 border-b border-slate-900">
-              <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+          <div className="rounded-2xl border border-border bg-card p-5 space-y-4 text-card-foreground shadow-xs">
+            <div className="pb-3 border-b border-border">
+              <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-500" />
                 Zero-Trust Bot Defense &amp; Challenge Provider
               </h4>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Enforces invisible or managed challenges on Sign In, Onboarding Requests, and Password Resets.
               </p>
             </div>
@@ -521,14 +521,14 @@ export function SystemAdminHub({
       {/* ── Sub-Tab C: Outbound Email & OTP Audit Stream ── */}
       {subTab === "logs" && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-800 bg-[#070710] p-5 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-900">
+          <div className="rounded-2xl border border-border bg-card p-5 space-y-4 text-card-foreground shadow-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
-                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                   <Activity className="h-4 w-4 text-primary" />
                   Outbound Email &amp; OTP Audit Stream
                 </h4>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Real-time database log of all dispatched OTPs, invitations, and transactional messages.
                 </p>
               </div>
@@ -608,13 +608,13 @@ export function SystemAdminHub({
       {/* ── Sub-Tab D: Security Policies & Sessions ── */}
       {subTab === "security" && (
         <div className="space-y-5">
-          <div className="rounded-2xl border border-slate-800 bg-[#070710] p-5 space-y-4">
-            <div className="pb-3 border-b border-slate-900">
-              <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                <Lock className="h-4 w-4 text-indigo-400" />
+          <div className="rounded-2xl border border-border bg-card p-5 space-y-4 text-card-foreground shadow-xs">
+            <div className="pb-3 border-b border-border">
+              <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <Lock className="h-4 w-4 text-primary" />
                 Security Policies, Sessions &amp; Alert Routing
               </h4>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Enforce idle session timeout thresholds, brute-force mitigation limits, and security notifications.
               </p>
             </div>
@@ -681,15 +681,15 @@ export function SystemAdminHub({
           onClick={(e) => e.stopPropagation()}
         >
           <div
-            className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl space-y-4"
+            className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4 text-card-foreground"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-900 pb-3">
+            <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary">
                   <Send className="h-4 w-4" />
                 </div>
-                <h3 className="text-sm font-bold text-white">Send Live Test Email</h3>
+                <h3 className="text-sm font-bold text-foreground">Send Live Test Email</h3>
               </div>
               <button
                 type="button"

@@ -422,17 +422,17 @@ export function UserManagement() {
   const categories = Array.from(new Set(PERMISSION_REGISTRY.map((p) => p.category)));
 
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-950 p-6 md:p-8 space-y-6 text-slate-100">
+    <div className="flex-1 overflow-y-auto bg-background p-6 md:p-8 space-y-6 text-foreground">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-900 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
             <div className="p-2 rounded-xl bg-primary/10 border border-primary/20 text-primary">
               <Users className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">User Administration</h1>
-              <p className="text-xs text-slate-400">
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">User Administration</h1>
+              <p className="text-xs text-muted-foreground">
                 Manage console accounts, review quarantined onboarding requests, and administer enterprise RBAC profiles.
               </p>
             </div>
@@ -488,13 +488,13 @@ export function UserManagement() {
       </div>
 
       {/* Sub-Tab Navigation Bar */}
-      <div className="flex items-center gap-2 border-b border-slate-900 pb-3">
+      <div className="flex items-center gap-2 border-b border-border pb-3">
         <button
           onClick={() => setActiveTab("active")}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
             activeTab === "active"
-              ? "bg-primary text-white shadow-lg shadow-primary/25"
-              : "text-slate-400 hover:text-white hover:bg-slate-900"
+              ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
         >
           <Users className="h-3.5 w-3.5" />
@@ -505,14 +505,14 @@ export function UserManagement() {
           onClick={() => setActiveTab("pending")}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
             activeTab === "pending"
-              ? "bg-amber-600 text-white shadow-lg shadow-amber-600/25"
-              : "text-slate-400 hover:text-white hover:bg-slate-900"
+              ? "bg-amber-600 text-white shadow-sm shadow-amber-600/25"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
         >
-          <Clock className="h-3.5 w-3.5 text-amber-400" />
+          <Clock className="h-3.5 w-3.5 text-amber-500" />
           Pending Approvals Queue
           {pendingUsers.length > 0 && (
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40">
               {pendingUsers.length}
             </span>
           )}
@@ -522,8 +522,8 @@ export function UserManagement() {
           onClick={() => setActiveTab("matrix")}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
             activeTab === "matrix"
-              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/25"
-              : "text-slate-400 hover:text-white hover:bg-slate-900"
+              ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
         >
           <Layers className="h-3.5 w-3.5" />
@@ -552,22 +552,22 @@ export function UserManagement() {
           {/* Search & Filters */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-500" />
+              <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search active users by name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/60 pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-primary/50 transition-colors"
+                className="w-full rounded-xl border border-border bg-card pl-10 pr-4 py-2 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 transition-colors"
               />
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <span className="text-xs text-slate-400 font-medium">Filter Profile:</span>
+              <span className="text-xs text-muted-foreground font-medium">Filter Profile:</span>
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-1.5 text-xs text-white outline-none focus:border-primary/50"
+                className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs text-foreground outline-none focus:border-primary/50"
               >
                 <option value="all">All Profiles</option>
                 <option value="admin">Super Administrator</option>
@@ -581,11 +581,11 @@ export function UserManagement() {
           </div>
 
           {/* Active Users Table */}
-          <div className="rounded-2xl border border-slate-900 bg-slate-900/30 overflow-hidden shadow-2xl backdrop-blur-xl">
+          <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-900 bg-slate-950/40 text-slate-400 font-semibold tracking-wider uppercase text-[10px]">
+                  <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold tracking-wider uppercase text-[10px]">
                     <th className="py-3 px-4">User</th>
                     <th className="py-3 px-4">Assigned Profile</th>
                     <th className="py-3 px-4">Status</th>
@@ -754,18 +754,18 @@ export function UserManagement() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-900 bg-slate-900/30 overflow-hidden shadow-2xl backdrop-blur-xl">
+          <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-900 bg-slate-950/40 text-slate-400 font-semibold tracking-wider uppercase text-[10px]">
+                  <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold tracking-wider uppercase text-[10px]">
                     <th className="py-3 px-4">Applicant</th>
                     <th className="py-3 px-4">Verification Status</th>
                     <th className="py-3 px-4">Requested At</th>
                     <th className="py-3 px-4 text-right">Approval Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-900/60">
+                <tbody className="divide-y divide-border">
                   {pendingUsers.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="py-12 text-center text-slate-500">
@@ -911,12 +911,12 @@ export function UserManagement() {
           </div>
 
           {/* Interactive 53-Permission Matrix Table */}
-          <div className="rounded-2xl border border-slate-900 bg-slate-900/30 overflow-hidden shadow-2xl backdrop-blur-xl">
-            <div className="p-4 border-b border-slate-900 bg-slate-950/40 flex items-center justify-between">
-              <span className="text-xs font-bold text-white uppercase tracking-wider">
+          <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
+            <div className="p-4 border-b border-border bg-muted/40 flex items-center justify-between">
+              <span className="text-xs font-bold text-foreground uppercase tracking-wider">
                 Full Platform Authorization Matrix (53 Permissions)
               </span>
-              <span className="text-xs text-slate-400 font-mono">
+              <span className="text-xs text-muted-foreground font-mono">
                 {roles.length} Roles Registered
               </span>
             </div>
@@ -924,23 +924,23 @@ export function UserManagement() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-900 bg-slate-950/60 text-slate-400 font-semibold tracking-wider text-[11px]">
+                  <tr className="border-b border-border bg-muted/50 text-muted-foreground font-semibold tracking-wider text-[11px]">
                     <th className="py-3 px-4 min-w-[280px]">Module &amp; Action</th>
                     {roles.map((r) => (
                       <th key={r.id} className="py-3 px-3 text-center min-w-[120px]">
-                        <div className="font-semibold text-white truncate">{r.name}</div>
+                        <div className="font-semibold text-foreground truncate">{r.name}</div>
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-900/60">
+                <tbody className="divide-y divide-border">
                   {categories.map((catKey) => {
                     const catLabel = CATEGORY_LABELS[catKey as keyof typeof CATEGORY_LABELS] || catKey;
                     const catPerms = PERMISSION_REGISTRY.filter((p) => p.category === catKey);
 
                     return (
                       <React.Fragment key={catKey}>
-                        <tr className="bg-slate-950/80">
+                        <tr className="bg-muted/70">
                           <td
                             colSpan={roles.length + 1}
                             className="py-2 px-4 font-bold text-xs text-primary uppercase tracking-wider"
@@ -993,21 +993,21 @@ export function UserManagement() {
 
       {/* ── MODAL: APPROVE & ASSIGN PROFILE ── */}
       {isApproveOpen && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-900 bg-slate-950 p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-900 pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                   <UserCheck className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Approve Quarantined User</h3>
-                  <p className="text-xs text-slate-400">Assign role profile and activate account access.</p>
+                  <h3 className="text-base font-bold text-foreground">Approve Quarantined User</h3>
+                  <p className="text-xs text-muted-foreground">Assign role profile and activate account access.</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsApproveOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1080,23 +1080,23 @@ export function UserManagement() {
 
       {/* ── MODAL: GENERATE ONBOARDING INVITE LINK ── */}
       {isInviteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-900 bg-slate-950 p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-900 pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
                   <LinkIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Generate Onboarding Invite Link</h3>
-                  <p className="text-xs text-slate-400">
+                  <h3 className="text-base font-bold text-foreground">Generate Onboarding Invite Link</h3>
+                  <p className="text-xs text-muted-foreground">
                     Create a cryptographic, time-bounded URL for pre-authorized user registration.
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsInviteModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1265,13 +1265,13 @@ export function UserManagement() {
 
       {/* ── MODAL: EDIT ACTIVE USER ── */}
       {isEditOpen && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-900 bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-900 pb-3">
-              <h3 className="text-base font-bold text-white">Edit User Profile &amp; Role</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-base font-bold text-foreground">Edit User Profile &amp; Role</h3>
               <button
                 onClick={() => setIsEditOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1359,16 +1359,16 @@ export function UserManagement() {
 
       {/* ── MODAL: CREATE CUSTOM ROLE ── */}
       {isCreateRoleOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-900 bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-900 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2.5">
-                <Sparkles className="h-5 w-5 text-indigo-400" />
-                <h3 className="text-base font-bold text-white">Create Custom Enterprise Profile</h3>
+                <Sparkles className="h-5 w-5 text-primary" />
+                <h3 className="text-base font-bold text-foreground">Create Custom Enterprise Profile</h3>
               </div>
               <button
                 onClick={() => setIsCreateRoleOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1483,13 +1483,13 @@ export function UserManagement() {
 
       {/* ── MODAL: PASSWORD RESET / FORCE RESET ── */}
       {isPasswordOpen && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-900 bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-900 pb-3">
-              <h3 className="text-base font-bold text-white">Reset Password &amp; Force Reset</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-base font-bold text-foreground">Reset Password &amp; Force Reset</h3>
               <button
                 onClick={() => setIsPasswordOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1556,25 +1556,25 @@ export function UserManagement() {
 
       {/* ── MODAL: DELETE USER ── */}
       {isDeleteOpen && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-900 bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center gap-3 text-red-400">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-destructive">
               <AlertTriangle className="h-6 w-6" />
-              <h3 className="text-base font-bold text-white">
+              <h3 className="text-base font-bold text-foreground">
                 {selectedUser.status === "PENDING_APPROVAL" ? "Reject & Purge Request" : "Delete Account"}
               </h3>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Are you sure you want to permanently delete{" "}
-              <strong>{selectedUser.name}</strong> (<code>{selectedUser.email}</code>)? This action immediately invalidates any sessions and purges credential records.
+              <strong className="text-foreground">{selectedUser.name}</strong> (<code>{selectedUser.email}</code>)? This action immediately invalidates any sessions and purges credential records.
             </p>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-900">
+            <div className="flex justify-end gap-2 pt-2 border-t border-border">
               <button
                 type="button"
                 onClick={() => setIsDeleteOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
+                className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
               >
                 Cancel
               </button>
@@ -1582,7 +1582,7 @@ export function UserManagement() {
                 type="button"
                 onClick={handleDeleteSubmit}
                 disabled={formLoading}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-semibold"
               >
                 {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Confirm Deletion
@@ -1594,13 +1594,13 @@ export function UserManagement() {
 
       {/* ── MODAL: CREATE USER ── */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-900 bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-900 pb-3">
-              <h3 className="text-base font-bold text-white">Create Platform User</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-base font-bold text-foreground">Create Platform User</h3>
               <button
                 onClick={() => setIsCreateOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
               >
                 <X className="h-4 w-4" />
               </button>

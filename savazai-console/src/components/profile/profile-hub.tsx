@@ -159,12 +159,12 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
   const categories = Array.from(new Set(PERMISSION_REGISTRY.map((p) => p.category)));
 
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-950 p-6 md:p-8 space-y-6 text-slate-100 max-w-6xl mx-auto w-full">
+    <div className="flex-1 overflow-y-auto bg-background p-6 md:p-8 space-y-6 text-foreground max-w-6xl mx-auto w-full">
       {/* Profile Header Banner */}
-      <div className="relative rounded-2xl border border-slate-900 bg-gradient-to-r from-slate-900/80 via-slate-900/40 to-slate-950 p-6 backdrop-blur-xl">
+      <div className="relative rounded-2xl border border-border bg-card p-6 shadow-xs">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
           <div className="relative group">
-            <div className="h-20 w-20 rounded-2xl overflow-hidden border-2 border-primary/30 bg-slate-800 flex items-center justify-center text-2xl font-bold text-white shadow-xl shadow-black/50">
+            <div className="h-20 w-20 rounded-2xl overflow-hidden border-2 border-primary/30 bg-muted flex items-center justify-center text-2xl font-bold text-foreground shadow-md">
               {avatarImage ? (
                 <img src={avatarImage} alt={user.name} className="h-full w-full object-cover" />
               ) : (
@@ -180,24 +180,24 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
 
           <div className="flex-1 text-center sm:text-left">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
-              <h1 className="text-2xl font-bold text-white tracking-tight">{name || user.name}</h1>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 w-fit mx-auto sm:mx-0">
-                <Shield className="h-3 w-3 text-indigo-400" />
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">{name || user.name}</h1>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 w-fit mx-auto sm:mx-0">
+                <Shield className="h-3 w-3 text-primary" />
                 {user.roleName || (user.role === "admin" ? "Super Administrator" : "Operator")}
               </span>
             </div>
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs text-slate-400 font-mono mt-1">
-              <span className="flex items-center gap-1.5 text-slate-300">
-                <Mail className="h-3.5 w-3.5 text-slate-500" />
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs text-muted-foreground font-mono mt-1">
+              <span className="flex items-center gap-1.5 text-foreground">
+                <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                 {user.email}
               </span>
               {location && (
-                <span className="flex items-center gap-1.5 text-slate-300 font-sans">
-                  <MapPin className="h-3.5 w-3.5 text-slate-500" />
+                <span className="flex items-center gap-1.5 text-foreground font-sans">
+                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                   {location}
                 </span>
               )}
-              <span className="inline-flex items-center gap-1 text-emerald-400 font-sans font-medium text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20">
+              <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-sans font-medium text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20">
                 <CheckCircle2 className="h-3 w-3" />
                 ACTIVE ACCOUNT
               </span>
@@ -206,13 +206,13 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
         </div>
 
         {/* Sub-Tabs */}
-        <div className="flex items-center gap-2 border-t border-slate-800/60 mt-6 pt-4">
+        <div className="flex items-center gap-2 border-t border-border mt-6 pt-4">
           <button
             onClick={() => setActiveTab("details")}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
               activeTab === "details"
-                ? "bg-primary text-white shadow-lg shadow-primary/25"
-                : "text-slate-400 hover:text-white hover:bg-slate-900"
+                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
             }`}
           >
             <User className="h-3.5 w-3.5" />
@@ -223,8 +223,8 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
             onClick={() => setActiveTab("security")}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
               activeTab === "security"
-                ? "bg-primary text-white shadow-lg shadow-primary/25"
-                : "text-slate-400 hover:text-white hover:bg-slate-900"
+                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
             }`}
           >
             <KeyRound className="h-3.5 w-3.5" />
@@ -235,8 +235,8 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
             onClick={() => setActiveTab("access")}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
               activeTab === "access"
-                ? "bg-primary text-white shadow-lg shadow-primary/25"
-                : "text-slate-400 hover:text-white hover:bg-slate-900"
+                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
             }`}
           >
             <Layers className="h-3.5 w-3.5" />
@@ -247,26 +247,26 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
 
       {/* Tab 1: Personal Details */}
       {activeTab === "details" && (
-        <div className="rounded-2xl border border-slate-900 bg-slate-900/30 p-6 backdrop-blur-xl">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
           <div className="mb-6">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
               <User className="h-4 w-4 text-primary" />
               Maintain Personal Information
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Update your public profile display name, avatar, and operational region.
             </p>
           </div>
 
           {profileSuccess && (
-            <div className="mb-4 flex items-center gap-2 p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-300">
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+            <div className="mb-4 flex items-center gap-2 p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-600 dark:text-emerald-300">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
               <span>{profileSuccess}</span>
             </div>
           )}
 
           {profileError && (
-            <div className="mb-4 flex items-center gap-2 p-3 rounded-xl border border-red-500/20 bg-red-500/10 text-xs text-red-400">
+            <div className="mb-4 flex items-center gap-2 p-3 rounded-xl border border-destructive/20 bg-destructive/10 text-xs text-destructive">
               <AlertTriangle className="h-4 w-4 shrink-0" />
               <span>{profileError}</span>
             </div>
@@ -274,7 +274,7 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
 
           <form onSubmit={handleProfileSubmit} className="space-y-4 max-w-xl">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-xs font-medium text-foreground mb-1.5">
                 Full Name
               </label>
               <input
@@ -282,12 +282,12 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-primary/50"
+                className="w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-xs font-medium text-foreground mb-1.5">
                 Email Address (Verified Identity)
               </label>
               <div className="flex items-center gap-2">
@@ -296,14 +296,14 @@ export function ProfileHub({ user, grantedPermissions }: ProfileHubProps) {
                   value={user.email}
                   disabled
                   readOnly
-                  className="w-full rounded-xl border border-slate-800/80 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-400 font-mono select-none outline-none cursor-not-allowed"
+                  className="w-full rounded-xl border border-border bg-muted px-3.5 py-2.5 text-xs text-muted-foreground font-mono select-none outline-none cursor-not-allowed"
                 />
-                <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-emerald-400 font-medium px-2.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium px-2.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                   <CheckCircle2 className="h-3 w-3" />
                   Verified
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
+              <p className="text-[11px] text-muted-foreground mt-1">
                 Your email address is your verified security identifier and cannot be changed directly.
               </p>
             </div>
