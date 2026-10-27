@@ -1,7 +1,7 @@
 import { DemoRequestManagement } from "@/components/admin/demo-request-management";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSessionAccessContext, resolveDefaultLandingRoute } from "@/lib/auth/rbac";
 import { redirect } from "next/navigation";
+import { AccessDeniedScreen } from "@/components/shared/access-denied";
 
 export const metadata = {
   title: "Inbound Demo Requests | SavazAI Admin",
@@ -9,16 +9,24 @@ export const metadata = {
 };
 
 export default async function AdminDemoRequestsPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const ctx = await getSessionAccessContext();
 
-  if (!session) {
+  if (!ctx || ctx.status !== "ACTIVE") {
     redirect("/signin");
   }
 
-  if (session.user.role !== "admin") {
-    redirect("/studio");
+  if (ctx.mustResetPassword) {
+    redirect("/reset-password");
+  }
+
+  if (!ctx.permissions.has("demo_requests:view")) {
+    return (
+      <AccessDeniedScreen
+        requiredPermission="demo_requests:view"
+        moduleTitle="Inbound Demo Requests & Leads"
+        fallbackRoute={resolveDefaultLandingRoute(ctx.permissions)}
+      />
+    );
   }
 
   return (

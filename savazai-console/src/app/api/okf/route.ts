@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { Pool } from "pg";
+import { requirePermission } from "@/lib/auth/rbac";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -24,6 +25,12 @@ async function ensureOkfConceptsTable() {
 
 export async function GET() {
   try {
+    const check = await requirePermission("business_center", "okf_view");
+    if (!check.authorized) {
+      const studioCheck = await requirePermission("capability_studio", "view");
+      if (!studioCheck.authorized) return check.response;
+    }
+
     await ensureOkfConceptsTable();
     const res = await pool.query(
       'SELECT id, category, concept_key as "conceptKey", yaml_frontmatter as "yamlFrontmatter", markdown_body as "markdownBody", updated_at as "updatedAt" FROM okf_concepts ORDER BY updated_at DESC'
@@ -44,6 +51,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const check = await requirePermission("business_center", ["okf_create", "okf_ingest"]);
+    if (!check.authorized) return check.response;
+
     await ensureOkfConceptsTable();
     const { category, conceptKey, yamlFrontmatter, markdownBody } = await req.json();
 
@@ -76,6 +86,9 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    const check = await requirePermission("business_center", "okf_edit");
+    if (!check.authorized) return check.response;
+
     await ensureOkfConceptsTable();
     const { id, category, conceptKey, yamlFrontmatter, markdownBody } = await req.json();
 
@@ -107,6 +120,9 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const check = await requirePermission("business_center", "okf_delete");
+    if (!check.authorized) return check.response;
+
     await ensureOkfConceptsTable();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

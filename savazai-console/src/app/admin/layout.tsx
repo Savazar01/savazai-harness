@@ -1,21 +1,21 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import React from "react";
 import { Sidebar } from "@/components/sidebar";
+import { getSessionAccessContext } from "@/lib/auth/rbac";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const ctx = await getSessionAccessContext();
 
-  // Verify that session exists
-  if (!session) {
+  if (!ctx || ctx.status !== "ACTIVE") {
     redirect("/signin");
+  }
+
+  if (ctx.mustResetPassword) {
+    redirect("/reset-password");
   }
 
   return (

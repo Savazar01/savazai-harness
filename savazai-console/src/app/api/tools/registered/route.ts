@@ -1,7 +1,17 @@
+import { requirePermission } from "@/lib/auth/rbac";
+
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_HARNESS_API_URL || "http://savazai-backend:3055";
 
 export async function GET() {
+  const studioCheck = await requirePermission("capability_studio", "view");
+  if (!studioCheck.authorized) {
+    const wsCheck = await requirePermission("agent_workspace", "view");
+    if (!wsCheck.authorized) {
+      return studioCheck.response;
+    }
+  }
+
   try {
     const response = await fetch(`${BACKEND_URL}/api/tools/registered`);
     if (!response.ok) {

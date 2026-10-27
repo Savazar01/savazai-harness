@@ -28,6 +28,7 @@ import {
   Save,
   Check
 } from "lucide-react";
+import { usePermissions } from "@/lib/auth/use-permissions";
 
 export interface DemoRequest {
   id: string;
@@ -81,6 +82,9 @@ const STATUS_CONFIG: Record<
 };
 
 export function DemoRequestManagement() {
+  const { hasPermission } = usePermissions();
+  const canManageLeads = hasPermission("demo_requests", "manage");
+
   const [mounted, setMounted] = useState(false);
   const [requests, setRequests] = useState<DemoRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -474,15 +478,17 @@ export function DemoRequestManagement() {
                               onClick={() => handleOpenDetail(req)}
                               className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 text-xs font-semibold transition-all"
                             >
-                              Manage
+                              {canManageLeads ? "Manage" : "Inspect"}
                             </button>
-                            <button
-                              onClick={() => setDeleteTarget(req)}
-                              className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                              title="Delete Record"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
+                            {canManageLeads && (
+                              <button
+                                onClick={() => setDeleteTarget(req)}
+                                className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                                title="Delete Record"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -625,13 +631,15 @@ export function DemoRequestManagement() {
 
             {/* Footer Action Buttons */}
             <div className="pt-5 border-t border-slate-800 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => setDeleteTarget(selectedRequest)}
-                className="px-4 py-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 text-xs font-semibold transition-all"
-              >
-                Delete Lead
-              </button>
+              {canManageLeads ? (
+                <button
+                  type="button"
+                  onClick={() => setDeleteTarget(selectedRequest)}
+                  className="px-4 py-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 text-xs font-semibold transition-all"
+                >
+                  Delete Lead
+                </button>
+              ) : <div />}
 
               <div className="flex items-center gap-2">
                 <button
@@ -639,26 +647,28 @@ export function DemoRequestManagement() {
                   onClick={() => setSelectedRequest(null)}
                   className="px-4 py-2.5 rounded-xl border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-semibold transition-all"
                 >
-                  Cancel
+                  {canManageLeads ? "Cancel" : "Close"}
                 </button>
-                <button
-                  type="button"
-                  onClick={handleSaveDetails}
-                  disabled={savingNotes}
-                  className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-primary text-white text-xs font-semibold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50"
-                >
-                  {savingNotes ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-3.5 w-3.5" />
-                      Save Changes
-                    </>
-                  )}
-                </button>
+                {canManageLeads && (
+                  <button
+                    type="button"
+                    onClick={handleSaveDetails}
+                    disabled={savingNotes}
+                    className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-primary text-white text-xs font-semibold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50"
+                  >
+                    {savingNotes ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-3.5 w-3.5" />
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           </div>

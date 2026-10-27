@@ -13,6 +13,7 @@ import {
   type SkillRecord,
 } from "@/lib/tool-gateway";
 import { McpAggregator } from "@/lib/mcp/client-aggregator";
+import { requirePermission } from "@/lib/auth/rbac";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -2653,6 +2654,12 @@ export async function POST(req: NextRequest) {
   const encoder = new TextEncoder();
   
   try {
+    const studioTestCheck = await requirePermission("capability_studio", "test_run");
+    if (!studioTestCheck.authorized) {
+      const wsFlowCheck = await requirePermission("agent_workspace", ["run_published_flow", "hitl_approve"]);
+      if (!wsFlowCheck.authorized) return studioTestCheck.response;
+    }
+
     const body = await req.json();
     let { nodes, edges } = body;
     const { approvedPlan, threadId, executionMode } = body;

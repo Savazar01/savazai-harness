@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Plus, FolderKanban, Loader2, X, Database, Download, Upload } from "lucide-react";
 import { CanvasEditor, CanvasEditorHandle, CanvasNode, CanvasEdge } from "@/components/studio/canvas-editor";
 import { regenerateAgentflowCanvas, sanitizeCanvasDefinition } from "@/lib/agentflow-utils";
+import { usePermissions } from "@/lib/auth/use-permissions";
 
 interface Agentflow {
   id: string;
@@ -44,6 +45,13 @@ const validateAgentflowJson = (json: any): { valid: boolean; error?: string } =>
 };
 
 export default function StudioPage() {
+  const { hasPermission } = usePermissions();
+  const canCreateFlow = hasPermission("capability_studio", "create_flow");
+  const canEditFlow = hasPermission("capability_studio", "edit_flow");
+  const canExportJson = hasPermission("capability_studio", "export_json");
+  const canImportJson = hasPermission("capability_studio", "import_json");
+  const canDeleteFlow = hasPermission("capability_studio", "delete_flow");
+
   const [agentflows, setAgentflows] = useState<Agentflow[]>([]);
   const [activeAgentflowId, setActiveAgentflowId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -444,7 +452,7 @@ export default function StudioPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {activeAgentflow && (
+          {activeAgentflow && canExportJson && (
             <button
               type="button"
               onClick={() => handleExportJson(activeAgentflow)}
@@ -454,14 +462,16 @@ export default function StudioPage() {
               Export JSON
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => { setImportError(null); setShowImportModal(true); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/40 text-slate-355 hover:text-white hover:bg-slate-900 transition-all shadow-sm"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            Import JSON
-          </button>
+          {canImportJson && (
+            <button
+              type="button"
+              onClick={() => { setImportError(null); setShowImportModal(true); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/40 text-slate-355 hover:text-white hover:bg-slate-900 transition-all shadow-sm"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              Import JSON
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setShowManageModal(true)}
@@ -470,14 +480,16 @@ export default function StudioPage() {
             <FolderKanban className="h-3.5 w-3.5" />
             Manage Agentflows
           </button>
-          <button
-            type="button"
-            onClick={() => { setCreateMode("scratch"); setShowCreateModal(true); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 transition-all"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            New Agentflow
-          </button>
+          {canCreateFlow && (
+            <button
+              type="button"
+              onClick={() => { setCreateMode("scratch"); setShowCreateModal(true); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 transition-all"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New Agentflow
+            </button>
+          )}
         </div>
       </div>
 
@@ -846,38 +858,46 @@ export default function StudioPage() {
                               >
                                 Open
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingAgentflow(wf);
-                                  setEditName(wf.name);
-                                  setEditDesc(wf.description || "");
-                                }}
-                                className="px-2 py-1 rounded-lg text-[10px] font-semibold border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-white transition-all"
-                              >
-                                Rename
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDuplicateAgentflow(wf)}
-                                className="px-2 py-1 rounded-lg text-[10px] font-semibold border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-white transition-all"
-                              >
-                                Duplicate
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleExportJson(wf)}
-                                className="px-2 py-1 rounded-lg text-[10px] font-semibold border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-white transition-all"
-                              >
-                                Export
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setDeletingAgentflowId(wf.id)}
-                                className="px-2 py-1 rounded-lg text-[10px] font-semibold border border-red-500/15 text-red-400 hover:bg-red-950/40 hover:border-red-500/40 transition-all"
-                              >
-                                Delete
-                              </button>
+                              {canEditFlow && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingAgentflow(wf);
+                                    setEditName(wf.name);
+                                    setEditDesc(wf.description || "");
+                                  }}
+                                  className="px-2 py-1 rounded-lg text-[10px] font-semibold border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-white transition-all"
+                                >
+                                  Rename
+                                </button>
+                              )}
+                              {canCreateFlow && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDuplicateAgentflow(wf)}
+                                  className="px-2 py-1 rounded-lg text-[10px] font-semibold border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-white transition-all"
+                                >
+                                  Duplicate
+                                </button>
+                              )}
+                              {canExportJson && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleExportJson(wf)}
+                                  className="px-2 py-1 rounded-lg text-[10px] font-semibold border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-white transition-all"
+                                >
+                                  Export
+                                </button>
+                              )}
+                              {canDeleteFlow && (
+                                <button
+                                  type="button"
+                                  onClick={() => setDeletingAgentflowId(wf.id)}
+                                  className="px-2 py-1 rounded-lg text-[10px] font-semibold border border-red-500/15 text-red-400 hover:bg-red-950/40 hover:border-red-500/40 transition-all"
+                                >
+                                  Delete
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

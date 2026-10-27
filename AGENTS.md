@@ -202,3 +202,80 @@ graphify update .
      - Executes tool calling loops directly using LLM native function declarations.
      - Dispatches JSON-RPC 2.0 calls directly to remote servers (e.g., `nse-bhavcopy` at `https://mcp.nseindia.in/bhavcopy/cm/mcp`).
      - Streams real-time tool traces to the System Trace sidebar and cleanly formatted Markdown answers directly into the chat bubble.
+
+
+---
+
+## 13. ENTERPRISE USER ADMINISTRATION, RBAC PROFILES & SELF-SERVICE PROFILE HUB
+
+### A. Modular 3-Tab User Administration Layout (`/admin/users`)
+User Administration enforces strict Separation of Duties (SoD) through a dedicated 3-sub-tab architecture:
+1. **Active Users Directory (`Tab 1`)**:
+   - Manages active and suspended operators with live status pills (`ACTIVE`, `SUSPENDED`).
+   - Displays assigned RBAC profiles, creation dates, and administrative actions:
+     - Profile & Role editing with dynamic role dropdowns.
+     - Account suspension / activation with immediate session revocation.
+     - Password reset and forced credential update on next login.
+     - Permanent deletion.
+2. **Pending Approvals Queue (`Tab 2`)**:
+   - Automatically isolates any user registered via invitation/OTP in quarantine state (`status = 'PENDING_APPROVAL'`) holding **zero permissions**.
+   - Displays active count badges (e.g. `Pending (1)`).
+   - Features **[ Approve & Assign Profile ]** to bind the applicant to one of the 6 predefined system profiles or a custom profile, activating the account.
+   - Features **[ Reject & Purge ]** to permanently eliminate unauthorized onboarding requests.
+3. **Roles & Access Profiles Matrix (`Tab 3`)**:
+   - Manages the **6 Predefined System Profiles**:
+     - `Super Administrator` (All 53 permissions)
+     - `Studio Flow Architect` (Full Capability Studio + Docs)
+     - `Workspace Operator` (Agent Workspace flows, HITL approval, direct MCP + Docs)
+     - `Business Policy Manager` (Skills, OKF, Compliance)
+     - `Infrastructure Lead` (All Command Center sub-tabs)
+     - `Auditor` (Read-only view access across modules)
+   - Renders the interactive 53-permission matrix grouped across the 7 platform categories.
+   - Allows administrators to create custom enterprise roles with tailored permissions via **[ + Create Custom Profile ]**.
+
+### B. Self-Service Profile Hub (`/profile`) & Credential Workflow
+- Every authenticated operator has access to `/profile` via the bottom-left sidebar user card:
+  - **Personal Details**: Maintains name, location/address region, and uploads custom avatar (stored in `user.image` and `user.location`).
+  - **Security & Credentials**: Self-service password change verifying current password before updating Better-Auth hashes, alongside 2FA / OTP verification status.
+  - **My Access Profile**: Transparent, read-only breakdown of granted permissions across all platform modules.
+
+### C. DevPlans & Repository Knowledge Graph Mandate
+Every feature, fix, or security update requires:
+- Active tracking under `/devplans`: `PROMPT_<TASK>.md`, `PLAN_<TASK>.md`, and `WALKTHROUGH_<TASK>.md`.
+- Knowledge graph synchronization command execution prior to declaring completion:
+  ```bash
+  graphify update .
+  ```
+
+---
+
+## 14. ENTERPRISE SECURITY & CODEBASE INVARIANTS
+
+### A. Edge Defense & Unforgeable Client IP Extraction
+- Never inspect raw, spoofable `x-forwarded-for` directly without Cloudflare prioritization.
+- Always use the centralized `getClientIp(req)` helper which prioritizes `cf-connecting-ip`, then `x-real-ip`, and then the sanitized first hop of `x-forwarded-for`.
+
+### B. Route Perimeter & RBAC Enforcement
+- All Next.js API routes and server actions must enforce `requirePermission(resource, action)`.
+- Internal services (`/api/mcp`, `/api/tools/registered`) must be protected by either user session permission or internal service secret header (`x-internal-secret: process.env.MASTER_VAULT_SECRET || process.env.BETTER_AUTH_SECRET`).
+- Zero public registration: `/signup`, `/register`, and `/api/auth/sign-up` routes must permanently return redirects or 403 Forbidden.
+
+### C. Cryptographic Tokenized Onboarding
+- New users can only submit access requests with an administrator-generated, time-limited cryptographic invitation token.
+- Tokens are SHA-256 hashed and verified against `verification_token`, and immediately consumed (deleted) upon account creation to prevent replay attacks.
+- Created users are permanently quarantined in `status = 'PENDING_APPROVAL'` with `mustResetPassword = true` and zero permissions until explicitly approved and assigned a role by an administrator.
+
+### D. Hardened Security Headers & Content Security Policy
+- All responses must emit strict security headers:
+  - `Content-Security-Policy`: Whitelisting `challenges.cloudflare.com` for Cloudflare Turnstile bot defense.
+  - `X-Frame-Options: SAMEORIGIN` / `DENY`.
+  - `X-Content-Type-Options: nosniff`.
+  - `Referrer-Policy: strict-origin-when-cross-origin`.
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`.
+  - `Permissions-Policy: camera=(), microphone=(), geolocation=(), browsing-topics=()`.
+
+### E. Secret Protection & 100% Parameterized SQL
+- All passwords, API keys, and SMTP credentials must be encrypted at rest with AES-256 via `MASTER_VAULT_SECRET`.
+- Secrets displayed in settings forms must be masked (`••••••••••••••••`) and never overwritten with blanks or masked placeholders upon update.
+- Zero raw string concatenation in SQL queries: 100% of database statements must use Drizzle ORM query builders or parameterized queries (`$1, $2, ...`).
+

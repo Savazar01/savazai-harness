@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { Pool } from "pg";
 import { randomUUID } from "node:crypto";
+import { verifyCaptchaToken } from "@/lib/auth/captcha";
+import { getClientIp } from "@/lib/auth/ip";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -17,9 +19,25 @@ export async function POST(req: NextRequest) {
       industry,
       timeline,
       description,
+      captchaToken,
     } = body;
 
-    // Validate required fields
+    // 1. Validate CAPTCHA token if provided or required
+    if (captchaToken !== undefined || process.env.TURNSTILE_SECRET_KEY || process.env.RECAPTCHA_SECRET_KEY) {
+      const clientIp = getClientIp(req);
+      const captchaCheck = await verifyCaptchaToken(
+        captchaToken,
+        clientIp
+      );
+      if (!captchaCheck.valid) {
+        return Response.json(
+          { error: captchaCheck.reason || "CAPTCHA verification failed." },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 2. Validate required fields
     if (!fullName || typeof fullName !== "string" || !fullName.trim()) {
       return Response.json({ error: "Full name is required." }, { status: 400 });
     }
@@ -40,6 +58,7 @@ export async function POST(req: NextRequest) {
     const cleanIndustry = industry || "Other Industry";
     const cleanTimeline = timeline || "Exploring / Architectural Evaluation";
 
+    // STRICT SECURITY INVARIANT: Inbound demo requests save ONLY to `demo_requests` lead table, NEVER to `"user"`!
     const insertQuery = `
       INSERT INTO demo_requests (
         id,
@@ -70,7 +89,6 @@ export async function POST(req: NextRequest) {
 
     const createdRecord = result.rows[0];
 
-    // Notification Dispatch Receipt Logging
     const adminEmail = process.env.ADMIN_EMAIL || "admin@savazar.com";
     console.log(`[DEMO_REQUEST_DISPATCH] New Inbound Lead [${createdRecord.id}] from ${createdRecord.full_name} (${createdRecord.email}, ${createdRecord.company}) -> Notification routed to ${adminEmail}`);
 

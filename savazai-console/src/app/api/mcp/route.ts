@@ -1,5 +1,20 @@
 import { NextRequest } from "next/server";
 import { Pool } from "pg";
+import { requirePermission } from "@/lib/auth/rbac";
+
+function isInternalServiceCall(req: NextRequest): boolean {
+  const secretHeader = req.headers.get("x-internal-secret") || "";
+  const authHeader = req.headers.get("authorization") || "";
+  const masterSecret = process.env.MASTER_VAULT_SECRET;
+  const authSecret = process.env.BETTER_AUTH_SECRET;
+  const validSecrets = [masterSecret, authSecret, "savaz_crawl_secret"].filter(Boolean) as string[];
+
+  for (const s of validSecrets) {
+    if (secretHeader && secretHeader === s) return true;
+    if (authHeader && (authHeader === `Bearer ${s}` || authHeader === s)) return true;
+  }
+  return false;
+}
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -405,7 +420,17 @@ const localToolDefs: McpToolDefinition[] = (MCP_SERVERS_TOOLS["wedplanai"] || []
 }));
 aggregator.registerLocalHandler(handleMcpToolCall, localToolDefs);
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!isInternalServiceCall(req)) {
+    const wsCheck = await requirePermission("agent_workspace", "view");
+    if (!wsCheck.authorized) {
+      const studioCheck = await requirePermission("capability_studio", "view");
+      if (!studioCheck.authorized) {
+        return wsCheck.response;
+      }
+    }
+  }
+
   try {
     const { servers } = await aggregator.listAllTools(pool);
     return new Response(JSON.stringify({ servers }), {
@@ -424,6 +449,16 @@ export async function GET() {
 
 // ── JSON-RPC tools/call POST handler for aggregated MCP tool execution ──
 export async function POST(req: NextRequest) {
+  if (!isInternalServiceCall(req)) {
+    const wsCheck = await requirePermission("agent_workspace", ["direct_mcp_chat", "run_published_flow"]);
+    if (!wsCheck.authorized) {
+      const studioCheck = await requirePermission("capability_studio", "test_run");
+      if (!studioCheck.authorized) {
+        return wsCheck.response;
+      }
+    }
+  }
+
   try {
     const body = await req.json();
     const { method, params, id } = body;

@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { requirePermission } from "@/lib/auth/rbac";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -6,6 +7,12 @@ const pool = new Pool({
 
 export async function GET() {
   try {
+    const check = await requirePermission("business_center", [
+      "compliance_audit_stream",
+      "compliance_view",
+    ]);
+    if (!check.authorized) return check.response;
+
     await pool.query(`CREATE TABLE IF NOT EXISTS agentflow_pii_audit_logs (
       id UUID PRIMARY KEY,
       thread_id VARCHAR(255) NOT NULL,

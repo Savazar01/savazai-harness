@@ -1,11 +1,11 @@
 import { NextRequest } from "next/server";
 import { Pool } from "pg";
+import { requirePermission } from "@/lib/auth/rbac";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-// Helper to initialize table if missing
 async function ensureOkfTable() {
   try {
     await pool.query(`
@@ -24,6 +24,9 @@ async function ensureOkfTable() {
 
 export async function GET() {
   try {
+    const check = await requirePermission("business_center", "okf_view");
+    if (!check.authorized) return check.response;
+
     await ensureOkfTable();
 
     const res = await pool.query(
@@ -46,6 +49,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const check = await requirePermission("business_center", ["okf_create", "okf_edit", "okf_ingest"]);
+    if (!check.authorized) return check.response;
+
     await ensureOkfTable();
     const { category, factKey, factValue } = await req.json();
 
@@ -78,6 +84,9 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const check = await requirePermission("business_center", "okf_delete");
+    if (!check.authorized) return check.response;
+
     await ensureOkfTable();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

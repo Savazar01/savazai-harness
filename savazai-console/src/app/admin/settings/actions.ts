@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import type { LLMProviderConfig } from "@/components/theme-provider";
 import { encrypt } from "@/lib/crypto";
+import { requirePermission } from "@/lib/auth/rbac";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -52,10 +53,27 @@ export interface UpdateSettingsInput {
   socialConnections?: string;
   agentsMd?: string;
   capabilityProfile?: string;
+  smtpSettings?: string;
+  captchaSettings?: string;
+  securitySettings?: string;
 }
 
 export async function updateSystemConfig(input: UpdateSettingsInput) {
   try {
+    const check = await requirePermission("command_center", [
+      "appearance_manage",
+      "branding_manage",
+      "llm_manage",
+      "mcp_manage",
+      "db_manage",
+      "api_services_manage",
+      "social_manage",
+      "system_admin_manage",
+    ]);
+    if (!check.authorized) {
+      return { success: false, error: check.error };
+    }
+
     const selectRes = await pool.query(
       'SELECT id, design_tokens as "designTokens" FROM system_configurations LIMIT 1'
     ).catch(() => null);
@@ -132,6 +150,66 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
       ...(input.socialConnections !== undefined && { socialConnections: input.socialConnections }),
       ...(input.agentsMd !== undefined && { agentsMd: input.agentsMd }),
       ...(input.capabilityProfile !== undefined && { capabilityProfile: input.capabilityProfile }),
+      ...(input.smtpSettings !== undefined && {
+        smtpSettings: (() => {
+          try {
+            const parsed = JSON.parse(input.smtpSettings);
+            const current = (currentTokens.smtpSettings as Record<string, unknown>) || {};
+            let passToStore = current.pass;
+            if (
+              typeof parsed.pass === "string" &&
+              parsed.pass.trim() !== "" &&
+              !parsed.pass.includes("••••")
+            ) {
+              passToStore = encrypt(parsed.pass.trim().replace(/\s+/g, ""));
+            }
+            let sendgridKeyToStore = current.sendgridApiKey;
+            if (
+              typeof parsed.sendgridApiKey === "string" &&
+              parsed.sendgridApiKey.trim() !== "" &&
+              !parsed.sendgridApiKey.includes("••••")
+            ) {
+              sendgridKeyToStore = encrypt(parsed.sendgridApiKey.trim());
+            }
+            return {
+              ...current,
+              ...parsed,
+              pass: passToStore,
+              sendgridApiKey: sendgridKeyToStore,
+            };
+          } catch {
+            return currentTokens.smtpSettings;
+          }
+        })(),
+      }),
+      ...(input.captchaSettings !== undefined && {
+        captchaSettings: (() => {
+          try {
+            const parsed = JSON.parse(input.captchaSettings);
+            const current = (currentTokens.captchaSettings as Record<string, unknown>) || {};
+            let secretKeyToStore = current.secretKey;
+            if (parsed.secretKey && !parsed.secretKey.includes("••••")) {
+              secretKeyToStore = encrypt(parsed.secretKey);
+            }
+            return {
+              ...current,
+              ...parsed,
+              secretKey: secretKeyToStore,
+            };
+          } catch {
+            return currentTokens.captchaSettings;
+          }
+        })(),
+      }),
+      ...(input.securitySettings !== undefined && {
+        securitySettings: (() => {
+          try {
+            return JSON.parse(input.securitySettings);
+          } catch {
+            return currentTokens.securitySettings;
+          }
+        })(),
+      }),
     };
 
     await pool.query(
@@ -425,6 +503,11 @@ export async function readAgentsMd() {
 
 export async function saveAgentsMd(content: string) {
   try {
+    const check = await requirePermission("command_center", "llm_manage");
+    if (!check.authorized) {
+      return { success: false, error: check.error };
+    }
+
     const selectRes = await pool.query(
       'SELECT id, design_tokens as "designTokens" FROM system_configurations LIMIT 1'
     ).catch(() => null);
@@ -451,6 +534,11 @@ export async function saveAgentsMd(content: string) {
 
 export async function getTelemetryAnalytics() {
   try {
+    const check = await requirePermission("command_center", ["spend_view", "spend_export"]);
+    if (!check.authorized) {
+      return { success: false, error: check.error };
+    }
+
     const statsRes = await pool.query(`
       SELECT 
         COALESCE(SUM(input_tokens), 0)::int as "totalInputTokens",

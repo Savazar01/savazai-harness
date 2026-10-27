@@ -7,6 +7,7 @@ import { SystemTrace, type TraceEvent } from "./system-trace";
 import { streamFromBackend } from "@/lib/stream-client";
 import type { SystemConfig } from "@/components/theme-provider";
 import { fetchProviderModels, updateSystemConfig } from "@/app/admin/settings/actions";
+import { usePermissions } from "@/lib/auth/use-permissions";
 
 const MODEL_PRESETS: Record<string, string[]> = {
   openai: ["gpt-4o", "gpt-4o-mini", "o3-mini", "o1", "o1-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
@@ -71,6 +72,11 @@ interface PlanItem {
 }
 
 export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
+  const { hasPermission } = usePermissions();
+  const canRunPublishedFlow = hasPermission("agent_workspace", "run_published_flow");
+  const canDirectMcpChat = hasPermission("agent_workspace", "direct_mcp_chat");
+  const canHitlApprove = hasPermission("agent_workspace", "hitl_approve");
+
   const storedProviders = useMemo(
     () => initialConfig.designTokens?.llmProviders ?? ({} as Record<string, { active?: boolean; defaultModel?: string; endpoint?: string; apiKey?: string }>),
     [initialConfig.designTokens?.llmProviders],
@@ -141,39 +147,51 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
 
   // Dynamically discover published agentflows and MCP servers from DB / Command Center
   useEffect(() => {
+    if (!canRunPublishedFlow && canDirectMcpChat) {
+      setExecutionTarget("mcp");
+    }
+
     // 1. Fetch published Agentflows
-    fetch("/api/agentflows")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => {
-        if (Array.isArray(data)) {
-          const published = data.filter((f) => f.status === "published");
-          setPublishedFlows(published);
-          if (published.length > 0) {
-            setSelectedFlowId(published[0].id);
-            setExecutionTarget("agentflow");
-          } else {
-            setExecutionTarget("mcp");
+    if (canRunPublishedFlow) {
+      fetch("/api/agentflows")
+        .then((res) => (res.ok ? res.json() : []))
+        .then((data) => {
+          if (Array.isArray(data)) {
+            const published = data.filter((f) => f.status === "published");
+            setPublishedFlows(published);
+            if (published.length > 0) {
+              setSelectedFlowId(published[0].id);
+              setExecutionTarget("agentflow");
+            } else if (canDirectMcpChat) {
+              setExecutionTarget("mcp");
+            }
           }
-        }
-      })
-      .catch((err) => console.warn("[ChatWorkspace] Failed to fetch agentflows:", err));
+        })
+        .catch((err) => console.warn("[ChatWorkspace] Failed to fetch agentflows:", err));
+    } else {
+      setPublishedFlows([]);
+    }
 
     // 2. Fetch all registered MCP servers and their granular tools
-    fetch("/api/mcp")
-      .then((res) => (res.ok ? res.json() : { servers: [] }))
-      .then((data) => {
-        if (data && Array.isArray(data.servers)) {
-          // Only expose servers configured as workspace-enabled (internal/studio-only servers are excluded)
-          const workspaceServers = data.servers.filter(
-            (s: { serverId: string; workspaceEnabled?: boolean }) => s.workspaceEnabled !== false
-          );
-          setDiscoveredServers(workspaceServers);
-          // Opt-in selection: Do NOT bulk-activate all servers. Start empty so user explicitly picks their target
-          setActiveTools(new Set());
-        }
-      })
-      .catch((err) => console.warn("[ChatWorkspace] Failed to fetch MCP servers:", err));
-  }, []);
+    if (canDirectMcpChat) {
+      fetch("/api/mcp")
+        .then((res) => (res.ok ? res.json() : { servers: [] }))
+        .then((data) => {
+          if (data && Array.isArray(data.servers)) {
+            // Only expose servers configured as workspace-enabled (internal/studio-only servers are excluded)
+            const workspaceServers = data.servers.filter(
+              (s: { serverId: string; workspaceEnabled?: boolean }) => s.workspaceEnabled !== false
+            );
+            setDiscoveredServers(workspaceServers);
+            // Opt-in selection: Do NOT bulk-activate all servers. Start empty so user explicitly picks their target
+            setActiveTools(new Set());
+          }
+        })
+        .catch((err) => console.warn("[ChatWorkspace] Failed to fetch MCP servers:", err));
+    } else {
+      setDiscoveredServers([]);
+    }
+  }, [canRunPublishedFlow, canDirectMcpChat]);
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
@@ -592,40 +610,44 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
 
             {/* Mode Switcher Tabs */}
             <div className="flex items-center p-0.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
-              <button
-                onClick={() => setExecutionTarget("agentflow")}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all ${
-                  executionTarget === "agentflow"
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-                title="Execute compiled multi-agent workflows"
-              >
-                <Zap className="h-3.5 w-3.5" />
-                <span>Published Agentflows</span>
-                {publishedFlows.length > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-900/60 text-indigo-300 ml-0.5">
-                    {publishedFlows.length}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => setExecutionTarget("mcp")}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all ${
-                  executionTarget === "mcp"
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-                title="Execute direct queries with active MCP servers"
-              >
-                <Server className="h-3.5 w-3.5" />
-                <span>Direct MCP Chat</span>
-                {discoveredServers.length > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-900/60 text-indigo-300 ml-0.5">
-                    {discoveredServers.length}
-                  </span>
-                )}
-              </button>
+              {canRunPublishedFlow && (
+                <button
+                  onClick={() => setExecutionTarget("agentflow")}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all ${
+                    executionTarget === "agentflow"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                  title="Execute compiled multi-agent workflows"
+                >
+                  <Zap className="h-3.5 w-3.5" />
+                  <span>Published Agentflows</span>
+                  {publishedFlows.length > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-900/60 text-indigo-300 ml-0.5">
+                      {publishedFlows.length}
+                    </span>
+                  )}
+                </button>
+              )}
+              {canDirectMcpChat && (
+                <button
+                  onClick={() => setExecutionTarget("mcp")}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all ${
+                    executionTarget === "mcp"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                  title="Execute direct queries with active MCP servers"
+                >
+                  <Server className="h-3.5 w-3.5" />
+                  <span>Direct MCP Chat</span>
+                  {discoveredServers.length > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-900/60 text-indigo-300 ml-0.5">
+                      {discoveredServers.length}
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
           </div>
 
@@ -854,41 +876,47 @@ export function ChatWorkspace({ initialConfig }: ChatWorkspaceProps) {
                   className="w-full rounded-xl border-2 border-indigo-500/40 bg-[#06060b] p-4 text-base text-slate-100 placeholder-slate-500 outline-none resize-y focus:border-indigo-500 font-mono leading-relaxed transition-all min-h-[140px] shadow-inner"
                   rows={Math.max(4, (feedbackInput.match(/\n/g) || []).length + 1)}
                 />
-                <div className="flex flex-wrap gap-2 justify-end pt-2">
-                  <button
-                    onClick={handleRejectReplan}
-                    disabled={streaming}
-                    className="px-3.5 py-2 rounded-xl bg-rose-900/60 hover:bg-rose-800 border border-rose-500/30 text-rose-200 font-semibold text-xs flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow"
-                  >
-                    <span>❌</span> Reject &amp; Re-Plan
-                  </button>
-
-                  {feedbackInput.trim() && (
+                {canHitlApprove ? (
+                  <div className="flex flex-wrap gap-2 justify-end pt-2">
                     <button
-                      onClick={handleEditReplan}
+                      onClick={handleRejectReplan}
                       disabled={streaming}
-                      className="px-3.5 py-2 rounded-xl bg-amber-900/60 hover:bg-amber-800 border border-amber-500/30 text-amber-200 font-semibold text-xs flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow"
+                      className="px-3.5 py-2 rounded-xl bg-rose-900/60 hover:bg-rose-800 border border-rose-500/30 text-rose-200 font-semibold text-xs flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow"
                     >
-                      <span>📝</span> Adjust &amp; Re-Plan
+                      <span>❌</span> Reject &amp; Re-Plan
                     </button>
-                  )}
 
-                  <button
-                    onClick={handleSendFeedback}
-                    disabled={!feedbackInput.trim() || streaming}
-                    className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed shadow transition-colors"
-                  >
-                    <span>✨</span> Submit Details &amp; Execute
-                  </button>
+                    {feedbackInput.trim() && (
+                      <button
+                        onClick={handleEditReplan}
+                        disabled={streaming}
+                        className="px-3.5 py-2 rounded-xl bg-amber-900/60 hover:bg-amber-800 border border-amber-500/30 text-amber-200 font-semibold text-xs flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow"
+                      >
+                        <span>📝</span> Adjust &amp; Re-Plan
+                      </button>
+                    )}
 
-                  <button
-                    onClick={handleApproveExecute}
-                    disabled={streaming}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow flex items-center gap-1.5"
-                  >
-                    <span>✓</span> Approve &amp; Execute Plan
-                  </button>
-                </div>
+                    <button
+                      onClick={handleSendFeedback}
+                      disabled={!feedbackInput.trim() || streaming}
+                      className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed shadow transition-colors"
+                    >
+                      <span>✨</span> Submit Details &amp; Execute
+                    </button>
+
+                    <button
+                      onClick={handleApproveExecute}
+                      disabled={streaming}
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow flex items-center gap-1.5"
+                    >
+                      <span>✓</span> Approve &amp; Execute Plan
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-xs text-amber-300 bg-amber-950/30 border border-amber-500/30 rounded-xl p-3">
+                    Requires permission <code className="font-mono">agent_workspace:hitl_approve</code> to approve or adjust execution plans.
+                  </div>
+                )}
               </div>
             </div>
           )}

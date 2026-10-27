@@ -20,8 +20,10 @@ import {
   Users,
   BookOpen,
   CalendarCheck,
+  User,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { usePermissions } from "@/lib/auth/use-permissions";
 
 const navItems = [
   { href: "/dashboard", label: "Agent Workspace", icon: LayoutDashboard },
@@ -58,6 +60,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = authClient.useSession();
+  const { hasPermission, hasAnyCategoryView } = usePermissions();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [threads, setThreads] = useState<ChatThread[]>(() => loadThreads());
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
@@ -105,20 +108,22 @@ export function Sidebar() {
     return () => window.removeEventListener("savazai-appearance-updated", handleAppearance);
   }, []);
 
-  const isAdmin = (session?.user as { role?: string } | undefined)?.role === "admin";
+  const canViewWorkspace = hasPermission("agent_workspace", "view") && showAgentWorkspace;
+  const canViewStudio = hasPermission("capability_studio", "view");
+  const canViewBusiness = hasAnyCategoryView("business_center");
+  const canViewDocs = hasPermission("documentation", "view");
+  const canViewCommandCenter = hasAnyCategoryView("command_center");
+  const canViewDemoRequests = hasPermission("demo_requests", "view");
+  const canViewUserAdmin = hasPermission("user_admin", "view");
 
   const activeNavItems = [
-    ...(isAdmin && showAgentWorkspace ? [{ href: "/dashboard", label: "Agent Workspace", icon: LayoutDashboard }] : []),
-    { href: "/studio", label: "Capability Studio", icon: BrainCircuit },
-    { href: "/business", label: "Business Center", icon: Library },
-    { href: "/docs", label: "Documentation", icon: BookOpen },
-    { href: "/admin/settings", label: "Command Center", icon: Settings },
-    ...(isAdmin
-      ? [
-          { href: "/admin/demo-requests", label: "Demo Requests", icon: CalendarCheck },
-          { href: "/admin/users", label: "User Admin", icon: Users },
-        ]
-      : []),
+    ...(canViewWorkspace ? [{ href: "/dashboard", label: "Agent Workspace", icon: LayoutDashboard }] : []),
+    ...(canViewStudio ? [{ href: "/studio", label: "Capability Studio", icon: BrainCircuit }] : []),
+    ...(canViewBusiness ? [{ href: "/business", label: "Business Center", icon: Library }] : []),
+    ...(canViewDocs ? [{ href: "/docs", label: "Documentation", icon: BookOpen }] : []),
+    ...(canViewCommandCenter ? [{ href: "/admin/settings", label: "Command Center", icon: Settings }] : []),
+    ...(canViewDemoRequests ? [{ href: "/admin/demo-requests", label: "Demo Requests", icon: CalendarCheck }] : []),
+    ...(canViewUserAdmin ? [{ href: "/admin/users", label: "User Admin", icon: Users }] : []),
   ];
 
   useEffect(() => {
@@ -277,7 +282,31 @@ export function Sidebar() {
       {/* Spacer to push signout down if dashboard is not active */}
       {!isDashboard && <div className="flex-1" />}
 
-      <div className="px-2 py-4 border-t border-slate-900 shrink-0">
+      <div className="px-2 py-3 border-t border-slate-900 shrink-0 space-y-1">
+        <Link
+          href="/profile"
+          className={`flex items-center gap-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-900/60 transition-all ${
+            pathname === "/profile" ? "bg-primary/10 text-primary border border-primary/20" : ""
+          } ${
+            !showFullContent ? "justify-center p-2.5 mx-2" : "w-full px-3 py-2"
+          }`}
+          title={!showFullContent ? (session?.user?.name || "My Profile") : undefined}
+        >
+          <div className="h-6 w-6 rounded-lg bg-primary/20 text-primary border border-primary/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+            {session?.user?.image ? (
+              <img src={session.user.image} alt="Avatar" className="h-full w-full object-cover" />
+            ) : (
+              session?.user?.name?.charAt(0).toUpperCase() || <User className="h-3.5 w-3.5" />
+            )}
+          </div>
+          {showFullContent && (
+            <div className="flex-1 truncate text-left animate-in fade-in duration-200">
+              <div className="truncate text-white font-medium text-xs">{session?.user?.name || "My Profile"}</div>
+              <div className="text-[10px] text-slate-500 truncate">Account &amp; Security</div>
+            </div>
+          )}
+        </Link>
+
         <button
           onClick={async () => {
             try {
@@ -290,8 +319,8 @@ export function Sidebar() {
               console.error("[sidebar] Sign out failed:", err);
             }
           }}
-          className={`flex items-center gap-3 rounded-xl text-sm font-semibold text-red-400 hover:bg-red-500/10 transition-all ${
-            !showFullContent ? "justify-center p-2.5 mx-2" : "w-full px-3 py-2.5"
+          className={`flex items-center gap-3 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-500/10 transition-all ${
+            !showFullContent ? "justify-center p-2.5 mx-2" : "w-full px-3 py-2"
           }`}
           title={!showFullContent ? "Sign Out" : undefined}
         >

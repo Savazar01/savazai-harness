@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { Pool } from "pg";
+import { requirePermission } from "@/lib/auth/rbac";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -27,6 +28,12 @@ async function ensureSkillsTable() {
 
 export async function GET() {
   try {
+    const check = await requirePermission("business_center", "skills_view");
+    if (!check.authorized) {
+      const studioCheck = await requirePermission("capability_studio", "view");
+      if (!studioCheck.authorized) return check.response;
+    }
+
     await ensureSkillsTable();
     const res = await pool.query(
       'SELECT id, name, description, instructions, category, mcp_server_id as "mcpServerId", version, created_at as "createdAt", updated_at as "updatedAt" FROM skills ORDER BY updated_at DESC'
@@ -47,6 +54,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const check = await requirePermission("business_center", ["skills_create", "skills_import"]);
+    if (!check.authorized) return check.response;
+
     await ensureSkillsTable();
     const { name, description, instructions, category, mcpServerId, version } = await req.json();
 
@@ -79,6 +89,9 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    const check = await requirePermission("business_center", "skills_edit");
+    if (!check.authorized) return check.response;
+
     await ensureSkillsTable();
     const { id, name, description, instructions, category, mcpServerId, version } = await req.json();
 
@@ -110,6 +123,9 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const check = await requirePermission("business_center", "skills_delete");
+    if (!check.authorized) return check.response;
+
     await ensureSkillsTable();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

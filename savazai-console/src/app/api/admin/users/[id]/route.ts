@@ -1,13 +1,8 @@
 import { NextRequest } from "next/server";
-import { Pool } from "pg";
-import { auth } from "@/lib/auth";
-import { hashPassword } from "better-auth/crypto";
-import { headers } from "next/headers";
 import { randomUUID } from "node:crypto";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { hashPassword } from "better-auth/crypto";
+import { pool, ensureAdminProvisioned } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth/rbac";
 
 interface RouteParams {
   params: Promise<{
@@ -17,50 +12,84 @@ interface RouteParams {
 
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
+    await ensureAdminProvisioned();
     const { id: targetUserId } = await params;
-
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session || session.user.role !== "admin") {
-      return Response.json(
-        { error: "Forbidden: Admin privileges required." },
-        { status: 403 }
-      );
-    }
 
     if (!targetUserId) {
       return Response.json({ error: "Target user ID is required." }, { status: 400 });
     }
 
     const body = await req.json();
-    const { name, email, role, password } = body;
+    const {
+      name,
+      email,
+      role,
+      roleId,
+      status,
+      mustResetPassword,
+      password,
+      customPermissions,
+    } = body;
 
-    // Self-demotion safeguard: Current admin cannot demote their own account
-    if (targetUserId === session.user.id && role && role !== "admin") {
-      return Response.json(
-        { error: "Self-demotion safeguard: You cannot remove admin privileges from your own active account." },
-        { status: 400 }
-      );
+    // Determine required permission based on operation
+    if (password !== undefined || mustResetPassword !== undefined) {
+      const check = await requirePermission("user_admin", ["force_password_reset", "approve_users"]);
+      if (!check.authorized) return check.response;
+    } else if (roleId !== undefined || customPermissions !== undefined) {
+      const check = await requirePermission("user_admin", ["manage_roles", "approve_users"]);
+      if (!check.authorized) return check.response;
+    } else {
+      const check = await requirePermission("user_admin", ["approve_users", "manage_roles"]);
+      if (!check.authorized) return check.response;
     }
 
-    // Verify user exists
+    const check = await requirePermission("user_admin", [
+      "approve_users",
+      "manage_roles",
+      "force_password_reset",
+    ]);
+    if (!check.authorized) return check.response;
+
     const existing = await pool.query(
-      'SELECT id, name, email, role FROM "user" WHERE id = $1 LIMIT 1',
+      'SELECT id, name, email, role, "status", "mustResetPassword", "roleId" FROM "user" WHERE id = $1 LIMIT 1',
       [targetUserId]
     );
-
     if (existing.rows.length === 0) {
       return Response.json({ error: "User not found." }, { status: 404 });
     }
 
     const currentUser = existing.rows[0];
+
+    // Self-demotion / self-lockout safeguard
+    if (targetUserId === check.context.userId) {
+      if (status && status !== "ACTIVE") {
+        return Response.json(
+          { error: "Self-lockout safeguard: You cannot suspend or reject your own active administrator account." },
+          { status: 400 }
+        );
+      }
+      if (roleId !== undefined && roleId !== "role_super_admin" && currentUser.role === "admin") {
+        return Response.json(
+          { error: "Self-demotion safeguard: You cannot remove Super Administrator privileges from your own account." },
+          { status: 400 }
+        );
+      }
+    }
+
     const newName = name ? name.trim() : currentUser.name;
     const newEmail = email ? email.trim().toLowerCase() : currentUser.email;
-    const newRole = role ? (role === "admin" ? "admin" : "user") : currentUser.role;
+    const newStatus = status || currentUser.status || "ACTIVE";
+    const newRoleId =
+      roleId !== undefined ? roleId : role === "admin" ? "role_super_admin" : currentUser.roleId;
+    const newLegacyRole =
+      newRoleId === "role_super_admin" || role === "admin" ? "admin" : "user";
+    const newMustReset =
+      mustResetPassword !== undefined
+        ? Boolean(mustResetPassword)
+        : currentUser.status === "PENDING_APPROVAL" && newStatus === "ACTIVE"
+        ? true
+        : Boolean(currentUser.mustResetPassword);
 
-    // Check if new email conflicts with another user
     if (email && newEmail !== currentUser.email) {
       const emailConflict = await pool.query(
         'SELECT id FROM "user" WHERE LOWER(email) = $1 AND id != $2 LIMIT 1',
@@ -74,16 +103,47 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Update user table
     const updateRes = await pool.query(
       `UPDATE "user"
-       SET name = $1, email = $2, role = $3, "updatedAt" = now()
-       WHERE id = $4
-       RETURNING id, name, email, role, "emailVerified", "createdAt", "updatedAt"`,
-      [newName, newEmail, newRole, targetUserId]
+       SET name = $1,
+           email = $2,
+           role = $3,
+           "status" = $4,
+           "mustResetPassword" = $5,
+           "roleId" = $6,
+           "updatedAt" = now()
+       WHERE id = $7
+       RETURNING id, name, email, role, "status", "mustResetPassword", "roleId", "emailVerified", "createdAt", "updatedAt"`,
+      [newName, newEmail, newLegacyRole, newStatus, newMustReset, newRoleId, targetUserId]
     );
 
-    // Update password if provided
+    // If user is suspended, rejected, or forced to reset password, revoke active sessions if needed
+    if (newStatus !== "ACTIVE") {
+      await pool.query('DELETE FROM "session" WHERE "userId" = $1', [targetUserId]);
+    }
+
+    // Update custom permissions overrides if provided
+    if (Array.isArray(customPermissions)) {
+      await pool.query('DELETE FROM "user_permission" WHERE "userId" = $1', [targetUserId]);
+      for (const cp of customPermissions) {
+        if (cp?.resource && cp?.action) {
+          await pool.query(
+            `INSERT INTO "user_permission" ("id", "userId", "resource", "action", "granted")
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT ("userId", "resource", "action") DO UPDATE SET "granted" = EXCLUDED."granted"`,
+            [
+              randomUUID(),
+              targetUserId,
+              String(cp.resource),
+              String(cp.action),
+              cp.granted !== false,
+            ]
+          );
+        }
+      }
+    }
+
+    // Update password if provided by admin
     if (password && typeof password === "string" && password.trim().length >= 6) {
       const hashedPassword = await hashPassword(password.trim());
       const accountRes = await pool.query(
@@ -103,6 +163,12 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
           [accountId, targetUserId, hashedPassword]
         );
       }
+      // Force password reset on next sign-in whenever an admin resets a user's password
+      if (mustResetPassword === undefined && targetUserId !== check.context.userId) {
+        await pool.query('UPDATE "user" SET "mustResetPassword" = true WHERE id = $1', [
+          targetUserId,
+        ]);
+      }
     }
 
     return Response.json({ user: updateRes.rows[0] }, { status: 200 });
@@ -115,48 +181,38 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(_req: NextRequest, { params }: RouteParams) {
   try {
+    await ensureAdminProvisioned();
     const { id: targetUserId } = await params;
 
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session || session.user.role !== "admin") {
-      return Response.json(
-        { error: "Forbidden: Admin privileges required." },
-        { status: 403 }
-      );
-    }
+    const check = await requirePermission("user_admin", "approve_users");
+    if (!check.authorized) return check.response;
 
     if (!targetUserId) {
       return Response.json({ error: "Target user ID is required." }, { status: 400 });
     }
 
-    // Self-deletion safeguard: Admin cannot delete their own account
-    if (targetUserId === session.user.id) {
+    if (targetUserId === check.context.userId) {
       return Response.json(
         { error: "Self-deletion safeguard: You cannot delete your own active administrator account." },
         { status: 400 }
       );
     }
 
-    // Verify user exists
     const existing = await pool.query(
       'SELECT id, email FROM "user" WHERE id = $1 LIMIT 1',
       [targetUserId]
     );
-
     if (existing.rows.length === 0) {
       return Response.json({ error: "User not found." }, { status: 404 });
     }
 
-    // Cascade delete sessions, accounts, and user
+    await pool.query('DELETE FROM "user_permission" WHERE "userId" = $1', [targetUserId]);
     await pool.query('DELETE FROM "session" WHERE "userId" = $1', [targetUserId]);
     await pool.query('DELETE FROM "account" WHERE "userId" = $1', [targetUserId]);
     await pool.query('DELETE FROM "user" WHERE id = $1', [targetUserId]);
 
     return Response.json(
-      { success: true, message: `User ${existing.rows[0].email} deleted successfully.` },
+      { success: true, message: `User ${existing.rows[0].email} purged successfully.` },
       { status: 200 }
     );
   } catch (err: unknown) {

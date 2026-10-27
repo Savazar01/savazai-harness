@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { Pool } from "pg";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requirePermission } from "@/lib/auth/rbac";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -56,6 +55,9 @@ const DEFAULT_ENTITY_RULES: ComplianceEntityRule[] = [
 
 export async function GET() {
   try {
+    const check = await requirePermission("business_center", "compliance_view");
+    if (!check.authorized) return check.response;
+
     await pool.query(`CREATE TABLE IF NOT EXISTS agentflow_compliance_rules (
       id UUID PRIMARY KEY,
       config JSONB NOT NULL DEFAULT '{}',
@@ -106,13 +108,12 @@ function migrateConfig(config: ComplianceConfig): ComplianceConfig {
 
 export async function PUT(req: NextRequest) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) {
-      return new Response(JSON.stringify({ error: "Unauthorized: Authentication required to modify compliance rules." }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+    const check = await requirePermission("business_center", [
+      "compliance_manage",
+      "compliance_import_framework",
+      "compliance_custom_entities",
+    ]);
+    if (!check.authorized) return check.response;
 
     const body = (await req.json()) as ComplianceConfig;
     if (!body || typeof body !== "object") {
@@ -154,6 +155,9 @@ export async function PUT(req: NextRequest) {
 // AI-powered regex generation from sample input
 export async function POST(req: NextRequest) {
   try {
+    const check = await requirePermission("business_center", "compliance_custom_entities");
+    if (!check.authorized) return check.response;
+
     const { sample, label } = await req.json();
     if (!sample || typeof sample !== "string") {
       return new Response(

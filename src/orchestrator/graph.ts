@@ -402,6 +402,9 @@ async function fetchMcpTools(serverUrl: string, headers: Record<string, string>,
   try {
     const proxyRes = await fetch(mcpProxyUrl, {
       method: "GET",
+      headers: {
+        "x-internal-secret": process.env.MASTER_VAULT_SECRET || "savaz_crawl_secret",
+      },
       signal: AbortSignal.timeout(6000),
     });
     if (proxyRes.ok) {
@@ -2562,7 +2565,10 @@ async function executeToolByName(
       try {
         const proxyRes = await fetch(mcpProxyUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-secret": process.env.MASTER_VAULT_SECRET || "savaz_crawl_secret",
+          },
           body: JSON.stringify({
             jsonrpc: "2.0",
             id: `call-${toolName}-${Date.now()}`,

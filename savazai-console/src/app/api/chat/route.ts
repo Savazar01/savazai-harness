@@ -10,6 +10,7 @@ import {
   type McpToolInputSchema,
 } from "@/app/api/orchestrator/test/route";
 import { McpAggregator } from "@/lib/mcp/client-aggregator";
+import { requirePermission } from "@/lib/auth/rbac";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -38,6 +39,14 @@ export async function POST(req: NextRequest) {
   // ── MODE 1: PUBLISHED AGENTFLOWS ──
   // If workflowId is a valid UUID, execute strictly through the unified orchestrator engine
   if (workflowId && typeof workflowId === "string" && /^[0-9a-fA-F-]{36}$/.test(workflowId.trim())) {
+    const flowCheck = await requirePermission("agent_workspace", "run_published_flow");
+    if (!flowCheck.authorized) return flowCheck.response;
+
+    if (resume !== undefined) {
+      const hitlCheck = await requirePermission("agent_workspace", "hitl_approve");
+      if (!hitlCheck.authorized) return hitlCheck.response;
+    }
+
     const testPayload: Record<string, unknown> = {
       workflowId: workflowId.trim(),
       message,
@@ -73,6 +82,9 @@ export async function POST(req: NextRequest) {
   const isDirectMcp = mode === "direct-mcp" || (!workflowId && Array.isArray(activeTools));
 
   if (isDirectMcp) {
+    const mcpCheck = await requirePermission("agent_workspace", "direct_mcp_chat");
+    if (!mcpCheck.authorized) return mcpCheck.response;
+
     const encoder = new TextEncoder();
     const effectiveServers = Array.isArray(selectedMcpServers) && selectedMcpServers.length > 0
       ? selectedMcpServers

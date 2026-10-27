@@ -1,8 +1,28 @@
+import { requirePermission } from "@/lib/auth/rbac";
+
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_HARNESS_API_URL || "http://savazai-backend:3055";
 
 export async function GET() {
   try {
+    const check = await requirePermission("command_center", [
+      "appearance_view",
+      "branding_view",
+      "llm_view",
+      "mcp_view",
+      "db_view",
+      "api_services_view",
+      "spend_view",
+      "social_view",
+    ]);
+    if (!check.authorized) {
+      const fallbackCheck = await requirePermission("capability_studio", "view");
+      if (!fallbackCheck.authorized) {
+        const wsCheck = await requirePermission("agent_workspace", "view");
+        if (!wsCheck.authorized) return check.response;
+      }
+    }
+
     const response = await fetch(`${BACKEND_URL}/api/settings`);
     if (!response.ok) {
       return new Response(

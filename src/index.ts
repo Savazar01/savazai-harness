@@ -17,7 +17,40 @@ import { seed } from "./db/seed.js";
 const app = express();
 const PORT = Number(process.env.PORT) || 3055;
 
-app.use(cors());
+const allowedOrigins = [
+  "http://localhost:3056",
+  "http://127.0.0.1:3056",
+  "http://localhost:3055",
+  "http://127.0.0.1:3055",
+  "http://savazai-console:3056",
+  "http://savazai-backend:3055",
+  process.env.BETTER_AUTH_URL,
+  process.env.NEXT_PUBLIC_APP_URL,
+  process.env.NEXT_PUBLIC_HARNESS_API_URL,
+].filter(Boolean) as string[];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, container-to-container) or whitelisted origins
+      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.some((o) => origin.startsWith(o))) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS policy violation: Unauthorized origin blocked."));
+      }
+    },
+    credentials: true,
+  })
+);
+
+// Global Security Response Headers
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
 app.use(express.json());
 
 app.get("/health", (_req, res) => {

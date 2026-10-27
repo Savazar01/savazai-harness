@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { Pool } from "pg";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requirePermission } from "@/lib/auth/rbac";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -12,16 +11,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session || session.user.role !== "admin") {
-      return Response.json(
-        { error: "Forbidden: Admin privileges required." },
-        { status: 403 }
-      );
-    }
+    const check = await requirePermission("demo_requests", "manage");
+    if (!check.authorized) return check.response;
 
     const { id } = await params;
     const body = await req.json();
@@ -94,16 +85,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session || session.user.role !== "admin") {
-      return Response.json(
-        { error: "Forbidden: Admin privileges required." },
-        { status: 403 }
-      );
-    }
+    const check = await requirePermission("demo_requests", "manage");
+    if (!check.authorized) return check.response;
 
     const { id } = await params;
 

@@ -15,17 +15,27 @@ export function encrypt(text: string): string {
 
 export function decrypt(encryptedText: string): string {
   if (!encryptedText) return "";
-  try {
-    const secret = process.env.MASTER_VAULT_SECRET || "fallback_secret_key_long_enough_32";
-    const key = scryptSync(secret, "salt", 32);
-    const [ivHex, encrypted] = encryptedText.split(":");
-    if (!ivHex || !encrypted) return encryptedText; // If not encrypted
-    const iv = Buffer.from(ivHex, "hex");
-    const decipher = createDecipheriv(ALGORITHM, key, iv);
-    let decrypted = decipher.update(encrypted, "hex", "utf8");
-    decrypted += decipher.final("utf8");
-    return decrypted;
-  } catch {
-    return encryptedText; // Return original if decryption fails (e.g. not encrypted)
+  const [ivHex, encrypted] = encryptedText.split(":");
+  if (!ivHex || !encrypted) return encryptedText; // If not encrypted
+
+  const secrets = [
+    process.env.MASTER_VAULT_SECRET,
+    "fallback_secret_key_long_enough_32",
+  ].filter(Boolean) as string[];
+
+  const iv = Buffer.from(ivHex, "hex");
+
+  for (const secret of secrets) {
+    try {
+      const key = scryptSync(secret, "salt", 32);
+      const decipher = createDecipheriv(ALGORITHM, key, iv);
+      let decrypted = decipher.update(encrypted, "hex", "utf8");
+      decrypted += decipher.final("utf8");
+      return decrypted;
+    } catch {
+      // Try next secret candidate
+    }
   }
+
+  return encryptedText; // Return original if all decryption attempts fail
 }

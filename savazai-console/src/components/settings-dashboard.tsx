@@ -34,8 +34,18 @@ import {
   Trash2,
   Edit,
   Share2,
+  ShieldAlert,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
+import {
+  SystemAdminHub,
+  type SmtpSettingsState,
+  type CaptchaSettingsState,
+  type SecuritySettingsState,
+} from "@/components/admin/system-admin-hub";
+import { usePermissions } from "@/lib/auth/use-permissions";
 
 interface CustomSkill {
   name: string;
@@ -99,7 +109,7 @@ interface SettingsDashboardProps {
   initialConfig: SystemConfig;
 }
 
-type TabType = "appearance" | "branding" | "llm" | "mcp" | "database" | "api" | "capability" | "analytics" | "social";
+type TabType = "appearance" | "branding" | "llm" | "mcp" | "database" | "api" | "capability" | "analytics" | "social" | "system_admin";
 
 const DEFAULT_LLM_PROVIDERS: Record<string, LLMProviderConfig> = {
   openai: { apiKey: "", endpoint: "https://api.openai.com/v1", defaultModel: "gpt-4o", active: false },
@@ -203,35 +213,100 @@ const MCP_PRESETS: Record<string, { command: string; args: string[]; env: Record
   }
 };
 
-function TabButton({ tab, icon: Icon, activeTab, setActiveTab, label }: {
+function TabButton({
+  tab,
+  icon: Icon,
+  activeTab,
+  setActiveTab,
+  label,
+  isCollapsed,
+}: {
   tab: TabType;
   icon: React.FC<{ className?: string }>;
   activeTab: TabType;
   setActiveTab: (t: TabType) => void;
   label: string;
+  isCollapsed?: boolean;
 }) {
   return (
     <button
       onClick={() => setActiveTab(tab)}
-      className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+      title={isCollapsed ? label : undefined}
+      className={`flex items-center ${
+        isCollapsed ? "justify-center px-2 py-3" : "gap-3 px-4 py-3"
+      } w-full rounded-xl text-sm font-semibold transition-all cursor-pointer ${
         activeTab === tab
           ? "bg-primary text-white shadow-lg shadow-primary/20"
           : "text-slate-400 hover:text-white hover:bg-slate-900/40"
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" />
-      {label}
+      {!isCollapsed && <span className="truncate">{label}</span>}
     </button>
   );
 }
 
 export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
+  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
+  const { hasPermission } = usePermissions();
+  const canViewAppearance = hasPermission("command_center", "appearance_view");
+  const canManageAppearance = hasPermission("command_center", "appearance_manage");
+  const canViewBranding = hasPermission("command_center", "branding_view");
+  const canManageBranding = hasPermission("command_center", "branding_manage");
+  const canViewLlm = hasPermission("command_center", "llm_view");
+  const canManageLlm = hasPermission("command_center", "llm_manage");
+  const canViewMcp = hasPermission("command_center", "mcp_view");
+  const canManageMcp = hasPermission("command_center", "mcp_manage");
+  const canViewDb = hasPermission("command_center", "db_view");
+  const canManageDb = hasPermission("command_center", "db_manage");
+  const canViewApi = hasPermission("command_center", "api_services_view");
+  const canManageApi = hasPermission("command_center", "api_services_manage");
+  const canViewSpend = hasPermission("command_center", "spend_view");
+  const canExportSpend = hasPermission("command_center", "spend_export");
+  const canViewSocial = hasPermission("command_center", "social_view");
+  const canManageSocial = hasPermission("command_center", "social_manage");
+  const canViewSystemAdmin = hasPermission("command_center", "system_admin_view");
+  const canManageSystemAdmin = hasPermission("command_center", "system_admin_manage");
+
   const [activeTab, setActiveTab] = useState<TabType>("appearance");
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<Record<string, { success: boolean; detail?: string; error?: string } | undefined>>({});
   const tokens = initialConfig.designTokens || {};
+
+  const [smtpSettings, setSmtpSettings] = useState<SmtpSettingsState>(() => {
+    const raw = (tokens.smtpSettings as Record<string, any>) || {};
+    return {
+      provider: raw.provider || "smtp",
+      host: raw.host || "smtp.gmail.com",
+      port: String(raw.port || "587"),
+      secure: Boolean(raw.secure),
+      user: raw.user || "",
+      pass: raw.pass ? "••••••••" : "",
+      fromName: raw.fromName || "SavazAI Platform",
+      fromEmail: raw.fromEmail || "security@savazar.com",
+      sendgridApiKey: raw.sendgridApiKey ? "••••••••" : "",
+    };
+  });
+
+  const [captchaSettings, setCaptchaSettings] = useState<CaptchaSettingsState>(() => {
+    const raw = (tokens.captchaSettings as Record<string, any>) || {};
+    return {
+      provider: raw.provider || "turnstile",
+      siteKey: raw.siteKey || "",
+      secretKey: raw.secretKey ? "••••••••" : "",
+    };
+  });
+
+  const [securitySettings, setSecuritySettings] = useState<SecuritySettingsState>(() => {
+    const raw = (tokens.securitySettings as Record<string, any>) || {};
+    return {
+      sessionHours: String(raw.sessionHours || "24"),
+      maxLoginAttempts: String(raw.maxLoginAttempts || "5"),
+      quarantineNotificationEmail: raw.quarantineNotificationEmail || "security@savazar.com",
+    };
+  });
   const storedProviders = React.useMemo(() => tokens.llmProviders || {}, [tokens.llmProviders]);
   const mergedProviders = React.useMemo(() => {
     const res: Record<string, LLMProviderConfig> = {};
@@ -648,6 +723,9 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
       dbConnections: JSON.stringify(dbConnections),
       socialConnections: JSON.stringify(socialConnections),
       agentsMd,
+      smtpSettings: JSON.stringify(smtpSettings),
+      captchaSettings: JSON.stringify(captchaSettings),
+      securitySettings: JSON.stringify(securitySettings),
     });
 
     if (typeof window !== "undefined") {
@@ -1042,7 +1120,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-6 px-4 flex flex-col min-h-0">
+    <div className="w-full max-w-[1400px] mx-auto py-6 px-4 flex flex-col min-h-0">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-6 border-b border-slate-900 pb-6 shrink-0">
         <div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">SavazAI Command Center</h1>
@@ -1061,19 +1139,43 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 min-h-0 flex-1">
-        <div className="flex flex-col gap-2 shrink-0">
-          <TabButton tab="appearance" icon={Palette} activeTab={activeTab} setActiveTab={setActiveTab} label="Appearance" />
-          <TabButton tab="branding" icon={ImageIcon} activeTab={activeTab} setActiveTab={setActiveTab} label="Branding" />
-          <TabButton tab="llm" icon={Cpu} activeTab={activeTab} setActiveTab={setActiveTab} label="LLM Providers" />
-          <TabButton tab="mcp" icon={Wrench} activeTab={activeTab} setActiveTab={setActiveTab} label="MCP Integration" />
-          <TabButton tab="database" icon={Database} activeTab={activeTab} setActiveTab={setActiveTab} label="Database Hub" />
-          <TabButton tab="api" icon={Globe} activeTab={activeTab} setActiveTab={setActiveTab} label="API Services" />
-          <TabButton tab="analytics" icon={BarChart3} activeTab={activeTab} setActiveTab={setActiveTab} label="Usage & Spend" />
-          <TabButton tab="social" icon={Share2} activeTab={activeTab} setActiveTab={setActiveTab} label="Social Media Hub" />
+      <div className="flex flex-col lg:flex-row gap-6 min-h-0 flex-1">
+        <div
+          className={`transition-all duration-300 flex flex-col gap-2 shrink-0 ${
+            isNavCollapsed ? "w-16" : "w-64"
+          }`}
+        >
+          <div className="flex items-center justify-between px-1 mb-1">
+            {!isNavCollapsed && (
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                Navigation
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsNavCollapsed((prev) => !prev)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition-colors cursor-pointer ml-auto"
+              title={isNavCollapsed ? "Expand sub-navigation" : "Collapse sub-navigation"}
+            >
+              {isNavCollapsed ? (
+                <PanelLeftOpen className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+          {canViewAppearance && <TabButton tab="appearance" icon={Palette} activeTab={activeTab} setActiveTab={setActiveTab} label="Appearance" isCollapsed={isNavCollapsed} />}
+          {canViewBranding && <TabButton tab="branding" icon={ImageIcon} activeTab={activeTab} setActiveTab={setActiveTab} label="Branding" isCollapsed={isNavCollapsed} />}
+          {canViewLlm && <TabButton tab="llm" icon={Cpu} activeTab={activeTab} setActiveTab={setActiveTab} label="LLM Providers" isCollapsed={isNavCollapsed} />}
+          {canViewMcp && <TabButton tab="mcp" icon={Wrench} activeTab={activeTab} setActiveTab={setActiveTab} label="MCP Integration" isCollapsed={isNavCollapsed} />}
+          {canViewDb && <TabButton tab="database" icon={Database} activeTab={activeTab} setActiveTab={setActiveTab} label="Database Hub" isCollapsed={isNavCollapsed} />}
+          {canViewApi && <TabButton tab="api" icon={Globe} activeTab={activeTab} setActiveTab={setActiveTab} label="API Services" isCollapsed={isNavCollapsed} />}
+          {canViewSpend && <TabButton tab="analytics" icon={BarChart3} activeTab={activeTab} setActiveTab={setActiveTab} label="Usage & Spend" isCollapsed={isNavCollapsed} />}
+          {canViewSocial && <TabButton tab="social" icon={Share2} activeTab={activeTab} setActiveTab={setActiveTab} label="Social Media Hub" isCollapsed={isNavCollapsed} />}
+          {canViewSystemAdmin && <TabButton tab="system_admin" icon={ShieldAlert} activeTab={activeTab} setActiveTab={setActiveTab} label="System Admin" isCollapsed={isNavCollapsed} />}
         </div>
 
-        <form onSubmit={handleSave} className="lg:col-span-3 rounded-3xl border border-slate-900 bg-slate-950/40 p-6 relative flex flex-col min-h-0">
+        <form onSubmit={handleSave} className="flex-1 min-w-0 rounded-3xl border border-slate-900 bg-slate-950/40 p-6 relative flex flex-col min-h-0">
           <div className="max-h-[calc(100vh-260px)] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full">
             {activeTab === "appearance" && (
               <div className="space-y-5">
@@ -2282,7 +2384,28 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               </div>
             )}
 
+            {activeTab === "system_admin" && (
+              <SystemAdminHub
+                canManage={canManageSystemAdmin}
+                smtpSettings={smtpSettings}
+                setSmtpSettings={setSmtpSettings}
+                captchaSettings={captchaSettings}
+                setCaptchaSettings={setCaptchaSettings}
+                securitySettings={securitySettings}
+                setSecuritySettings={setSecuritySettings}
+              />
+            )}
+
           {activeTab !== "analytics" && (
+            (activeTab === "appearance" && canManageAppearance) ||
+            (activeTab === "branding" && canManageBranding) ||
+            (activeTab === "llm" && canManageLlm) ||
+            (activeTab === "mcp" && canManageMcp) ||
+            (activeTab === "database" && canManageDb) ||
+            (activeTab === "api" && canManageApi) ||
+            (activeTab === "social" && canManageSocial) ||
+            (activeTab === "system_admin" && canManageSystemAdmin)
+          ) && (
             <div className="sticky bottom-0 z-10 bg-[#0c0c12]/95 py-4 border-t border-[#1f1f2e] mt-4 -mx-6 px-6 rounded-b-3xl">
               <div className="flex justify-end">
                 <button type="submit"

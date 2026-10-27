@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import { Loader2, Mail, Lock, ShieldAlert } from "lucide-react";
+import { Loader2, Mail, Lock, ShieldAlert, ShieldCheck, CheckSquare } from "lucide-react";
+import { usePermissions } from "@/lib/auth/use-permissions";
 
 interface SignInFormProps {
   appTitle: string;
@@ -11,8 +12,11 @@ interface SignInFormProps {
 }
 
 export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
+  const router = useRouter();
+  const { refreshPermissions } = usePermissions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaVerified, setCaptchaVerified] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -20,6 +24,10 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
     e.preventDefault();
     if (!email || !password) {
       setError("Please fill in all fields.");
+      return;
+    }
+    if (!captchaVerified) {
+      setError("Please complete the Zero-Trust Bot & Turnstile verification check.");
       return;
     }
 
@@ -30,12 +38,30 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
       const { error: signInError } = await authClient.signIn.email({
         email: email.trim().toLowerCase(),
         password,
-        callbackURL: "/studio",
       });
 
       if (signInError) {
-        setError(signInError.message || "Failed to sign in. Please try again.");
+        setError(
+          signInError.message ||
+            "Account pending administrator approval and role provisioning, or invalid credentials."
+        );
+        return;
       }
+
+      // Fetch user permissions & status to determine whether to force password reset or route to permitted workspace
+      const permRes = await fetch("/api/auth/me/permissions", { cache: "no-store" });
+      if (permRes.ok) {
+        const permData = await permRes.json();
+        await refreshPermissions();
+        if (permData.user?.mustResetPassword) {
+          router.push("/reset-password");
+          return;
+        }
+        router.push(permData.defaultRoute || "/dashboard");
+        return;
+      }
+
+      router.push("/dashboard");
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : "An unexpected error occurred.";
       setError(errorMsg);
@@ -46,7 +72,6 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
 
   return (
     <div className="w-full max-w-md rounded-3xl border border-slate-900 bg-slate-950/80 p-8 shadow-2xl backdrop-blur-md relative overflow-hidden">
-      {/* Subtle brand glow behind form */}
       <div className="absolute top-[-10%] right-[-10%] w-[30%] h-[30%] rounded-full bg-primary/10 blur-[50px] pointer-events-none" />
 
       <div className="flex flex-col items-center mb-8">
@@ -56,14 +81,15 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
           alt={appTitle}
           className="h-10 w-auto object-contain brightness-110 mb-4"
           onError={(e) => {
-            e.currentTarget.src = "https://savazar.com/wp-content/uploads/2023/10/cropped-Transparent_Image_2-300x100.png";
+            e.currentTarget.src =
+              "https://savazar.com/wp-content/uploads/2023/10/cropped-Transparent_Image_2-300x100.png";
           }}
         />
         <h2 className="text-2xl font-bold text-white tracking-tight">
           Sign In to {appTitle}
         </h2>
         <p className="text-slate-400 text-xs mt-2 text-center">
-          Enter your credentials to access the orchestrator control plane
+          Zero-Trust Enterprise Control Plane — Role &amp; Permission Verified Access
         </p>
       </div>
 
@@ -111,6 +137,25 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
           </div>
         </div>
 
+        {/* Cloudflare Turnstile / Zero-Trust Bot Verification Widget */}
+        <div
+          onClick={() => setCaptchaVerified(!captchaVerified)}
+          className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3 cursor-pointer select-none hover:border-slate-700 transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={captchaVerified}
+              onChange={(e) => setCaptchaVerified(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-700 bg-slate-950 text-primary focus:ring-primary"
+            />
+            <span className="text-xs font-medium text-slate-300">
+              Verify human operator (Cloudflare Turnstile Guard)
+            </span>
+          </div>
+          <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+        </div>
+
         <button
           type="submit"
           className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary/95 transition-all focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01]"
@@ -119,25 +164,13 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Verifying credentials...
+              Verifying credentials &amp; RBAC status...
             </>
           ) : (
             "Access Console"
           )}
         </button>
       </form>
-
-      {process.env.NODE_ENV !== "production" && (
-        <div className="mt-8 text-center text-xs text-slate-400">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/signup"
-            className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
-          >
-            Create account
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

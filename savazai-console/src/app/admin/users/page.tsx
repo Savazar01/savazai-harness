@@ -1,7 +1,7 @@
 import { UserManagement } from "@/components/admin/user-management";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSessionAccessContext, resolveDefaultLandingRoute } from "@/lib/auth/rbac";
 import { redirect } from "next/navigation";
+import { AccessDeniedScreen } from "@/components/shared/access-denied";
 
 export const metadata = {
   title: "User Administration | SavazAI",
@@ -9,16 +9,24 @@ export const metadata = {
 };
 
 export default async function UsersPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const ctx = await getSessionAccessContext();
 
-  if (!session) {
+  if (!ctx || ctx.status !== "ACTIVE") {
     redirect("/signin");
   }
 
-  if (session.user.role !== "admin") {
-    redirect("/studio");
+  if (ctx.mustResetPassword) {
+    redirect("/reset-password");
+  }
+
+  if (!ctx.permissions.has("user_admin:view")) {
+    return (
+      <AccessDeniedScreen
+        requiredPermission="user_admin:view"
+        moduleTitle="User Administration & RBAC Matrix"
+        fallbackRoute={resolveDefaultLandingRoute(ctx.permissions)}
+      />
+    );
   }
 
   return (

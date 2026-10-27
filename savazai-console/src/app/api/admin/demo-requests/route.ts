@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { Pool } from "pg";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requirePermission } from "@/lib/auth/rbac";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -9,16 +8,8 @@ const pool = new Pool({
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session || session.user.role !== "admin") {
-      return Response.json(
-        { error: "Forbidden: Admin privileges required." },
-        { status: 403 }
-      );
-    }
+    const check = await requirePermission("demo_requests", "view");
+    if (!check.authorized) return check.response;
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");

@@ -1,10 +1,20 @@
 import { NextRequest } from "next/server";
+import { requirePermission } from "@/lib/auth/rbac";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_HARNESS_API_URL || "http://savazai-backend:3055";
 
 export async function GET() {
   try {
+    const studioCheck = await requirePermission("capability_studio", "view");
+    if (!studioCheck.authorized) {
+      const wsCheck = await requirePermission("agent_workspace", ["view", "run_published_flow"]);
+      if (!wsCheck.authorized) {
+        const skillsCheck = await requirePermission("business_center", ["skills_view", "okf_view"]);
+        if (!skillsCheck.authorized) return studioCheck.response;
+      }
+    }
+
     const response = await fetch(`${BACKEND_URL}/api/agentflows`);
     if (!response.ok) {
       return new Response(
@@ -28,6 +38,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const check = await requirePermission("capability_studio", ["create_flow", "import_json"]);
+    if (!check.authorized) return check.response;
+
     const body = await req.json();
     const response = await fetch(`${BACKEND_URL}/api/agentflows`, {
       method: "POST",

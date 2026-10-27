@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { requirePermission } from "@/lib/auth/rbac";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_HARNESS_API_URL || "http://savazai-backend:3055";
@@ -7,6 +8,11 @@ export async function GET(
   req: NextRequest,
   props: { params: Promise<{ threadId: string }> }
 ) {
+  const permCheck = await requirePermission("agent_workspace", "view");
+  if (!permCheck.authorized) {
+    return permCheck.response;
+  }
+
   const { threadId } = await props.params;
   const backendUrl = `${BACKEND_URL}/api/graph/threads/${threadId}`;
 

@@ -1,15 +1,33 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SkillsRegistry } from "@/components/business/skills-registry";
 import { OkfRegistry } from "@/components/business/okf-registry";
 import { ComplianceManager } from "@/components/business/compliance-manager";
 import { Wrench, BookOpen, ShieldCheck, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { HelpTooltip } from "@/components/shared/help-tooltip";
+import { usePermissions } from "@/lib/auth/use-permissions";
 
 export default function BusinessCenterPage() {
+  const { hasPermission } = usePermissions();
+  const canViewSkills = hasPermission("business_center", "skills_view");
+  const canViewOkf = hasPermission("business_center", "okf_view");
+  const canViewCompliance = hasPermission("business_center", "compliance_view");
+
   const [subTab, setSubTab] = useState<"skills" | "okf" | "governance">("skills");
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (subTab === "skills" && !canViewSkills) {
+      if (canViewOkf) setSubTab("okf");
+      else if (canViewCompliance) setSubTab("governance");
+    } else if (subTab === "okf" && !canViewOkf) {
+      if (canViewSkills) setSubTab("skills");
+      else if (canViewCompliance) setSubTab("governance");
+    } else if (subTab === "governance" && !canViewCompliance) {
+      if (canViewSkills) setSubTab("skills");
+      else if (canViewOkf) setSubTab("okf");
+    }
+  }, [subTab, canViewSkills, canViewOkf, canViewCompliance]);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-slate-950 p-6">
@@ -46,60 +64,66 @@ export default function BusinessCenterPage() {
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setSubTab("skills")}
-            className={`flex items-center gap-3 w-full rounded-xl text-xs font-semibold tracking-wide transition-all text-left ${
-              isNavCollapsed ? "px-2.5 py-3 justify-center" : "px-4 py-3"
-            } ${
-              subTab === "skills"
-                ? "bg-indigo-600/10 border border-indigo-500/30 text-white font-bold"
-                : "border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40"
-            }`}
-            title={isNavCollapsed ? "Universal Skills Registry" : undefined}
-          >
-            <Wrench className={`h-4 w-4 shrink-0 ${subTab === "skills" ? "text-indigo-400" : "text-slate-500"}`} />
-            {!isNavCollapsed && <span>Universal Skills Registry</span>}
-          </button>
+          {canViewSkills && (
+            <button
+              type="button"
+              onClick={() => setSubTab("skills")}
+              className={`flex items-center gap-3 w-full rounded-xl text-xs font-semibold tracking-wide transition-all text-left ${
+                isNavCollapsed ? "px-2.5 py-3 justify-center" : "px-4 py-3"
+              } ${
+                subTab === "skills"
+                  ? "bg-indigo-600/10 border border-indigo-500/30 text-white font-bold"
+                  : "border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40"
+              }`}
+              title={isNavCollapsed ? "Universal Skills Registry" : undefined}
+            >
+              <Wrench className={`h-4 w-4 shrink-0 ${subTab === "skills" ? "text-indigo-400" : "text-slate-500"}`} />
+              {!isNavCollapsed && <span>Universal Skills Registry</span>}
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={() => setSubTab("okf")}
-            className={`flex items-center gap-3 w-full rounded-xl text-xs font-semibold tracking-wide transition-all text-left ${
-              isNavCollapsed ? "px-2.5 py-3 justify-center" : "px-4 py-3"
-            } ${
-              subTab === "okf"
-                ? "bg-indigo-600/10 border border-indigo-500/30 text-white font-bold"
-                : "border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40"
-            }`}
-            title={isNavCollapsed ? "Google OKF Concepts" : undefined}
-          >
-            <BookOpen className={`h-4 w-4 shrink-0 ${subTab === "okf" ? "text-indigo-400" : "text-slate-500"}`} />
-            {!isNavCollapsed && <span>Google OKF Concepts</span>}
-          </button>
+          {canViewOkf && (
+            <button
+              type="button"
+              onClick={() => setSubTab("okf")}
+              className={`flex items-center gap-3 w-full rounded-xl text-xs font-semibold tracking-wide transition-all text-left ${
+                isNavCollapsed ? "px-2.5 py-3 justify-center" : "px-4 py-3"
+              } ${
+                subTab === "okf"
+                  ? "bg-indigo-600/10 border border-indigo-500/30 text-white font-bold"
+                  : "border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40"
+              }`}
+              title={isNavCollapsed ? "Google OKF Concepts" : undefined}
+            >
+              <BookOpen className={`h-4 w-4 shrink-0 ${subTab === "okf" ? "text-indigo-400" : "text-slate-500"}`} />
+              {!isNavCollapsed && <span>Google OKF Concepts</span>}
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={() => setSubTab("governance")}
-            className={`flex items-center gap-3 w-full rounded-xl text-xs font-semibold tracking-wide transition-all text-left ${
-              isNavCollapsed ? "px-2.5 py-3 justify-center" : "px-4 py-3"
-            } ${
-              subTab === "governance"
-                ? "bg-indigo-600/10 border border-indigo-500/30 text-white font-bold"
-                : "border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40"
-            }`}
-            title={isNavCollapsed ? "Compliance & PII Rules" : undefined}
-          >
-            <ShieldCheck className={`h-4 w-4 shrink-0 ${subTab === "governance" ? "text-indigo-400" : "text-slate-500"}`} />
-            {!isNavCollapsed && <span>Compliance &amp; PII Rules</span>}
-          </button>
+          {canViewCompliance && (
+            <button
+              type="button"
+              onClick={() => setSubTab("governance")}
+              className={`flex items-center gap-3 w-full rounded-xl text-xs font-semibold tracking-wide transition-all text-left ${
+                isNavCollapsed ? "px-2.5 py-3 justify-center" : "px-4 py-3"
+              } ${
+                subTab === "governance"
+                  ? "bg-indigo-600/10 border border-indigo-500/30 text-white font-bold"
+                  : "border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40"
+              }`}
+              title={isNavCollapsed ? "Compliance & PII Rules" : undefined}
+            >
+              <ShieldCheck className={`h-4 w-4 shrink-0 ${subTab === "governance" ? "text-indigo-400" : "text-slate-500"}`} />
+              {!isNavCollapsed && <span>Compliance &amp; PII Rules</span>}
+            </button>
+          )}
         </div>
 
         {/* Right dedicated workspace */}
         <div className="flex-1 min-h-0 bg-slate-950/40 rounded-2xl overflow-hidden flex flex-col">
-          {subTab === "skills" && <SkillsRegistry />}
-          {subTab === "okf" && <OkfRegistry />}
-          {subTab === "governance" && <ComplianceManager />}
+          {subTab === "skills" && canViewSkills && <SkillsRegistry />}
+          {subTab === "okf" && canViewOkf && <OkfRegistry />}
+          {subTab === "governance" && canViewCompliance && <ComplianceManager />}
         </div>
       </div>
     </div>

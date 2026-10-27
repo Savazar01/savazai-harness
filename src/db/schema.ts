@@ -10,6 +10,8 @@ import {
   customType,
   varchar,
   doublePrecision,
+  unique,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const vector = customType<{ data: number[]; driverData: string }>({
@@ -123,3 +125,92 @@ export const demoRequests = pgTable("demo_requests", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// ── Enterprise Zero-Trust RBAC & Onboarding Schema ──
+
+export type AccountStatus = "PENDING_APPROVAL" | "ACTIVE" | "SUSPENDED" | "REJECTED";
+
+export const roles = pgTable("role", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  isSystem: boolean("isSystem").default(false).notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const users = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("emailVerified").default(false).notNull(),
+  image: text("image"),
+  location: text("location"),
+  role: text("role").default("user").notNull(),
+  status: text("status").$type<AccountStatus>().default("PENDING_APPROVAL").notNull(),
+  mustResetPassword: boolean("mustResetPassword").default(true).notNull(),
+  roleId: text("roleId").references(() => roles.id, { onDelete: "set null" }),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const rolePermissions = pgTable(
+  "role_permission",
+  {
+    id: text("id").primaryKey(),
+    roleId: text("roleId")
+      .notNull()
+      .references(() => roles.id, { onDelete: "cascade" }),
+    resource: text("resource").notNull(),
+    action: text("action").notNull(),
+  },
+  (t) => [unique("role_permission_unique").on(t.roleId, t.resource, t.action)]
+);
+
+export const userPermissions = pgTable(
+  "user_permission",
+  {
+    id: text("id").primaryKey(),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    resource: text("resource").notNull(),
+    action: text("action").notNull(),
+    granted: boolean("granted").default(true).notNull(),
+  },
+  (t) => [unique("user_permission_unique").on(t.userId, t.resource, t.action)]
+);
+
+export const verificationTokens = pgTable(
+  "verification_token",
+  {
+    id: text("id").primaryKey(),
+    identifier: text("identifier").notNull(),
+    token: text("token").notNull(),
+    purpose: text("purpose").default("onboarding").notNull(),
+    expiresAt: timestamp("expiresAt", { withTimezone: true }).notNull(),
+    attempts: integer("attempts").default(0).notNull(),
+    createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("verification_token_identifier_idx").on(t.identifier)]
+);
+
+export const emailAuditLogs = pgTable(
+  "email_audit_logs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    recipient: text("recipient").notNull(),
+    subject: text("subject").notNull(),
+    purpose: text("purpose").notNull(),
+    status: varchar("status", { length: 50 }).notNull(),
+    error: text("error"),
+    metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("email_audit_recipient_idx").on(t.recipient),
+    index("email_audit_created_at_idx").on(t.createdAt),
+  ]
+);
+
+

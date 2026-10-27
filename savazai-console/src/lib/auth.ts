@@ -2,8 +2,9 @@ import { betterAuth } from "better-auth";
 import { hashPassword } from "better-auth/crypto";
 import { Pool } from "pg";
 import { randomUUID } from "node:crypto";
+import { SYSTEM_ROLES } from "@/lib/auth/permissions-registry";
 
-const pool = new Pool({
+export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
@@ -22,16 +23,22 @@ export async function ensureAdminProvisioned() {
   if (adminBootstrapped) return;
   if (process.env.NEXT_PHASE === "phase-production-build") return;
 
-  const adminEmail = cleanEnv(process.env.ADMIN_EMAIL)?.toLowerCase();
+  const adminEmail = cleanEnv(process.env.ADMIN_EMAIL)?.toLowerCase() || "savazar01@gmail.com";
   const adminPassword = cleanEnv(process.env.ADMIN_PASSWORD);
   const adminName = cleanEnv(process.env.ADMIN_NAME) || "System Administrator";
 
-  if (!adminEmail || !adminPassword) {
-    return;
-  }
-
   try {
+    // 1. Bootstrap Zero-Trust Account & RBAC Tables
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS "role" (
+        "id" TEXT PRIMARY KEY,
+        "name" TEXT NOT NULL UNIQUE,
+        "description" TEXT,
+        "isSystem" BOOLEAN NOT NULL DEFAULT false,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+
       CREATE TABLE IF NOT EXISTS "user" (
         "id" TEXT PRIMARY KEY,
         "name" TEXT NOT NULL,
@@ -39,9 +46,60 @@ export async function ensureAdminProvisioned() {
         "emailVerified" BOOLEAN NOT NULL DEFAULT false,
         "image" TEXT,
         "role" TEXT NOT NULL DEFAULT 'user',
+        "status" TEXT NOT NULL DEFAULT 'PENDING_APPROVAL',
+        "mustResetPassword" BOOLEAN NOT NULL DEFAULT true,
+        "roleId" TEXT REFERENCES "role"("id") ON DELETE SET NULL,
         "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+
+      ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'PENDING_APPROVAL';
+      ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "mustResetPassword" BOOLEAN NOT NULL DEFAULT true;
+      ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "roleId" TEXT REFERENCES "role"("id") ON DELETE SET NULL;
+      ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "image" TEXT;
+      ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "location" TEXT;
+
+      CREATE TABLE IF NOT EXISTS "role_permission" (
+        "id" TEXT PRIMARY KEY,
+        "roleId" TEXT NOT NULL REFERENCES "role"("id") ON DELETE CASCADE,
+        "resource" TEXT NOT NULL,
+        "action" TEXT NOT NULL,
+        UNIQUE("roleId", "resource", "action")
+      );
+
+      CREATE TABLE IF NOT EXISTS "user_permission" (
+        "id" TEXT PRIMARY KEY,
+        "userId" TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+        "resource" TEXT NOT NULL,
+        "action" TEXT NOT NULL,
+        "granted" BOOLEAN NOT NULL DEFAULT true,
+        UNIQUE("userId", "resource", "action")
+      );
+
+      CREATE TABLE IF NOT EXISTS "verification_token" (
+        "id" TEXT PRIMARY KEY,
+        "identifier" TEXT NOT NULL,
+        "token" TEXT NOT NULL,
+        "purpose" TEXT NOT NULL DEFAULT 'onboarding',
+        "expiresAt" TIMESTAMPTZ NOT NULL,
+        "attempts" INTEGER NOT NULL DEFAULT 0,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS "verification_token_identifier_idx" ON "verification_token"("identifier");
+
+      CREATE TABLE IF NOT EXISTS "email_audit_logs" (
+        "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "recipient" TEXT NOT NULL,
+        "subject" TEXT NOT NULL,
+        "purpose" TEXT NOT NULL,
+        "status" VARCHAR(50) NOT NULL,
+        "error" TEXT,
+        "metadata" JSONB DEFAULT '{}',
+        "created_at" TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS "email_audit_recipient_idx" ON "email_audit_logs"("recipient");
+      CREATE INDEX IF NOT EXISTS "email_audit_created_at_idx" ON "email_audit_logs"("created_at");
+
       CREATE TABLE IF NOT EXISTS "session" (
         "id" TEXT PRIMARY KEY,
         "userId" TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
@@ -52,6 +110,7 @@ export async function ensureAdminProvisioned() {
         "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+
       CREATE TABLE IF NOT EXISTS "account" (
         "id" TEXT PRIMARY KEY,
         "accountId" TEXT NOT NULL,
@@ -68,6 +127,7 @@ export async function ensureAdminProvisioned() {
         "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+
       CREATE TABLE IF NOT EXISTS "verification" (
         "id" TEXT PRIMARY KEY,
         "identifier" TEXT NOT NULL,
@@ -76,39 +136,122 @@ export async function ensureAdminProvisioned() {
         "createdAt" TIMESTAMPTZ DEFAULT now(),
         "updatedAt" TIMESTAMPTZ DEFAULT now()
       );
+
       ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "issuer" TEXT DEFAULT 'local:credential';
       UPDATE "account" SET "issuer" = 'local:credential' WHERE "issuer" IS NULL OR "issuer" = '';
     `);
 
+    // 2. Seed Predefined System Roles & Permissions idempotently
+    for (const sysRole of SYSTEM_ROLES) {
+      await pool.query(
+        `INSERT INTO "role" ("id", "name", "description", "isSystem", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, now(), now())
+         ON CONFLICT ("name") DO UPDATE SET
+           "description" = EXCLUDED."description",
+           "isSystem" = EXCLUDED."isSystem",
+           "updatedAt" = now()`,
+        [sysRole.id, sysRole.name, sysRole.description, sysRole.isSystem]
+      );
+
+      const roleRowRes = await pool.query('SELECT "id" FROM "role" WHERE "name" = $1 LIMIT 1', [sysRole.name]);
+      const effectiveRoleId = roleRowRes.rows[0]?.id || sysRole.id;
+
+      for (const perm of sysRole.permissions) {
+        const permId = `rp_${effectiveRoleId}_${perm.resource}_${perm.action}`;
+        await pool.query(
+          `INSERT INTO "role_permission" ("id", "roleId", "resource", "action")
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT ("roleId", "resource", "action") DO NOTHING`,
+          [permId, effectiveRoleId, perm.resource, perm.action]
+        );
+      }
+    }
+
+    const superAdminRoleRes = await pool.query(
+      'SELECT "id" FROM "role" WHERE "name" = \'Super Administrator\' LIMIT 1'
+    );
+    const superAdminRoleId = superAdminRoleRes.rows[0]?.id || "role_super_admin";
+
+    // 3. Quarantine any existing non-admin users that lack a provisioned roleId
+    await pool.query(
+      `UPDATE "user"
+       SET "status" = 'PENDING_APPROVAL',
+           "roleId" = NULL
+       WHERE LOWER("email") != $1
+         AND "role" != 'admin'
+         AND "roleId" IS NULL`,
+      [adminEmail]
+    );
+    // Revoke active sessions for any quarantined users
+    await pool.query(
+      `DELETE FROM "session"
+       WHERE "userId" IN (SELECT "id" FROM "user" WHERE "status" != 'ACTIVE')`
+    );
+
+    // 4. Provision / Synchronize Primary Super Administrator
     const userRes = await pool.query('SELECT id, role FROM "user" WHERE LOWER(email) = $1 LIMIT 1', [adminEmail]);
-    const hashedPassword = await hashPassword(adminPassword);
 
     if (userRes.rows.length > 0) {
       const user = userRes.rows[0];
-      await pool.query('UPDATE "user" SET name = $1, email = $2, role = \'admin\', "emailVerified" = true, "updatedAt" = now() WHERE id = $3', [adminName, adminEmail, user.id]);
-      
-      const accountRes = await pool.query('SELECT id FROM "account" WHERE "userId" = $1 AND "providerId" = \'credential\' LIMIT 1', [user.id]);
-      if (accountRes.rows.length > 0) {
-        await pool.query('UPDATE "account" SET password = $1, "issuer" = \'local:credential\', "updatedAt" = now() WHERE "userId" = $2 AND "providerId" = \'credential\'', [hashedPassword, user.id]);
-      } else {
-        const accountId = randomUUID();
-        await pool.query('INSERT INTO "account" (id, "userId", "accountId", "providerId", "issuer", password, "createdAt", "updatedAt") VALUES ($1, $2, $2, \'credential\', \'local:credential\', $3, now(), now())', [accountId, user.id, hashedPassword]);
+      await pool.query(
+        `UPDATE "user"
+         SET name = $1,
+             email = $2,
+             role = 'admin',
+             "status" = 'ACTIVE',
+             "mustResetPassword" = false,
+             "roleId" = $3,
+             "emailVerified" = true,
+             "updatedAt" = now()
+         WHERE id = $4`,
+        [adminName, adminEmail, superAdminRoleId, user.id]
+      );
+
+      if (adminPassword) {
+        const hashedPassword = await hashPassword(adminPassword);
+        const accountRes = await pool.query('SELECT id FROM "account" WHERE "userId" = $1 AND "providerId" = \'credential\' LIMIT 1', [user.id]);
+        if (accountRes.rows.length > 0) {
+          await pool.query('UPDATE "account" SET password = $1, "issuer" = \'local:credential\', "updatedAt" = now() WHERE "userId" = $2 AND "providerId" = \'credential\'', [hashedPassword, user.id]);
+        } else {
+          const accountId = randomUUID();
+          await pool.query('INSERT INTO "account" (id, "userId", "accountId", "providerId", "issuer", password, "createdAt", "updatedAt") VALUES ($1, $2, $2, \'credential\', \'local:credential\', $3, now(), now())', [accountId, user.id, hashedPassword]);
+        }
       }
-      console.log(`[Better Auth Init] Synchronized admin user and password for: ${adminEmail}`);
-    } else {
+      console.log(`[Better Auth Init] Synchronized Super Administrator account: ${adminEmail}`);
+    } else if (adminPassword) {
       const userId = randomUUID();
       const accountId = randomUUID();
-      await pool.query('INSERT INTO "user" (id, name, email, "emailVerified", role, "createdAt", "updatedAt") VALUES ($1, $2, $3, true, \'admin\', now(), now())', [userId, adminName, adminEmail]);
-      await pool.query('INSERT INTO "account" (id, "userId", "accountId", "providerId", "issuer", password, "createdAt", "updatedAt") VALUES ($1, $2, $2, \'credential\', \'local:credential\', $3, now(), now())', [accountId, userId, hashedPassword]);
-      console.log(`[Better Auth Init] Created initial admin credentials for: ${adminEmail}`);
+      const hashedPassword = await hashPassword(adminPassword);
+      await pool.query(
+        `INSERT INTO "user" (id, name, email, "emailVerified", role, "status", "mustResetPassword", "roleId", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, true, 'admin', 'ACTIVE', false, $4, now(), now())`,
+        [userId, adminName, adminEmail, superAdminRoleId]
+      );
+      await pool.query(
+        `INSERT INTO "account" (id, "userId", "accountId", "providerId", "issuer", password, "createdAt", "updatedAt")
+         VALUES ($1, $2, $2, 'credential', 'local:credential', $3, now(), now())`,
+        [accountId, userId, hashedPassword]
+      );
+      console.log(`[Better Auth Init] Created initial Super Administrator credentials for: ${adminEmail}`);
     }
+
+    // Ensure any other explicitly marked 'admin' accounts have Super Administrator roleId and ACTIVE status
+    await pool.query(
+      `UPDATE "user"
+       SET "status" = 'ACTIVE',
+           "mustResetPassword" = false,
+           "roleId" = $1
+       WHERE "role" = 'admin' AND "roleId" IS NULL`,
+      [superAdminRoleId]
+    );
+
     adminBootstrapped = true;
   } catch (err) {
-    console.error("[Better Auth Init] Failed to provision admin credentials:", err);
+    console.error("[Better Auth Init] Failed to provision RBAC schema & admin credentials:", err);
   }
 }
 
-if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD && process.env.NEXT_PHASE !== "phase-production-build") {
+if (process.env.NEXT_PHASE !== "phase-production-build") {
   ensureAdminProvisioned().catch((err) => {
     console.error("[Better Auth Init] Immediate bootstrap error:", err);
   });
@@ -126,6 +269,7 @@ export const auth = betterAuth({
   ].filter(Boolean) as string[],
   emailAndPassword: {
     enabled: true,
+    disableSignUp: true,
   },
   rateLimit: {
     enabled: true,
@@ -143,39 +287,18 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user) => {
-          try {
-            const isLocalDev = process.env.NODE_ENV !== "production";
-            
-            if (isLocalDev) {
-              const res = await pool.query('SELECT COUNT(*) FROM "user"').catch(() => null);
-              const userCount = res ? parseInt(res.rows[0].count, 10) : 0;
-              const isFirstLocalUser = userCount === 0;
-
-              return {
-                data: {
-                  ...user,
-                  role: isFirstLocalUser ? "admin" : "user",
-                  emailVerified: isFirstLocalUser ? true : (user.emailVerified ?? false),
-                },
-              };
-            }
-
-            // In production, public registration NEVER receives admin role. Admin is provisioned strictly via environment variables.
-            return {
-              data: {
-                ...user,
-                role: "user",
-              },
-            };
-          } catch (err) {
-            console.error("[auth-hook] Error in user.create.before hook:", err);
-            return {
-              data: {
-                ...user,
-                role: "user",
-              },
-            };
-          }
+          // Zero-Trust Lockdown: Any user created via Better-Auth hooks is strictly quarantined
+          // with PENDING_APPROVAL, mustResetPassword = true, role = 'user', and roleId = null.
+          return {
+            data: {
+              ...user,
+              role: "user",
+              status: "PENDING_APPROVAL",
+              mustResetPassword: true,
+              roleId: null,
+              emailVerified: false,
+            },
+          };
         },
       },
     },
@@ -185,6 +308,18 @@ export const auth = betterAuth({
       role: {
         type: "string",
         defaultValue: "user",
+      },
+      status: {
+        type: "string",
+        defaultValue: "PENDING_APPROVAL",
+      },
+      mustResetPassword: {
+        type: "boolean",
+        defaultValue: true,
+      },
+      roleId: {
+        type: "string",
+        required: false,
       },
     },
   },

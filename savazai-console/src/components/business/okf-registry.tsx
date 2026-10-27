@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
 import { AiAssistButton } from "@/components/shared/ai-assist-button";
+import { usePermissions } from "@/lib/auth/use-permissions";
 
 export interface OkfConcept {
   id: string;
@@ -152,6 +153,13 @@ export function serializeOkfFrontmatter(params: {
 }
 
 export function OkfRegistry() {
+  const { hasPermission } = usePermissions();
+  const canCreateOkf = hasPermission("business_center", "okf_create");
+  const canEditOkf = hasPermission("business_center", "okf_edit");
+  const canDeleteOkf = hasPermission("business_center", "okf_delete");
+  const canExportOkf = hasPermission("business_center", "okf_export");
+  const canIngestOkf = hasPermission("business_center", "okf_ingest");
+
   const [concepts, setConcepts] = useState<OkfConcept[]>([]);
   const [agentUsageMap, setAgentUsageMap] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(false);
@@ -644,28 +652,34 @@ export function OkfRegistry() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer"
-            title="Export all concepts to CSV"
-          >
-            <FileSpreadsheet className="h-4 w-4 text-emerald-400" /> Export CSV
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsIngestModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer"
-          >
-            <Upload className="h-4 w-4 text-slate-400" /> Ingest Bundle
-          </button>
-          <button
-            type="button"
-            onClick={handleOpenAuthorModal}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
-          >
-            <Plus className="h-4 w-4" /> + New Concept
-          </button>
+          {canExportOkf && (
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer"
+              title="Export all concepts to CSV"
+            >
+              <FileSpreadsheet className="h-4 w-4 text-emerald-400" /> Export CSV
+            </button>
+          )}
+          {canIngestOkf && (
+            <button
+              type="button"
+              onClick={() => setIsIngestModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer"
+            >
+              <Upload className="h-4 w-4 text-slate-400" /> Ingest Bundle
+            </button>
+          )}
+          {canCreateOkf && (
+            <button
+              type="button"
+              onClick={handleOpenAuthorModal}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+            >
+              <Plus className="h-4 w-4" /> + New Concept
+            </button>
+          )}
         </div>
       </div>
 
@@ -840,50 +854,56 @@ export function OkfRegistry() {
                         >
                           <Eye className="h-3.5 w-3.5" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditModal(item)}
-                          className="p-1.5 rounded-lg border border-slate-850 hover:border-indigo-500/40 bg-slate-900/40 hover:bg-indigo-950/20 text-slate-300 hover:text-indigo-300 transition-all cursor-pointer"
-                          title="Edit Concept"
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </button>
-                        <div className="relative">
+                        {canEditOkf && (
                           <button
                             type="button"
-                            onClick={() => setActiveExportMenuId(activeExportMenuId === item.id ? null : item.id)}
-                            className="p-1.5 rounded-lg border border-slate-855 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-850 text-slate-300 hover:text-white transition-all cursor-pointer"
-                            title="Export Options"
+                            onClick={() => handleOpenEditModal(item)}
+                            className="p-1.5 rounded-lg border border-slate-850 hover:border-indigo-500/40 bg-slate-900/40 hover:bg-indigo-950/20 text-slate-300 hover:text-indigo-300 transition-all cursor-pointer"
+                            title="Edit Concept"
                           >
-                            <Download className="h-3.5 w-3.5" />
+                            <Edit className="h-3.5 w-3.5" />
                           </button>
-                          {activeExportMenuId === item.id && (
-                            <div className="absolute right-0 top-full mt-1 w-32 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
-                              <button
-                                type="button"
-                                onClick={() => handleExportMarkdown(item)}
-                                className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2 cursor-pointer"
-                              >
-                                <FileText className="h-3.5 w-3.5 text-indigo-400" /> Export .md
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleExportJson(item)}
-                                className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2 cursor-pointer"
-                              >
-                                <Code className="h-3.5 w-3.5 text-amber-400" /> Export JSON
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setDeletingConcept(item)}
-                          className="p-1.5 rounded-lg border border-slate-850 hover:border-red-500/40 bg-slate-900/40 hover:bg-red-950/20 text-slate-400 hover:text-red-400 transition-all cursor-pointer"
-                          title="Delete Concept"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        )}
+                        {canExportOkf && (
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setActiveExportMenuId(activeExportMenuId === item.id ? null : item.id)}
+                              className="p-1.5 rounded-lg border border-slate-855 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-850 text-slate-300 hover:text-white transition-all cursor-pointer"
+                              title="Export Options"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                            </button>
+                            {activeExportMenuId === item.id && (
+                              <div className="absolute right-0 top-full mt-1 w-32 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
+                                <button
+                                  type="button"
+                                  onClick={() => handleExportMarkdown(item)}
+                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2 cursor-pointer"
+                                >
+                                  <FileText className="h-3.5 w-3.5 text-indigo-400" /> Export .md
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleExportJson(item)}
+                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-900 flex items-center gap-2 cursor-pointer"
+                                >
+                                  <Code className="h-3.5 w-3.5 text-amber-400" /> Export JSON
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {canDeleteOkf && (
+                          <button
+                            type="button"
+                            onClick={() => setDeletingConcept(item)}
+                            className="p-1.5 rounded-lg border border-slate-850 hover:border-red-500/40 bg-slate-900/40 hover:bg-red-950/20 text-slate-400 hover:text-red-400 transition-all cursor-pointer"
+                            title="Delete Concept"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

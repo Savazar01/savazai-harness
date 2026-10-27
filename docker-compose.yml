@@ -26,7 +26,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       ADMIN_NAME: ${ADMIN_NAME}
-      MASTER_VAULT_SECRET: ${MASTER_VAULT_SECRET}
+      MASTER_VAULT_SECRET: ${MASTER_VAULT_SECRET:-sz_dev_master_secret_key_2026_change_in_production_!!}
     depends_on:
       savazai-db:
         condition: service_healthy
@@ -53,6 +53,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       ADMIN_NAME: ${ADMIN_NAME}
+      MASTER_VAULT_SECRET: ${MASTER_VAULT_SECRET:-sz_dev_master_secret_key_2026_change_in_production_!!}
     depends_on:
       savazai-db:
         condition: service_healthy

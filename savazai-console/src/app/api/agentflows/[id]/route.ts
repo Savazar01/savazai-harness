@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { requirePermission } from "@/lib/auth/rbac";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_HARNESS_API_URL || "http://savazai-backend:3055";
@@ -8,6 +9,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const studioCheck = await requirePermission("capability_studio", "view");
+    if (!studioCheck.authorized) {
+      const wsCheck = await requirePermission("agent_workspace", ["view", "run_published_flow"]);
+      if (!wsCheck.authorized) return studioCheck.response;
+    }
+
     const { id } = await params;
     if (!id) {
       return new Response(
@@ -49,6 +56,15 @@ export async function PUT(
       );
     }
     const body = await req.json();
+
+    if (body.status === "published") {
+      const pubCheck = await requirePermission("capability_studio", "publish");
+      if (!pubCheck.authorized) return pubCheck.response;
+    } else {
+      const editCheck = await requirePermission("capability_studio", ["save_draft", "edit_flow"]);
+      if (!editCheck.authorized) return editCheck.response;
+    }
+
     const forwarded: Record<string, unknown> = {};
     if (body.canvasDefinition !== undefined) {
       forwarded.canvasDefinition = typeof body.canvasDefinition === "string"
@@ -91,6 +107,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const check = await requirePermission("capability_studio", "delete_flow");
+    if (!check.authorized) return check.response;
+
     const { id } = await params;
     if (!id) {
       return new Response(
@@ -102,13 +121,13 @@ export async function DELETE(
       method: "DELETE",
     });
     if (!response.ok) {
+      const errorText = await response.text().catch(() => `Backend error: ${response.status}`);
       return new Response(
-        JSON.stringify({ error: `Backend error: ${response.status}` }),
+        JSON.stringify({ error: errorText }),
         { status: response.status, headers: { "Content-Type": "application/json" } }
       );
     }
-    const data = await response.json();
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

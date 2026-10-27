@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import type { ComplianceConfig, ComplianceEntityRule, ImportedFramework, ImportedFrameworkEntity, KeywordRule } from "@/app/api/governance/compliance/route";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
+import { usePermissions } from "@/lib/auth/use-permissions";
 
 const FRAMEWORKS = [
   { key: "hipaa", label: "HIPAA (PHI)", description: "Health Insurance Portability and Accountability Act" },
@@ -119,6 +120,12 @@ soc2_internal,SOC 2 (Internal),SOC 2 CC6.1 / CC6.6,"SOC 2 internal security cont
 soc2_internal,SOC 2 (Internal),SOC 2 CC6.1 / CC6.6,"SOC 2 internal security controls for tokens, IPs, and hostnames",server_hostname,Server Hostname,mask,\\\\b(?:db|api|app|admin)-[a-z]+\\\\.internal\\\\.com\\\\b`;
 
 export function ComplianceManager() {
+  const { hasPermission } = usePermissions();
+  const canManageCompliance = hasPermission("business_center", "compliance_manage");
+  const canImportFramework = hasPermission("business_center", "compliance_import_framework");
+  const canCustomEntities = hasPermission("business_center", "compliance_custom_entities");
+  const canAuditStream = hasPermission("business_center", "compliance_audit_stream");
+
   const [tab, setTab] = useState<"rules" | "stream">("rules");
   const [frameworks, setFrameworks] = useState<string[]>([]);
   const [entityRules, setEntityRules] = useState<ComplianceEntityRule[]>([]);
@@ -529,16 +536,18 @@ export function ComplianceManager() {
           <ShieldCheck className="h-3.5 w-3.5 inline mr-1.5" />
           Compliance Rules
         </button>
-        <button
-          type="button"
-          onClick={() => setTab("stream")}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-            tab === "stream" ? "bg-indigo-600/10 text-indigo-300 border border-indigo-500/30" : "text-slate-500 hover:text-slate-300"
-          }`}
-        >
-          <Terminal className="h-3.5 w-3.5 inline mr-1.5" />
-          Gateway Masking Audit Stream
-        </button>
+        {canAuditStream && (
+          <button
+            type="button"
+            onClick={() => setTab("stream")}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              tab === "stream" ? "bg-indigo-600/10 text-indigo-300 border border-indigo-500/30" : "text-slate-500 hover:text-slate-300"
+            }`}
+          >
+            <Terminal className="h-3.5 w-3.5 inline mr-1.5" />
+            Gateway Masking Audit Stream
+          </button>
+        )}
       </div>
 
       {tab === "rules" && (
@@ -562,14 +571,16 @@ export function ComplianceManager() {
                 </div>
                 <HelpTooltip content="Framework Presets auto-configure entity rules for regulatory standards (HIPAA, PCI-DSS, GDPR/CCPA). Toggle a preset to automatically enforce its entity masking strategies across the pipeline." side="right" />
               </div>
-              <button
-                type="button"
-                onClick={() => setImportModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-800/50 text-slate-300 hover:text-white text-xs font-bold transition-all"
-              >
-                <Upload className="h-3.5 w-3.5" />
-                Import Custom Framework
-              </button>
+              {canImportFramework && (
+                <button
+                  type="button"
+                  onClick={() => setImportModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-800/50 text-slate-300 hover:text-white text-xs font-bold transition-all"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  Import Custom Framework
+                </button>
+              )}
             </div>
             <div className="flex flex-wrap gap-2">
               {FRAMEWORKS.map((fw) => {
@@ -656,14 +667,16 @@ export function ComplianceManager() {
                 <h3 className="text-sm font-bold text-white">Standard Entity Rules</h3>
                 <HelpTooltip content="Each entity type can be toggled on/off and assigned an action: Mask (replace with placeholder), Tokenize (replace with contextual token like <EMAIL_1>), or Block (reject the turn entirely). Active framework presets auto-enforce certain entities." side="right" />
               </div>
-              <button
-                type="button"
-                onClick={() => { setAddEntityModalOpen(true); }}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-800/50 text-slate-300 hover:text-white text-xs font-bold transition-all"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add Standard Entity
-              </button>
+              {canCustomEntities && (
+                <button
+                  type="button"
+                  onClick={() => { setAddEntityModalOpen(true); }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-800/50 text-slate-300 hover:text-white text-xs font-bold transition-all"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Standard Entity
+                </button>
+              )}
             </div>
             <p className="text-[10px] text-slate-500">Toggle entities and assign Mask / Tokenize / Block actions.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -841,17 +854,19 @@ export function ComplianceManager() {
           </div>
 
           {/* Save */}
-          <div className="sticky bottom-0 bg-slate-950 py-3 border-t border-slate-900">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50"
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {saving ? "Saving..." : "Save Compliance Configuration"}
-            </button>
-          </div>
+          {canManageCompliance && (
+            <div className="sticky bottom-0 bg-slate-950 py-3 border-t border-slate-900">
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {saving ? "Saving..." : "Save Compliance Configuration"}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

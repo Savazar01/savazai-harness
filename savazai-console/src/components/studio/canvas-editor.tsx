@@ -31,6 +31,7 @@ import { AgentDrawer } from "./agent-drawer";
 import { TestSandbox } from "./test-sandbox";
 import { TeamNode } from "./nodes/team-node";
 import { getTeamDimensions, migrateLegacyCanvasDefinition, sanitizeCanvasDefinition, RawNode, RawEdge } from "@/lib/agentflow-utils";
+import { usePermissions } from "@/lib/auth/use-permissions";
 
 export interface ToolReference {
   id: string;
@@ -280,6 +281,11 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
   workflowId,
   canvasLoadKey = 0,
 }: CanvasEditorProps, ref) {
+  const { hasPermission } = usePermissions();
+  const canEditFlow = hasPermission("capability_studio", "edit_flow");
+  const canSaveDraft = hasPermission("capability_studio", "save_draft");
+  const canTestRun = hasPermission("capability_studio", "test_run");
+  const canPublish = hasPermission("capability_studio", "publish");
   // Run initial legacy migration on mount
   const migratedInitial = React.useMemo(() => {
     const res = migrateLegacyCanvasDefinition(
@@ -1314,25 +1320,29 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
           </div>
 
           {/* Save Draft */}
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            disabled={saving}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900/40 transition-all disabled:opacity-40"
-          >
-            {saving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-            Save Draft
-          </button>
+          {canSaveDraft && (
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={saving}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900/40 transition-all disabled:opacity-40"
+            >
+              {saving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              Save Draft
+            </button>
+          )}
 
           {/* Test Workflow */}
-          <button
-            type="button"
-            onClick={() => setShowTestSandbox(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-emerald-800 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/30 transition-all"
-          >
-            <FlaskConical className="h-3.5 w-3.5" />
-            Test
-          </button>
+          {canTestRun && (
+            <button
+              type="button"
+              onClick={() => setShowTestSandbox(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-emerald-800 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/30 transition-all"
+            >
+              <FlaskConical className="h-3.5 w-3.5" />
+              Test
+            </button>
+          )}
 
           <button
             type="button"
@@ -1347,7 +1357,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
             JSON
           </button>
 
-          {onSave && (
+          {onSave && canSaveDraft && (
             <button
               type="button"
               onClick={() => onSave(nodes, edges)}
@@ -1357,15 +1367,17 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={handlePublish}
-            disabled={publishing}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-          >
-            {publishing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-            {workflowType === "scheduled" ? "Publish Schedule" : "Publish"}
-          </button>
+          {canPublish && (
+            <button
+              type="button"
+              onClick={handlePublish}
+              disabled={publishing}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              {publishing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+              {workflowType === "scheduled" ? "Publish Schedule" : "Publish"}
+            </button>
+          )}
         </div>
       </div>
 

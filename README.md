@@ -223,6 +223,57 @@ npm run db:migrate
 
 ---
 
+## 🔐 Zero-Trust Onboarding, Role Management & Self-Service Profile
+
+* **Quarantine Approval Workflow**:
+  - Any applicant onboarding via invitation link and 6-digit OTP is quarantined in `PENDING_APPROVAL` holding zero permissions.
+  - Administrators navigate to **User Admin** (`/admin/users`) $\rightarrow$ **Pending Approvals Queue** tab to review applicants.
+  - Clicking **[ Approve & Assign Profile ]** allows binding the applicant to any of the 6 predefined system profiles (`Workspace Operator`, `Studio Flow Architect`, `Business Policy Manager`, `Infrastructure Lead`, `Auditor`, `Super Administrator`) or a custom role, activating their account.
+* **Roles & Access Profiles Matrix**:
+  - Visual matrix inspects all 53 granular permissions across platform modules.
+  - Administrators can author custom enterprise profiles with tailored permission combinations.
+* **Self-Service Operator Profile Hub (`/profile`)**:
+  - Authenticated operators can update their display name, location/address region, and upload custom avatars.
+  - Operators can securely change their password (with old password verification) and inspect their active granted permissions in real time.
+
+---
+
+## 🛡️ Enterprise Security & Hardened Defense Architecture
+
+SavazAI adheres to defense-in-depth principles across edge, application, database, and infrastructure tiers:
+
+1. **Cloudflare Edge, Network & Bot Defense Architecture**:
+   - **Unforgeable Client IP Extraction**: Edge rate limiters and CAPTCHA verifiers prioritize Cloudflare's unforgeable `CF-Connecting-IP` header over spoofable client headers (`X-Forwarded-For`), with fallback to `X-Real-IP`.
+   - **Cloudflare Turnstile & reCAPTCHA v3**: Public entry portals (demo requests, invitations, OTP dispatch) require cryptographic bot challenge tokens. Turnstile secret keys can be configured via environment variables or encrypted at rest in Command Center System Admin (`system_configurations`).
+   - **Fail-Closed Policy**: If bot defense verification fails or tokens expire (15-minute TTL), requests are immediately rejected with `400 Bad Request`. Pass-through test tokens are strictly disabled in production environments (`NODE_ENV === "production"`).
+
+2. **API Route & Server Action Perimeter (RBAC Enforcement)**:
+   - **Granular RBAC Guards**: Every Next.js route handler and server action enforces `requirePermission(resource, action)` verifying session validity, active account status (`ACTIVE`), and mandatory password reset completion.
+   - **Zero Public Registration**: Public sign-up routes (`/signup`, `/register`) are permanently eradicated. Better-Auth `disableSignUp: true` is enforced and all unauthenticated registration endpoints return `403 Forbidden`.
+   - **Cryptographic Tokenized Onboarding**: New operators can only onboard via time-limited, administrator-generated cryptographic invitation tokens (`/auth/invite/onboard?token=...&email=...`). Tokens are verified via SHA-256 hash against `verification_token` and consumed (deleted) immediately upon account creation to prevent replay attacks.
+   - **Internal Service Protection**: Engine endpoints (`/api/mcp`, `/api/tools/registered`) require either valid operator session permissions or internal service verification headers (`x-internal-secret`) for Docker container inter-communication.
+
+3. **HTTP Response Headers & Content Security Policy (CSP)**:
+   - Configured globally via `next.config.ts` and `middleware.ts`:
+     - `Content-Security-Policy`: Restricts scripts, styles, fonts, connections, and frames, with explicit whitelisting for Cloudflare Turnstile (`challenges.cloudflare.com`).
+     - `X-Frame-Options: SAMEORIGIN` (mitigating clickjacking attacks).
+     - `X-Content-Type-Options: nosniff` (preventing MIME-sniffing exploits).
+     - `Referrer-Policy: strict-origin-when-cross-origin`.
+     - `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` (enforcing HTTPS).
+     - `Permissions-Policy: camera=(), microphone=(), geolocation=(), browsing-topics=()`.
+
+4. **Outbound Email & SMTP Service with Live Diagnostics**:
+   - **Command Center System Admin Hub**: Dedicated modular interface for configuring Custom SMTP, Gmail App Passwords, or SendGrid API transports.
+   - **AES-256-CBC Secret Encryption**: SMTP credentials are encrypted at rest with `MASTER_VAULT_SECRET` and masked in client forms (`••••••••••••••••`), preventing password overwrites on settings updates.
+   - **Pre-Flight Handshake & In-Dialog Feedback**: "Send Live Test Email" dialog verifies SMTP socket handshakes (15-second timeout) and reports granular diagnostics (Message-ID, host, port, TLS state) directly to the operator.
+   - **Audit Trail**: All outbound emails (invitations, OTP codes, transactional notifications) are persisted to `email_audit_logs` with delivery status, message IDs, and error diagnostics.
+
+5. **Session Management, Cookies & Injection Prevention**:
+   - **Zero Raw SQL Injections**: 100% of database interactions utilize Drizzle ORM query builders or fully parameterized `pg.Pool` queries (`$1, $2, ...`).
+   - **Data Masking Gateway**: Sensitive PII/SPI data rows are hashed and masked into token references prior to external model dispatch, rehydrating only inside authenticated local boundaries.
+
+---
+
 ## 📋 DevPlans Contribution Framework
 
 All features, bugfixes, and refactors must strictly maintain active tracking artifacts under `/devplans`:
