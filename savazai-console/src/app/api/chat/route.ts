@@ -11,6 +11,7 @@ import {
 } from "@/app/api/orchestrator/test/route";
 import { McpAggregator } from "@/lib/mcp/client-aggregator";
 import { requirePermission } from "@/lib/auth/rbac";
+import { getInternalBackendHeaders } from "@/lib/backend-client";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -318,7 +319,7 @@ Do NOT make up data; rely strictly on tool execution results.`;
 
   const response = await fetch(backendUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getInternalBackendHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
   });
 
@@ -379,7 +380,7 @@ export async function GET(req: NextRequest) {
 
   const backendUrl = `${BACKEND_URL}/api/graph/threads/${threadId}`;
   const response = await fetch(backendUrl, {
-    headers: { "Content-Type": "application/json" },
+    headers: getInternalBackendHeaders({ "Content-Type": "application/json" }),
   });
 
   if (!response.ok) {

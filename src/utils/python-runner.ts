@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { resolve } from "node:path";
+import { resolve, relative, isAbsolute } from "node:path";
 
 const VENV_PATH = resolve(process.cwd(), ".venv");
 
@@ -14,7 +14,10 @@ export async function runPython(
     resolve(process.cwd(), "dist/skills"),
   ];
 
-  const isAllowed = allowedDirs.some((dir) => resolvedPath.startsWith(dir));
+  const isAllowed = allowedDirs.some((dir) => {
+    const rel = relative(dir, resolvedPath);
+    return !rel.startsWith("..") && !isAbsolute(rel);
+  });
   if (!isAllowed) {
     throw new Error(
       `Security violation: Unauthorized script execution path "${scriptPath}". Scripts must reside within authorized directories (scripts/ or src/skills/).`,

@@ -1,0 +1,335 @@
+[
+  {
+    "verdict": "confirmed",
+    "title": "Unauthenticated Direct Endpoint Access on Backend Orchestrator Service",
+    "description": "The SavazAI backend service (port 3055) exposes agentflow management, graph execution, and settings endpoints without verifying internal service secret tokens or caller authorization. An attacker who reaches port 3055 directly bypasses the Next.js console authentication perimeter and can create, update, or delete agentflows and trigger arbitrary graph workflows.",
+    "root_cause": "app router in src/index.ts does not verify internal service secret headers, allowing unauthenticated remote clients to invoke backend orchestration and modify agentflows",
+    "intended_behavior": "Enforce that all incoming requests on backend orchestrator endpoints require a shared internal service secret (x-internal-secret: MASTER_VAULT_SECRET) unless originating from loopback or internal trusted networks.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "src/index.ts",
+        "line": 665,
+        "scope": "post",
+        "description": "Receives unauthenticated HTTP POST request on /api/agentflows."
+      },
+      {
+        "kind": "sink",
+        "file": "src/index.ts",
+        "line": 672,
+        "scope": "post",
+        "description": "Executes database insert into agentflows table without verifying authorization or internal secret."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "network_routing",
+        "description": "Backend orchestrator port 3055 is exposed or reachable directly by the client."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Attacker directly addresses http://<target>:3055 bypassing Next.js console port 3056.",
+      "payloads": [
+        "POST /api/agentflows HTTP/1.1\\r\\nContent-Type: application/json\\r\\n\\r\\n{\"name\":\"Malicious Flow\",\"canvasDefinition\":{}}",
+        "DELETE /api/agentflows/target-uuid HTTP/1.1\\r\\n"
+      ],
+      "instructions": [
+        "Send an HTTP POST request directly to port 3055 at /api/agentflows without authentication headers.",
+        "Observe successful creation of the agentflow and HTTP 201 response.",
+        "Send an HTTP DELETE request to /api/agentflows/:id and observe flow deletion."
+      ],
+      "expected_result": "Agentflows are created or deleted without any authentication or permission checks."
+    },
+    "remediation": {
+      "strategy": "Inject an internal service authorization middleware across all /api/* routes in src/index.ts requiring x-internal-secret matching MASTER_VAULT_SECRET, and update savazai-console proxy calls to supply this header.",
+      "code_changes": [
+        {
+          "file_name": "src/index.ts",
+          "fixed_code": "app.use('/api', (req, res, next) => { if (req.path === '/health') return next(); const secret = req.headers['x-internal-secret']; if (secret !== process.env.MASTER_VAULT_SECRET) return res.status(401).json({ error: 'Unauthorized internal service request' }); next(); });"
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "high",
+        "reason": "Endpoints are publicly accessible if port 3055 is bound on the host or reverse proxy."
+      },
+      "impact": {
+        "score": "high",
+        "reason": "Allows total bypass of RBAC, arbitrary workflow creation, tampering, and deletion."
+      },
+      "overall_severity": "high"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Verified by direct endpoint inspection of src/index.ts routes."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "title": "Path Traversal via Partial Prefix Matching in Python Runner Sandbox",
+    "description": "The Python sandbox runner validates script paths by checking if the resolved absolute path starts with one of the allowed directories using resolvedPath.startsWith(dir). Because startsWith does not enforce a directory boundary delimiter, an attacker who can place or target a script in an adjacent directory with a matching prefix (e.g. scripts_malicious/) bypasses the path restriction and executes scripts outside the intended sandbox directories.",
+    "root_cause": "runPython in src/utils/python-runner.ts does not enforce boundary-delimited path containment, allowing arbitrary python script execution outside authorized directories via prefix matching",
+    "intended_behavior": "Enforce strict directory containment using path.relative or explicit path separators to ensure scripts only execute within scripts/, src/skills/, or dist/skills/.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "src/utils/python-runner.ts",
+        "line": 6,
+        "scope": "runPython",
+        "description": "Receives user-specified scriptPath parameter for execution."
+      },
+      {
+        "kind": "propagation",
+        "file": "src/utils/python-runner.ts",
+        "line": 17,
+        "scope": "runPython",
+        "description": "Validates resolvedPath using startsWith against allowed directory paths without path separator."
+      },
+      {
+        "kind": "sink",
+        "file": "src/utils/python-runner.ts",
+        "line": 25,
+        "scope": "runPython",
+        "description": "Spawns python3 process executing the script at resolvedPath outside authorized directories."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "system_configuration",
+        "description": "Attacker has write access to an adjacent directory sharing the prefix of an allowed directory."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Attacker invokes Python sub-runner tool passing a script path in an adjacent prefix-matched directory.",
+      "payloads": [
+        "scripts_evil/exploit.py"
+      ],
+      "instructions": [
+        "Invoke tool requiring python execution with scriptPath='../scripts_evil/exploit.py'.",
+        "Observe that resolvedPath.startsWith(allowedDir) evaluates to true because /app/scripts_evil starts with /app/scripts.",
+        "Child process executes exploit.py."
+      ],
+      "expected_result": "Script in unauthorized directory is executed by python-runner."
+    },
+    "remediation": {
+      "strategy": "Use path.relative to verify that the relative path does not begin with '..' and is not absolute, ensuring strict directory subtree containment.",
+      "code_changes": [
+        {
+          "file_name": "src/utils/python-runner.ts",
+          "fixed_code": "const isAllowed = allowedDirs.some((dir) => { const rel = relative(dir, resolvedPath); return !rel.startsWith('..') && !isAbsolute(rel); });"
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "medium",
+        "reason": "Requires ability to target or write to adjacent directory names sharing prefixes."
+      },
+      "impact": {
+        "score": "high",
+        "reason": "Arbitrary python code execution on the backend server environment."
+      },
+      "overall_severity": "high"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Confirmed by source code inspection of path comparison logic in runPython."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "title": "Missing Concurrent Session Invalidation on Password Modification",
+    "description": "When a user changes their password via /api/auth/change-password, resets their password via /api/auth/reset-password, or an administrator updates a user password in /api/admin/users/[id], the system updates password hashes in the account table but does not revoke concurrent active sessions in the session table. In account takeover or credential compromise scenarios, an adversary possessing an existing session cookie remains authenticated until session expiration.",
+    "root_cause": "POST in savazai-console/src/app/api/auth/change-password/route.ts does not delete active session tokens upon password update, allowing compromised sessions to remain active indefinitely",
+    "intended_behavior": "Immediately delete all existing session records for the user from the session table when a password is changed or reset.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "savazai-console/src/app/api/auth/change-password/route.ts",
+        "line": 6,
+        "scope": "POST",
+        "description": "Receives password change request with verified current password."
+      },
+      {
+        "kind": "sink",
+        "file": "savazai-console/src/app/api/auth/change-password/route.ts",
+        "line": 73,
+        "scope": "POST",
+        "description": "Updates password hash in database but leaves existing session tokens active in the session table."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "authentication_level",
+        "description": "User account was compromised or has an active session on an untrusted device."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Attacker has hijacked an active session cookie on a public workstation or device.",
+      "payloads": [
+        "Cookie: better-auth.session_token=<hijacked-token>"
+      ],
+      "instructions": [
+        "Legitimate user detects compromise and changes password via /profile or /api/auth/change-password.",
+        "Attacker continues sending requests with hijacked session token.",
+        "Observe that attacker requests remain authorized."
+      ],
+      "expected_result": "Hijacked session remains valid and active despite password change."
+    },
+    "remediation": {
+      "strategy": "Execute DELETE FROM \"session\" WHERE \"userId\" = $1 whenever a password is changed or reset.",
+      "code_changes": [
+        {
+          "file_name": "savazai-console/src/app/api/auth/change-password/route.ts",
+          "fixed_code": "await pool.query('DELETE FROM \"session\" WHERE \"userId\" = $1', [userId]);"
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "medium",
+        "reason": "Requires an existing hijacked or concurrent session."
+      },
+      "impact": {
+        "score": "medium",
+        "reason": "Attacker retains access to the victim account despite credential remediation."
+      },
+      "overall_severity": "medium"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Confirmed by inspecting session handling in change-password, reset-password, and admin user patch routes."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "title": "Plaintext Authentication OTP Code Exposure in Server Logs",
+    "description": "The generateAndSendEmailOtp function in otp.ts logs the unmasked 6-digit numeric OTP to container standard output via console.log. In production deployments where container logs are aggregated or accessible to system operators, this exposes sensitive one-time credentials, allowing anyone with log access to authenticate without receiving the email.",
+    "root_cause": "generateAndSendEmailOtp in savazai-console/src/lib/auth/otp.ts does not suppress sensitive credentials in production stdout logs, allowing unauthorized log consumers to view one-time authentication codes",
+    "intended_behavior": "Mask OTP values in log outputs in production environments, displaying only masked placeholders.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "savazai-console/src/lib/auth/otp.ts",
+        "line": 13,
+        "scope": "generateAndSendEmailOtp",
+        "description": "Generates 6-digit numeric OTP code for user email verification."
+      },
+      {
+        "kind": "sink",
+        "file": "savazai-console/src/lib/auth/otp.ts",
+        "line": 80,
+        "scope": "generateAndSendEmailOtp",
+        "description": "Prints unmasked raw OTP code directly to server console.log."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "environmental_dependency",
+        "description": "Container logs are collected or viewable by operators or third-party log ingestion services."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Attacker has read-only access to application container logs or observability dashboards.",
+      "payloads": [
+        "docker compose logs savazai-console"
+      ],
+      "instructions": [
+        "Trigger onboarding OTP dispatch for a target email.",
+        "Inspect container stdout logs.",
+        "Extract the 6-digit OTP code printed in the log statement."
+      ],
+      "expected_result": "The 6-digit OTP is disclosed in plaintext in the log output."
+    },
+    "remediation": {
+      "strategy": "Mask the OTP code in console.log output when NODE_ENV is production, logging only masked strings.",
+      "code_changes": [
+        {
+          "file_name": "savazai-console/src/lib/auth/otp.ts",
+          "fixed_code": "const displayOtp = process.env.NODE_ENV === 'production' ? '******' : rawOtp; console.log(`[ZERO-TRUST OTP DISPATCH] Email: ${cleanEmail} | OTP: ${displayOtp}`);"
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "medium",
+        "reason": "Requires access to application log streams or container logs."
+      },
+      "impact": {
+        "score": "medium",
+        "reason": "Exposes single-use authentication codes."
+      },
+      "overall_severity": "medium"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Confirmed by direct source code inspection of line 80 in otp.ts."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "title": "Insecure Static Master Vault Secret Fallback in Console Cryptography",
+    "description": "The cryptographic utility in savazai-console/src/lib/crypto.ts falls back to a static hardcoded key ('fallback_secret_key_long_enough_32') whenever MASTER_VAULT_SECRET is not defined in the environment. If an administrator fails to configure MASTER_VAULT_SECRET in production, secrets including SMTP passwords and Turnstile keys are encrypted using a publicly known key.",
+    "root_cause": "encrypt in savazai-console/src/lib/crypto.ts does not enforce a mandatory encryption key in production environments, allowing credentials to be encrypted with a static hardcoded key",
+    "intended_behavior": "Enforce that MASTER_VAULT_SECRET must be explicitly configured and at least 32 characters long in production environments, refusing to start or encrypt with a static fallback.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "savazai-console/src/lib/crypto.ts",
+        "line": 5,
+        "scope": "encrypt",
+        "description": "Receives sensitive secret for encryption at rest."
+      },
+      {
+        "kind": "sink",
+        "file": "savazai-console/src/lib/crypto.ts",
+        "line": 7,
+        "scope": "encrypt",
+        "description": "Derives encryption key using hardcoded fallback string when MASTER_VAULT_SECRET is absent."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "environmental_dependency",
+        "description": "MASTER_VAULT_SECRET environment variable is missing or empty in production deployment."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Attacker obtains a database dump of system_configurations.",
+      "payloads": [
+        "decrypt(encryptedSecret, 'fallback_secret_key_long_enough_32')"
+      ],
+      "instructions": [
+        "Inspect database configuration row in system_configurations.",
+        "Observe secrets encrypted with default fallback key.",
+        "Decrypt SMTP credentials and API keys using the known static key from source code."
+      ],
+      "expected_result": "Encrypted credentials are successfully decrypted using the public fallback key."
+    },
+    "remediation": {
+      "strategy": "Throw a configuration error in production environments if MASTER_VAULT_SECRET is missing or shorter than 32 characters.",
+      "code_changes": [
+        {
+          "file_name": "savazai-console/src/lib/crypto.ts",
+          "fixed_code": "if (process.env.NODE_ENV === 'production' && (!process.env.MASTER_VAULT_SECRET || process.env.MASTER_VAULT_SECRET.length < 32)) { throw new Error('MASTER_VAULT_SECRET must be set and at least 32 characters in production.'); }"
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "low",
+        "reason": "Requires deployment misconfiguration where MASTER_VAULT_SECRET is omitted."
+      },
+      "impact": {
+        "score": "high",
+        "reason": "Allows unauthorized decryption of all system credentials and API tokens."
+      },
+      "overall_severity": "medium"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Confirmed by source code inspection of crypto.ts lines 7-8 and 22-23."
+    }
+  }
+]

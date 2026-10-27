@@ -75,6 +75,9 @@ export async function POST(req: NextRequest) {
       [userId]
     );
 
+    // Invalidate all active sessions upon password modification for security
+    await pool.query('DELETE FROM "session" WHERE "userId" = $1', [userId]);
+
     return Response.json(
       {
         success: true,

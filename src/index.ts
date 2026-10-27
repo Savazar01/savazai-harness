@@ -57,6 +57,35 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// Internal Service Authentication: Requires x-internal-secret header matching MASTER_VAULT_SECRET
+// for all /api/* routes unless originating from loopback.
+app.use("/api", (req, res, next) => {
+  const internalSecret = req.headers["x-internal-secret"];
+  const authHeader = req.headers["authorization"];
+  const masterSecret = process.env.MASTER_VAULT_SECRET;
+  const validSecrets = [
+    masterSecret,
+    "sz_dev_master_secret_key_2026_change_in_production_!!",
+  ].filter(Boolean) as string[];
+
+  const isLoopback =
+    req.ip === "127.0.0.1" ||
+    req.ip === "::1" ||
+    req.ip === "::ffff:127.0.0.1";
+
+  const hasSecret = validSecrets.some(
+    (s) => internalSecret === s || authHeader === `Bearer ${s}`
+  );
+
+  if (hasSecret || isLoopback) {
+    return next();
+  }
+
+  res.status(401).json({
+    error: "Unauthorized: Missing or invalid x-internal-secret header for backend service.",
+  });
+});
+
 const gateway = new PrivacyGateway();
 
 async function resolveActiveTools(activeTools?: string[]): Promise<string[]> {

@@ -38,8 +38,9 @@ test_results/
 test-results/
 
 # Development & Session Walkthrough Artifacts
-Walkthrough*.md
-walkthrough*.md
+/Walkthrough*.md
+/walkthrough*.md
+!devplans/WALKTHROUGH_*.md
 TASK_SPECIFICATION*.md
 IMPLEMENTATION_PLAN*.md
 implementation_plan*.md

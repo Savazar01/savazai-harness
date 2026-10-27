@@ -114,6 +114,12 @@ export async function PUT(req: NextRequest) {
     if (roleRes.rows.length === 0) {
       return Response.json({ error: "Role not found." }, { status: 404 });
     }
+    if (roleRes.rows[0].isSystem) {
+      return Response.json(
+        { error: "System predefined roles have immutable permissions and cannot be modified." },
+        { status: 400 }
+      );
+    }
 
     if (description !== undefined) {
       await pool.query(

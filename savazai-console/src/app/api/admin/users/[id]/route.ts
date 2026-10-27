@@ -169,6 +169,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
           targetUserId,
         ]);
       }
+      // Revoke all existing sessions for the target user to enforce re-authentication
+      await pool.query('DELETE FROM "session" WHERE "userId" = $1', [targetUserId]);
     }
 
     return Response.json({ user: updateRes.rows[0] }, { status: 200 });

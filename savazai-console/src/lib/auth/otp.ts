@@ -17,6 +17,19 @@ export async function generateAndSendEmailOtp(
   await ensureAdminProvisioned();
   const cleanEmail = email.trim().toLowerCase();
 
+  // Rate limit: Enforce 60-second cooldown per identifier
+  const recent = await pool.query(
+    'SELECT "createdAt" FROM "verification_token" WHERE LOWER("identifier") = $1 AND "purpose" = $2 ORDER BY "createdAt" DESC LIMIT 1',
+    [cleanEmail, purpose]
+  );
+  if (recent.rows.length > 0) {
+    const elapsed = Date.now() - new Date(recent.rows[0].createdAt).getTime();
+    if (elapsed < 60 * 1000) {
+      const waitSec = Math.ceil((60 * 1000 - elapsed) / 1000);
+      throw new Error(`Rate limit exceeded: Please wait ${waitSec} second(s) before requesting another code.`);
+    }
+  }
+
   // Generate CSPRNG 6-digit numeric code (100000 - 999999)
   const rawOtp = crypto.randomInt(100000, 1000000).toString();
   const hashedToken = hashOtp(rawOtp);
@@ -76,8 +89,9 @@ export async function generateAndSendEmailOtp(
     console.error("[OTP Email Dispatch Exception]", emailErr);
   }
 
+  const logOtp = process.env.NODE_ENV === "production" ? "******" : rawOtp;
   console.log(
-    `[ZERO-TRUST OTP DISPATCH] Email: ${cleanEmail} | Purpose: ${purpose} | Dispatched: ${emailDispatched} | 6-Digit OTP: ${rawOtp}`
+    `[ZERO-TRUST OTP DISPATCH] Email: ${cleanEmail} | Purpose: ${purpose} | Dispatched: ${emailDispatched} | 6-Digit OTP: ${logOtp}`
   );
 
   return {

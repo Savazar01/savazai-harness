@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { requirePermission } from "@/lib/auth/rbac";
+import { getInternalBackendHeaders } from "@/lib/backend-client";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_HARNESS_API_URL || "http://savazai-backend:3055";
@@ -22,7 +23,9 @@ export async function GET(
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
-    const response = await fetch(`${BACKEND_URL}/api/agentflows/${id}`);
+    const response = await fetch(`${BACKEND_URL}/api/agentflows/${id}`, {
+      headers: getInternalBackendHeaders(),
+    });
     if (!response.ok) {
       return new Response(
         JSON.stringify({ error: `Backend error: ${response.status}` }),
@@ -78,7 +81,7 @@ export async function PUT(
 
     const response = await fetch(`${BACKEND_URL}/api/agentflows/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: getInternalBackendHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(forwarded),
     });
     if (!response.ok) {
@@ -119,6 +122,7 @@ export async function DELETE(
     }
     const response = await fetch(`${BACKEND_URL}/api/agentflows/${id}`, {
       method: "DELETE",
+      headers: getInternalBackendHeaders(),
     });
     if (!response.ok) {
       const errorText = await response.text().catch(() => `Backend error: ${response.status}`);

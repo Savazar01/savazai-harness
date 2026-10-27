@@ -2,9 +2,19 @@ import { randomBytes, createCipheriv, createDecipheriv, scryptSync } from "crypt
 
 const ALGORITHM = "aes-256-cbc";
 
+function getMasterSecret(): string {
+  const secret = process.env.MASTER_VAULT_SECRET;
+  if (process.env.NODE_ENV === "production" && (!secret || secret.length < 32)) {
+    throw new Error(
+      "Security invariant violation: MASTER_VAULT_SECRET must be configured and at least 32 characters long in production."
+    );
+  }
+  return secret || "fallback_secret_key_long_enough_32";
+}
+
 export function encrypt(text: string): string {
   if (!text) return "";
-  const secret = process.env.MASTER_VAULT_SECRET || "fallback_secret_key_long_enough_32";
+  const secret = getMasterSecret();
   const key = scryptSync(secret, "salt", 32);
   const iv = randomBytes(16);
   const cipher = createCipheriv(ALGORITHM, key, iv);
@@ -20,7 +30,7 @@ export function decrypt(encryptedText: string): string {
 
   const secrets = [
     process.env.MASTER_VAULT_SECRET,
-    "fallback_secret_key_long_enough_32",
+    ...(process.env.NODE_ENV !== "production" ? ["fallback_secret_key_long_enough_32"] : []),
   ].filter(Boolean) as string[];
 
   const iv = Buffer.from(ivHex, "hex");

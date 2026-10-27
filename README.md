@@ -251,7 +251,8 @@ SavazAI adheres to defense-in-depth principles across edge, application, databas
    - **Granular RBAC Guards**: Every Next.js route handler and server action enforces `requirePermission(resource, action)` verifying session validity, active account status (`ACTIVE`), and mandatory password reset completion.
    - **Zero Public Registration**: Public sign-up routes (`/signup`, `/register`) are permanently eradicated. Better-Auth `disableSignUp: true` is enforced and all unauthenticated registration endpoints return `403 Forbidden`.
    - **Cryptographic Tokenized Onboarding**: New operators can only onboard via time-limited, administrator-generated cryptographic invitation tokens (`/auth/invite/onboard?token=...&email=...`). Tokens are verified via SHA-256 hash against `verification_token` and consumed (deleted) immediately upon account creation to prevent replay attacks.
-   - **Internal Service Protection**: Engine endpoints (`/api/mcp`, `/api/tools/registered`) require either valid operator session permissions or internal service verification headers (`x-internal-secret`) for Docker container inter-communication.
+   - **Internal Service Protection**: Engine endpoints (`/api/mcp`, `/api/tools/registered`, `/api/agentflows`, `/api/settings`, `/api/graph/invoke`) require either valid operator session permissions or internal service verification headers (`x-internal-secret`) for Docker container inter-communication.
+   - **Security Audit Governance**: Full codebase security audits are executed and archived under `.security/audits/` (latest: `run-02` with 5 validated findings adhering to `report-schema.json`, 100% remediated across backend service proxy authentication, Python runner subtree path containment, session purging on credential changes, OTP production log masking, and enforced master vault secrets).
 
 3. **HTTP Response Headers & Content Security Policy (CSP)**:
    - Configured globally via `next.config.ts` and `middleware.ts`:

@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { requirePermission } from "@/lib/auth/rbac";
+import { getInternalBackendHeaders } from "@/lib/backend-client";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_HARNESS_API_URL || "http://savazai-backend:3055";
@@ -17,7 +18,7 @@ export async function GET(
   const backendUrl = `${BACKEND_URL}/api/graph/threads/${threadId}`;
 
   const response = await fetch(backendUrl, {
-    headers: { "Content-Type": "application/json" },
+    headers: getInternalBackendHeaders({ "Content-Type": "application/json" }),
   });
 
   if (!response.ok) {

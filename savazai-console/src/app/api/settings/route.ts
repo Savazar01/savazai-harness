@@ -1,4 +1,5 @@
 import { requirePermission } from "@/lib/auth/rbac";
+import { getInternalBackendHeaders } from "@/lib/backend-client";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_HARNESS_API_URL || "http://savazai-backend:3055";
@@ -23,7 +24,9 @@ export async function GET() {
       }
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/settings`);
+    const response = await fetch(`${BACKEND_URL}/api/settings`, {
+      headers: getInternalBackendHeaders(),
+    });
     if (!response.ok) {
       return new Response(
         JSON.stringify({ error: `Backend error: ${response.status}` }),
