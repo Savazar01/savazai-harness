@@ -115,7 +115,7 @@ export async function getSystemConfig(): Promise<SystemConfig> {
       surfaceTone: DEFAULT_SURFACE,
       radius: DEFAULT_RADIUS,
       density: DEFAULT_DENSITY,
-      themeMode: "system",
+      themeMode: "dark",
     },
   };
 }
@@ -151,7 +151,7 @@ export async function ThemeProvider({ children }: { children: React.ReactNode })
     (tokens.background ? surfaceFromLegacyBackground(tokens.background) : DEFAULT_SURFACE);
 
   const appearanceConfig: AppearanceConfig = {
-    themeMode: tokens.themeMode || "system",
+    themeMode: tokens.themeMode || "dark",
     accentPreset,
     accentCustom,
     surfaceTone,
@@ -208,7 +208,7 @@ export async function ThemeProvider({ children }: { children: React.ReactNode })
         id="savazai-theme-vars"
         dangerouslySetInnerHTML={{ __html: cssVariables }}
       />
-      <ClientThemeProvider defaultTheme={tokens.themeMode || "system"}>
+      <ClientThemeProvider defaultTheme={tokens.themeMode || "dark"}>
         {children}
       </ClientThemeProvider>
     </>

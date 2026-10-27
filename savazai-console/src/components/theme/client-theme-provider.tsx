@@ -12,13 +12,13 @@ export interface ClientThemeProviderProps {
 
 export function ClientThemeProvider({
   children,
-  defaultTheme = "system",
+  defaultTheme = "dark",
 }: ClientThemeProviderProps) {
   return (
     <NextThemesProvider
       attribute="class"
       defaultTheme={defaultTheme}
-      enableSystem
+      enableSystem={false}
       disableTransitionOnChange={false}
     >
       <TooltipProvider delayDuration={150}>

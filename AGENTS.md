@@ -287,5 +287,6 @@ Every feature, fix, or security update requires:
 - **Zero Hardcoded Colors**: Never use arbitrary hex codes (`bg-[#14141f]`, `bg-[#0c0c12]`, `border-[#1f1f2e]`, etc.) or non-adaptive dark classes (`bg-slate-900`, `text-white`) directly in UI components. Always consume semantic tokens (`bg-background`, `bg-card`, `text-card-foreground`, `border-border`, `bg-muted`, `text-muted-foreground`, `bg-primary`, `text-primary-foreground`, `bg-popover`).
 - **Zero `!important` Text Overrides**: Never declare global `!important` text color or background overrides. Theme changes must be driven purely through semantic token resolution on `:root` and `html.dark`.
 - **Mandatory Dual-Theme Verification**: Every new component, modal, drawer, or view must be verified for WCAG AA compliance (minimum 4.5:1 text contrast) under both Light Mode (`html.light`) and Dark Mode (`html.dark`).
+- **Default Dark Mode on Public Surfaces**: The root landing page (`/`) defaults to Dark Mode on initial load, mounts an accessible header `ThemeToggle` next to branding, and employs dual-mode gradient typography on hero headings to ensure WCAG AAA contrast across both light and dark backgrounds.
 
 
