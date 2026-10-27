@@ -34,7 +34,7 @@
   --sidebar-ring: #c2410c;
 
   --canvas: #f8fafc;
-  --canvas-grid: #cbd5e1;
+  --canvas-grid: #94a3b8;
 
   --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -71,7 +71,7 @@
   --sidebar-ring: #fb923c;
 
   --canvas: #0b0e14;
-  --canvas-grid: #252c38;
+  --canvas-grid: #334155;
 }
 
 @theme inline {

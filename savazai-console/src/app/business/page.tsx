@@ -8,22 +8,18 @@ import { ComplianceManager } from "@/components/business/compliance-manager";
 import { usePermissions } from "@/lib/auth/use-permissions";
 
 export default function BusinessPage() {
-  const { hasPermission } = usePermissions();
+  const { hasPermission, loading } = usePermissions();
 
-  const canViewSkills = hasPermission("business_center:skills_view");
-  const canViewOkf = hasPermission("business_center:okf_view");
-  const canViewCompliance = hasPermission("business_center:compliance_view");
+  const canViewSkills = hasPermission("business_center", "skills_view") || hasPermission("business_center:skills_view") || loading;
+  const canViewOkf = hasPermission("business_center", "okf_view") || hasPermission("business_center:okf_view") || loading;
+  const canViewCompliance = hasPermission("business_center", "compliance_view") || hasPermission("business_center:compliance_view") || loading;
 
-  const [subTab, setSubTab] = useState<"skills" | "okf" | "governance">(() => {
-    if (canViewSkills) return "skills";
-    if (canViewOkf) return "okf";
-    if (canViewCompliance) return "governance";
-    return "skills";
-  });
+  const [subTab, setSubTab] = useState<"skills" | "okf" | "governance">("skills");
 
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
 
   useEffect(() => {
+    if (loading) return;
     if (subTab === "skills" && !canViewSkills) {
       if (canViewOkf) setSubTab("okf");
       else if (canViewCompliance) setSubTab("governance");
@@ -34,7 +30,7 @@ export default function BusinessPage() {
       if (canViewSkills) setSubTab("skills");
       else if (canViewOkf) setSubTab("okf");
     }
-  }, [subTab, canViewSkills, canViewOkf, canViewCompliance]);
+  }, [subTab, canViewSkills, canViewOkf, canViewCompliance, loading]);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground p-6">
@@ -128,9 +124,9 @@ export default function BusinessPage() {
 
         {/* Right dedicated workspace */}
         <div className="flex-1 min-h-0 bg-card border border-border rounded-2xl overflow-hidden flex flex-col shadow-xs">
-          {subTab === "skills" && canViewSkills && <SkillsRegistry />}
-          {subTab === "okf" && canViewOkf && <OkfRegistry />}
-          {subTab === "governance" && canViewCompliance && <ComplianceManager />}
+          {subTab === "skills" && (canViewSkills || loading) && <SkillsRegistry />}
+          {subTab === "okf" && (canViewOkf || loading) && <OkfRegistry />}
+          {subTab === "governance" && (canViewCompliance || loading) && <ComplianceManager />}
         </div>
       </div>
     </div>

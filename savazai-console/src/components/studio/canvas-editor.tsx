@@ -105,11 +105,11 @@ interface CanvasEditorProps {
 }
 
 const ROLE_CONFIGS: Record<AgentRole, { icon: typeof Bot; label: string; border: string; bg: string; accent: string }> = {
-  supervisor: { icon: Bot, label: "Supervisor Agent", border: "border-indigo-500/30", bg: "bg-indigo-500/10", accent: "indigo" },
-  team: { icon: Users, label: "Agent Team", border: "border-indigo-500/40", bg: "bg-indigo-950/20", accent: "indigo" },
-  worker: { icon: Wrench, label: "Worker / Specialist Agent", border: "border-cyan-500/30", bg: "bg-cyan-500/10", accent: "cyan" },
-  synthesizer: { icon: Sparkles, label: "Synthesizer Agent", border: "border-fuchsia-500/50", bg: "bg-gradient-to-br from-fuchsia-950/40 via-purple-950/30 to-slate-950/60", accent: "fuchsia" },
-  scheduled: { icon: Clock, label: "Scheduled Autonomous Worker", border: "border-amber-500/30", bg: "bg-amber-500/10", accent: "amber" },
+  supervisor: { icon: Bot, label: "Supervisor Agent", border: "border-indigo-500/40", bg: "bg-card", accent: "indigo" },
+  team: { icon: Users, label: "Agent Team", border: "border-indigo-500/40", bg: "bg-card", accent: "indigo" },
+  worker: { icon: Wrench, label: "Worker / Specialist Agent", border: "border-teal-500/40", bg: "bg-card", accent: "teal" },
+  synthesizer: { icon: Sparkles, label: "Synthesizer Agent", border: "border-purple-500/50", bg: "bg-card", accent: "purple" },
+  scheduled: { icon: Clock, label: "Scheduled Autonomous Worker", border: "border-amber-500/40", bg: "bg-card", accent: "amber" },
 };
 
 const NODE_CUSTOM_COLORS: Record<string, { bg: string; border: string; accent: string; dot: string; ring: string }> = {
@@ -1432,9 +1432,9 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                   key={role}
                   type="button"
                   onClick={() => handleAddNode(role)}
-                  className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-xs font-semibold text-muted-foreground border transition-all text-left ${config.bg} ${config.border} hover:opacity-90 hover:scale-[1.02]`}
+                  className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-xs font-semibold text-foreground border transition-all text-left bg-card hover:bg-muted ${config.border} hover:scale-[1.02] shadow-xs`}
                 >
-                  <Icon className={`h-4 w-4 text-${config.accent}-400 shrink-0`} />
+                  <Icon className={`h-4 w-4 text-${config.accent}-600 dark:text-${config.accent}-400 shrink-0`} />
                   <span className="leading-tight truncate">
                     {role === "team" ? "Agent Team" : config.label.replace(" Agent", "").replace(" Autonomous Worker", "").replace("Worker / ", "")}
                   </span>
@@ -1453,7 +1453,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
           onWheel={handleCanvasWheel}
           className="flex-1 h-full bg-canvas relative overflow-hidden select-none cursor-grab active:cursor-grabbing"
           style={{
-            backgroundImage: "radial-gradient(var(--canvas-grid) 1.2px, transparent 1.2px)",
+            backgroundImage: "radial-gradient(var(--canvas-grid) 1.5px, transparent 1.5px)",
             backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
             backgroundPosition: `${pan.x}px ${pan.y}px`
           }}
@@ -1707,17 +1707,19 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                       onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
                       onClick={() => { setSelectedNodeId(node.id); setSelectedEdgeId(null); }}
                       onDoubleClick={(e) => handleNodeDoubleClick(e, node.id)}
-                      className={`w-48 rounded-2xl border px-3.5 py-2.5 flex flex-col gap-1.5 transition-all select-none z-10 cursor-grab active:cursor-grabbing backdrop-blur-md shadow-xl ${
+                      className={`w-48 rounded-2xl border px-3.5 py-2.5 flex flex-col gap-1.5 transition-all select-none z-10 cursor-grab active:cursor-grabbing backdrop-blur-md shadow-md ${
                         customTheme
-                          ? `${customTheme.bg} ${customTheme.border} ${isSelected ? `ring-2 ${customTheme.ring} shadow-lg shadow-${customTheme.accent}-500/20` : "hover:border-white/40"}`
+                          ? `${customTheme.bg} ${customTheme.border} ${isSelected ? `ring-2 ${customTheme.ring}` : "hover:border-foreground/30"}`
                           : isSynth
-                          ? `border-2 border-fuchsia-500/50 bg-gradient-to-br from-fuchsia-950/40 via-purple-950/30 to-slate-950/60 text-purple-200 shadow-[0_0_20px_rgba(217,70,239,0.18)] ${
-                              isSelected ? "ring-2 ring-fuchsia-500 shadow-fuchsia-500/30 border-fuchsia-400" : "hover:border-fuchsia-400/70"
+                          ? `border-2 border-purple-500/60 bg-card text-foreground shadow-md ${
+                              isSelected ? "ring-2 ring-purple-500 shadow-purple-500/30 border-purple-400" : "hover:border-purple-400/70"
                             }`
-                          : `${config.bg} ${config.border} ${
-                              isSelected
-                                ? isSupervisor ? "ring-2 ring-indigo-500/80 shadow-indigo-500/10" : "ring-2 ring-cyan-500/80 shadow-cyan-500/10"
-                                : "hover:bg-muted/30"
+                          : isSupervisor
+                          ? `border-2 border-indigo-500/60 bg-card text-foreground shadow-md ${
+                              isSelected ? "ring-2 ring-indigo-500 shadow-indigo-500/30 border-indigo-400" : "hover:border-indigo-400/70"
+                            }`
+                          : `border border-teal-500/40 bg-card text-foreground shadow-md ${
+                              isSelected ? "ring-2 ring-teal-500 shadow-teal-500/30 border-teal-400" : "hover:border-teal-400/70"
                             }`
                       }`}
                     >
@@ -1728,15 +1730,19 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                             customTheme
                               ? `bg-muted/40 ${customTheme.border}`
                               : isSynth
-                              ? "bg-fuchsia-500/20 border-fuchsia-500/30 text-fuchsia-300"
-                              : "bg-muted/40 border-border"
+                              ? "bg-purple-100 dark:bg-purple-500/20 border-purple-200 dark:border-purple-500/30 text-purple-700 dark:text-purple-300"
+                              : isSupervisor
+                              ? "bg-indigo-100 dark:bg-indigo-500/20 border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300"
+                              : "bg-teal-100 dark:bg-teal-500/20 border-teal-200 dark:border-teal-500/30 text-teal-800 dark:text-teal-300"
                           }`}>
                             <NodeIcon className={`h-3.5 w-3.5 ${
                               customTheme
-                                ? `text-${customTheme.accent}-400`
+                                ? `text-${customTheme.accent}-600 dark:text-${customTheme.accent}-400`
                                 : isSynth
-                                ? "text-fuchsia-300 animate-pulse"
-                                : `text-${config.accent}-400`
+                                ? "text-purple-600 dark:text-purple-400 animate-pulse"
+                                : isSupervisor
+                                ? "text-indigo-600 dark:text-indigo-400"
+                                : "text-teal-600 dark:text-teal-400"
                             }`} />
                           </div>
                           {/* Status Ring */}
@@ -1774,15 +1780,15 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
 
                       <span className={`self-start px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
                         customTheme
-                          ? `bg-${customTheme.accent}-500/20 text-${customTheme.accent}-300 border ${customTheme.border}`
-                          : isSupervisor ? "bg-indigo-500/15 text-indigo-300 border border-indigo-500/25" :
-                          isSynth ? "bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30" :
-                          "bg-cyan-500/15 text-cyan-300 border border-cyan-500/25"
+                          ? `bg-${customTheme.accent}-500/20 text-${customTheme.accent}-700 dark:text-${customTheme.accent}-300 border ${customTheme.border}`
+                          : isSupervisor ? "bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30" :
+                          isSynth ? "bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30" :
+                          "bg-teal-100 dark:bg-teal-500/20 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-500/30"
                       }`}>
                         {config.label.replace(" Agent", "").replace(" Autonomous Worker", "").replace("Worker / ", "")}
                       </span>
 
-                      <div className="text-xs font-bold text-white truncate max-w-full">
+                      <div className="text-xs font-bold text-foreground truncate max-w-full">
                         {node.label}
                       </div>
 

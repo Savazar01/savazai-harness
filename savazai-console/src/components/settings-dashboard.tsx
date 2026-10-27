@@ -32,6 +32,7 @@ import {
   Wrench,
   Globe,
   Save,
+  Upload,
   Loader2,
   CheckCircle2,
   XCircle,
@@ -335,6 +336,10 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
   const { setTheme: setNextTheme } = useTheme();
   const [appTitle, setAppTitle] = useState(initialConfig.appTitle);
   const [brandLogoUrl, setBrandLogoUrl] = useState(initialConfig.brandLogoUrl);
+  const [faviconUrl, setFaviconUrl] = useState(tokens.faviconUrl || "");
+  const logoFileInputRef = React.useRef<HTMLInputElement>(null);
+  const faviconFileInputRef = React.useRef<HTMLInputElement>(null);
+  const [logoDimensions, setLogoDimensions] = useState<{ width: number; height: number } | null>(null);
   const [primaryColor, setPrimaryColor] = useState(tokens.primaryColor || "#c2410c");
   const [secondaryColor, setSecondaryColor] = useState(tokens.secondaryColor || "#f1f5f9");
   const [background, setBackground] = useState(tokens.background || "#f8fafc");
@@ -724,8 +729,49 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
     document.body.removeChild(link);
   };
 
-  const restoreLogoDefault = () => {
+  useEffect(() => {
+    if (brandLogoUrl && typeof window !== "undefined") {
+      const img = new Image();
+      img.onload = () => {
+        setLogoDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.src = brandLogoUrl;
+    } else {
+      setLogoDimensions(null);
+    }
+  }, [brandLogoUrl]);
+
+  const handleLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Logo image size must be less than 2MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setBrandLogoUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFaviconFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 512 * 1024) {
+      alert("Favicon size must be less than 512KB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setFaviconUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const restoreBrandingDefaults = () => {
     setBrandLogoUrl("https://savazar.com/wp-content/uploads/2023/10/cropped-Transparent_Image_2-300x100.png");
+    setFaviconUrl("");
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -741,6 +787,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
     const result = await updateSystemConfig({
       appTitle,
       brandLogoUrl,
+      faviconUrl,
       primaryColor: accentCustom,
       secondaryColor,
       background,
@@ -1668,29 +1715,151 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
             )}
 
             {activeTab === "branding" && (
-              <div className="space-y-5">
+              <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1">Branding Assets</h3>
-                  <p className="text-muted-foreground text-xs">Core identity logos with live preview and canonical restoration</p>
+                  <h3 className="text-lg font-bold text-foreground mb-1">Branding Assets</h3>
+                  <p className="text-muted-foreground text-xs">Configure platform logo and browser favicon with drag-and-drop file upload or manual URL</p>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Platform Logo URL</label>
-                  <input type="url" value={brandLogoUrl} onChange={(e) => setBrandLogoUrl(e.target.value)}
-                    placeholder="https://example.com/logo.png"
-                    className="w-full rounded-xl border border-border bg-muted/30 py-3 px-4 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20" required />
-                </div>
-                <div className="flex gap-4 items-center pt-2">
-                  <button type="button" onClick={restoreLogoDefault}
-                    className="px-4 py-2 border border-border hover:border-border bg-muted/30 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground transition-all">
-                    Restore Canonical Logo
-                  </button>
-                  {brandLogoUrl && (
-                    <div className="rounded-xl border border-border bg-background p-2 ml-auto">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={brandLogoUrl} alt="Brand preview" className="h-10 max-w-[240px] object-contain brightness-115"
-                        onError={(e) => { e.currentTarget.style.display = "none"; }} />
+
+                {/* Platform Brand Logo */}
+                <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground">Platform Brand Logo</h4>
+                      <p className="text-xs text-muted-foreground">Used on navigation headers, emails, and sign-in cards (PNG, SVG, or JPG)</p>
                     </div>
-                  )}
+                    {logoDimensions && (
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                        {logoDimensions.width} × {logoDimensions.height} px
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Dropzone & Preview */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    <div
+                      onClick={() => logoFileInputRef.current?.click()}
+                      className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border hover:border-primary/50 rounded-xl bg-background/50 cursor-pointer transition-all hover:bg-muted/30 group text-center"
+                    >
+                      <Upload className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors mb-2" />
+                      <span className="text-xs font-semibold text-foreground mb-0.5">Upload Logo Image</span>
+                      <span className="text-[10px] text-muted-foreground">PNG, SVG, or JPG up to 2MB</span>
+                      <input
+                        ref={logoFileInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/svg+xml"
+                        onChange={handleLogoFileUpload}
+                        className="hidden"
+                      />
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-background min-h-[100px]">
+                      {brandLogoUrl ? (
+                        <div className="space-y-2 text-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={brandLogoUrl}
+                            alt="Brand logo preview"
+                            className="h-12 max-w-[220px] object-contain mx-auto"
+                            onError={(e) => { e.currentTarget.style.display = "none"; }}
+                          />
+                          <span className="text-[10px] text-muted-foreground block">Active Logo Preview</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No custom logo selected</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Or specify Logo URL</label>
+                    <input
+                      type="url"
+                      value={brandLogoUrl}
+                      onChange={(e) => setBrandLogoUrl(e.target.value)}
+                      placeholder="https://example.com/logo.png"
+                      className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+
+                {/* Browser Favicon */}
+                <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground">Browser Favicon</h4>
+                      <p className="text-xs text-muted-foreground">Browser tab icon displayed in window headers and bookmarks (ICO, PNG, or SVG)</p>
+                    </div>
+                  </div>
+
+                  {/* Dropzone & Preview */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    <div
+                      onClick={() => faviconFileInputRef.current?.click()}
+                      className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border hover:border-primary/50 rounded-xl bg-background/50 cursor-pointer transition-all hover:bg-muted/30 group text-center"
+                    >
+                      <Upload className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors mb-2" />
+                      <span className="text-xs font-semibold text-foreground mb-0.5">Upload Favicon Icon</span>
+                      <span className="text-[10px] text-muted-foreground">ICO, PNG, or SVG up to 512KB</span>
+                      <input
+                        ref={faviconFileInputRef}
+                        type="file"
+                        accept="image/x-icon,image/png,image/svg+xml"
+                        onChange={handleFaviconFileUpload}
+                        className="hidden"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-center p-4 rounded-xl border border-border bg-background min-h-[100px]">
+                      {faviconUrl ? (
+                        <div className="flex items-center gap-3">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={faviconUrl}
+                            alt="Favicon preview"
+                            className="h-8 w-8 object-contain rounded-sm border border-border p-1 bg-card"
+                            onError={(e) => { e.currentTarget.style.display = "none"; }}
+                          />
+                          <div>
+                            <span className="text-xs font-semibold text-foreground block">Active Favicon</span>
+                            <span className="text-[10px] text-muted-foreground">32x32 Tab Preview</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3 text-muted-foreground">
+                          <div className="h-8 w-8 rounded-sm border border-border bg-muted flex items-center justify-center text-[10px] font-bold">
+                            S
+                          </div>
+                          <div>
+                            <span className="text-xs font-semibold text-foreground block">Default Favicon</span>
+                            <span className="text-[10px] text-muted-foreground">/favicon.ico</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Or specify Favicon URL</label>
+                    <input
+                      type="url"
+                      value={faviconUrl}
+                      onChange={(e) => setFaviconUrl(e.target.value)}
+                      placeholder="https://example.com/favicon.ico"
+                      className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+
+                {/* Restoration Action */}
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={restoreBrandingDefaults}
+                    className="px-4 py-2 border border-border hover:border-border bg-card hover:bg-muted rounded-xl text-xs font-semibold text-foreground transition-all cursor-pointer shadow-xs"
+                  >
+                    Restore Canonical Logo &amp; Favicon
+                  </button>
                 </div>
               </div>
             )}
@@ -1698,19 +1867,19 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
             {activeTab === "llm" && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-foreground mb-1 flex items-center gap-2">
                     LLM Providers
                     <HelpTooltip content="Configure API keys, endpoints, and default models for each LLM provider. At least one provider must be active with a valid API key for AI features to work." side="right" />
                   </h3>
                   <p className="text-muted-foreground text-xs">Configure API keys, endpoints, and default models per provider</p>
-                  <div className="mt-3 rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3 text-[10px] text-indigo-300 leading-relaxed space-y-1">
-                    <p><strong className="text-indigo-200">How to set up a provider:</strong></p>
-                    <ol className="list-decimal list-inside space-y-0.5 text-indigo-300/80">
-                      <li>Click the <strong className="text-indigo-200">Setup Guide &amp; Get API Key</strong> link to open the provider&apos;s API key page in a new tab.</li>
+                  <div className="mt-3 rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed space-y-1.5">
+                    <p><strong className="text-foreground">How to set up a provider:</strong></p>
+                    <ol className="list-decimal list-inside space-y-0.5 text-muted-foreground">
+                      <li>Click the <strong className="text-foreground">Setup Guide &amp; Get API Key</strong> link to open the provider&apos;s API key page in a new tab.</li>
                       <li>Sign in / create an account, generate a new API key, and copy it.</li>
-                      <li>Paste the key into the <strong className="text-indigo-200">API Key</strong> field below.</li>
-                      <li>Toggle <strong className="text-indigo-200">Enabled</strong> on, then click <strong className="text-indigo-200">Test Connection</strong> to verify the key works.</li>
-                      <li>Select your preferred <strong className="text-indigo-200">Default Model</strong> and check allowed models for agent workflows.</li>
+                      <li>Paste the key into the <strong className="text-foreground">API Key</strong> field below.</li>
+                      <li>Toggle <strong className="text-foreground">Enabled</strong> on, then click <strong className="text-foreground">Test Connection</strong> to verify the key works.</li>
+                      <li>Select your preferred <strong className="text-foreground">Default Model</strong> and check allowed models for agent workflows.</li>
                     </ol>
                   </div>
                 </div>
@@ -1732,7 +1901,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                             <Cpu className="h-3.5 w-3.5" />
                           </div>
                           <div>
-                            <span className="text-sm font-bold text-white">{label}</span>
+                            <span className="text-sm font-bold text-foreground">{label}</span>
                             {prov.active && (
                               <span className="ml-2 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">ACTIVE</span>
                             )}
@@ -1744,7 +1913,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                               href={PROVIDER_SETUP_LINKS[key]}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold transition-all"
+                              className="flex items-center gap-1 text-[10px] text-indigo-400 hover:text-muted-foreground font-semibold transition-all"
                             >
                               <ExternalLink className="h-3 w-3" />
                               Setup Guide &amp; Get API Key
@@ -1763,20 +1932,20 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                           <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">API Endpoint</label>
                           <input type="text" value={prov.endpoint} onChange={(e) => updateProvider(key, "endpoint", e.target.value)}
                             placeholder={DEFAULT_LLM_PROVIDERS[key].endpoint}
-                            className="w-full rounded-lg border border-border bg-muted/30 py-2 px-3 text-xs text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                            className="w-full rounded-lg border border-border bg-muted/30 py-2 px-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono" />
                         </div>
                         <div>
                           <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">API Key</label>
                           <input type="password" value={prov.apiKey} onChange={(e) => updateProvider(key, "apiKey", e.target.value)}
                             placeholder="sk-..."
-                            className="w-full rounded-lg border border-border bg-muted/30 py-2 px-3 text-xs text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                            className="w-full rounded-lg border border-border bg-muted/30 py-2 px-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono" />
                         </div>
                         <div>
                           <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Default Model</label>
                           <select
                             value={prov.defaultModel}
                             onChange={(e) => updateProvider(key, "defaultModel", e.target.value)}
-                            className="w-full rounded-lg border border-border bg-muted/30 py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                            className="w-full rounded-lg border border-border bg-muted/30 py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50 font-mono"
                           >
                             {getDiscoveredOrFallbackModels(key).map((m: string) => (
                               <option key={m} value={m}>{m}</option>
@@ -1801,7 +1970,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                                   return { ...prev, [key]: { ...p, models: allModels } };
                                 });
                               }}
-                              className="text-[9px] text-indigo-400 hover:text-indigo-300 font-semibold cursor-pointer"
+                              className="text-[9px] text-indigo-400 hover:text-muted-foreground font-semibold cursor-pointer"
                             >
                               Select All
                             </button>
@@ -1814,7 +1983,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                                   return { ...prev, [key]: { ...p, models: [] } };
                                 });
                               }}
-                              className="text-[9px] text-indigo-400 hover:text-indigo-300 font-semibold cursor-pointer"
+                              className="text-[9px] text-indigo-400 hover:text-muted-foreground font-semibold cursor-pointer"
                             >
                               Deselect All
                             </button>
@@ -1832,7 +2001,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                                   key={m}
                                   className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all text-[10px] ${
                                     checked
-                                      ? "border-indigo-500/40 bg-indigo-500/10 text-indigo-200"
+                                      ? "border-indigo-500/40 bg-indigo-500/10 text-foreground"
                                       : "border-border bg-muted/30 text-muted-foreground hover:border-border"
                                   }`}
                                 >
@@ -1878,12 +2047,12 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                             onChange={(e) => setModelInputs((prev) => ({ ...prev, [key]: e.target.value }))}
                             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addModel(key, modelInputs[key] || ""); } }}
                             placeholder="+ Add custom model ID"
-                            className="flex-1 rounded-lg border border-border bg-muted/30 py-1.5 px-3 text-[10px] text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono"
+                            className="flex-1 rounded-lg border border-border bg-muted/30 py-1.5 px-3 text-[10px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono"
                           />
                           <button
                             type="button"
                             onClick={() => addModel(key, modelInputs[key] || "")}
-                            className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold transition-all"
+                            className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-bold shadow-xs transition-all"
                           >
                             Add
                           </button>
@@ -1901,7 +2070,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                           Test Connection
                         </button>
                         <button type="button" onClick={() => handleFetchModels(key)} disabled={fetchingModels[key] || testingProvider === key}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-xs font-semibold text-indigo-300 hover:text-indigo-200 transition-all disabled:opacity-50">
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all disabled:opacity-50">
                           {fetchingModels[key] ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />}
                           Fetch / Refresh Models
                         </button>
@@ -1922,7 +2091,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               <div className="space-y-5">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-foreground mb-1 flex items-center gap-2">
                       MCP Integration
                       <HelpTooltip content="Model Context Protocol (MCP) servers provide external tools and capabilities to agents. Each server is configured with a command, arguments, and optional environment variables." side="right" />
                     </h3>
@@ -1931,7 +2100,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   <button
                     type="button"
                     onClick={() => openEditMcpModal(null)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary/80 transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/80 transition-all cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Add Server Instance
@@ -1949,7 +2118,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   </div>
                   <textarea rows={4} value={mcpServers} onChange={(e) => setMcpServers(e.target.value)}
                     placeholder='{"mcpServers":{"playwright":{"command":"npx","args":["@playwright/mcp"],"env":{"KEY":"val"}}}}'
-                    className="w-full rounded-xl border border-border bg-background py-2.5 px-3 text-xs text-white font-mono placeholder-slate-600 outline-none focus:border-primary/50" />
+                    className="w-full rounded-xl border border-border bg-background py-2.5 px-3 text-xs text-foreground font-mono placeholder-slate-600 outline-none focus:border-primary/50" />
                 </div>
 
                 <div className="space-y-3">
@@ -1967,7 +2136,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                             <div key={name} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-border bg-background/60 gap-3 hover:border-border transition-all">
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm font-semibold text-white">{name}</span>
+                                  <span className="text-sm font-semibold text-foreground">{name}</span>
                                   <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ${
                                     isActive ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-800 text-muted-foreground"
                                   }`}>
@@ -2062,7 +2231,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                         onClick={() => injectMcpPreset(key, config)}
                         className="flex flex-col items-start gap-1 p-3 rounded-xl border border-border bg-background text-left hover:border-indigo-500/50 hover:bg-background transition-all cursor-pointer"
                       >
-                        <span className="text-xs font-bold text-white capitalize">{key}</span>
+                        <span className="text-xs font-bold text-foreground capitalize">{key}</span>
                         <span className="text-[9px] text-muted-foreground font-mono block truncate w-full">
                           {config.args[0]}
                         </span>
@@ -2077,7 +2246,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               <div className="space-y-5">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-foreground mb-1 flex items-center gap-2">
                       Database Connections Hub
                       <HelpTooltip content="Register external database servers. These databases can be accessed dynamically by agent query tools." side="right" />
                     </h3>
@@ -2097,7 +2266,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                       setNewDbActive(true);
                       setIsAddDbOpen(true);
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary/80 transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/80 transition-all cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Add Database Connection
@@ -2116,7 +2285,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                         <div key={index} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-border bg-background/60 gap-3 hover:border-border transition-all">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-white">{conn.alias}</span>
+                              <span className="text-sm font-semibold text-foreground">{conn.alias}</span>
                               <span className={`text-[9px] px-2 py-0.5 rounded-full font-mono capitalize ${
                                 conn.active ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-800 text-muted-foreground"
                               }`}>
@@ -2173,7 +2342,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
             {activeTab === "api" && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-foreground mb-1 flex items-center gap-2">
                     API Services
                     <HelpTooltip content="Configure third-party API services for web search, local business lookup, email (Gmail / SendGrid), WhatsApp messaging, and compliance PII governance." side="right" />
                   </h3>
@@ -2181,7 +2350,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                  <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
                     <Search className="h-4 w-4 text-primary" />
                     Search Engine &amp; Lookup Services
                   </h4>
@@ -2189,20 +2358,20 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Tavily API Key</label>
                       <input type="password" value={tavilyApiKey} onChange={(e) => setTavilyApiKey(e.target.value)} placeholder="tvly-..."
-                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono" />
                       <p className="mt-1 text-[10px] text-slate-600">Web search & content extraction</p>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Serper API Key</label>
                       <input type="password" value={serperApiKey} onChange={(e) => setSerperApiKey(e.target.value)} placeholder="serper-..."
-                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono" />
                       <p className="mt-1 text-[10px] text-slate-600">Google search API integration</p>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Google Places API Key</label>
                       <div className="relative">
                         <input type="password" value={googlePlacesApiKey} onChange={(e) => setGooglePlacesApiKey(e.target.value)} placeholder="AIza..."
-                          className="w-full rounded-xl border border-border bg-muted/30 py-2.5 pl-9 pr-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                          className="w-full rounded-xl border border-border bg-muted/30 py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono" />
                         <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       </div>
                       <p className="mt-1 text-[10px] text-slate-600">Local business &amp; coordinate resolution</p>
@@ -2210,26 +2379,26 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Search Radius (meters)</label>
                       <input type="number" value={googlePlacesRadius} onChange={(e) => setGooglePlacesRadius(e.target.value)} placeholder="5000"
-                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50" />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Yelp Client ID</label>
                       <div className="relative">
                         <input type="text" value={yelpClientId} onChange={(e) => setYelpClientId(e.target.value)} placeholder="..."
-                          className="w-full rounded-xl border border-border bg-muted/30 py-2.5 pl-9 pr-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                          className="w-full rounded-xl border border-border bg-muted/30 py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono" />
                         <Star className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Yelp API Key</label>
                       <input type="password" value={yelpApiKey} onChange={(e) => setYelpApiKey(e.target.value)} placeholder="..."
-                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono" />
                     </div>
                   </div>
                 </div>
 
                 <div className="border-t border-border pt-5">
-                  <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                  <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
                     <Mail className="h-4 w-4 text-cyan-400" />
                     Communication Gateways
                   </h4>
@@ -2240,36 +2409,36 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Client ID</label>
                       <input type="text" value={gmailClientId} onChange={(e) => setGmailClientId(e.target.value)} placeholder="..."
-                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono" />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Client Secret</label>
                       <input type="password" value={gmailClientSecret} onChange={(e) => setGmailClientSecret(e.target.value)} placeholder="..."
-                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono" />
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Refresh Token</label>
                       <input type="password" value={gmailRefreshToken} onChange={(e) => setGmailRefreshToken(e.target.value)} placeholder="..."
-                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono" />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">SendGrid API Key</label>
                       <div className="relative">
                         <input type="password" value={sendgridApiKey} onChange={(e) => setSendgridApiKey(e.target.value)} placeholder="SG...."
-                          className="w-full rounded-xl border border-border bg-muted/30 py-2.5 pl-9 pr-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                          className="w-full rounded-xl border border-border bg-muted/30 py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono" />
                         <Send className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Sender Verification Email</label>
                       <input type="email" value={sendgridSenderEmail} onChange={(e) => setSendgridSenderEmail(e.target.value)} placeholder="sender@example.com"
-                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50" />
                     </div>
                   </div>
                 </div>
 
                 <div className="border-t border-border pt-5">
-                  <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                  <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-emerald-400" />
                     Enterprise WhatsApp API
                   </h4>
@@ -2277,17 +2446,17 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">WABA ID (Business Account ID)</label>
                       <input type="text" value={wabaId} onChange={(e) => setWabaId(e.target.value)} placeholder="..."
-                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono" />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Phone Number ID</label>
                       <input type="text" value={wabaPhoneNumberId} onChange={(e) => setWabaPhoneNumberId(e.target.value)} placeholder="..."
-                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono" />
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Permanent System Access Token</label>
                       <input type="password" value={wabaAccessToken} onChange={(e) => setWabaAccessToken(e.target.value)} placeholder="EAA..."
-                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-white placeholder-slate-600 outline-none focus:border-primary/50 font-mono" />
+                        className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 font-mono" />
                     </div>
                   </div>
                 </div>
@@ -2296,7 +2465,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
 
                 <div className="border-t border-border pt-5">
                   <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                       <Plus className="h-4 w-4 text-primary" />
                       Dynamic Integrations &amp; Custom APIs
                     </h4>
@@ -2310,7 +2479,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                         setNewApiCode(`// Custom API Script execution\n// Receive arguments in \`toolArgs\` variable\nconsole.log("Custom executing with args:", toolArgs);\nreturn { status: "success", received: toolArgs };`);
                         setIsAddCustomApiOpen(true);
                       }}
-                      className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border border-border text-white text-xs font-semibold hover:bg-slate-800 transition-all cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border border-border text-foreground text-xs font-semibold hover:bg-muted transition-all cursor-pointer shadow-xs"
                     >
                       <Plus className="h-3.5 w-3.5 text-primary" />
                       Add Custom API
@@ -2359,7 +2528,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
             {activeTab === "analytics" && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1">Usage & Spend</h3>
+                  <h3 className="text-lg font-bold text-foreground mb-1">Usage & Spend</h3>
                   <p className="text-muted-foreground text-xs">Real-time harness metrics, token usage, spend stats, and tool performance</p>
                 </div>
 
@@ -2378,7 +2547,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="rounded-2xl border border-border bg-muted/30 p-5 space-y-1">
                         <span className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">Total Model Runs</span>
-                        <div className="text-2xl font-bold text-white font-mono">{analyticsData.totalRuns}</div>
+                        <div className="text-2xl font-bold text-foreground font-mono">{analyticsData.totalRuns}</div>
                       </div>
                       <div className="rounded-2xl border border-border bg-muted/30 p-5 space-y-1">
                         <span className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">Accumulated Spend</span>
@@ -2392,26 +2561,26 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
 
                     {/* Token Breakdown */}
                     <div className="rounded-2xl border border-border bg-muted/30 p-5 space-y-4">
-                      <h4 className="text-sm font-bold text-white uppercase tracking-wider">Token Aggregates</h4>
+                      <h4 className="text-sm font-bold text-foreground uppercase tracking-wider">Token Aggregates</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-muted-foreground text-xs">
                         <div className="bg-muted/40 rounded-xl p-3">
                           <div className="text-muted-foreground mb-0.5 font-semibold">Input Tokens</div>
-                          <div className="text-white font-mono font-bold text-sm">{analyticsData.totalInputTokens.toLocaleString()}</div>
+                          <div className="text-foreground font-mono font-bold text-sm">{analyticsData.totalInputTokens.toLocaleString()}</div>
                         </div>
                         <div className="bg-muted/40 rounded-xl p-3">
                           <div className="text-muted-foreground mb-0.5 font-semibold">Output Tokens</div>
-                          <div className="text-white font-mono font-bold text-sm">{analyticsData.totalOutputTokens.toLocaleString()}</div>
+                          <div className="text-foreground font-mono font-bold text-sm">{analyticsData.totalOutputTokens.toLocaleString()}</div>
                         </div>
                         <div className="bg-muted/40 rounded-xl p-3">
                           <div className="text-muted-foreground mb-0.5 font-semibold">Reasoning Tokens</div>
-                          <div className="text-white font-mono font-bold text-sm">{analyticsData.totalReasoningTokens.toLocaleString()}</div>
+                          <div className="text-foreground font-mono font-bold text-sm">{analyticsData.totalReasoningTokens.toLocaleString()}</div>
                         </div>
                       </div>
                     </div>
 
                     {/* Granular Usage Logs */}
                     <div className="rounded-2xl border border-border bg-muted/30 p-5 space-y-4">
-                      <h4 className="text-sm font-bold text-white uppercase tracking-wider">Granular Usage Logs</h4>
+                      <h4 className="text-sm font-bold text-foreground uppercase tracking-wider">Granular Usage Logs</h4>
                       
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-muted/40 border border-border rounded-xl p-3.5 text-xs">
                         <div className="flex flex-wrap items-center gap-3">
@@ -2594,7 +2763,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
 
                     {/* Tool Breakdown Table */}
                     <div className="rounded-2xl border border-border bg-muted/30 p-5 space-y-4">
-                      <h4 className="text-sm font-bold text-white uppercase tracking-wider">Tool Calls breakdown</h4>
+                      <h4 className="text-sm font-bold text-foreground uppercase tracking-wider">Tool Calls breakdown</h4>
                       {analyticsData.toolBreakdown.length === 0 ? (
                         <p className="text-xs text-slate-600">No MCP tool invocations recorded yet</p>
                       ) : (
@@ -2632,7 +2801,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
             {activeTab === "social" && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-foreground mb-1 flex items-center gap-2">
                     <Share2 className="h-5 w-5 text-indigo-400" />
                     Social Media Integration Hub
                   </h3>
@@ -2659,7 +2828,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                       setNewSocialActive(true);
                       setIsAddSocialOpen(true);
                     }}
-                    className="flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 shadow-md shadow-indigo-600/10 transition-all hover:scale-[1.01]"
+                    className="flex items-center gap-1.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-4 py-2.5 shadow-xs shadow-md shadow-indigo-600/10 transition-all hover:scale-[1.01]"
                   >
                     <Plus className="h-4 w-4" /> Add Social Channel
                   </button>
@@ -2682,7 +2851,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                         <div className="flex items-start justify-between">
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-white">{conn.name}</span>
+                              <span className="text-xs font-bold text-foreground">{conn.name}</span>
                               <span className="bg-card border border-border px-2 py-0.5 rounded text-[8px] uppercase font-bold text-muted-foreground">
                                 {conn.preset}
                               </span>
@@ -2802,7 +2971,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   value={mcpServerNameInput}
                   onChange={(e) => setMcpServerNameInput(e.target.value)}
                   placeholder="e.g. sap-prod"
-                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-sm text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-sm text-foreground outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
@@ -2813,7 +2982,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   value={mcpServerUrlInput}
                   onChange={(e) => setMcpServerUrlInput(e.target.value)}
                   placeholder={`{\n  "command": "npx",\n  "args": ["@modelcontextprotocol/server-postgres"],\n  "env": {\n    "DATABASE_URL": "postgresql://..."\n  }\n}`}
-                  className="w-full rounded-xl border border-border bg-background py-2.5 px-3 text-xs text-white font-mono outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2.5 px-3 text-xs text-foreground font-mono outline-none focus:border-primary/50"
                 />
               </div>
 
@@ -2858,7 +3027,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               <button
                 type="button"
                 onClick={handleSaveMcpModal}
-                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/95 text-white text-xs font-semibold transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground text-xs font-semibold transition-all cursor-pointer"
               >
                 Apply Changes
               </button>
@@ -2886,7 +3055,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   value={newDbAlias}
                   onChange={(e) => setNewDbAlias(e.target.value)}
                   placeholder="e.g. sap-db-dev"
-                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50"
                 />
               </div>
 
@@ -2895,7 +3064,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                 <select
                   value={newDbEngine}
                   onChange={(e) => setNewDbEngine(e.target.value as "postgres" | "mysql" | "mariadb" | "mongodb" | "sqlite" | "oracle")}
-                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50"
                 >
                   <option value="postgres">PostgreSQL</option>
                   <option value="mysql">MySQL</option>
@@ -2913,7 +3082,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   value={newDbHostUri}
                   onChange={(e) => setNewDbHostUri(e.target.value)}
                   placeholder={newDbEngine === "sqlite" ? "/path/to/database.sqlite" : "mongodb://... or host ip"}
-                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
@@ -2926,7 +3095,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                       value={newDbPort}
                       onChange={(e) => setNewDbPort(e.target.value)}
                       placeholder="e.g. 5432"
-                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50 font-mono"
                     />
                   </div>
 
@@ -2937,7 +3106,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                       value={newDbDatabase}
                       onChange={(e) => setNewDbDatabase(e.target.value)}
                       placeholder="e.g. users_db"
-                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50"
                     />
                   </div>
 
@@ -2948,7 +3117,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                       value={newDbUser}
                       onChange={(e) => setNewDbUser(e.target.value)}
                       placeholder="username"
-                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50"
                     />
                   </div>
 
@@ -2959,7 +3128,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                       value={newDbPasswordKey}
                       onChange={(e) => setNewDbPasswordKey(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50 font-mono"
                     />
                   </div>
                 </>
@@ -2990,7 +3159,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               <button
                 type="button"
                 onClick={handleSaveDbConnection}
-                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/95 text-white text-xs font-semibold transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground text-xs font-semibold transition-all cursor-pointer"
               >
                 Apply Connection
               </button>
@@ -3018,7 +3187,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   value={newApiName}
                   onChange={(e) => setNewApiName(e.target.value)}
                   placeholder="e.g. send-customer-sms"
-                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
@@ -3029,7 +3198,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   value={newApiDesc}
                   onChange={(e) => setNewApiDesc(e.target.value)}
                   placeholder="Explain what this dynamic integration accomplishes"
-                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50"
                 />
               </div>
 
@@ -3040,7 +3209,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   value={newApiSchema}
                   onChange={(e) => setNewApiSchema(e.target.value)}
                   placeholder={`{\n  "type": "object",\n  "properties": {\n    "param1": { "type": "string" }\n  },\n  "required": ["param1"]\n}`}
-                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white font-mono outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground font-mono outline-none focus:border-primary/50"
                 />
               </div>
 
@@ -3051,7 +3220,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   value={newApiCode}
                   onChange={(e) => setNewApiCode(e.target.value)}
                   placeholder={`// Execute custom API tasks\n// Received parameters: toolArgs\nconsole.log(toolArgs);\nreturn { status: "completed" };`}
-                  className="w-full rounded-xl border border-border bg-background py-2.5 px-3 text-xs text-white font-mono outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2.5 px-3 text-xs text-foreground font-mono outline-none focus:border-primary/50"
                 />
               </div>
             </div>
@@ -3067,7 +3236,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               <button
                 type="button"
                 onClick={handleSaveCustomApi}
-                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/95 text-white text-xs font-semibold transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground text-xs font-semibold transition-all cursor-pointer"
               >
                 Apply Integration
               </button>
@@ -3095,7 +3264,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   value={newSocialName}
                   onChange={(e) => setNewSocialName(e.target.value)}
                   placeholder="e.g. My Marketing Channel"
-                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50"
                 />
               </div>
 
@@ -3104,7 +3273,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                 <select
                   value={newSocialPreset}
                   onChange={(e) => setNewSocialPreset(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50"
                 >
                   <option value="youtube">YouTube preset</option>
                   <option value="instagram">Instagram preset</option>
@@ -3124,7 +3293,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   value={newSocialAppId}
                   onChange={(e) => setNewSocialAppId(e.target.value)}
                   placeholder="e.g. cli-928374928"
-                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
@@ -3135,7 +3304,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   value={newSocialTokenOrKey}
                   onChange={(e) => setNewSocialTokenOrKey(e.target.value)}
                   placeholder="••••••••••••••••"
-                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
@@ -3146,7 +3315,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   value={newSocialBaseEndpoint}
                   onChange={(e) => setNewSocialBaseEndpoint(e.target.value)}
                   placeholder="e.g. https://api.twitter.com/2"
-                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
@@ -3157,7 +3326,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
                   value={newSocialScopes}
                   onChange={(e) => setNewSocialScopes(e.target.value)}
                   placeholder="e.g. tweet.read, tweet.write"
-                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-white outline-none focus:border-primary/50 font-mono"
+                  className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary/50 font-mono"
                 />
               </div>
 
@@ -3186,7 +3355,7 @@ export function SettingsDashboard({ initialConfig }: SettingsDashboardProps) {
               <button
                 type="button"
                 onClick={handleSaveSocialConnection}
-                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/95 text-white text-xs font-semibold transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground text-xs font-semibold transition-all cursor-pointer"
               >
                 Apply Integration
               </button>

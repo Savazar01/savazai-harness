@@ -134,14 +134,14 @@ export function TeamNode({
       >
         {/* Left Input Port (Indigo Target Handle) */}
         <div
-          className="absolute w-4 h-4 rounded-full bg-indigo-500 ring-4 ring-indigo-950/80 -left-2 top-8 z-20 cursor-crosshair hover:scale-125 transition-transform shadow-lg shadow-indigo-500/30"
+          className="absolute w-4 h-4 rounded-full bg-indigo-500 ring-4 ring-card -left-2 top-8 z-20 cursor-crosshair hover:scale-125 transition-transform shadow-lg shadow-indigo-500/30"
           title="Team Target Bus (Input Port)"
         />
 
         {/* Right Output Port (Teal Source Handle) */}
         <div
           onMouseDown={onOutputHandleMouseDown}
-          className="absolute w-4 h-4 rounded-full bg-teal-400 ring-4 ring-teal-950/80 -right-2 top-8 z-20 cursor-crosshair hover:scale-125 transition-transform shadow-lg shadow-teal-400/30"
+          className="absolute w-4 h-4 rounded-full bg-teal-400 ring-4 ring-card -right-2 top-8 z-20 cursor-crosshair hover:scale-125 transition-transform shadow-lg shadow-teal-400/30"
           title="Team Source Bus (Output Port — drag to connect)"
         />
 
@@ -152,9 +152,9 @@ export function TeamNode({
           onDoubleClick={onDoubleClick}
           className={`w-[280px] h-[90px] rounded-2xl border px-3.5 py-3 flex flex-col justify-between transition-all backdrop-blur-md shadow-2xl cursor-grab active:cursor-grabbing ${
             isHoveredTarget
-              ? "border-indigo-400 bg-indigo-900/60 ring-4 ring-indigo-500/50 scale-[1.03]"
+              ? "border-indigo-400 bg-indigo-100 dark:bg-indigo-900/60 ring-4 ring-indigo-500/50 scale-[1.03]"
               : isSelected
-              ? "border-indigo-500/80 bg-indigo-950/50 ring-2 ring-indigo-500/80 shadow-indigo-500/20"
+              ? "border-indigo-500/80 bg-indigo-50 dark:bg-indigo-950/50 ring-2 ring-indigo-500/80 shadow-indigo-500/20"
               : "border-indigo-500/30 bg-background/80 hover:border-indigo-400/50 hover:bg-muted/80"
           }`}
         >
@@ -173,7 +173,7 @@ export function TeamNode({
                     onChange={(e) => setTitleInput(e.target.value)}
                     onKeyDown={handleTitleKeyDown}
                     onBlur={handleTitleSubmit}
-                    className="w-full text-xs font-bold text-white bg-card border border-indigo-500 rounded-lg px-2 py-0.5 outline-none font-sans"
+                    className="w-full text-xs font-bold text-foreground bg-background border border-indigo-500 rounded-lg px-2 py-0.5 outline-none font-sans"
                   />
                   <button
                     type="button"
@@ -195,7 +195,7 @@ export function TeamNode({
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 min-w-0 flex-1 group/title">
-                  <span className="text-xs font-bold text-white truncate tracking-tight">
+                  <span className="text-xs font-bold text-foreground truncate tracking-tight">
                     {node.label || "Specialist Team"}
                   </span>
                   <button
@@ -231,7 +231,7 @@ export function TeamNode({
 
           {/* Footer Bar with Specialist count */}
           <div className="flex items-center justify-between border-t border-indigo-500/20 pt-1.5 mt-1">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30">
               <Sparkles className="h-2.5 w-2.5 text-indigo-400" />
               {workerCount} {workerCount === 1 ? "Specialist" : "Specialists"}
             </span>
@@ -279,14 +279,14 @@ export function TeamNode({
     >
       {/* Left Input Port (Indigo Target Handle) */}
       <div
-        className="absolute w-4 h-4 rounded-full bg-indigo-500 ring-4 ring-indigo-950/80 -left-2 top-8 z-20 cursor-crosshair hover:scale-125 transition-transform shadow-lg shadow-indigo-500/30"
+        className="absolute w-4 h-4 rounded-full bg-indigo-500 ring-4 ring-card -left-2 top-8 z-20 cursor-crosshair hover:scale-125 transition-transform shadow-lg shadow-indigo-500/30"
         title="Team Target Bus (Input Port)"
       />
 
       {/* Right Output Port (Teal Source Handle) */}
       <div
         onMouseDown={onOutputHandleMouseDown}
-        className="absolute w-4 h-4 rounded-full bg-teal-400 ring-4 ring-teal-950/80 -right-2 top-8 z-20 cursor-crosshair hover:scale-125 transition-transform shadow-lg shadow-teal-400/30"
+        className="absolute w-4 h-4 rounded-full bg-teal-400 ring-4 ring-card -right-2 top-8 z-20 cursor-crosshair hover:scale-125 transition-transform shadow-lg shadow-teal-400/30"
         title="Team Source Bus (Output Port — drag to connect)"
       />
 
@@ -297,10 +297,10 @@ export function TeamNode({
         onDoubleClick={onDoubleClick}
         className={`w-full h-full rounded-3xl border-2 border-dashed p-6 flex flex-col transition-all backdrop-blur-md cursor-grab active:cursor-grabbing shadow-2xl relative ${
           isHoveredTarget
-            ? "border-indigo-400 bg-indigo-950/60 ring-4 ring-indigo-500/40"
+            ? "border-indigo-400 bg-indigo-50 dark:bg-muted ring-4 ring-indigo-500/40"
             : isSelected
-            ? "border-indigo-500/80 bg-indigo-950/30 ring-2 ring-indigo-500/60 shadow-indigo-500/10"
-            : "border-indigo-500/40 bg-indigo-950/20 hover:border-indigo-400/60 hover:bg-indigo-950/25"
+            ? "border-indigo-500/80 bg-card dark:bg-indigo-950/30 ring-2 ring-indigo-500/60 shadow-indigo-500/10"
+            : "border-indigo-500/40 bg-card/90 dark:bg-indigo-950/20 hover:border-indigo-400/60 hover:bg-card dark:bg-indigo-950/25"
         }`}
       >
         {/* Container Header Bar */}
@@ -319,7 +319,7 @@ export function TeamNode({
                   onChange={(e) => setTitleInput(e.target.value)}
                   onKeyDown={handleTitleKeyDown}
                   onBlur={handleTitleSubmit}
-                  className="text-xs font-bold text-white bg-card border border-indigo-500 rounded-lg px-2.5 py-1 outline-none w-64"
+                  className="text-xs font-bold text-foreground bg-background border border-indigo-500 rounded-lg px-2.5 py-1 outline-none w-64"
                 />
                 <button
                   type="button"
@@ -341,7 +341,7 @@ export function TeamNode({
               </div>
             ) : (
               <div className="flex items-center gap-2 min-w-0 group/title">
-                <span className="text-sm font-bold text-white tracking-tight truncate">
+                <span className="text-sm font-bold text-foreground tracking-tight truncate">
                   {node.label || "Specialist Team"}
                 </span>
                 <button
@@ -355,7 +355,7 @@ export function TeamNode({
                 >
                   <Pencil className="h-3 w-3" />
                 </button>
-                <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30">
                   {workerCount} {workerCount === 1 ? "Specialist" : "Specialists"}
                 </span>
               </div>
@@ -403,7 +403,7 @@ export function TeamNode({
 
         {/* Inner Canvas Guidance Placeholder (when team is empty) */}
         {workerCount === 0 && (
-          <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-indigo-500/20 rounded-2xl m-3 bg-indigo-950/10 text-center p-6">
+          <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-indigo-500/20 rounded-2xl m-3 bg-muted/40 text-center p-6">
             <Users className="h-8 w-8 text-indigo-400/40 mb-2" />
             <p className="text-xs font-bold text-muted-foreground">Team is currently empty</p>
             <p className="text-[10px] text-muted-foreground mt-1 max-w-sm">
@@ -418,7 +418,7 @@ export function TeamNode({
           className={`absolute bottom-2 right-2 p-1.5 rounded-lg cursor-nwse-resize select-none transition-all z-30 ${
             isResizing
               ? "bg-indigo-600 text-white scale-125"
-              : "text-muted-foreground hover:text-indigo-400 hover:bg-indigo-950/60"
+              : "text-muted-foreground hover:text-indigo-400 hover:bg-indigo-50 dark:bg-muted"
           }`}
           title="Drag to resize team container width and height"
         >

@@ -14,6 +14,7 @@ const pool = new Pool({
 export interface UpdateSettingsInput {
   appTitle?: string;
   brandLogoUrl?: string;
+  faviconUrl?: string;
   primaryColor?: string;
   secondaryColor?: string;
   background?: string;
@@ -119,6 +120,7 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
       ...(input.secondaryColor !== undefined && { secondaryColor: input.secondaryColor }),
       ...(input.background !== undefined && { background: input.background }),
       ...(input.themeMode !== undefined && { themeMode: input.themeMode }),
+      ...(input.faviconUrl !== undefined && { faviconUrl: input.faviconUrl }),
       ...(input.accentPreset !== undefined && { accentPreset: input.accentPreset }),
       ...(input.accentCustom !== undefined && { accentCustom: input.accentCustom }),
       ...(input.surfaceTone !== undefined && { surfaceTone: input.surfaceTone }),

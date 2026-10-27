@@ -27,6 +27,7 @@ export interface LLMProviderConfig {
 
 export interface DesignTokens {
   themeMode?: "system" | "dark" | "light";
+  faviconUrl?: string;
   accentPreset?: string;
   accentCustom?: string;
   surfaceTone?: string;

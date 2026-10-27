@@ -22,7 +22,7 @@ interface PermissionsContextValue {
   permissions: Set<string>;
   defaultRoute: string;
   captchaChallengeToken: string | null;
-  hasPermission: (resource: string, action: string | string[]) => boolean;
+  hasPermission: (resource: string, action?: string | string[]) => boolean;
   hasAnyCategoryView: (resource: string) => boolean;
   refreshPermissions: () => Promise<void>;
 }
@@ -102,9 +102,17 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   }, [fetchPermissions]);
 
   const hasPermission = useCallback(
-    (resource: string, action: string | string[]): boolean => {
+    (resource: string, action?: string | string[]): boolean => {
       if (!user || user.status !== "ACTIVE" || user.mustResetPassword) return false;
-      const actions = Array.isArray(action) ? action : [action];
+      // Super Administrator bypass
+      if (user.role === "admin" || user.roleName === "Super Administrator") return true;
+
+      if (action === undefined && resource.includes(":")) {
+        const parts = resource.split(":");
+        return permissions.has(`${parts[0]}:${parts[1]}`);
+      }
+
+      const actions = Array.isArray(action) ? action : [action || ""];
       return actions.some((act) => permissions.has(formatPermissionKey(resource, act)));
     },
     [user, permissions]
