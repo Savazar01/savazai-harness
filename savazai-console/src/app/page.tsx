@@ -61,7 +61,7 @@ export default async function Home() {
             <ThemeToggle compact className="mr-1" />
             {session ? (
               <Link
-                href={session.user.role === "admin" ? "/admin/settings" : "/dashboard"}
+                href="/dashboard"
                 className="rounded-full bg-primary/20 border border-primary/40 px-5 py-2 text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground shadow-xs transition-all hover:scale-[1.02]"
               >
                 Open Workspace
@@ -127,7 +127,7 @@ export default async function Home() {
             <div className="mt-10 flex flex-wrap justify-center items-center gap-4">
               {session ? (
                 <Link
-                  href={session.user.role === "admin" ? "/admin/settings" : "/dashboard"}
+                  href="/dashboard"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all hover:scale-[1.02]"
                 >
                   Open Workspace
@@ -525,7 +525,7 @@ export default async function Home() {
               <div className="mt-10 flex flex-wrap justify-center items-center gap-4">
                 {session ? (
                   <Link
-                    href={session.user.role === "admin" ? "/admin/settings" : "/dashboard"}
+                    href="/dashboard"
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all hover:scale-[1.02]"
                   >
                     Open Workspace

@@ -29,7 +29,13 @@ export default async function SettingsPage() {
     );
   }
 
-  const config = await getSystemConfig();
+  const rawConfig = await getSystemConfig().catch(() => null);
+  const config = {
+    appTitle: rawConfig?.appTitle || "SavazAI Console",
+    brandLogoUrl: rawConfig?.brandLogoUrl || "https://savazar.com/wp-content/uploads/2023/10/cropped-Transparent_Image_2-300x100.png",
+    designTokens: rawConfig?.designTokens || {},
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <SettingsDashboard initialConfig={config} />

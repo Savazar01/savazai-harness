@@ -92,15 +92,15 @@ export async function GET(req: NextRequest) {
       const countRes = await pool.query(
         `SELECT COUNT(*) as total FROM system_audit_logs
          WHERE category = 'USER_ADMIN'
-           AND ($1::text IS NULL OR action ILIKE $1 OR actor_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1)`,
+           AND ($1::text IS NULL OR action ILIKE $1 OR user_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1)`,
         [searchParam]
       );
       const rowsRes = await pool.query(
         `SELECT id, category, action, resource, target_id as "targetId", target_name as "targetName",
-                details, ip_address as "ipAddress", actor_id as "actorId", actor_email as "actorEmail", created_at as "createdAt"
+                details, ip_address as "ipAddress", user_id as "actorId", user_email as "actorEmail", created_at as "createdAt"
          FROM system_audit_logs
          WHERE category = 'USER_ADMIN'
-           AND ($1::text IS NULL OR action ILIKE $1 OR actor_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1)
+           AND ($1::text IS NULL OR action ILIKE $1 OR user_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1)
          ORDER BY created_at DESC
          LIMIT $2 OFFSET $3`,
         [searchParam, limit, offset]
@@ -115,15 +115,15 @@ export async function GET(req: NextRequest) {
       const countRes = await pool.query(
         `SELECT COUNT(*) as total FROM system_audit_logs
          WHERE category = 'COMMAND_CENTER'
-           AND ($1::text IS NULL OR action ILIKE $1 OR actor_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1 OR resource ILIKE $1)`,
+           AND ($1::text IS NULL OR action ILIKE $1 OR user_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1 OR resource ILIKE $1)`,
         [searchParam]
       );
       const rowsRes = await pool.query(
         `SELECT id, category, action, resource, target_id as "targetId", target_name as "targetName",
-                details, ip_address as "ipAddress", actor_id as "actorId", actor_email as "actorEmail", created_at as "createdAt"
+                details, ip_address as "ipAddress", user_id as "actorId", user_email as "actorEmail", created_at as "createdAt"
          FROM system_audit_logs
          WHERE category = 'COMMAND_CENTER'
-           AND ($1::text IS NULL OR action ILIKE $1 OR actor_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1 OR resource ILIKE $1)
+           AND ($1::text IS NULL OR action ILIKE $1 OR user_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1 OR resource ILIKE $1)
          ORDER BY created_at DESC
          LIMIT $2 OFFSET $3`,
         [searchParam, limit, offset]
@@ -138,15 +138,15 @@ export async function GET(req: NextRequest) {
       const countRes = await pool.query(
         `SELECT COUNT(*) as total FROM system_audit_logs
          WHERE (category IN ('BUSINESS_CENTER', 'ASSET_VERSION') OR resource IN ('skills', 'okf_concepts', 'email_templates'))
-           AND ($1::text IS NULL OR action ILIKE $1 OR actor_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1 OR resource ILIKE $1)`,
+           AND ($1::text IS NULL OR action ILIKE $1 OR user_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1 OR resource ILIKE $1)`,
         [searchParam]
       );
       const rowsRes = await pool.query(
         `SELECT id, category, action, resource, target_id as "targetId", target_name as "targetName",
-                details, ip_address as "ipAddress", actor_id as "actorId", actor_email as "actorEmail", created_at as "createdAt"
+                details, ip_address as "ipAddress", user_id as "actorId", user_email as "actorEmail", created_at as "createdAt"
          FROM system_audit_logs
          WHERE (category IN ('BUSINESS_CENTER', 'ASSET_VERSION') OR resource IN ('skills', 'okf_concepts', 'email_templates'))
-           AND ($1::text IS NULL OR action ILIKE $1 OR actor_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1 OR resource ILIKE $1)
+           AND ($1::text IS NULL OR action ILIKE $1 OR user_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1 OR resource ILIKE $1)
          ORDER BY created_at DESC
          LIMIT $2 OFFSET $3`,
         [searchParam, limit, offset]
@@ -161,15 +161,15 @@ export async function GET(req: NextRequest) {
       const countRes = await pool.query(
         `SELECT COUNT(*) as total FROM system_audit_logs
          WHERE category = 'AGENTFLOWS'
-           AND ($1::text IS NULL OR action ILIKE $1 OR actor_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1)`,
+           AND ($1::text IS NULL OR action ILIKE $1 OR user_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1)`,
         [searchParam]
       );
       const rowsRes = await pool.query(
         `SELECT id, category, action, resource, target_id as "targetId", target_name as "targetName",
-                details, ip_address as "ipAddress", actor_id as "actorId", actor_email as "actorEmail", created_at as "createdAt"
+                details, ip_address as "ipAddress", user_id as "actorId", user_email as "actorEmail", created_at as "createdAt"
          FROM system_audit_logs
          WHERE category = 'AGENTFLOWS'
-           AND ($1::text IS NULL OR action ILIKE $1 OR actor_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1)
+           AND ($1::text IS NULL OR action ILIKE $1 OR user_email ILIKE $1 OR target_name ILIKE $1 OR target_id ILIKE $1)
          ORDER BY created_at DESC
          LIMIT $2 OFFSET $3`,
         [searchParam, limit, offset]

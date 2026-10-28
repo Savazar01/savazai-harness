@@ -4,13 +4,20 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-export default async function SignInPage() {
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ returnUrl?: string }>;
+}) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
+  const resolvedParams = searchParams ? await searchParams : {};
+  const returnUrl = resolvedParams?.returnUrl;
+
   if (session) {
-    redirect(session.user.role === "admin" ? "/admin/settings" : "/studio");
+    redirect(returnUrl && returnUrl.startsWith("/") ? returnUrl : "/dashboard");
   }
 
   const config = await getSystemConfig();

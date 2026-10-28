@@ -141,6 +141,12 @@ export function Sidebar() {
     return () => window.removeEventListener("savazai-appearance-updated", handleAppearance);
   }, []);
 
+  const isSuperAdmin =
+    user?.role === "admin" ||
+    user?.roleName === "Super Administrator" ||
+    user?.roleNames?.includes("Super Administrator") ||
+    session?.user?.role === "admin";
+
   const canViewWorkspace = hasPermission("agent_workspace", "view") && showAgentWorkspace;
   const canViewStudio = hasPermission("capability_studio", "view");
   const canViewBusiness = hasAnyCategoryView("business_center");
@@ -157,7 +163,6 @@ export function Sidebar() {
     user?.roleNames?.includes("Auditor") ||
     user?.roleNames?.includes("User Administrator");
 
-  const isSuperAdmin = user?.role === "admin" || user?.roleName === "Super Administrator" || session?.user?.role === "admin";
   const canViewDocs = hasPermission("documentation", "view");
   const canViewDemoRequests = hasPermission("demo_requests", "view") && isSuperAdmin;
 

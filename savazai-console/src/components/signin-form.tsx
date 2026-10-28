@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Loader2, Mail, Lock, ShieldAlert, ShieldCheck, CheckSquare } from "lucide-react";
 import { usePermissions } from "@/lib/auth/use-permissions";
@@ -13,6 +13,8 @@ interface SignInFormProps {
 
 export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl");
   const { refreshPermissions } = usePermissions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,7 +59,18 @@ export function SignInForm({ appTitle, logoUrl }: SignInFormProps) {
           router.push("/reset-password");
           return;
         }
-        router.push(permData.defaultRoute || "/dashboard");
+
+        if (returnUrl && returnUrl.startsWith("/") && returnUrl !== "/signin" && returnUrl !== "/admin/settings") {
+          router.push(returnUrl);
+          return;
+        }
+
+        // Never force default route to /admin/settings upon sign-in; default strictly to /dashboard (Workspace)
+        const targetRoute =
+          permData.defaultRoute && permData.defaultRoute !== "/admin/settings"
+            ? permData.defaultRoute
+            : "/dashboard";
+        router.push(targetRoute);
         return;
       }
 
