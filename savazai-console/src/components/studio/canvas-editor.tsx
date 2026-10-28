@@ -86,6 +86,7 @@ export interface CanvasEdge {
   source: string;
   target: string;
   conditionExpression?: string;
+  offsetY?: number;
 }
 
 export interface CanvasEditorHandle {
@@ -286,8 +287,9 @@ function getNodePortPosition(node: CanvasNode, type: "input" | "output"): { x: n
       y: node.y + 32,
     };
   }
+  const cardWidth = node.width || 208;
   return {
-    x: type === "input" ? node.x : node.x + 180,
+    x: type === "input" ? node.x : node.x + cardWidth,
     y: node.y + 28,
   };
 }
@@ -299,17 +301,39 @@ function generateSmoothStepPath(
   endY: number,
   borderRadius = 14,
   offset = 24,
+  offsetY = 0,
 ): { path: string; mx: number; my: number } {
   if (endX >= startX + offset * 2) {
     const midX = (startX + endX) / 2;
     const r = Math.min(borderRadius, Math.abs(endY - startY) / 2, Math.abs(endX - startX) / 4);
     const signY = endY >= startY ? 1 : -1;
 
-    if (Math.abs(endY - startY) < 2) {
+    if (Math.abs(endY - startY) < 2 && Math.abs(offsetY) < 2) {
       return {
         path: `M ${startX} ${startY} L ${endX} ${endY}`,
         mx: (startX + endX) / 2,
         my: (startY + endY) / 2,
+      };
+    }
+
+    if (offsetY !== 0) {
+      const stepY = (startY + endY) / 2 + offsetY;
+      const s1 = stepY >= startY ? 1 : -1;
+      const s2 = endY >= stepY ? 1 : -1;
+      const rStep = Math.min(borderRadius, Math.abs(stepY - startY) / 2, Math.abs(endY - stepY) / 2, 12);
+      const path = [
+        `M ${startX} ${startY}`,
+        `L ${midX - rStep} ${startY}`,
+        `Q ${midX} ${startY}, ${midX} ${startY + s1 * rStep}`,
+        `L ${midX} ${stepY - s2 * rStep}`,
+        `Q ${midX} ${stepY}, ${midX + (endX > midX ? 1 : -1) * rStep} ${stepY}`,
+        `L ${endX - rStep} ${stepY}`,
+        `Q ${endX} ${stepY}, ${endX} ${endY}`,
+      ].join(" ");
+      return {
+        path,
+        mx: midX,
+        my: stepY,
       };
     }
 
@@ -329,7 +353,7 @@ function generateSmoothStepPath(
     };
   } else {
     const r = Math.min(borderRadius, 8);
-    const midY = (startY + endY) / 2;
+    const midY = (startY + endY) / 2 + offsetY;
     const signY = endY >= startY ? 1 : -1;
     const path = [
       `M ${startX} ${startY}`,
@@ -423,11 +447,56 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
   });
 
   // Studio Infinite Canvas & Multi-selection
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState(() => {
+    if (typeof window !== "undefined" && workflowId) {
+      try {
+        const savedVp = localStorage.getItem(`savazai_viewport_${workflowId}`);
+        if (savedVp) {
+          const parsed = JSON.parse(savedVp);
+          if (typeof parsed.x === "number" && typeof parsed.y === "number") {
+            return { x: parsed.x, y: parsed.y };
+          }
+        }
+      } catch {}
+    }
+    return { x: 0, y: 0 };
+  });
+
+  const [zoom, setZoom] = useState(() => {
+    if (typeof window !== "undefined" && workflowId) {
+      try {
+        const savedVp = localStorage.getItem(`savazai_viewport_${workflowId}`);
+        if (savedVp) {
+          const parsed = JSON.parse(savedVp);
+          if (typeof parsed.zoom === "number" && parsed.zoom > 0) {
+            return parsed.zoom;
+          }
+        }
+      } catch {}
+    }
+    return 1;
+  });
+
   const [isPanning, setIsPanning] = useState(false);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [selectionBox, setSelectionBox] = useState<{ startX: number; startY: number; currentX: number; currentY: number } | null>(null);
+
+  // Ergonomic state: Hover detail magnification & auto-align animation
+  const [magnifiedNodeId, setMagnifiedNodeId] = useState<string | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isAutoAligning, setIsAutoAligning] = useState(false);
+
+  const handleAgentMouseEnter = useCallback((nodeId: string) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setMagnifiedNodeId(nodeId);
+    }, 400);
+  }, []);
+
+  const handleAgentMouseLeave = useCallback(() => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setMagnifiedNodeId(null);
+  }, []);
 
   const panStart = useRef({ x: 0, y: 0 });
   const panOffset = useRef({ x: 0, y: 0 });
@@ -446,7 +515,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
     getSnapshot: () => ({ nodes: nodesRef.current, edges: edgesRef.current }),
   }));
 
-  // Restore canvas from localStorage on mount or when canvasLoadKey/workflowId changes
+  // Restore canvas & viewport from localStorage on mount or when canvasLoadKey/workflowId changes
   useEffect(() => {
     if (!workflowId) return;
     const saved = localStorage.getItem(`savazai_canvas_${workflowId}`);
@@ -457,18 +526,40 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
           const migrated = migrateLegacyCanvasDefinition(parsed, workflowName);
           setNodes((migrated.nodes || []) as unknown as CanvasNode[]);
           setEdges((migrated.edges || []) as unknown as CanvasEdge[]);
-          return;
         }
       } catch { /* ignore corrupt data */ }
+    } else {
+      const migrated = migrateLegacyCanvasDefinition(
+        { nodes: initialNodes as unknown as RawNode[], edges: initialEdges as unknown as RawEdge[] },
+        workflowName
+      );
+      setNodes((migrated.nodes || []) as unknown as CanvasNode[]);
+      setEdges((migrated.edges || []) as unknown as CanvasEdge[]);
     }
-    const migrated = migrateLegacyCanvasDefinition(
-      { nodes: initialNodes as unknown as RawNode[], edges: initialEdges as unknown as RawEdge[] },
-      workflowName
-    );
-    setNodes((migrated.nodes || []) as unknown as CanvasNode[]);
-    setEdges((migrated.edges || []) as unknown as CanvasEdge[]);
+
+    const savedVp = localStorage.getItem(`savazai_viewport_${workflowId}`);
+    if (savedVp) {
+      try {
+        const parsedVp = JSON.parse(savedVp);
+        if (typeof parsedVp.x === "number" && typeof parsedVp.y === "number") {
+          setPan({ x: parsedVp.x, y: parsedVp.y });
+        }
+        if (typeof parsedVp.zoom === "number" && parsedVp.zoom > 0) {
+          setZoom(parsedVp.zoom);
+        }
+      } catch {}
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canvasLoadKey, workflowId]);
+
+  // Persist Viewport State (Zoom & Pan) to localStorage
+  useEffect(() => {
+    if (!workflowId) return;
+    const timer = setTimeout(() => {
+      localStorage.setItem(`savazai_viewport_${workflowId}`, JSON.stringify({ x: pan.x, y: pan.y, zoom }));
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [pan, zoom, workflowId]);
 
   // Immediate localStorage write on canvas mutation
   useEffect(() => {
@@ -1018,8 +1109,8 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const dx = (moveEvent.clientX - startX) / zoom;
       const dy = (moveEvent.clientY - startY) / zoom;
-      const newWidth = Math.max(192, Math.min(440, Math.round(initialW + dx)));
-      const newHeight = Math.max(100, Math.min(360, Math.round(initialH + dy)));
+      const newWidth = Math.max(260, Math.min(520, Math.round(initialW + dx)));
+      const newHeight = Math.max(120, Math.min(420, Math.round(initialH + dy)));
       setNodes((prev) =>
         prev.map((n) => (n.id === nodeId ? { ...n, width: newWidth, height: newHeight } : n))
       );
@@ -1040,6 +1131,28 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
     setEdgePopover(null);
     setRetargetEdgeId(null);
   }, []);
+
+  const handleEdgeWaypointMouseDown = useCallback((e: React.MouseEvent, edgeId: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const startY = e.clientY;
+    const targetEdge = edgesRef.current.find(ed => ed.id === edgeId);
+    const initialOffset = targetEdge?.offsetY || 0;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const dy = (moveEvent.clientY - startY) / zoom;
+      const newOffsetY = Math.round(initialOffset + dy);
+      setEdges(prev => prev.map(ed => ed.id === edgeId ? { ...ed, offsetY: newOffsetY } : ed));
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  }, [zoom]);
 
   const handleEdgeClick = useCallback((e: React.MouseEvent, edgeId: string) => {
     e.stopPropagation();
@@ -1095,8 +1208,8 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
     nodes.forEach(n => {
       const isTeam = n.roleTemplate === "team";
       const dims = getTeamDimensions(4, n.collapsed ?? false, n.width, n.height);
-      const w = isTeam ? (n.collapsed ? 280 : dims.width) : 180;
-      const h = isTeam ? (n.collapsed ? 90 : dims.height) : 70;
+      const w = isTeam ? (n.collapsed ? 280 : (n.width || dims.width)) : (n.width || 208);
+      const h = isTeam ? (n.collapsed ? 90 : (n.height || dims.height)) : (n.height || 120);
       minX = Math.min(minX, n.x);
       maxX = Math.max(maxX, n.x + w);
       minY = Math.min(minY, n.y);
@@ -1136,32 +1249,36 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
     const updatedNodes = [...activeNodes];
     const newEdges: CanvasEdge[] = [];
 
-    const numTeams = teams.length;
-    let teamCols = 1;
-    if (numTeams >= 5) teamCols = 3;
-    else if (numTeams >= 3) teamCols = 2;
-    else teamCols = 1;
+    const startTeamsX = 460;
+    const TEAM_GAP_Y = 50;
+    let currentTeamY = 80;
+    let maxTeamW = 600;
 
-    const startMatrixX = 440;
-    const hasExpandedTeams = teams.some(t => t.collapsed === false);
-    const colSpacing = hasExpandedTeams ? 980 : 340;
-
-    let maxGridY = 80;
-    let maxGridX = startMatrixX;
-
-    teams.forEach((team, idx) => {
-      const col = idx % teamCols;
-      const row = Math.floor(idx / teamCols);
-      const teamX = startMatrixX + col * colSpacing;
+    // 1. Arrange each team vertically stacked in center column
+    teams.forEach((team) => {
       const isCollapsed = team.collapsed ?? false;
-
       const teamWorkers = updatedNodes.filter(n => n.parentId === team.id);
-      const dims = getTeamDimensions(teamWorkers.length, isCollapsed, team.width, team.height);
-      const rowHeight = isCollapsed ? 120 : (dims.height + 40);
+      const N = teamWorkers.length;
 
-      const teamY = 80 + row * rowHeight;
-      maxGridY = Math.max(maxGridY, teamY + dims.height);
-      maxGridX = Math.max(maxGridX, teamX + (isCollapsed ? 280 : dims.width));
+      // Calculate balanced grid for specialists inside team
+      const cols = N <= 2 ? 2 : Math.min(3, Math.max(2, Math.ceil(Math.sqrt(N))));
+      const rows = Math.max(1, Math.ceil(N / cols));
+
+      const CARD_W = 260;
+      const CARD_H = 110;
+      const GAP_X = 24;
+      const GAP_Y = 20;
+      const PADDING_X = 32;
+      const PADDING_TOP = 80;
+      const PADDING_BOTTOM = 36;
+
+      const teamW = isCollapsed ? 280 : (PADDING_X * 2 + cols * CARD_W + (cols - 1) * GAP_X);
+      const teamH = isCollapsed ? 90 : (PADDING_TOP + PADDING_BOTTOM + rows * CARD_H + (rows - 1) * GAP_Y);
+      maxTeamW = Math.max(maxTeamW, teamW);
+
+      const teamX = startTeamsX;
+      const teamY = currentTeamY;
+      currentTeamY += teamH + TEAM_GAP_Y;
 
       const tIdx = updatedNodes.findIndex(n => n.id === team.id);
       if (tIdx !== -1) {
@@ -1169,21 +1286,15 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
           ...updatedNodes[tIdx],
           x: teamX,
           y: teamY,
-          width: dims.width,
-          height: dims.height,
+          width: teamW,
+          height: teamH,
         };
       }
 
+      // Position specialists inside team in balanced grid
       teamWorkers.forEach((w, wIdx) => {
-        const wCol = wIdx % dims.cols;
-        const wRow = Math.floor(wIdx / dims.cols);
-        const CARD_W = 260;
-        const CARD_H = 110;
-        const GAP_X = 24;
-        const GAP_Y = 20;
-        const PADDING_TOP = 80;
-        const PADDING_X = 32;
-
+        const wCol = wIdx % cols;
+        const wRow = Math.floor(wIdx / cols);
         const workerX = teamX + PADDING_X + wCol * (CARD_W + GAP_X);
         const workerY = teamY + PADDING_TOP + wRow * (CARD_H + GAP_Y);
         const nwIdx = updatedNodes.findIndex(n => n.id === w.id);
@@ -1192,10 +1303,13 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
             ...updatedNodes[nwIdx],
             x: workerX,
             y: workerY,
+            width: CARD_W,
+            height: CARD_H,
           };
         }
       });
 
+      // Connect Supervisor -> Team
       if (supervisor && supervisor.id !== team.id) {
         newEdges.push({
           id: `edge-${crypto.randomUUID()}`,
@@ -1204,6 +1318,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
         });
       }
 
+      // Connect Team -> Synthesizer
       if (synthesizer && synthesizer.id !== team.id) {
         newEdges.push({
           id: `edge-${crypto.randomUUID()}`,
@@ -1213,36 +1328,52 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
       }
     });
 
-    const totalCenterY = Math.max(120, (maxGridY - 80) / 2);
+    // 2. Vertical span and common centerline
+    const minTeamY = 80;
+    const maxTeamY = Math.max(minTeamY + 200, currentTeamY - TEAM_GAP_Y);
+    const teamCenterY = (minTeamY + maxTeamY) / 2;
+
+    // 3. Position Supervisor (prominent width 320, height 180) in Left Column
+    const SUP_W = 320;
+    const SUP_H = 180;
     if (supervisor) {
       const supIdx = updatedNodes.findIndex(n => n.id === supervisor.id);
       if (supIdx !== -1) {
         updatedNodes[supIdx] = {
           ...updatedNodes[supIdx],
           x: 80,
-          y: totalCenterY,
+          y: Math.max(80, Math.round(teamCenterY - (SUP_H / 2))),
+          width: SUP_W,
+          height: SUP_H,
         };
       }
     }
 
-    const synthX = Math.max(startMatrixX + 600, maxGridX + 180);
+    // 4. Position Synthesizer (prominent width 300, height 180) in Right Column
+    const SYN_W = 300;
+    const SYN_H = 180;
+    const synthX = startTeamsX + maxTeamW + 80;
     if (synthesizer) {
       const synthIdx = updatedNodes.findIndex(n => n.id === synthesizer.id);
       if (synthIdx !== -1) {
         updatedNodes[synthIdx] = {
           ...updatedNodes[synthIdx],
           x: synthX,
-          y: totalCenterY,
+          y: Math.max(80, Math.round(teamCenterY - (SYN_H / 2))),
+          width: SYN_W,
+          height: SYN_H,
         };
       }
     }
 
+    setIsAutoAligning(true);
     setNodes(updatedNodes);
     setEdges(newEdges);
 
     setTimeout(() => {
+      setIsAutoAligning(false);
       handleFitView();
-    }, 60);
+    }, 360);
   }, [nodes, edges, workflowName, handleFitView]);
 
   const handleSaveDraft = useCallback(async () => {
@@ -1646,7 +1777,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                   const endPos = getNodePortPosition(tgt, "input");
 
                   const isSelected = selectedEdgeId === edge.id;
-                  const { path, mx, my } = generateSmoothStepPath(startPos.x, startPos.y, endPos.x, endPos.y, 14, 24);
+                  const { path, mx, my } = generateSmoothStepPath(startPos.x, startPos.y, endPos.x, endPos.y, 14, 24, edge.offsetY || 0);
 
                   return (
                     <g key={edge.id} className="pointer-events-auto">
@@ -1666,6 +1797,21 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                         strokeWidth={14}
                         onClick={(e) => handleEdgeClick(e, edge.id)}
                       />
+                      {/* Draggable Waypoint Nudge Handle */}
+                      {isSelected && (
+                        <g
+                          className="cursor-ns-resize pointer-events-auto"
+                          onMouseDown={(e) => handleEdgeWaypointMouseDown(e, edge.id)}
+                        >
+                          <circle
+                            cx={mx}
+                            cy={my}
+                            r={6.5}
+                            className="fill-indigo-500 stroke-background stroke-2 shadow-md hover:scale-125 transition-transform"
+                          />
+                          <circle cx={mx} cy={my} r={2} className="fill-white" />
+                        </g>
+                      )}
                       {/* Edge midpoint badge when selected */}
                       {isSelected && (
                         <g>
@@ -1741,31 +1887,37 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                 const isHoveredTarget = hoveredTeamId === team.id;
 
                 return (
-                  <TeamNode
+                  <div
                     key={team.id}
-                    node={team}
-                    childWorkers={childWorkers}
-                    isSelected={isSelected}
-                    isHoveredTarget={isHoveredTarget}
-                    zoom={zoom}
-                    onSelect={() => {
-                      setSelectedNodeId(team.id);
-                      setSelectedEdgeId(null);
+                    style={{
+                      transition: isAutoAligning ? "all 350ms cubic-bezier(0.4, 0, 0.2, 1)" : undefined,
                     }}
-                    onDoubleClick={() => {
-                      setSelectedNodeId(team.id);
-                      setSelectedNodeIds([team.id]);
-                      setRetargetEdgeId(null);
-                      setDrawerOpen(true);
-                    }}
-                    onToggleCollapse={() => handleToggleTeamCollapse(team.id)}
-                    onRename={(name) => handleRenameNode(team.id, name)}
-                    onResize={(w, h) => handleResizeTeam(team.id, w, h)}
-                    onAddWorker={() => handleAddWorkerToTeam(team.id)}
-                    onDelete={() => setDeleteConfirmId(team.id)}
-                    onOutputHandleMouseDown={(e) => handleOutputHandleMouseDown(e, team.id)}
-                    onMouseDown={(e) => handleNodeMouseDown(e, team.id)}
-                  />
+                  >
+                    <TeamNode
+                      node={team}
+                      childWorkers={childWorkers}
+                      isSelected={isSelected}
+                      isHoveredTarget={isHoveredTarget}
+                      zoom={zoom}
+                      onSelect={() => {
+                        setSelectedNodeId(team.id);
+                        setSelectedEdgeId(null);
+                      }}
+                      onDoubleClick={() => {
+                        setSelectedNodeId(team.id);
+                        setSelectedNodeIds([team.id]);
+                        setRetargetEdgeId(null);
+                        setDrawerOpen(true);
+                      }}
+                      onToggleCollapse={() => handleToggleTeamCollapse(team.id)}
+                      onRename={(name) => handleRenameNode(team.id, name)}
+                      onResize={(w, h) => handleResizeTeam(team.id, w, h)}
+                      onAddWorker={() => handleAddWorkerToTeam(team.id)}
+                      onDelete={() => setDeleteConfirmId(team.id)}
+                      onOutputHandleMouseDown={(e) => handleOutputHandleMouseDown(e, team.id)}
+                      onMouseDown={(e) => handleNodeMouseDown(e, team.id)}
+                    />
+                  </div>
                 );
               })}
 
@@ -1788,8 +1940,66 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                   <div
                     key={node.id}
                     className="absolute group"
-                    style={{ left: `${node.x}px`, top: `${node.y}px` }}
+                    style={{
+                      left: `${node.x}px`,
+                      top: `${node.y}px`,
+                      transition: isAutoAligning ? "left 350ms cubic-bezier(0.4, 0, 0.2, 1), top 350ms cubic-bezier(0.4, 0, 0.2, 1), width 350ms, height 350ms" : undefined,
+                    }}
+                    onMouseEnter={() => handleAgentMouseEnter(node.id)}
+                    onMouseLeave={handleAgentMouseLeave}
                   >
+                    {/* Hover Detail Magnification Card */}
+                    {magnifiedNodeId === node.id && !node.collapsed && (
+                      <div
+                        className="absolute z-50 p-4 w-80 rounded-2xl bg-popover text-popover-foreground border border-border shadow-2xl backdrop-blur-md pointer-events-none animate-in fade-in-0 zoom-in-95 duration-150"
+                        style={{ left: `${(node.width || 208) + 16}px`, top: "0px" }}
+                      >
+                        <div className="flex items-center justify-between pb-2 border-b border-border mb-2.5">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <NodeIcon className="h-4 w-4 text-primary shrink-0" />
+                            <span className="text-xs font-bold truncate max-w-[170px] text-foreground">{node.label}</span>
+                          </div>
+                          <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20 shrink-0">
+                            {config.label.replace(" Agent", "").replace(" Autonomous Worker", "").replace("Worker / ", "")}
+                          </span>
+                        </div>
+
+                        <div className="space-y-2 text-[11px]">
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-0.5">Model Engine</span>
+                            <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded border border-border/50 text-foreground inline-block">
+                              {node.modelConfig?.provider || "openai"} / {node.modelConfig?.model || "gpt-4o-mini"}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-0.5">
+                              Bound Tools ({node.tools?.length || 0})
+                            </span>
+                            {node.tools && node.tools.length > 0 ? (
+                              <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                                {node.tools.map((t, idx) => (
+                                  <span key={idx} className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-muted text-foreground border border-border/60">
+                                    {typeof t === "string" ? t : (t.name || t.toolId || "tool")}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground italic text-[10px]">No external tools bound</span>
+                            )}
+                          </div>
+
+                          {node.systemPrompt && (
+                            <div>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-0.5">System Directive</span>
+                              <p className="text-[10px] text-muted-foreground line-clamp-3 italic bg-muted/40 p-2 rounded-lg border border-border/40">
+                                {node.systemPrompt}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     {/* Input port (left side) */}
                     <div
                       className={`absolute w-3.5 h-3.5 rounded-full -left-[7px] top-[28px] z-20 cursor-crosshair hover:scale-125 transition-transform border-2 border-slate-950 ${
@@ -2279,16 +2489,16 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
       {publishStatus && (
         <div className={`absolute bottom-6 right-6 border rounded-2xl p-4 text-xs shadow-xl backdrop-blur-md max-w-sm flex gap-3 items-start z-40 ${
           publishStatus.type === "success"
-            ? "border-emerald-300 dark:border-emerald-500/30 bg-emerald-100 dark:bg-emerald-950/90 text-emerald-950 dark:text-emerald-200"
-            : "border-destructive/30 bg-destructive/10 dark:bg-red-950/90 text-destructive dark:text-red-300"
+            ? "bg-emerald-50 dark:bg-emerald-950/80 border-emerald-500/30 text-emerald-900 dark:text-emerald-100 font-semibold shadow-md"
+            : "bg-rose-50 dark:bg-rose-950/80 border-rose-500/30 text-rose-900 dark:text-rose-100 font-semibold shadow-md"
         }`}>
           <div className="flex-1">
             <span className="font-bold block mb-1">
               {publishStatus.type === "success" ? "Success" : "Failed"}
             </span>
-            <p className="opacity-80 leading-relaxed">{publishStatus.msg}</p>
+            <p className="leading-relaxed">{publishStatus.msg}</p>
           </div>
-          <button type="button" onClick={() => setPublishStatus(null)} className="opacity-50 hover:opacity-100 font-bold">×</button>
+          <button type="button" onClick={() => setPublishStatus(null)} className="opacity-70 hover:opacity-100 font-bold cursor-pointer text-base leading-none">×</button>
         </div>
       )}
 

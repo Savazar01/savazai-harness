@@ -162,13 +162,22 @@ export default function StudioPage() {
   const handleSaveDraft = async (nodes: CanvasNode[], edges: CanvasEdge[], suppressToast?: boolean): Promise<boolean> => {
     if (!activeAgentflowId) return false;
     try {
+      let savedVp = null;
+      if (typeof window !== "undefined") {
+        try {
+          savedVp = JSON.parse(localStorage.getItem(`savazai_viewport_${activeAgentflowId}`) || "null");
+        } catch {}
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const canvasPayload = sanitizeCanvasDefinition({
-        workflowType: "interactive",
-        nodes: nodes as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        edges: edges as any,
-      });
+      const canvasPayload: any = {
+        ...sanitizeCanvasDefinition({
+          workflowType: "interactive",
+          nodes: nodes as any,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          edges: edges as any,
+        }),
+        viewport: savedVp,
+      };
       const res = await fetch(`/api/agentflows/${activeAgentflowId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -248,10 +257,18 @@ export default function StudioPage() {
       localStorage.setItem(`savazai_canvas_${activeAgentflowId}`, JSON.stringify(snapshot));
       await handleSaveDraft(snapshot.nodes, snapshot.edges, true);
     }
+    const targetFlow = agentflows.find(f => f.id === newId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (targetFlow && (targetFlow.canvasDefinition as any)?.viewport) {
+      if (!localStorage.getItem(`savazai_viewport_${newId}`)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        localStorage.setItem(`savazai_viewport_${newId}`, JSON.stringify((targetFlow.canvasDefinition as any).viewport));
+      }
+    }
     setActiveAgentflowId(newId);
     setCanvasLoadKey((k) => k + 1);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeAgentflowId]);
+  }, [activeAgentflowId, agentflows]);
 
   // Visibility change: save to localStorage when tab hidden
   useEffect(() => {
@@ -495,10 +512,10 @@ export default function StudioPage() {
 
       {/* Save Toast Indicator */}
       {saveToast && (
-        <div className={`shrink-0 mb-3 flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-semibold transition-all ${
+        <div className={`shrink-0 mb-3 flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold transition-all shadow-md ${
           saveToast.type === "success"
-            ? "bg-emerald-950/30 border-emerald-500/40 text-emerald-400"
-            : "bg-red-950/30 border-red-500/40 text-red-400"
+            ? "bg-emerald-50 dark:bg-emerald-950/80 border-emerald-500/30 text-emerald-900 dark:text-emerald-100"
+            : "bg-rose-50 dark:bg-rose-950/80 border-rose-500/30 text-rose-900 dark:text-rose-100"
         }`}>
           <Database className="h-3.5 w-3.5 shrink-0" />
           <span>{saveToast.msg}</span>

@@ -67,15 +67,7 @@ export default async function Home() {
                 Open Workspace
               </Link>
             ) : (
-              <>
-                <Link
-                  href="/signin"
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5"
-                >
-                  Sign In
-                </Link>
-                <RequestDemoTrigger variant="header" />
-              </>
+              <RequestDemoTrigger variant="header" />
             )}
           </nav>
         </div>
@@ -142,16 +134,7 @@ export default async function Home() {
                   <ArrowRight className="h-5 w-5" />
                 </Link>
               ) : (
-                <>
-                  <RequestDemoTrigger variant="hero" />
-                  <Link
-                    href="/signin"
-                    className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-8 py-4 text-base font-semibold text-foreground shadow-xs hover:bg-muted transition-all hover:scale-[1.02]"
-                  >
-                    Operator Sign In
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                  </Link>
-                </>
+                <RequestDemoTrigger variant="hero" />
               )}
             </div>
           </div>
@@ -549,16 +532,7 @@ export default async function Home() {
                     <ArrowRight className="h-5 w-5" />
                   </Link>
                 ) : (
-                  <>
-                    <RequestDemoTrigger variant="hero" />
-                    <Link
-                      href="/signin"
-                      className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-muted/40 px-8 py-4 text-base font-semibold text-foreground shadow-xs hover:bg-muted transition-all hover:scale-[1.02]"
-                    >
-                      Operator Sign In
-                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    </Link>
-                  </>
+                  <RequestDemoTrigger variant="hero" />
                 )}
               </div>
             </div>
@@ -573,9 +547,6 @@ export default async function Home() {
             &copy; 2026 {config.appTitle}. All rights reserved. Sovereign Multi-Agent Orchestration Infrastructure.
           </div>
           <div className="flex items-center gap-6">
-            <Link href="/signin" className="hover:text-foreground transition-colors">
-              Operator Sign In
-            </Link>
             <RequestDemoTrigger variant="header" />
           </div>
         </div>

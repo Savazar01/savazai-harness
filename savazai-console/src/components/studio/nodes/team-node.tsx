@@ -150,7 +150,7 @@ export function TeamNode({
           onMouseDown={onMouseDown}
           onClick={onSelect}
           onDoubleClick={onDoubleClick}
-          className={`w-[280px] h-[90px] rounded-2xl border px-3.5 py-3 flex flex-col justify-between transition-all backdrop-blur-md shadow-2xl cursor-grab active:cursor-grabbing ${
+          className={`team-node-container w-[280px] h-[90px] rounded-2xl border px-3.5 py-3 flex flex-col justify-between transition-all backdrop-blur-md shadow-2xl canvas-cursor-grab active:canvas-cursor-grabbing ${
             isHoveredTarget
               ? "border-indigo-400 bg-indigo-100 dark:bg-indigo-900/60 ring-4 ring-indigo-500/50 scale-[1.03]"
               : isSelected
@@ -221,7 +221,7 @@ export function TeamNode({
                   e.stopPropagation();
                   onToggleCollapse();
                 }}
-                className="p-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 transition-all flex items-center gap-1 text-[10px] font-bold"
+                className="p-1.5 rounded-lg bg-card hover:bg-muted text-foreground/80 hover:text-foreground border border-border shadow-xs transition-all flex items-center gap-1 text-[10px] font-bold cursor-pointer"
                 title="Expand Team Container"
               >
                 <Maximize2 className="h-3 w-3" />
@@ -243,7 +243,7 @@ export function TeamNode({
                   e.stopPropagation();
                   onAddWorker();
                 }}
-                className="p-1 rounded-md bg-indigo-900/40 border border-indigo-500/30 text-indigo-300 hover:text-foreground hover:bg-indigo-800/50 transition-all"
+                className="p-1 rounded-md bg-card border border-border text-foreground/80 hover:text-foreground hover:bg-muted transition-all cursor-pointer shadow-xs"
                 title="Add Worker to Team"
               >
                 <Plus className="h-3 w-3" />
@@ -254,7 +254,7 @@ export function TeamNode({
                   e.stopPropagation();
                   onDelete();
                 }}
-                className="p-1 rounded-md bg-red-950/40 border border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-900/50 transition-all"
+                className="p-1 rounded-md bg-destructive/10 border border-destructive/30 text-destructive hover:bg-destructive/20 transition-all cursor-pointer shadow-xs"
                 title="Delete Team"
               >
                 <Trash2 className="h-3 w-3" />
@@ -295,7 +295,7 @@ export function TeamNode({
         onMouseDown={onMouseDown}
         onClick={onSelect}
         onDoubleClick={onDoubleClick}
-        className={`w-full h-full rounded-3xl border-2 border-dashed p-6 flex flex-col transition-all backdrop-blur-md cursor-grab active:cursor-grabbing shadow-2xl relative ${
+        className={`team-node-container w-full h-full rounded-3xl border-2 border-dashed p-6 flex flex-col transition-all backdrop-blur-md canvas-cursor-grab active:canvas-cursor-grabbing shadow-2xl relative ${
           isHoveredTarget
             ? "border-indigo-400 bg-indigo-50 dark:bg-muted ring-4 ring-indigo-500/40"
             : isSelected
@@ -382,7 +382,7 @@ export function TeamNode({
                 e.stopPropagation();
                 onToggleCollapse();
               }}
-              className="p-1.5 rounded-xl bg-indigo-900/40 hover:bg-indigo-800/60 border border-indigo-500/30 text-indigo-300 hover:text-foreground transition-all"
+              className="p-1.5 rounded-xl bg-card border border-border hover:bg-muted text-foreground/80 hover:text-foreground shadow-xs transition-all cursor-pointer"
               title="Collapse Team Container"
             >
               <Minimize2 className="h-3.5 w-3.5" />
@@ -393,7 +393,7 @@ export function TeamNode({
                 e.stopPropagation();
                 onDelete();
               }}
-              className="p-1.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-400 hover:text-red-300 transition-all"
+              className="p-1.5 rounded-xl bg-destructive/10 border border-destructive/30 hover:bg-destructive/20 text-destructive shadow-xs transition-all cursor-pointer"
               title="Delete Team"
             >
               <Trash2 className="h-3.5 w-3.5" />

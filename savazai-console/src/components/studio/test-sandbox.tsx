@@ -908,7 +908,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                 fontSize: "var(--prompt-font-size, 16px)",
                 fontFamily: "var(--prompt-font-family, inherit)",
               }}
-              className="flex-1 rounded-xl border border-border bg-muted/30 py-3 px-4 text-white outline-none focus:border-emerald-500 disabled:opacity-40 placeholder-slate-600 resize-none leading-relaxed transition-all"
+              className="flex-1 rounded-xl border border-border bg-card py-3 px-4 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary disabled:opacity-40 resize-none leading-relaxed transition-all shadow-xs"
             />
 
             <div className="relative">
@@ -918,7 +918,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                   setExecutionModeDropdownOpen(!executionModeDropdownOpen);
                   setShowFeedbackForm(false);
                 }}
-                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-card border border-border/80 text-[11px] font-bold text-slate-100 shadow-md transition-all whitespace-nowrap h-full"
+                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-card border border-border text-[11px] font-bold text-foreground hover:bg-muted shadow-xs transition-all whitespace-nowrap h-full cursor-pointer"
                 title={`Execution: ${
                   executionModeOverride === "inherit" ? "Inherit Default" :
                   executionModeOverride === "plan_first" ? "Plan First" : "Direct Execution"
@@ -932,7 +932,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
               {executionModeDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setExecutionModeDropdownOpen(false)} />
-                  <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[190px] rounded-xl border border-border bg-card shadow-2xl shadow-black/80 py-1.5 space-y-0.5">
+                  <div className="absolute bottom-full mb-1 right-0 z-20 min-w-[190px] rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl py-1.5 space-y-0.5">
                     <button
                       type="button"
                       onClick={() => {
@@ -942,7 +942,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                       className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors cursor-pointer ${
                         executionModeOverride === "inherit"
                           ? "bg-primary/10 text-primary border-l-2 border-primary font-bold"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          : "text-foreground/80 hover:bg-muted hover:text-foreground"
                       }`}
                     >
                       ⚙️ Inherit Agent Default
@@ -956,7 +956,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                       className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors cursor-pointer ${
                         executionModeOverride === "plan_first"
                           ? "bg-primary/10 text-primary border-l-2 border-primary font-bold"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          : "text-foreground/80 hover:bg-muted hover:text-foreground"
                       }`}
                     >
                       📋 Plan First
@@ -970,7 +970,7 @@ export function TestSandbox({ canvasJson, onClose, onNodeEvent }: TestSandboxPro
                       className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors cursor-pointer ${
                         executionModeOverride === "direct"
                           ? "bg-primary/10 text-primary border-l-2 border-primary font-bold"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          : "text-foreground/80 hover:bg-muted hover:text-foreground"
                       }`}
                     >
                       ⚡ Direct Execution
