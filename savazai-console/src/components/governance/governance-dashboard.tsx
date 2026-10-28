@@ -77,9 +77,14 @@ interface AuditRecord {
   changeSummary?: string;
   // prompt revision specific
   agentId?: string;
+  agentName?: string;
+  agentRole?: string;
   agentflowId?: string;
+  agentflowTitle?: string;
   versionNumber?: number;
   systemPrompt?: string;
+  changeSummary?: string;
+  promptLengthChars?: number;
 }
 
 export function GovernanceDashboard() {
@@ -177,15 +182,15 @@ export function GovernanceDashboard() {
       if (type === "prompt") {
         setDiffState({
           isOpen: true,
-          title: `Agent Directive Diff: ${current.agent_id}`,
-          subtitle: `Flow ID: ${current.agentflow_id}`,
+          title: `Agent Directive Diff: ${current.agent_name || current.agentId || current.agent_id || "Agent"}`,
+          subtitle: `${current.agentflow_title || current.agentflowTitle ? `Flow: ${current.agentflow_title || current.agentflowTitle}` : `Flow ID: ${current.agentflow_id || current.agentflowId}`} • Role: ${current.agent_role || current.agentRole || "Agent"}`,
           badgeLabel: "System Prompt",
-          oldVersionLabel: previous ? `v${previous.version_number}` : "Initial Baseline (v0)",
-          newVersionLabel: `v${current.version_number}`,
-          oldContent: previous ? previous.system_prompt : "",
-          newContent: current.system_prompt,
-          authorEmail: current.author_email,
-          timestamp: current.created_at,
+          oldVersionLabel: previous ? `v${previous.version_number ?? previous.versionNumber}` : "Initial Baseline (v0)",
+          newVersionLabel: `v${current.version_number ?? current.versionNumber}`,
+          oldContent: previous ? (previous.system_prompt ?? previous.systemPrompt ?? "") : "",
+          newContent: current.system_prompt ?? current.systemPrompt ?? "",
+          authorEmail: current.author_email || current.authorEmail,
+          timestamp: current.created_at || current.createdAt,
         });
       } else {
         setDiffState({
@@ -412,11 +417,11 @@ export function GovernanceDashboard() {
                   ) : activeTab === "prompt_revisions" ? (
                     <tr>
                       <th className="py-2.5 px-4 font-semibold">Timestamp</th>
-                      <th className="py-2.5 px-4 font-semibold">Agent Node ID</th>
-                      <th className="py-2.5 px-4 font-semibold">Agentflow ID</th>
+                      <th className="py-2.5 px-4 font-semibold">Agent Name</th>
+                      <th className="py-2.5 px-4 font-semibold">Agentflow Title</th>
                       <th className="py-2.5 px-4 font-semibold">Version #</th>
                       <th className="py-2.5 px-4 font-semibold">Author</th>
-                      <th className="py-2.5 px-4 font-semibold">Length</th>
+                      <th className="py-2.5 px-4 font-semibold">Characters</th>
                       <th className="py-2.5 px-4 text-right font-semibold">Actions</th>
                     </tr>
                   ) : (
@@ -509,22 +514,31 @@ export function GovernanceDashboard() {
                         </>
                       ) : activeTab === "prompt_revisions" ? (
                         <>
-                          <td className="py-2.5 px-4 font-semibold text-foreground font-mono">
-                            {row.agentId}
+                          <td className="py-2.5 px-4">
+                            <div className="font-semibold text-foreground flex items-center gap-2">
+                              <span>{row.agentName || row.agentId}</span>
+                              {row.agentRole && (
+                                <Badge variant="outline" className="text-[9px] uppercase px-1.5 py-0">
+                                  {row.agentRole}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground font-mono">{row.agentId}</div>
                           </td>
-                          <td className="py-2.5 px-4 text-muted-foreground font-mono text-[11px]">
-                            {row.agentflowId}
+                          <td className="py-2.5 px-4">
+                            <div className="font-medium text-foreground">{row.agentflowTitle || "Standalone"}</div>
+                            <div className="text-[10px] text-muted-foreground font-mono truncate max-w-[120px]">{row.agentflowId}</div>
                           </td>
                           <td className="py-2.5 px-4">
                             <Badge variant="secondary" className="text-[10px] font-mono">
                               v{row.versionNumber}
                             </Badge>
                           </td>
-                          <td className="py-2.5 px-4 text-muted-foreground">
+                          <td className="py-2.5 px-4 text-muted-foreground text-xs">
                             {row.authorEmail || row.authorId}
                           </td>
                           <td className="py-2.5 px-4 text-muted-foreground font-mono text-[11px]">
-                            {row.systemPrompt ? `${row.systemPrompt.length} chars` : "0 chars"}
+                            {row.promptLengthChars ? `${row.promptLengthChars} chars` : row.systemPrompt ? `${row.systemPrompt.length} chars` : "0 chars"}
                           </td>
                           <td className="py-2.5 px-4 text-right">
                             <Button

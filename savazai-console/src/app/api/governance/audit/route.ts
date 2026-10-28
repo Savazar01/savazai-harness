@@ -30,7 +30,9 @@ export async function GET(req: NextRequest) {
 
       if (type === "prompt") {
         const curRes = await pool.query(
-          `SELECT id, agent_id, agentflow_id, version_number, system_prompt, author_id, author_email, created_at
+          `SELECT id, agent_id, agent_name, agent_role, agentflow_id, agentflow_title,
+                  version_number, system_prompt, change_summary, prompt_length_chars,
+                  author_id, author_email, created_at
            FROM prompt_revisions WHERE id = $1`,
           [id]
         );
@@ -42,7 +44,9 @@ export async function GET(req: NextRequest) {
         }
         const current = curRes.rows[0];
         const prevRes = await pool.query(
-          `SELECT id, agent_id, agentflow_id, version_number, system_prompt, author_id, author_email, created_at
+          `SELECT id, agent_id, agent_name, agent_role, agentflow_id, agentflow_title,
+                  version_number, system_prompt, change_summary, prompt_length_chars,
+                  author_id, author_email, created_at
            FROM prompt_revisions
            WHERE agent_id = $1 AND agentflow_id = $2 AND version_number < $3
            ORDER BY version_number DESC
@@ -229,15 +233,17 @@ export async function GET(req: NextRequest) {
     if (tab === "prompt_revisions") {
       const countRes = await pool.query(
         `SELECT COUNT(*) as total FROM prompt_revisions
-         WHERE ($1::text IS NULL OR agent_id ILIKE $1 OR agentflow_id ILIKE $1 OR author_email ILIKE $1)`,
+         WHERE ($1::text IS NULL OR agent_id ILIKE $1 OR agent_name ILIKE $1 OR agentflow_id ILIKE $1 OR agentflow_title ILIKE $1 OR author_email ILIKE $1)`,
         [searchParam]
       );
       const rowsRes = await pool.query(
-        `SELECT id, agent_id as "agentId", agentflow_id as "agentflowId",
+        `SELECT id, agent_id as "agentId", agent_name as "agentName", agent_role as "agentRole",
+                agentflow_id as "agentflowId", agentflow_title as "agentflowTitle",
                 version_number as "versionNumber", system_prompt as "systemPrompt",
+                change_summary as "changeSummary", prompt_length_chars as "promptLengthChars",
                 author_id as "authorId", author_email as "authorEmail", created_at as "createdAt"
          FROM prompt_revisions
-         WHERE ($1::text IS NULL OR agent_id ILIKE $1 OR agentflow_id ILIKE $1 OR author_email ILIKE $1)
+         WHERE ($1::text IS NULL OR agent_id ILIKE $1 OR agent_name ILIKE $1 OR agentflow_id ILIKE $1 OR agentflow_title ILIKE $1 OR author_email ILIKE $1)
          ORDER BY created_at DESC
          LIMIT $2 OFFSET $3`,
         [searchParam, limit, offset]

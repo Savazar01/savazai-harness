@@ -115,14 +115,20 @@ export async function PUT(
           }
         }
         if (canvasObj && Array.isArray(canvasObj.nodes)) {
+          const flowTitle = body.name || (data && data.name) || `Flow ${id}`;
           for (const node of canvasObj.nodes) {
-            const prompt = node.data?.systemPrompt || node.data?.prompt || node.data?.instructions;
+            const prompt = node.systemPrompt || node.data?.systemPrompt || node.instructions || node.data?.instructions || node.prompt || node.data?.prompt;
             if (prompt && typeof prompt === "string" && prompt.trim().length > 0) {
-              const agentId = node.id || node.data?.id || node.data?.name || "agent_node";
+              const agentId = node.id || node.data?.id || "agent_node";
+              const agentName = node.label || node.data?.label || node.name || node.data?.name || `Agent ${agentId}`;
+              const agentRole = node.roleTemplate || node.data?.roleTemplate || node.role || "worker";
               await recordPromptRevision({
                 agentId: String(agentId),
+                agentName: String(agentName),
+                agentRole: String(agentRole),
                 agentflowId: id,
-                systemPrompt: prompt,
+                agentflowTitle: String(flowTitle),
+                systemPrompt: prompt.trim(),
                 authorId: authContext.userId,
                 authorEmail: authContext.email,
               }).catch((e) => console.warn("[recordPromptRevision] Non-fatal error:", e));

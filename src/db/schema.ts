@@ -302,9 +302,14 @@ export const assetRevisions = pgTable("asset_revisions", {
 export const promptRevisions = pgTable("prompt_revisions", {
   id: text("id").primaryKey(),
   agentId: text("agent_id").notNull(),
+  agentName: varchar("agent_name", { length: 256 }),
+  agentRole: varchar("agent_role", { length: 64 }),
   agentflowId: text("agentflow_id").notNull(),
+  agentflowTitle: varchar("agentflow_title", { length: 256 }),
   versionNumber: integer("version_number").notNull(),
   systemPrompt: text("system_prompt").notNull(),
+  changeSummary: text("change_summary"),
+  promptLengthChars: integer("prompt_length_chars"),
   authorId: text("author_id").notNull(),
   authorEmail: text("author_email").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -313,6 +318,33 @@ export const promptRevisions = pgTable("prompt_revisions", {
   index("prompt_revisions_flow_idx").on(t.agentflowId),
   index("prompt_revisions_created_at_idx").on(t.createdAt),
 ]);
+
+export const agentsCatalog = pgTable("agents_catalog", {
+  id: text("id").primaryKey(),
+  agentKey: varchar("agent_key", { length: 128 }).notNull().unique(),
+  name: varchar("name", { length: 256 }).notNull(),
+  role: varchar("role", { length: 64 }).notNull(), // supervisor, specialist, synthesizer, scheduled
+  description: text("description"),
+  llmProvider: varchar("llm_provider", { length: 64 }).default("OpenAI"),
+  modelName: varchar("model_name", { length: 128 }).default("gpt-4o-mini"),
+  temperature: doublePrecision("temperature").default(0.7),
+  systemPrompt: text("system_prompt").notNull(),
+  boundTools: jsonb("bound_tools").$type<string[]>().default([]),
+  boundSkills: jsonb("bound_skills").$type<string[]>().default([]),
+  boundConcepts: jsonb("bound_concepts").$type<string[]>().default([]),
+  originType: varchar("origin_type", { length: 32 }).notNull().default("agent_builder"), // agent_builder | agentflow
+  originFlowId: text("origin_flow_id"),
+  originFlowTitle: text("origin_flow_title"),
+  isLocked: boolean("is_locked").default(false).notNull(),
+  allowModificationInFlow: boolean("allow_modification_in_flow").default(true).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  index("agents_catalog_key_idx").on(t.agentKey),
+  index("agents_catalog_role_idx").on(t.role),
+  index("agents_catalog_origin_idx").on(t.originType),
+]);
+
 
 
 

@@ -14,8 +14,12 @@ export interface RecordAssetRevisionInput {
 
 export interface RecordPromptRevisionInput {
   agentId: string;
+  agentName?: string;
+  agentRole?: string;
   agentflowId: string;
+  agentflowTitle?: string;
   systemPrompt: string;
+  changeSummary?: string;
   authorId: string;
   authorEmail: string;
 }
@@ -110,16 +114,24 @@ export async function recordPromptRevision(input: RecordPromptRevisionInput): Pr
     }
 
     const revisionId = crypto.randomUUID();
+    const promptLen = input.systemPrompt.length;
     await pool.query(
       `INSERT INTO "prompt_revisions" (
-        "id", "agent_id", "agentflow_id", "version_number", "system_prompt", "author_id", "author_email", "created_at"
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, now())`,
+        "id", "agent_id", "agent_name", "agent_role", "agentflow_id", "agentflow_title",
+        "version_number", "system_prompt", "change_summary", "prompt_length_chars",
+        "author_id", "author_email", "created_at"
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now())`,
       [
         revisionId,
         input.agentId,
+        input.agentName || null,
+        input.agentRole || null,
         input.agentflowId,
+        input.agentflowTitle || null,
         nextVersionNumber,
         input.systemPrompt,
+        input.changeSummary || `Updated directive for ${input.agentName || input.agentId} to v${nextVersionNumber}`,
+        promptLen,
         input.authorId,
         input.authorEmail,
       ]
@@ -132,11 +144,14 @@ export async function recordPromptRevision(input: RecordPromptRevisionInput): Pr
       actorId: input.authorId,
       actorEmail: input.authorEmail,
       targetId: input.agentId,
-      targetName: `Agent ${input.agentId}`,
+      targetName: input.agentName || `Agent ${input.agentId}`,
       details: {
         agentflowId: input.agentflowId,
+        agentflowTitle: input.agentflowTitle,
+        agentRole: input.agentRole,
         versionNumber: nextVersionNumber,
-        promptLength: input.systemPrompt.length,
+        promptLength: promptLen,
+        changeSummary: input.changeSummary,
       },
     });
 

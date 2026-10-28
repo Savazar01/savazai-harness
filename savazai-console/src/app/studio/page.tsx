@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Plus, FolderKanban, Loader2, X, Database, Download, Upload } from "lucide-react";
+import { Plus, FolderKanban, Loader2, X, Database, Download, Upload, Bot, Workflow } from "lucide-react";
 import { CanvasEditor, CanvasEditorHandle, CanvasNode, CanvasEdge } from "@/components/studio/canvas-editor";
 import { regenerateAgentflowCanvas, sanitizeCanvasDefinition } from "@/lib/agentflow-utils";
 import { usePermissions } from "@/lib/auth/use-permissions";
+import { AgentCatalogView } from "@/components/studio/agent-builder/agent-catalog-view";
 
 interface Agentflow {
   id: string;
@@ -77,6 +78,7 @@ export default function StudioPage() {
   const [saveToast, setSaveToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
   const [showManageModal, setShowManageModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [studioTab, setStudioTab] = useState<"agentflows" | "agent_builder">("agentflows");
   const initialLoadDone = useRef(false);
   const canvasEditorRef = useRef<CanvasEditorHandle>(null);
 
@@ -438,117 +440,151 @@ export default function StudioPage() {
       <div className="shrink-0 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Capability Studio</h1>
-          <p className="text-muted-foreground text-xs mt-1">Design pure agent-to-agent graphs, schedule autonomous agentflows, and compile to LangGraph pipelines</p>
-        </div>
-      </div>
-
-      {/* Agentflow Selector Bar */}
-      <div className="shrink-0 mb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border pb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <FolderKanban className="h-4 w-4 text-primary shrink-0" />
-          <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Active Workspace:</span>
-          {loading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-          ) : agentflows.length === 0 ? (
-            <span className="text-xs text-muted-foreground">No agentflows</span>
-          ) : (
-            <div className="relative">
-              <select
-                value={activeAgentflowId || ""}
-                onChange={(e) => handleSwitchAgentflow(e.target.value)}
-                className="bg-card border border-input text-xs font-semibold text-foreground rounded-xl px-3 py-1.5 focus:border-primary outline-none transition-all cursor-pointer min-w-[200px]"
-              >
-                {agentflows.map((wf) => (
-                  <option key={wf.id} value={wf.id}>
-                    {wf.name} ({wf.status === "published" ? "Published" : "Draft"})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          <p className="text-muted-foreground text-xs mt-1">Design pure agent-to-agent graphs, author reusable agents, and compile to LangGraph pipelines</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {activeAgentflow && canExportJson && (
-            <button
-              type="button"
-              onClick={() => handleExportJson(activeAgentflow)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-all shadow-xs cursor-pointer"
-            >
-              <Download className="h-3.5 w-3.5" />
-              Export JSON
-            </button>
-          )}
-          {canImportJson && (
-            <button
-              type="button"
-              onClick={() => { setImportError(null); setShowImportModal(true); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-all shadow-xs cursor-pointer"
-            >
-              <Upload className="h-3.5 w-3.5" />
-              Import JSON
-            </button>
-          )}
+        {/* Studio Primary Sub-View Switcher */}
+        <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-2xl border border-border">
           <button
             type="button"
-            onClick={() => setShowManageModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-all shadow-xs cursor-pointer"
+            onClick={() => setStudioTab("agentflows")}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              studioTab === "agentflows"
+                ? "bg-card text-foreground shadow-xs border border-border"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
           >
-            <FolderKanban className="h-3.5 w-3.5" />
-            Manage Agentflows
+            <Workflow className="w-3.5 h-3.5 text-primary" />
+            Agentflows Canvas
           </button>
-          {canCreateFlow && (
-            <button
-              type="button"
-              onClick={() => { setCreateMode("scratch"); setShowCreateModal(true); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 shadow-xs transition-all cursor-pointer"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              New Agentflow
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setStudioTab("agent_builder")}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              studioTab === "agent_builder"
+                ? "bg-card text-foreground shadow-xs border border-border"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Bot className="w-3.5 h-3.5 text-primary" />
+            Agent Builder Hub
+          </button>
         </div>
       </div>
 
-      {/* Save Toast Indicator */}
-      {saveToast && (
-        <div className={`shrink-0 mb-3 flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold transition-all shadow-md ${
-          saveToast.type === "success"
-            ? "bg-emerald-50 dark:bg-emerald-950/80 border-emerald-500/30 text-emerald-900 dark:text-emerald-100"
-            : "bg-rose-50 dark:bg-rose-950/80 border-rose-500/30 text-rose-900 dark:text-rose-100"
-        }`}>
-          <Database className="h-3.5 w-3.5 shrink-0" />
-          <span>{saveToast.msg}</span>
-        </div>
-      )}
+      {studioTab === "agent_builder" ? (
+        <AgentCatalogView />
+      ) : (
+        <>
+          {/* Agentflow Selector Bar */}
+          <div className="shrink-0 mb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border pb-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <FolderKanban className="h-4 w-4 text-primary shrink-0" />
+              <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Active Workspace:</span>
+              {loading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+              ) : agentflows.length === 0 ? (
+                <span className="text-xs text-muted-foreground">No agentflows</span>
+              ) : (
+                <div className="relative">
+                  <select
+                    value={activeAgentflowId || ""}
+                    onChange={(e) => handleSwitchAgentflow(e.target.value)}
+                    className="bg-card border border-input text-xs font-semibold text-foreground rounded-xl px-3 py-1.5 focus:border-primary outline-none transition-all cursor-pointer min-w-[200px]"
+                  >
+                    {agentflows.map((wf) => (
+                      <option key={wf.id} value={wf.id}>
+                        {wf.name} ({wf.status === "published" ? "Published" : "Draft"})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
 
-      {/* Canvas */}
-      <div className="flex-1 min-h-0">
-        {activeAgentflow ? (
-          <CanvasEditor
-            key={`${activeAgentflow.id}_${canvasLoadKey}`}
-            ref={canvasEditorRef}
-            initialNodes={canvasData.nodes}
-            initialEdges={canvasData.edges}
-            globalSystemPrompt=""
-            workflowName={activeAgentflow.name}
-            workflowStatus={activeStatus}
-            onSaveDraft={handleSaveDraft}
-            onPublish={handlePublish}
-            onRename={() => {
-              setEditingAgentflow(activeAgentflow);
-              setEditName(activeAgentflow.name);
-              setEditDesc(activeAgentflow.description || "");
-            }}
-            workflowId={activeAgentflow.id}
-            canvasLoadKey={canvasLoadKey}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full text-slate-600 text-sm">
-            {loading ? "Loading agentflows..." : "Create or import an agentflow to get started"}
+            <div className="flex flex-wrap items-center gap-2">
+              {activeAgentflow && canExportJson && (
+                <button
+                  type="button"
+                  onClick={() => handleExportJson(activeAgentflow)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-all shadow-xs cursor-pointer"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Export JSON
+                </button>
+              )}
+              {canImportJson && (
+                <button
+                  type="button"
+                  onClick={() => { setImportError(null); setShowImportModal(true); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-all shadow-xs cursor-pointer"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  Import JSON
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowManageModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-all shadow-xs cursor-pointer"
+              >
+                <FolderKanban className="h-3.5 w-3.5" />
+                Manage Agentflows
+              </button>
+              {canCreateFlow && (
+                <button
+                  type="button"
+                  onClick={() => { setCreateMode("scratch"); setShowCreateModal(true); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 shadow-xs transition-all cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  New Agentflow
+                </button>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Save Toast Indicator */}
+          {saveToast && (
+            <div className={`shrink-0 mb-3 flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold transition-all shadow-md ${
+              saveToast.type === "success"
+                ? "bg-emerald-50 dark:bg-emerald-950/80 border-emerald-500/30 text-emerald-900 dark:text-emerald-100"
+                : "bg-rose-50 dark:bg-rose-950/80 border-rose-500/30 text-rose-900 dark:text-rose-100"
+            }`}>
+              <Database className="h-3.5 w-3.5 shrink-0" />
+              <span>{saveToast.msg}</span>
+            </div>
+          )}
+
+          {/* Canvas */}
+          <div className="flex-1 min-h-0">
+            {activeAgentflow ? (
+              <CanvasEditor
+                key={`${activeAgentflow.id}_${canvasLoadKey}`}
+                ref={canvasEditorRef}
+                initialNodes={canvasData.nodes}
+                initialEdges={canvasData.edges}
+                globalSystemPrompt=""
+                workflowName={activeAgentflow.name}
+                workflowStatus={activeStatus}
+                onSaveDraft={handleSaveDraft}
+                onPublish={handlePublish}
+                onRename={() => {
+                  setEditingAgentflow(activeAgentflow);
+                  setEditName(activeAgentflow.name);
+                  setEditDesc(activeAgentflow.description || "");
+                }}
+                workflowId={activeAgentflow.id}
+                canvasLoadKey={canvasLoadKey}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-slate-600 text-sm">
+                {loading ? "Loading agentflows..." : "Create or import an agentflow to get started"}
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Create / Import Agentflow Modal */}
       {showCreateModal && (

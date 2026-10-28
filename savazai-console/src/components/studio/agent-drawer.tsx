@@ -52,6 +52,8 @@ interface AgentDrawerProps {
   allNodes?: CanvasNode[];
   onClose: () => void;
   onSave: (updated: CanvasNode) => void;
+  workflowId?: string;
+  workflowName?: string;
 }
 
 const PROVIDER_MODELS: Record<string, string[]> = {
@@ -84,8 +86,9 @@ export const COLOR_PRESETS = [
   { id: "slate", label: "Slate", bg: "bg-muted/70 dark:bg-muted/40", border: "border-border", ring: "ring-border", dot: "#94a3b8" },
 ];
 
-export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawerProps) {
+export function AgentDrawer({ node, allNodes = [], onClose, onSave, workflowId, workflowName }: AgentDrawerProps) {
   const [activeTab, setActiveTab] = useState<"identity" | "tools" | "databases" | "social" | "mcp" | "knowledge" | "memory" | "guardrails">("identity");
+  const isNodeLocked = Boolean(node.isLocked || (node.data as any)?.isLocked);
 
   const [label, setLabel] = useState(node.label);
   const [roleTemplate, setRoleTemplate] = useState<AgentRole>(node.roleTemplate || "worker");
@@ -247,6 +250,21 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
     fetchRegisteredTools();
   }, [fetchResources, fetchMcpServers, fetchLlmProviders, fetchRegisteredTools]);
 
+  const handleForkAgent = () => {
+    const forked: CanvasNode = {
+      ...node,
+      label: `${label} (Customized)`,
+      isLocked: false,
+      data: {
+        ...node.data,
+        isLocked: false,
+        catalogAgentId: undefined,
+      },
+    };
+    onSave(forked);
+    onClose();
+  };
+
   const handleSave = () => {
     let newX = node.x;
     let newY = node.y;
@@ -264,6 +282,21 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
       }
     }
 
+    if (systemPrompt && systemPrompt.trim() !== (node.systemPrompt || "").trim()) {
+      fetch("/api/studio/prompt-revisions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agentId: node.id,
+          agentName: label,
+          agentRole: roleTemplate,
+          agentflowId: workflowId || "standalone",
+          agentflowTitle: workflowName,
+          systemPrompt: systemPrompt.trim(),
+        }),
+      }).catch((e) => console.warn("[prompt-revision snapshot error]:", e));
+    }
+
     const updated: CanvasNode = {
       ...node,
       label,
@@ -279,11 +312,13 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
       piiMaskingOverride,
       parentId: finalParentId,
       customColor: customColor === "default" ? undefined : customColor,
+      isLocked: isNodeLocked,
       x: newX,
       y: newY,
       data: {
         ...node.data,
         executionMode,
+        isLocked: isNodeLocked,
       },
     };
     onSave(updated);
@@ -444,6 +479,23 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave }: AgentDrawe
             </button>
           </div>
         </div>
+
+        {/* Enterprise Lock Banner */}
+        {isNodeLocked && (
+          <div className="mx-6 mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs flex items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <Lock className="w-4 h-4 shrink-0" />
+              <span className="truncate">Enterprise Locked Agent: Directives and bindings are governed centrally.</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleForkAgent}
+              className="px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-bold text-[11px] hover:bg-amber-400 transition-all shrink-0 cursor-pointer"
+            >
+              Detach / Fork
+            </button>
+          </div>
+        )}
 
         {/* 8-Tab Bar */}
         <div className="flex overflow-x-auto border-b border-border bg-card px-6 shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">

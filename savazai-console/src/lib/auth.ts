@@ -174,16 +174,51 @@ export async function ensureAdminProvisioned() {
       CREATE TABLE IF NOT EXISTS "prompt_revisions" (
         "id" TEXT PRIMARY KEY,
         "agent_id" TEXT NOT NULL,
+        "agent_name" VARCHAR(256),
+        "agent_role" VARCHAR(64),
         "agentflow_id" TEXT NOT NULL,
+        "agentflow_title" VARCHAR(256),
         "version_number" INTEGER NOT NULL,
         "system_prompt" TEXT NOT NULL,
+        "change_summary" TEXT,
+        "prompt_length_chars" INTEGER,
         "author_id" TEXT NOT NULL,
         "author_email" TEXT NOT NULL,
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+      ALTER TABLE "prompt_revisions" ADD COLUMN IF NOT EXISTS "agent_name" VARCHAR(256);
+      ALTER TABLE "prompt_revisions" ADD COLUMN IF NOT EXISTS "agent_role" VARCHAR(64);
+      ALTER TABLE "prompt_revisions" ADD COLUMN IF NOT EXISTS "agentflow_title" VARCHAR(256);
+      ALTER TABLE "prompt_revisions" ADD COLUMN IF NOT EXISTS "change_summary" TEXT;
+      ALTER TABLE "prompt_revisions" ADD COLUMN IF NOT EXISTS "prompt_length_chars" INTEGER;
       CREATE INDEX IF NOT EXISTS "prompt_revisions_agent_idx" ON "prompt_revisions"("agent_id");
       CREATE INDEX IF NOT EXISTS "prompt_revisions_flow_idx" ON "prompt_revisions"("agentflow_id");
       CREATE INDEX IF NOT EXISTS "prompt_revisions_created_at_idx" ON "prompt_revisions"("created_at");
+
+      CREATE TABLE IF NOT EXISTS "agents_catalog" (
+        "id" TEXT PRIMARY KEY,
+        "agent_key" VARCHAR(128) NOT NULL UNIQUE,
+        "name" VARCHAR(256) NOT NULL,
+        "role" VARCHAR(64) NOT NULL,
+        "description" TEXT,
+        "llm_provider" VARCHAR(64) DEFAULT 'OpenAI',
+        "model_name" VARCHAR(128) DEFAULT 'gpt-4o-mini',
+        "temperature" NUMERIC DEFAULT 0.7,
+        "system_prompt" TEXT NOT NULL,
+        "bound_tools" JSONB DEFAULT '[]',
+        "bound_skills" JSONB DEFAULT '[]',
+        "bound_concepts" JSONB DEFAULT '[]',
+        "origin_type" VARCHAR(32) NOT NULL DEFAULT 'agent_builder',
+        "origin_flow_id" TEXT,
+        "origin_flow_title" TEXT,
+        "is_locked" BOOLEAN NOT NULL DEFAULT false,
+        "allow_modification_in_flow" BOOLEAN NOT NULL DEFAULT true,
+        "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
+        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS "agents_catalog_key_idx" ON "agents_catalog"("agent_key");
+      CREATE INDEX IF NOT EXISTS "agents_catalog_role_idx" ON "agents_catalog"("role");
+      CREATE INDEX IF NOT EXISTS "agents_catalog_origin_idx" ON "agents_catalog"("origin_type");
 
       CREATE TABLE IF NOT EXISTS "session" (
         "id" TEXT PRIMARY KEY,

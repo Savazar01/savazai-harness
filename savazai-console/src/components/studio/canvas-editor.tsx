@@ -32,6 +32,8 @@ import {
   MoveDiagonal2,
   BookOpen,
   Waypoints,
+  Lock,
+  Search,
 } from "lucide-react";
 import { AgentDrawer } from "./agent-drawer";
 import { TestSandbox } from "./test-sandbox";
@@ -69,6 +71,8 @@ export interface CanvasNode {
   memoryCheckpoint?: boolean;
   kvPersistence?: boolean;
   piiMaskingOverride?: string;
+  isLocked?: boolean;
+  catalogAgentId?: string;
   x: number;
   y: number;
   parentId?: string;
@@ -79,6 +83,8 @@ export interface CanvasNode {
   data?: {
     executionMode?: "plan_first" | "direct";
     customColor?: string;
+    isLocked?: boolean;
+    catalogAgentId?: string;
     [key: string]: unknown;
   };
 }
@@ -449,6 +455,32 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
     return false;
   });
 
+  // Reusable Agent Catalog Palette State
+  const [paletteTab, setPaletteTab] = useState<"archetypes" | "catalog">("archetypes");
+  const [catalogAgents, setCatalogAgents] = useState<any[]>([]);
+  const [catalogSearch, setCatalogSearch] = useState("");
+  const [catalogRole, setCatalogRole] = useState("all");
+  const [loadingCatalog, setLoadingCatalog] = useState(false);
+
+  const fetchCatalogAgents = useCallback(async () => {
+    setLoadingCatalog(true);
+    try {
+      const res = await fetch("/api/agents");
+      if (res.ok) {
+        const data = await res.json();
+        setCatalogAgents(data.items || []);
+      }
+    } catch (e) {
+      console.warn("[fetchCatalogAgents] error:", e);
+    } finally {
+      setLoadingCatalog(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCatalogAgents();
+  }, [fetchCatalogAgents]);
+
   // Studio Infinite Canvas & Multi-selection
   const [pan, setPan] = useState(() => {
     if (typeof window !== "undefined" && workflowId) {
@@ -753,6 +785,147 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
       kvPersistence: false,
       x: roleTemplate === "supervisor" ? 80 : 1200,
       y: 150,
+    };
+
+    setNodes((prev) => [...prev, newNode]);
+    setSelectedNodeId(id);
+  }, [nodes, selectedNodeId, workflowName]);
+
+  const handleAddCatalogAgent = useCallback((agent: any) => {
+    const rawRole = agent.role || "worker";
+    const roleTemplate: AgentRole =
+      rawRole === "supervisor" || rawRole === "synthesizer" || rawRole === "scheduled" || rawRole === "team"
+        ? rawRole
+        : "worker";
+
+    const id = `node-${roleTemplate}-${crypto.randomUUID()}`;
+    const isWorker = roleTemplate === "worker" || roleTemplate === "scheduled";
+
+    const tools: ToolReference[] = (Array.isArray(agent.boundTools) ? agent.boundTools : []).map((t: any) => {
+      if (typeof t === "string") return { id: t, name: t, category: "mcp" };
+      return { id: t.name || String(t), name: t.name || String(t), category: t.category || "mcp" };
+    });
+
+    if (isWorker) {
+      let targetTeam = nodes.find((n) => n.id === selectedNodeId && n.roleTemplate === "team") ||
+                       nodes.find((n) => n.roleTemplate === "team");
+
+      const additionalNodes: CanvasNode[] = [];
+      const autoEdges: CanvasEdge[] = [];
+
+      if (!targetTeam) {
+        const teamId = `node-team-${crypto.randomUUID()}`;
+        const dims = getTeamDimensions(1, false);
+        targetTeam = {
+          id: teamId,
+          label: `${workflowName.replace(/\s*\(Draft\)\s*/i, "").trim()} Team`,
+          roleTemplate: "team",
+          systemPrompt: ROLE_DEFAULT_PROMPTS.team,
+          modelConfig: { provider: "openai", model: "gpt-4o", temperature: 0.2 },
+          tools: [],
+          memoryCheckpoint: true,
+          kvPersistence: false,
+          x: 440,
+          y: 80,
+          collapsed: false,
+          width: dims.width,
+          height: dims.height,
+        };
+        additionalNodes.push(targetTeam);
+
+        const supervisor = nodes.find((n) => n.roleTemplate === "supervisor");
+        const synthesizer = nodes.find((n) => n.roleTemplate === "synthesizer");
+        if (supervisor) autoEdges.push({ id: `edge-${crypto.randomUUID()}`, source: supervisor.id, target: teamId });
+        if (synthesizer) autoEdges.push({ id: `edge-${crypto.randomUUID()}`, source: teamId, target: synthesizer.id });
+      }
+
+      const existingWorkers = nodes.filter((n) => n.parentId === targetTeam!.id);
+      const count = existingWorkers.length;
+      const dims = getTeamDimensions(count + 1, false, targetTeam.width, targetTeam.height);
+      const col = count % dims.cols;
+      const row = Math.floor(count / dims.cols);
+
+      const CARD_W = 260;
+      const CARD_H = 110;
+      const GAP_X = 24;
+      const GAP_Y = 20;
+      const PADDING_TOP = 80;
+      const PADDING_X = 32;
+
+      const workerX = targetTeam.x + PADDING_X + col * (CARD_W + GAP_X);
+      const workerY = targetTeam.y + PADDING_TOP + row * (CARD_H + GAP_Y);
+
+      const newWorkerNode: CanvasNode = {
+        id,
+        label: agent.name || `Specialist ${count + 1}`,
+        roleTemplate,
+        systemPrompt: agent.systemPrompt || ROLE_DEFAULT_PROMPTS[roleTemplate],
+        modelConfig: {
+          provider: (agent.llmProvider || "openai").toLowerCase(),
+          model: agent.modelName || "gpt-4o-mini",
+          temperature: Number(agent.temperature) || 0.7,
+        },
+        tools,
+        memoryCheckpoint: true,
+        kvPersistence: false,
+        hitlPolicy: "always",
+        parentId: targetTeam.id,
+        isLocked: Boolean(agent.isLocked),
+        catalogAgentId: agent.id,
+        x: workerX,
+        y: workerY,
+        width: 230,
+        height: 100,
+        data: {
+          executionMode: "plan_first",
+          isLocked: Boolean(agent.isLocked),
+          catalogAgentId: agent.id,
+          allowModificationInFlow: agent.allowModificationInFlow !== false,
+        },
+      };
+
+      setNodes((prev) => {
+        return prev
+          .map((n) => (n.id === targetTeam!.id ? { ...n, collapsed: false, width: dims.width, height: dims.height } : n))
+          .concat(additionalNodes)
+          .concat(newWorkerNode);
+      });
+
+      if (autoEdges.length > 0) {
+        setEdges((prev) => [...prev, ...autoEdges]);
+      }
+
+      setSelectedNodeId(id);
+      return;
+    }
+
+    // Supervisor or Synthesizer
+    const posX = roleTemplate === "supervisor" ? 80 : 1200;
+    const posY = 150;
+    const newNode: CanvasNode = {
+      id,
+      label: agent.name || ROLE_CONFIGS[roleTemplate].label,
+      roleTemplate,
+      systemPrompt: agent.systemPrompt || ROLE_DEFAULT_PROMPTS[roleTemplate],
+      modelConfig: {
+        provider: (agent.llmProvider || "openai").toLowerCase(),
+        model: agent.modelName || "gpt-4o-mini",
+        temperature: Number(agent.temperature) || 0.7,
+      },
+      tools,
+      memoryCheckpoint: true,
+      kvPersistence: false,
+      hitlPolicy: "always",
+      isLocked: Boolean(agent.isLocked),
+      catalogAgentId: agent.id,
+      x: posX,
+      y: posY,
+      data: {
+        executionMode: "plan_first",
+        isLocked: Boolean(agent.isLocked),
+        catalogAgentId: agent.id,
+        allowModificationInFlow: agent.allowModificationInFlow !== false,
+      },
     };
 
     setNodes((prev) => [...prev, newNode]);
@@ -1669,9 +1842,9 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
       <div className="flex flex-1 min-h-0 relative">
         {/* Left Palette */}
         {!isPaletteCollapsed && (
-          <div className="flex flex-col gap-2.5 p-4 border-r border-border bg-muted/40 shrink-0 w-48 relative animate-in slide-in-from-left duration-200">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Agent Palette</span>
+          <div className="flex flex-col gap-2.5 p-3.5 border-r border-border bg-muted/40 shrink-0 w-60 relative animate-in slide-in-from-left duration-200">
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Agent Palette</span>
               <button
                 onClick={() => {
                   setIsPaletteCollapsed(true);
@@ -1683,23 +1856,134 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                 <ChevronLeft className="h-3.5 w-3.5" />
               </button>
             </div>
-            {(Object.keys(ROLE_CONFIGS) as AgentRole[]).map((role) => {
-              const config = ROLE_CONFIGS[role];
-              const Icon = config.icon;
-              return (
-                <button
-                  key={role}
-                  type="button"
-                  onClick={() => handleAddNode(role)}
-                  className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-xs font-semibold text-foreground border transition-all text-left bg-card hover:bg-muted ${config.border} hover:scale-[1.02] shadow-xs`}
-                >
-                  <Icon className={`h-4 w-4 text-${config.accent}-600 dark:text-${config.accent}-400 shrink-0`} />
-                  <span className="leading-tight truncate">
-                    {role === "team" ? "Agent Team" : config.label.replace(" Agent", "").replace(" Autonomous Worker", "").replace("Worker / ", "")}
-                  </span>
-                </button>
-              );
-            })}
+
+            {/* Sub-tabs */}
+            <div className="flex items-center bg-card p-0.5 rounded-xl border border-border text-[10px]">
+              <button
+                type="button"
+                onClick={() => setPaletteTab("archetypes")}
+                className={`flex-1 py-1 rounded-lg font-bold transition-all text-center cursor-pointer ${
+                  paletteTab === "archetypes"
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Archetypes
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPaletteTab("catalog");
+                  fetchCatalogAgents();
+                }}
+                className={`flex-1 py-1 rounded-lg font-bold transition-all text-center cursor-pointer ${
+                  paletteTab === "catalog"
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Catalog ({catalogAgents.length})
+              </button>
+            </div>
+
+            {paletteTab === "archetypes" ? (
+              <div className="space-y-2">
+                {(Object.keys(ROLE_CONFIGS) as AgentRole[]).map((role) => {
+                  const config = ROLE_CONFIGS[role];
+                  const Icon = config.icon;
+                  return (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => handleAddNode(role)}
+                      className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-xs font-semibold text-foreground border transition-all text-left bg-card hover:bg-muted ${config.border} hover:scale-[1.02] shadow-xs cursor-pointer`}
+                    >
+                      <Icon className={`h-4 w-4 text-${config.accent}-600 dark:text-${config.accent}-400 shrink-0`} />
+                      <span className="leading-tight truncate">
+                        {role === "team" ? "Agent Team" : config.label.replace(" Agent", "").replace(" Autonomous Worker", "").replace("Worker / ", "")}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2 min-h-0 flex-1">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="w-3 h-3 absolute left-2.5 top-2.5 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={catalogSearch}
+                    onChange={(e) => setCatalogSearch(e.target.value)}
+                    placeholder="Search catalog..."
+                    className="w-full pl-7 pr-2 py-1.5 rounded-lg bg-background border border-border text-[11px] text-foreground focus:outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+
+                {/* Role quick filter */}
+                <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[9px] [&::-webkit-scrollbar]:hidden">
+                  {["all", "specialist", "supervisor", "synthesizer"].map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setCatalogRole(r)}
+                      className={`px-2 py-0.5 rounded capitalize whitespace-nowrap ${
+                        catalogRole === r
+                          ? "bg-primary text-primary-foreground font-bold"
+                          : "bg-card text-muted-foreground hover:text-foreground border border-border"
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Agents List */}
+                <div className="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[440px]">
+                  {loadingCatalog ? (
+                    <div className="text-[11px] text-muted-foreground text-center py-4">Loading agents...</div>
+                  ) : catalogAgents.length === 0 ? (
+                    <div className="text-[11px] text-muted-foreground text-center py-4">
+                      No catalog agents.
+                    </div>
+                  ) : (
+                    catalogAgents
+                      .filter((agent) => {
+                        const matchesSearch =
+                          !catalogSearch ||
+                          agent.name.toLowerCase().includes(catalogSearch.toLowerCase()) ||
+                          agent.role.toLowerCase().includes(catalogSearch.toLowerCase());
+                        const matchesRole =
+                          catalogRole === "all" ||
+                          (catalogRole === "specialist" && (agent.role === "worker" || agent.role === "specialist")) ||
+                          agent.role === catalogRole;
+                        return matchesSearch && matchesRole;
+                      })
+                      .map((agent) => (
+                        <button
+                          key={agent.id}
+                          type="button"
+                          onClick={() => handleAddCatalogAgent(agent)}
+                          className="w-full p-2.5 rounded-xl border border-border bg-card hover:bg-muted text-left transition-all hover:scale-[1.01] shadow-xs space-y-1 cursor-pointer group"
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-xs font-bold text-foreground truncate group-hover:text-primary">
+                              {agent.name}
+                            </span>
+                            {agent.isLocked && (
+                              <Lock className="w-3 h-3 text-amber-500 shrink-0" />
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground font-mono">
+                            <span className="capitalize">{agent.role}</span>
+                            <span>{agent.modelName}</span>
+                          </div>
+                        </button>
+                      ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -2148,15 +2432,22 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
 
                       {!node.collapsed && (
                         <>
-                          <span className={`self-start px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider border ${
-                            customTheme
-                              ? `${customTheme.badgeBg} ${customTheme.badgeText} ${customTheme.badgeBorder}`
-                              : isSupervisor ? "bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30" :
-                              isSynth ? "bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30" :
-                              "bg-teal-100 dark:bg-teal-500/20 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-500/30"
-                          }`}>
-                            {config.label.replace(" Agent", "").replace(" Autonomous Worker", "").replace("Worker / ", "")}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`self-start px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider border ${
+                              customTheme
+                                ? `${customTheme.badgeBg} ${customTheme.badgeText} ${customTheme.badgeBorder}`
+                                : isSupervisor ? "bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30" :
+                                isSynth ? "bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30" :
+                                "bg-teal-100 dark:bg-teal-500/20 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-500/30"
+                            }`}>
+                              {config.label.replace(" Agent", "").replace(" Autonomous Worker", "").replace("Worker / ", "")}
+                            </span>
+                            {node.isLocked && (
+                              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20" title="Locked Enterprise Agent">
+                                <Lock className="w-2.5 h-2.5" /> Locked
+                              </span>
+                            )}
+                          </div>
 
                           <div className="text-xs font-bold text-foreground truncate max-w-full">
                             {node.label}
@@ -2681,6 +2972,8 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
         <AgentDrawer
           node={selectedNode}
           allNodes={nodes}
+          workflowId={workflowId}
+          workflowName={workflowName}
           onClose={() => setDrawerOpen(false)}
           onSave={handleUpdateNode}
         />
