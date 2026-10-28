@@ -21,6 +21,9 @@ import {
   Filter,
   CheckCircle2,
   FileCode,
+  LayoutGrid,
+  List,
+  ArrowUpDown,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +39,9 @@ export function AgentCatalogView() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [originFilter, setOriginFilter] = useState("all");
   const [lockedFilter, setLockedFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortField, setSortField] = useState<"name" | "role" | "model" | "tools" | "updated">("updated");
+  const [sortAsc, setSortAsc] = useState<boolean>(false);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeCanvasNode, setActiveCanvasNode] = useState<CanvasNode | null>(null);
@@ -256,6 +262,41 @@ export function AgentCatalogView() {
     };
   }, [agents]);
 
+  // Sorted agents
+  const sortedAgents = useMemo(() => {
+    return [...agents].sort((a, b) => {
+      if (sortField === "name") {
+        return sortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+      }
+      if (sortField === "role") {
+        return sortAsc ? a.role.localeCompare(b.role) : b.role.localeCompare(a.role);
+      }
+      if (sortField === "model") {
+        const mA = `${a.llmProvider}/${a.modelName}`;
+        const mB = `${b.llmProvider}/${b.modelName}`;
+        return sortAsc ? mA.localeCompare(mB) : mB.localeCompare(mA);
+      }
+      if (sortField === "tools") {
+        const tA = Array.isArray(a.boundTools) ? a.boundTools.length : 0;
+        const tB = Array.isArray(b.boundTools) ? b.boundTools.length : 0;
+        return sortAsc ? tA - tB : tB - tA;
+      }
+      // updated
+      const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return sortAsc ? dateA - dateB : dateB - dateA;
+    });
+  }, [agents, sortField, sortAsc]);
+
+  const toggleSort = (field: "name" | "role" | "model" | "tools" | "updated") => {
+    if (sortField === field) {
+      setSortAsc((prev) => !prev);
+    } else {
+      setSortField(field);
+      setSortAsc(true);
+    }
+  };
+
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "supervisor":
@@ -401,16 +442,44 @@ export function AgentCatalogView() {
             <option value="locked">Locked Only</option>
             <option value="unlocked">Unlocked Only</option>
           </select>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center bg-muted/60 p-1 rounded-xl border border-border ml-1">
+            <button
+              type="button"
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded-lg text-xs font-semibold transition-all ${
+                viewMode === "grid"
+                  ? "bg-card text-foreground shadow-xs border border-border"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="Grid Card View"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={`p-1.5 rounded-lg text-xs font-semibold transition-all ${
+                viewMode === "list"
+                  ? "bg-card text-foreground shadow-xs border border-border"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="High-Density List Table View"
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Agents Grid */}
+      {/* Agents Grid / List View */}
       {loading ? (
         <div className="flex items-center justify-center p-12 text-muted-foreground text-xs">
           <RefreshCw className="w-4 h-4 animate-spin mr-2" />
           Loading universal agent catalog...
         </div>
-      ) : agents.length === 0 ? (
+      ) : sortedAgents.length === 0 ? (
         <div className="p-12 text-center rounded-3xl border border-dashed border-border bg-card">
           <Bot className="w-10 h-10 text-muted-foreground/60 mx-auto mb-3" />
           <h3 className="text-sm font-bold text-foreground">No Agents Found</h3>
@@ -428,9 +497,176 @@ export function AgentCatalogView() {
             </Button>
           </div>
         </div>
+      ) : viewMode === "list" ? (
+        /* High-Density List Mode Table */
+        <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-muted/70 text-muted-foreground border-b border-border font-semibold">
+                <tr>
+                  <th className="py-3 px-4">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort("name")}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors font-semibold"
+                    >
+                      <span>Agent Name &amp; Key</span>
+                      <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  </th>
+                  <th className="py-3 px-4">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort("role")}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors font-semibold"
+                    >
+                      <span>Role Archetype</span>
+                      <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  </th>
+                  <th className="py-3 px-4">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort("model")}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors font-semibold"
+                    >
+                      <span>Provider &amp; Model</span>
+                      <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  </th>
+                  <th className="py-3 px-4">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort("tools")}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors font-semibold"
+                    >
+                      <span>Bound Tools</span>
+                      <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  </th>
+                  <th className="py-3 px-4">Flow Consumption</th>
+                  <th className="py-3 px-4">Policy</th>
+                  <th className="py-3 px-4">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort("updated")}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors font-semibold"
+                    >
+                      <span>Updated</span>
+                      <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  </th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {sortedAgents.map((agent) => {
+                  const toolCount = Array.isArray(agent.boundTools) ? agent.boundTools.length : 0;
+                  return (
+                    <tr key={agent.id} className="hover:bg-muted/40 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
+                            {agent.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <span className="font-bold text-foreground block hover:text-primary transition-colors cursor-pointer" onClick={() => handleEdit(agent)}>
+                              {agent.name}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground font-mono block">
+                              {agent.agentKey}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        {getRoleBadge(agent.role)}
+                      </td>
+                      <td className="py-3 px-4 font-mono text-[11px]">
+                        <span className="text-foreground font-semibold">{agent.llmProvider}</span>
+                        <span className="text-muted-foreground"> / {agent.modelName}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge variant="outline" className="text-[10px] bg-muted font-mono gap-1">
+                          <Wrench className="w-2.5 h-2.5 text-muted-foreground" />
+                          {toolCount} tools
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        {agent.usedInFlows && agent.usedInFlows > 0 ? (
+                          <span
+                            className="text-[10px] text-teal-400 font-mono bg-teal-500/10 px-2 py-0.5 rounded-md border border-teal-500/20 cursor-help inline-flex items-center gap-1"
+                            title={agent.usedFlowNames && agent.usedFlowNames.length > 0 ? `Used in: ${agent.usedFlowNames.join(", ")}` : `Used in ${agent.usedInFlows} flow(s)`}
+                          >
+                            <Workflow className="w-2.5 h-2.5" />
+                            {agent.usedInFlows} flow{agent.usedInFlows > 1 ? "s" : ""}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground font-mono">
+                            Standalone / Unassigned
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        {agent.isLocked ? (
+                          <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-500 border-amber-500/20 gap-1">
+                            <Lock className="w-2.5 h-2.5" /> Locked
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] text-muted-foreground border-border gap-1">
+                            <Unlock className="w-2.5 h-2.5" /> Editable
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+                        {agent.updatedAt ? new Date(agent.updatedAt).toLocaleDateString() : "—"}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleClone(agent)}
+                            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                            title="Clone Agent"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(agent)}
+                            className="h-7 text-xs px-2 gap-1 border-border"
+                          >
+                            <Edit2 className="w-3 h-3" /> Edit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDeleteTarget(agent)}
+                            disabled={agent.isLocked}
+                            className={`h-7 w-7 p-0 ${
+                              agent.isLocked
+                                ? "opacity-30 cursor-not-allowed text-muted-foreground"
+                                : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            }`}
+                            title={agent.isLocked ? "Cannot delete locked agent" : "Delete Agent"}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       ) : (
+        /* Grid Mode Cards */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {agents.map((agent) => {
+          {sortedAgents.map((agent) => {
             const toolCount = Array.isArray(agent.boundTools) ? agent.boundTools.length : 0;
             return (
               <div

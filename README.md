@@ -237,18 +237,31 @@ npm run db:migrate
 * **Automated Technical Context Resolution**: End users are never required to provide technical primary keys or UUIDs (e.g. `weddingId`, `tenantId`, `workspaceId`). The engine automatically resolves root context via assigned single-object and array getter tools (`get_<entity>`) behind the scenes before executing mutating actions, and shields technical foreign IDs from user-facing HITL parameter forms.
 * **Unified Plan-First HITL Approval Card**: When running in Plan-First mode within Agent Workspace (`/dashboard`), execution pauses at the HITL boundary and renders an interactive approval card with full plan step details, implementation summary, parameters pre-populated from clarification prompts, and 4 action buttons (`Approve & Execute Plan`, `Submit Details & Execute`, `Adjust & Re-Plan`, `Reject & Re-Plan`). Resuming dispatches back to the unified orchestrator engine and live-streams results without freezing.
 * **Strict Decoupling of Direct MCP Chat and Published Agentflows**: Agent Workspace strictly separates direct tool execution from multi-agent workflow compilation. Direct MCP mode runs pure, low-latency LLM tool calling scoped exclusively to selected servers without supervisor nodes, plan interrupts, or cross-domain leaks. Published Agentflows mode executes the full LangGraph topology with supervisor coordination, specialist teams, and Human-in-the-Loop plan approvals.
+* **Universal Agent Catalog & Standalone Builder Hub (`/studio/agents`)**: Centrally author, inspect, and test enterprise agents independently of visual agentflow canvas topologies.
+  * **Canonical 8-Tab Agent Inspector**: Configure Identity & Theming, Native & Custom Tools, External Databases, Social Media, MCP Servers, Knowledge Skills & OKF Concepts, Memory & History, and Safety Guardrails.
+  * **Dual-View Exploration Modes**: Toggle seamlessly between visual archetype Grid cards and a high-density List data table with multi-column sorting (Name, Role Archetype, Provider/Model, Tool count, Updated date) and flow consumption badges.
+  * **Enterprise Lock Policy**: Lock critical production agents against tampering on the visual flow canvas (`isLocked: true`).
+  * **Bidirectional Synchronization**: Automatically harvest embedded canvas agents across all draft and published flows into the universal catalog with 'Sync from Flows'.
+
+---
+
+## 🏛️ Governance Hub, Delta Diffing & Real-Time Alerting Engine
+
+SavazAI maintains a transparent, tamper-evident audit ledger and automated alerting engine across all platform mutations:
+
+* **Executive Overview Dashboard**: Real-time operational metrics across Today (24h), 7 Days, or 30 Days featuring 4 KPI cards (Total Events, Security & Model Mutations, Telemetry Executions, System Prompt Revisions), visual category event distribution progress bars, top active operator leaderboards, and recent critical mutations feed.
+* **Automated Alerting Engine**: Configurable email alert rules matching event action patterns (e.g. `LLM_PROVIDER_*`, `ROLE_*`, `PROMPT_*`, `*`) and severity thresholds (`all`, `warning`, `critical`). Includes pre-seeded `governance_alert_notification` HTML email templates, automated background dispatch via dynamic SMTP settings, and 1-click 'Test Alert' verification.
+* **Key-Level Delta Diff Tracking**: Eliminates false multi-mutation audit logs by computing exact field-level differences. When LLM providers or platform configurations are updated, the ledger logs specific mutation actions (`LLM_PROVIDER_UPDATED`) targeting the modified entity. Audit details render side-by-side Red/Green visual diff cards comparing Old vs New values alongside raw JSON view options.
 
 ---
 
 ## 🔐 Zero-Trust Onboarding, Role Management & Self-Service Profile
 
-* **Quarantine Approval Workflow**:
-  - Any applicant onboarding via invitation link and 6-digit OTP is quarantined in `PENDING_APPROVAL` holding zero permissions.
-  - Administrators navigate to **User Admin** (`/admin/users`) $\rightarrow$ **Pending Approvals Queue** tab to review applicants.
-  - Clicking **[ Approve & Assign Profile ]** allows binding the applicant to any of the 6 predefined system profiles (`Workspace Operator`, `Studio Flow Architect`, `Business Policy Manager`, `Infrastructure Lead`, `Auditor`, `Super Administrator`) or a custom role, activating their account.
-* **Roles & Access Profiles Matrix**:
-  - Visual matrix inspects all 53 granular permissions across platform modules.
-  - Administrators can author custom enterprise profiles with tailored permission combinations.
+* **Modular 4-Sub-Tab User Administration (`/admin/users`)**:
+  - **Sub-Tab 1: Active Users Directory (`active`)**: Manage active and suspended operators with multi-role assignments, self-assignment elevation prevention, account suspension, session revocation, and password resets.
+  - **Sub-Tab 2: Pending Approvals Queue (`pending`)**: Isolates any applicant onboarding via invitation link/OTP in a quarantined state holding zero permissions. Administrators review applicants and execute **[ Approve & Assign Profile ]** to bind them to one of 6 predefined profiles or a custom role.
+  - **Sub-Tab 3: Roles & Access Profiles (`roles`)**: Author and manage system and custom roles with Dual-View (Grid & List) and interactive assigned user count badges (with hover tooltips listing members and click-to-filter navigation to the Active Users Directory).
+  - **Sub-Tab 4: Platform Authorization Matrix (`matrix`)**: Dedicated full-width interactive cross-reference matrix displaying all 68 granular platform permissions across 7 functional categories (including 5 granular Agent Builder permissions).
 * **Self-Service Operator Profile Hub (`/profile`)**:
   - Authenticated operators can update their display name, location/address region, and upload custom avatars.
   - Operators can securely change their password (with old password verification) and inspect their active granted permissions in real time.

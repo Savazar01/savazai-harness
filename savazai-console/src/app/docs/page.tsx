@@ -180,11 +180,11 @@ const DOCS_MODULES: DocModule[] = [
         id: "understanding-roles",
         title: "Understanding User Roles & Access Profiles",
         badge: "Safety Rule",
-        summary: "SavazAI implements a fine-grained 53-permission Role-Based Access Control (RBAC) matrix grouped under 6 predefined enterprise profiles alongside custom profile support.",
+        summary: "SavazAI implements a fine-grained 68-permission Role-Based Access Control (RBAC) matrix grouped under 6 predefined enterprise profiles alongside custom profile support.",
         highlights: [
           {
             label: "Super Administrator",
-            description: "Holds all 53 permissions across all platform modules, system settings, user provisioning, and credential vaults."
+            description: "Holds all 68 permissions across all platform modules, system settings, user provisioning, and credential vaults."
           },
           {
             label: "Studio Flow Architect",
@@ -333,6 +333,30 @@ const DOCS_MODULES: DocModule[] = [
     icon: BrainCircuit,
     description: "Discover how to inspect agent skills, build visual Agentflows, coordinate Collapsible Agent Teams, and use tabular tool selectors.",
     sections: [
+      {
+        id: "agent-builder-catalog",
+        title: "Agent Catalog & Standalone Builder Hub (/studio/agents)",
+        badge: "Overview",
+        summary: "Centrally author, configure, version, and manage reusable enterprise agents independently of visual workflows.",
+        highlights: [
+          {
+            label: "Dual-View Exploration (Grid & List)",
+            description: "Toggle seamlessly between visual archetype Grid cards and a high-density, multi-column sortable List table (by Name, Role, Model, Tools, or Updated date)."
+          },
+          {
+            label: "Canonical 8-Tab Agent Inspector",
+            description: "Configure Identity & Theming, Native & Custom Tools, External Databases, Social Media, MCP Servers, Knowledge Skills & OKF, Memory & History, and Safety Guardrails."
+          },
+          {
+            label: "Enterprise Lock Policy",
+            description: "Lock critical production agents against unauthorized modifications on the visual flow canvas, preserving enterprise compliance."
+          },
+          {
+            label: "Bidirectional Flow Synchronization",
+            description: "Click 'Sync from Flows' to automatically harvest and catalog embedded agents across all draft and published canvas workflows."
+          }
+        ]
+      },
       {
         id: "what-are-skills",
         title: "What are Skills in SavazAI?",
@@ -528,6 +552,26 @@ const DOCS_MODULES: DocModule[] = [
             description: "Review comprehensive records detailing the exact date/time, model used, latency in milliseconds, tools invoked, and token expenditure for every user interaction."
           }
         ]
+      },
+      {
+        id: "governance-dashboard-alerts",
+        title: "Governance Overview Dashboard, Alerting Engine & Key Delta Diffs",
+        badge: "Admin Only",
+        summary: "The dedicated Governance Hub (/governance) features an executive analytics dashboard, real-time alerting engine, and granular key-level delta diffing.",
+        highlights: [
+          {
+            label: "Overview Dashboard & Timeframe Analytics",
+            description: "Track Total Events, Security Mutations, LLM Telemetry, and Prompt Revisions across Today (24h), 7 Days, or 30 Days with visual category distribution progress bars and top operator leaderboards."
+          },
+          {
+            label: "Automated Alerting Engine",
+            description: "Configure custom email notification rules matching event action patterns (e.g. LLM_PROVIDER_*, ROLE_*, PROMPT_*) and severity thresholds with 1-click test alert dispatches."
+          },
+          {
+            label: "Key-Level Delta Diff Tracking",
+            description: "Eliminates false multi-mutation audit logs by calculating field-level changes. View side-by-side Red/Green visual diffs comparing Old vs New values directly within audit record details."
+          }
+        ]
       }
     ]
   },
@@ -621,21 +665,25 @@ const DOCS_MODULES: DocModule[] = [
     sections: [
       {
         id: "modular-user-admin",
-        title: "Modular 3-Sub-Tab User Administration Hub",
+        title: "Modular 4-Sub-Tab User Administration Hub",
         badge: "Admin Only",
-        summary: "User Administration (/admin/users) provides a comprehensive, segregated layout for managing identity and access governance.",
+        summary: "User Administration (/admin/users) provides a comprehensive, segregated layout for managing identity, assigned operators, and access governance across 4 dedicated tabs.",
         highlights: [
           {
             label: "Active Users Directory (Tab 1)",
-            description: "View and manage active and suspended operators with live status pills, role editing, account suspension, session revocation, and password resets."
+            description: "View and manage active and suspended operators with live status pills, multi-role editing, account suspension, session revocation, and password resets."
           },
           {
             label: "Pending Approvals Queue (Tab 2)",
             description: "Isolates any applicant registered via tokenized invitation in a quarantined state with zero permissions. Features dynamic count badges and '[ Approve & Assign Profile ]' action."
           },
           {
-            label: "Roles & Access Profiles Matrix (Tab 3)",
-            description: "Inspect and manage the 6 predefined enterprise system profiles and create custom tailored profiles across the 53 platform permissions."
+            label: "Roles & Access Profiles (Tab 3)",
+            description: "Inspect and author roles in Dual-View (Grid & List) with live assigned user count badges (with hover tooltips and click-to-filter navigation to Active Users)."
+          },
+          {
+            label: "Platform Authorization Matrix (Tab 4)",
+            description: "Dedicated, uncluttered full-width cross-reference matrix displaying all 68 granular permissions across all system and custom profiles."
           }
         ]
       },

@@ -39,6 +39,11 @@ export const PERMISSION_REGISTRY: PermissionDefinition[] = [
   { resource: "capability_studio", action: "export_json", label: "Export JSON", category: "Capability Studio", description: "Export canvas definitions as JSON" },
   { resource: "capability_studio", action: "import_json", label: "Import JSON", category: "Capability Studio", description: "Import canvas definitions from JSON" },
   { resource: "capability_studio", action: "delete_flow", label: "Delete Agentflows", category: "Capability Studio", description: "Delete agentflows from workspace" },
+  { resource: "capability_studio", action: "agent_builder_view", label: "View Agent Catalog", category: "Capability Studio", subCategory: "Agent Builder", description: "View standalone agents catalog and inspector" },
+  { resource: "capability_studio", action: "agent_builder_create", label: "Create Standalone Agents", category: "Capability Studio", subCategory: "Agent Builder", description: "Author new reusable enterprise agents" },
+  { resource: "capability_studio", action: "agent_builder_edit", label: "Edit Catalog Agents", category: "Capability Studio", subCategory: "Agent Builder", description: "Update agent prompts, tools, and configurations" },
+  { resource: "capability_studio", action: "agent_builder_delete", label: "Delete Catalog Agents", category: "Capability Studio", subCategory: "Agent Builder", description: "Remove agents from universal catalog" },
+  { resource: "capability_studio", action: "agent_builder_lock", label: "Toggle Enterprise Lock", category: "Capability Studio", subCategory: "Agent Builder", description: "Toggle enterprise lock / immutability policy" },
 
   // Business Center - Universal Skills
   { resource: "business_center", action: "skills_view", label: "View Universal Skills", category: "Business Center", subCategory: "Skills Registry", description: "View skills registry table" },

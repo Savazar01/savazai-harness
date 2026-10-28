@@ -258,7 +258,7 @@ export default async function Home() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 mb-5">
                   <Key className="h-5 w-5" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">53-Permission RBAC Matrix</h3>
+                <h3 className="text-lg font-bold text-foreground mb-2">68-Permission RBAC Matrix</h3>
                 <p className="text-muted-foreground text-xs leading-relaxed">
                   6 predefined system access profiles (Super Admin, Studio Architect, Workspace Operator, Policy Manager, Infra Lead, Auditor) plus custom enterprise role composition across 7 functional categories.
                 </p>

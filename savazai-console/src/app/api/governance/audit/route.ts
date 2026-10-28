@@ -92,6 +92,86 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    if (tab === "overview") {
+      const days = parseInt(searchParams.get("days") || "30", 10);
+      const intervalStr = `${days} days`;
+
+      // 1. Total events in timeframe
+      const totalEventsRes = await pool.query(
+        "SELECT COUNT(*)::int as count FROM system_audit_logs WHERE created_at >= now() - $1::interval",
+        [intervalStr]
+      );
+      const total24hRes = await pool.query(
+        "SELECT COUNT(*)::int as count FROM system_audit_logs WHERE created_at >= now() - interval '24 hours'"
+      );
+      const total7dRes = await pool.query(
+        "SELECT COUNT(*)::int as count FROM system_audit_logs WHERE created_at >= now() - interval '7 days'"
+      );
+
+      // 2. Critical mutations
+      const criticalRes = await pool.query(
+        `SELECT COUNT(*)::int as count FROM system_audit_logs 
+         WHERE created_at >= now() - $1::interval
+           AND (
+             action ILIKE '%ROLE%' OR action ILIKE '%KEY%' OR action ILIKE '%PASSWORD%' 
+             OR action ILIKE '%SUSPEND%' OR action ILIKE '%DELETE%' OR action ILIKE '%LLM_PROVIDER%'
+           )`,
+        [intervalStr]
+      );
+
+      // 3. Telemetry executions
+      const telemetryRes = await pool.query(
+        "SELECT COUNT(*)::int as count FROM telemetry_logs WHERE created_at >= now() - $1::interval",
+        [intervalStr]
+      );
+
+      // 4. Prompt revisions
+      const promptsRes = await pool.query("SELECT COUNT(*)::int as count FROM prompt_revisions");
+
+      // 5. Category breakdown
+      const breakdownRes = await pool.query(
+        `SELECT category, COUNT(*)::int as count FROM system_audit_logs 
+         WHERE created_at >= now() - $1::interval 
+         GROUP BY category ORDER BY count DESC`,
+        [intervalStr]
+      );
+
+      // 6. Top active actors
+      const topActorsRes = await pool.query(
+        `SELECT COALESCE(user_email, 'system@savazai.local') as email, COUNT(*)::int as count 
+         FROM system_audit_logs 
+         WHERE created_at >= now() - $1::interval 
+         GROUP BY user_email ORDER BY count DESC LIMIT 6`,
+        [intervalStr]
+      );
+
+      // 7. Recent critical mutations
+      const recentMutationsRes = await pool.query(
+        `SELECT id, category, action, resource, target_id as "targetId", target_name as "targetName",
+                details, user_email as "actorEmail", ip_address as "ipAddress", created_at as "createdAt"
+         FROM system_audit_logs
+         ORDER BY created_at DESC
+         LIMIT 10`
+      );
+
+      return new Response(
+        JSON.stringify({
+          overview: {
+            totalEvents: totalEventsRes.rows[0]?.count || 0,
+            total24h: total24hRes.rows[0]?.count || 0,
+            total7d: total7dRes.rows[0]?.count || 0,
+            criticalMutations: criticalRes.rows[0]?.count || 0,
+            activeTelemetry: telemetryRes.rows[0]?.count || 0,
+            promptRevisions: promptsRes.rows[0]?.count || 0,
+            categoryBreakdown: breakdownRes.rows || [],
+            topActors: topActorsRes.rows || [],
+            recentMutations: recentMutationsRes.rows || [],
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     if (tab === "user_admin") {
       const countRes = await pool.query(
         `SELECT COUNT(*) as total FROM system_audit_logs

@@ -1,4 +1,5 @@
 import { pool, ensureAdminProvisioned } from "@/lib/auth";
+import { dispatchGovernanceAlert } from "@/lib/alerts/governance-alerter";
 
 export type AuditCategory =
   | "USER_ADMIN"
@@ -51,6 +52,11 @@ export async function logAuditEvent(entry: AuditLogEntry): Promise<void> {
         entry.ipAddress || null,
       ]
     );
+
+    // Asynchronously dispatch any matched governance alert rules (non-blocking)
+    dispatchGovernanceAlert(entry).catch((alertErr) => {
+      console.warn("[AuditLogger] Governance alert dispatch notice:", alertErr);
+    });
   } catch (err) {
     console.warn("[AuditLogger] Failed to write audit event:", err);
   }

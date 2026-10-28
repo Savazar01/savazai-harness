@@ -7,6 +7,7 @@ import type { LLMProviderConfig } from "@/components/theme-provider";
 import { encrypt } from "@/lib/crypto";
 import { requirePermission } from "@/lib/auth/rbac";
 import { logAuditEvent } from "@/lib/audit/audit-logger";
+import { calculateLlmProviderDiffs, computeObjectDiffs } from "@/lib/audit/delta-calculator";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -270,30 +271,77 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
       ]
     );
 
-    await logAuditEvent({
-      category: "COMMAND_CENTER",
-      action: "SETTINGS_UPDATED",
-      resource: "system_configurations",
-      actorId: check.context?.userId,
-      actorEmail: check.context?.email,
-      targetId: configId,
-      targetName: input.appTitle || "System Configuration",
-      details: {
-        updatedFields: Object.keys(input).filter((k) => (input as any)[k] !== undefined),
-      },
-    }).catch((err) => console.warn("[system_audit_logs] Insert warning:", err));
+    // 1. Check granular LLM provider diffs
+    if (input.llmProviders !== undefined) {
+      const llmEvents = calculateLlmProviderDiffs(
+        (currentTokens.llmProviders as Record<string, any>) || {},
+        input.llmProviders
+      );
+      for (const ev of llmEvents) {
+        await logAuditEvent({
+          category: ev.category,
+          action: ev.action,
+          resource: ev.resource,
+          actorId: check.context?.userId,
+          actorEmail: check.context?.email,
+          targetId: ev.targetId,
+          targetName: ev.targetName,
+          details: ev.details,
+        }).catch((err) => console.warn("[system_audit_logs] Insert warning:", err));
+      }
+    }
 
-    if (input.organizationalData) {
-      const org = typeof input.organizationalData === "string" ? JSON.parse(input.organizationalData) : input.organizationalData;
+    // 2. Check organizational data diffs ONLY if passed and actually modified
+    if (input.organizationalData !== undefined) {
+      const oldOrg = (currentTokens.organizationalData as Record<string, any>) || {};
+      const newOrg = typeof input.organizationalData === "string" ? JSON.parse(input.organizationalData) : input.organizationalData;
+      const orgChanges = computeObjectDiffs(oldOrg, newOrg);
+      if (orgChanges.length > 0) {
+        await logAuditEvent({
+          category: "SYSTEM_ADMIN",
+          action: "ORGANIZATIONAL_DATA_UPDATED",
+          resource: "system_configurations",
+          actorId: check.context?.userId,
+          actorEmail: check.context?.email,
+          targetId: configId,
+          targetName: newOrg.companyName || "Organization",
+          details: {
+            companyName: newOrg.companyName,
+            country: newOrg.country,
+            changes: orgChanges,
+          },
+        }).catch((err) => console.warn("[system_audit_logs] Insert warning:", err));
+      }
+    }
+
+    // 3. General settings diffs (appearance, branding, general configuration)
+    const generalKeysToCompare = [
+      "appTitle", "brandLogoUrl", "faviconUrl", "primaryColor", "secondaryColor",
+      "background", "themeMode", "accentPreset", "accentCustom", "surfaceTone",
+      "radius", "density", "fontSans", "promptFontSize", "promptFontFamily",
+      "showAgentWorkspace", "globalSystemPrompt", "orchestrationRules"
+    ];
+    const oldGeneral: Record<string, any> = {};
+    const newGeneral: Record<string, any> = {};
+    for (const gk of generalKeysToCompare) {
+      if ((input as any)[gk] !== undefined) {
+        oldGeneral[gk] = (currentTokens as any)[gk];
+        newGeneral[gk] = (input as any)[gk];
+      }
+    }
+    const generalChanges = computeObjectDiffs(oldGeneral, newGeneral);
+    if (generalChanges.length > 0) {
       await logAuditEvent({
         category: "COMMAND_CENTER",
-        action: "ORGANIZATIONAL_DATA_UPDATED",
+        action: "SETTINGS_UPDATED",
         resource: "system_configurations",
         actorId: check.context?.userId,
         actorEmail: check.context?.email,
         targetId: configId,
-        targetName: org.companyName || "Organization",
-        details: { companyName: org.companyName, country: org.country },
+        targetName: input.appTitle || "System Configuration",
+        details: {
+          changes: generalChanges,
+        },
       }).catch((err) => console.warn("[system_audit_logs] Insert warning:", err));
     }
 

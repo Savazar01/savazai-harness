@@ -29,6 +29,8 @@ import {
   UserCheck,
   UserX,
   ExternalLink,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { PERMISSION_REGISTRY, CATEGORY_LABELS, PermissionDefinition } from "@/lib/auth/permissions-registry";
@@ -65,7 +67,8 @@ export function UserManagement() {
   const currentUserId = session?.user?.id;
 
   // Active top sub-tab
-  const [activeTab, setActiveTab] = useState<"active" | "pending" | "matrix">("active");
+  const [activeTab, setActiveTab] = useState<"active" | "pending" | "roles" | "matrix">("active");
+  const [roleViewMode, setRoleViewMode] = useState<"grid" | "list">("grid");
 
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [roles, setRoles] = useState<RoleWithPermissions[]>([]);
@@ -575,7 +578,7 @@ export function UserManagement() {
       </div>
 
       {/* Sub-Tab Navigation Bar */}
-      <div className="flex items-center gap-2 border-b border-border pb-3">
+      <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
         <button
           onClick={() => setActiveTab("active")}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
@@ -606,6 +609,18 @@ export function UserManagement() {
         </button>
 
         <button
+          onClick={() => setActiveTab("roles")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === "roles"
+              ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+          }`}
+        >
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Roles &amp; Access Profiles ({roles.length})
+        </button>
+
+        <button
           onClick={() => setActiveTab("matrix")}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
             activeTab === "matrix"
@@ -614,7 +629,7 @@ export function UserManagement() {
           }`}
         >
           <Layers className="h-3.5 w-3.5" />
-          Roles &amp; Access Profiles Matrix ({roles.length})
+          Platform Authorization Matrix ({PERMISSION_REGISTRY.length})
         </button>
       </div>
 
@@ -957,112 +972,291 @@ export function UserManagement() {
         </div>
       )}
 
-      {/* ── TAB 3: ROLES & ACCESS PROFILES MATRIX ── */}
-      {activeTab === "matrix" && (
+      {/* ── TAB 3: ROLES & ACCESS PROFILES ── */}
+      {activeTab === "roles" && (
         <div className="space-y-6">
-          {/* Header & Create Role Button */}
+          {/* Header & Controls Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-indigo-400" />
-                Predefined System Roles &amp; Dynamic RBAC Matrix
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                Predefined System Roles &amp; Custom Access Profiles ({roles.length})
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                The platform enforces 53 granular permissions grouped across 7 operational modules.
+                Manage platform roles, capabilities assignments, and member bindings.
               </p>
             </div>
 
-            <button
-              onClick={() => {
-                setNewRoleName("");
-                setNewRoleDesc("");
-                setNewRolePerms(new Set());
-                setFormError(null);
-                setIsCreateRoleOpen(true);
-              }}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/25 transition-all w-fit"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              + Create Custom Profile
-            </button>
+            <div className="flex items-center gap-2.5">
+              {/* Dual-View Switcher */}
+              <div className="flex items-center bg-muted/60 p-1 rounded-xl border border-border">
+                <button
+                  type="button"
+                  onClick={() => setRoleViewMode("grid")}
+                  className={`p-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    roleViewMode === "grid"
+                      ? "bg-card text-foreground shadow-xs border border-border"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Grid Cards View"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRoleViewMode("list")}
+                  className={`p-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    roleViewMode === "list"
+                      ? "bg-card text-foreground shadow-xs border border-border"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="List Table View"
+                >
+                  <List className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  setNewRoleName("");
+                  setNewRoleDesc("");
+                  setNewRolePerms(new Set());
+                  setFormError(null);
+                  setIsCreateRoleOpen(true);
+                }}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-lg shadow-primary/25 transition-all w-fit"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                + Create Custom Profile
+              </button>
+            </div>
           </div>
 
-          {/* Role Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {roles.map((r) => {
-              const isSuperAdminRole = r.id === "role_super_admin" || r.name === "Super Administrator";
-              return (
-                <div
-                  key={r.id}
-                  className="rounded-2xl border border-border bg-card p-5 hover:border-primary/40 transition-all flex flex-col justify-between shadow-xs"
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <h3 className="text-sm font-bold text-foreground tracking-wide truncate" title={r.name}>{r.name}</h3>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
-                            r.isSystem
-                              ? "bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 border-indigo-500/30"
-                              : "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/30"
-                          }`}
-                        >
-                          {r.isSystem ? "System Profile" : "Custom"}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditRole(r)}
-                          className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-xs"
-                          title={`Edit ${r.name}`}
-                        >
-                          <Edit3 className="h-3.5 w-3.5" />
-                        </button>
-                        {!isSuperAdminRole ? (
+          {/* Role Profiles: Grid Mode */}
+          {roleViewMode === "grid" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {roles.map((r) => {
+                const isSuperAdminRole = r.id === "role_super_admin" || r.name === "Super Administrator";
+                const assignedUsers = activeUsers.filter((u) => {
+                  if (isSuperAdminRole && (u.role === "admin" || u.roleId === "role_super_admin")) return true;
+                  if (u.roleId === r.id) return true;
+                  if (u.roleIds && u.roleIds.includes(r.id)) return true;
+                  if (u.roleName === r.name) return true;
+                  if (u.roleNames && u.roleNames.includes(r.name)) return true;
+                  return false;
+                });
+
+                return (
+                  <div
+                    key={r.id}
+                    className="rounded-2xl border border-border bg-card p-5 hover:border-primary/40 transition-all flex flex-col justify-between shadow-xs space-y-4"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <h3 className="text-sm font-bold text-foreground tracking-wide truncate" title={r.name}>
+                          {r.name}
+                        </h3>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
+                              r.isSystem
+                                ? "bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 border-indigo-500/30"
+                                : "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/30"
+                            }`}
+                          >
+                            {r.isSystem ? "System Profile" : "Custom"}
+                          </span>
                           <button
                             type="button"
-                            onClick={() => { setDeletingRole(r); setIsDeleteRoleOpen(true); }}
-                            className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer shadow-xs"
-                            title={`Delete ${r.name}`}
+                            onClick={() => handleOpenEditRole(r)}
+                            className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-xs"
+                            title={`Edit ${r.name}`}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Edit3 className="h-3.5 w-3.5" />
                           </button>
-                        ) : (
-                          <div
-                            className="p-1.5 rounded-lg border border-border/50 bg-muted/20 text-muted-foreground/40 cursor-not-allowed"
-                            title="Super Administrator role is protected against deletion to prevent platform lockout"
-                          >
-                            <Lock className="h-3.5 w-3.5" />
-                          </div>
-                        )}
+                          {!isSuperAdminRole ? (
+                            <button
+                              type="button"
+                              onClick={() => { setDeletingRole(r); setIsDeleteRoleOpen(true); }}
+                              className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer shadow-xs"
+                              title={`Delete ${r.name}`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          ) : (
+                            <div
+                              className="p-1.5 rounded-lg border border-border/50 bg-muted/20 text-muted-foreground/40 cursor-not-allowed"
+                              title="Super Administrator role is protected against deletion to prevent platform lockout"
+                            >
+                              <Lock className="h-3.5 w-3.5" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                        {r.description || "No description provided."}
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 pt-3 border-t border-border">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Assigned Operators:</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRoleFilter(isSuperAdminRole ? "admin" : r.id);
+                            setActiveTab("active");
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-[11px] font-semibold transition-colors cursor-pointer"
+                          title={
+                            assignedUsers.length > 0
+                              ? `Assigned operators: ${assignedUsers.map((u) => u.name || u.email).join(", ")}`
+                              : "No operators currently assigned. Click to view."
+                          }
+                        >
+                          <Users className="w-3 h-3" />
+                          <span>{assignedUsers.length} Users Assigned</span>
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs font-mono text-muted-foreground">
+                        <span>Authorized Capabilities:</span>
+                        <span className="font-bold text-foreground bg-muted border border-border px-2 py-0.5 rounded-md">
+                          {r.permissions?.length || 0} / {PERMISSION_REGISTRY.length}
+                        </span>
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                      {r.description || "No description provided."}
-                    </p>
                   </div>
+                );
+              })}
+            </div>
+          ) : (
+            /* Role Profiles: List Mode Table */
+            <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50 text-muted-foreground font-semibold tracking-wider text-[11px]">
+                      <th className="py-3 px-4">Role Profile Name</th>
+                      <th className="py-3 px-4">Type</th>
+                      <th className="py-3 px-4">Description</th>
+                      <th className="py-3 px-4">Assigned Operators</th>
+                      <th className="py-3 px-4">Capabilities</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {roles.map((r) => {
+                      const isSuperAdminRole = r.id === "role_super_admin" || r.name === "Super Administrator";
+                      const assignedUsers = activeUsers.filter((u) => {
+                        if (isSuperAdminRole && (u.role === "admin" || u.roleId === "role_super_admin")) return true;
+                        if (u.roleId === r.id) return true;
+                        if (u.roleIds && u.roleIds.includes(r.id)) return true;
+                        if (u.roleName === r.name) return true;
+                        if (u.roleNames && u.roleNames.includes(r.name)) return true;
+                        return false;
+                      });
 
-                  <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs font-mono text-muted-foreground">
-                    <span>Authorized Capabilities:</span>
-                    <span className="font-bold text-foreground bg-muted border border-border px-2 py-0.5 rounded-md">
-                      {r.permissions?.length || 0} / {PERMISSION_REGISTRY.length}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+                      return (
+                        <tr key={r.id} className="hover:bg-muted/40 transition-colors">
+                          <td className="py-3 px-4">
+                            <span className="font-bold text-foreground block text-sm">{r.name}</span>
+                            <span className="text-[10px] text-muted-foreground font-mono">ID: {r.id}</span>
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
+                                r.isSystem
+                                  ? "bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 border-indigo-500/30"
+                                  : "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/30"
+                              }`}
+                            >
+                              {r.isSystem ? "System Profile" : "Custom"}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-muted-foreground max-w-sm truncate">
+                            {r.description || "No description provided."}
+                          </td>
+                          <td className="py-3 px-4">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRoleFilter(isSuperAdminRole ? "admin" : r.id);
+                                setActiveTab("active");
+                              }}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-[11px] font-semibold transition-colors cursor-pointer"
+                              title={
+                                assignedUsers.length > 0
+                                  ? `Assigned operators: ${assignedUsers.map((u) => u.name || u.email).join(", ")}`
+                                  : "No operators currently assigned. Click to view."
+                              }
+                            >
+                              <Users className="w-3 h-3" />
+                              <span>{assignedUsers.length} Users Assigned</span>
+                            </button>
+                          </td>
+                          <td className="py-3 px-4 font-mono font-bold text-foreground">
+                            {r.permissions?.length || 0} / {PERMISSION_REGISTRY.length}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditRole(r)}
+                                className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-xs"
+                                title={`Edit ${r.name}`}
+                              >
+                                <Edit3 className="h-3.5 w-3.5" />
+                              </button>
+                              {!isSuperAdminRole ? (
+                                <button
+                                  type="button"
+                                  onClick={() => { setDeletingRole(r); setIsDeleteRoleOpen(true); }}
+                                  className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer shadow-xs"
+                                  title={`Delete ${r.name}`}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              ) : (
+                                <div
+                                  className="p-1.5 rounded-lg border border-border/50 bg-muted/20 text-muted-foreground/40 cursor-not-allowed"
+                                  title="Protected role"
+                                >
+                                  <Lock className="h-3.5 w-3.5" />
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── TAB 4: PLATFORM AUTHORIZATION MATRIX ── */}
+      {activeTab === "matrix" && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-card border border-border shadow-xs">
+            <div>
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                <Layers className="h-4 w-4 text-primary" />
+                Dedicated Platform Authorization Matrix ({PERMISSION_REGISTRY.length} Permissions)
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Comprehensive permission cross-reference matrix across all {roles.length} system and custom roles.
+              </p>
+            </div>
+            <div className="text-xs font-mono text-muted-foreground bg-muted px-3 py-1.5 rounded-xl border border-border">
+              {roles.length} Profiles • 7 Capability Domains
+            </div>
           </div>
 
-          {/* Interactive 53-Permission Matrix Table */}
           <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
-            <div className="p-4 border-b border-border bg-muted/40 flex items-center justify-between">
-              <span className="text-xs font-bold text-foreground uppercase tracking-wider">
-                Full Platform Authorization Matrix ({PERMISSION_REGISTRY.length} Permissions)
-              </span>
-              <span className="text-xs text-muted-foreground font-mono">
-                {roles.length} Roles Registered
-              </span>
-            </div>
-
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
