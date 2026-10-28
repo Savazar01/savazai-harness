@@ -18,6 +18,8 @@ import {
   Share2,
   Maximize2,
   Minimize2,
+  Lock,
+  Unlock,
 } from "lucide-react";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
 import { AiAssistButton } from "@/components/shared/ai-assist-button";
@@ -47,11 +49,12 @@ interface RegisteredTool {
   description: string;
 }
 
-interface AgentDrawerProps {
+export interface AgentDrawerProps {
+  mode?: "flow_node" | "standalone_builder";
   node: CanvasNode;
   allNodes?: CanvasNode[];
   onClose: () => void;
-  onSave: (updated: CanvasNode) => void;
+  onSave: (updated: CanvasNode) => void | Promise<void>;
   workflowId?: string;
   workflowName?: string;
 }
@@ -86,11 +89,23 @@ export const COLOR_PRESETS = [
   { id: "slate", label: "Slate", bg: "bg-muted/70 dark:bg-muted/40", border: "border-border", ring: "ring-border", dot: "#94a3b8" },
 ];
 
-export function AgentDrawer({ node, allNodes = [], onClose, onSave, workflowId, workflowName }: AgentDrawerProps) {
+export function AgentDrawer({
+  mode = "flow_node",
+  node,
+  allNodes = [],
+  onClose,
+  onSave,
+  workflowId,
+  workflowName,
+}: AgentDrawerProps) {
   const [activeTab, setActiveTab] = useState<"identity" | "tools" | "databases" | "social" | "mcp" | "knowledge" | "memory" | "guardrails">("identity");
-  const isNodeLocked = Boolean(node.isLocked || (node.data as any)?.isLocked);
+  const [isNodeLocked, setIsNodeLocked] = useState<boolean>(Boolean(node.isLocked || (node.data as any)?.isLocked));
+  const [allowModificationInFlow, setAllowModificationInFlow] = useState<boolean>((node.data as any)?.allowModificationInFlow !== false);
 
   const [label, setLabel] = useState(node.label);
+  const [description, setDescription] = useState<string>((node.data?.description as string) || "");
+  const [agentKey, setAgentKey] = useState<string>((node.data?.agentKey as string) || "");
+  const [saving, setSaving] = useState(false);
   const [roleTemplate, setRoleTemplate] = useState<AgentRole>(node.roleTemplate || "worker");
   const [parentId, setParentId] = useState<string | undefined>(node.parentId);
   const [customColor, setCustomColor] = useState<string>(node.customColor || "default");
@@ -265,7 +280,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave, workflowId, 
     onClose();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     let newX = node.x;
     let newY = node.y;
     const finalParentId = roleTemplate === "team" ? undefined : parentId;
@@ -291,7 +306,7 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave, workflowId, 
           agentName: label,
           agentRole: roleTemplate,
           agentflowId: workflowId || "standalone",
-          agentflowTitle: workflowName,
+          agentflowTitle: workflowName || (mode === "standalone_builder" ? "Standalone Agent Builder" : undefined),
           systemPrompt: systemPrompt.trim(),
         }),
       }).catch((e) => console.warn("[prompt-revision snapshot error]:", e));
@@ -317,12 +332,23 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave, workflowId, 
       y: newY,
       data: {
         ...node.data,
+        description,
+        agentKey,
         executionMode,
         isLocked: isNodeLocked,
+        allowModificationInFlow,
       },
     };
-    onSave(updated);
-    onClose();
+
+    try {
+      setSaving(true);
+      await onSave(updated);
+      onClose();
+    } catch (err) {
+      setAlertMessage(err instanceof Error ? err.message : "Failed to apply agent configuration.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleToggleTool = (
@@ -461,8 +487,14 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave, workflowId, 
           <div className="flex items-center gap-3">
             <Bot className="h-5 w-5 text-indigo-400" />
             <div>
-              <h4 className="text-sm font-bold text-foreground">Agent Inspector</h4>
-              <p className="text-[10px] text-muted-foreground">Configure identity, tools, knowledge, memory, and guardrails</p>
+              <h4 className="text-sm font-bold text-foreground">
+                {mode === "standalone_builder" ? "Agent Inspector — Universal Agent Catalog" : "Agent Inspector"}
+              </h4>
+              <p className="text-[10px] text-muted-foreground">
+                {mode === "standalone_builder"
+                  ? "Author, configure, and govern standalone agent definitions across all 8 capability tabs"
+                  : "Configure identity, tools, knowledge, memory, and guardrails"}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -470,11 +502,11 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave, workflowId, 
               type="button"
               onClick={() => setIsDrawerExpanded(!isDrawerExpanded)}
               title={isDrawerExpanded ? "Collapse Inspector Width" : "Expand Inspector Width"}
-              className="text-muted-foreground hover:text-foreground p-1.5 hover:bg-muted rounded-xl transition-all flex items-center gap-1 text-[11px] font-bold"
+              className="text-muted-foreground hover:text-foreground p-1.5 hover:bg-muted rounded-xl transition-all flex items-center gap-1 text-[11px] font-bold cursor-pointer"
             >
               {isDrawerExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </button>
-            <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-xl transition-all">
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-xl transition-all cursor-pointer">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -527,12 +559,26 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave, workflowId, 
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Agent Name</label>
-                  <HelpTooltip content="A human-readable label for this agent node. Used on the canvas and in execution logs to identify the agent." side="right" />
+                  <HelpTooltip content="A human-readable label for this agent node. Used on the canvas, catalog, and in execution logs to identify the agent." side="right" />
                 </div>
                 <input
                   type="text"
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-4 text-xs text-foreground outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Agent Description</label>
+                  <HelpTooltip content="Brief summary of the agent's purpose, specialization, and execution scope." side="right" />
+                </div>
+                <input
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="e.g. Manages wedding vendor inquiries, quote comparisons, and contract terms"
                   className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-4 text-xs text-foreground outline-none focus:border-indigo-500"
                 />
               </div>
@@ -617,22 +663,48 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave, workflowId, 
                     <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Assigned Team Container</label>
                     <HelpTooltip content="Assign this specialist worker to a visual Team Container to bundle execution into a clean bus pipeline." side="right" />
                   </div>
-                  <select
-                    value={parentId || ""}
-                    onChange={(e) => setParentId(e.target.value ? e.target.value : undefined)}
-                    className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground outline-none focus:border-indigo-500 font-medium"
-                  >
-                    <option value="">(None — Standalone Specialist)</option>
-                    {allNodes
-                      ?.filter((n) => n.roleTemplate === "team" && n.id !== node.id)
-                      .map((team) => (
-                        <option key={team.id} value={team.id}>
-                          👥 {team.label || "Specialist Team"} ({allNodes.filter(c => c.parentId === team.id).length} specialists)
-                        </option>
-                      ))}
-                  </select>
+                  {mode === "standalone_builder" ? (
+                    <div className="w-full rounded-xl border border-dashed border-border bg-muted/20 px-3.5 py-2.5 text-xs text-muted-foreground font-medium flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-slate-500 shrink-0" />
+                      <span>Standalone / Unassigned (Assigned during flow composition)</span>
+                    </div>
+                  ) : (
+                    <select
+                      value={parentId || ""}
+                      onChange={(e) => setParentId(e.target.value ? e.target.value : undefined)}
+                      className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground outline-none focus:border-indigo-500 font-medium"
+                    >
+                      <option value="">(None — Standalone Specialist)</option>
+                      {allNodes
+                        ?.filter((n) => n.roleTemplate === "team" && n.id !== node.id)
+                        .map((team) => (
+                          <option key={team.id} value={team.id}>
+                            👥 {team.label || "Specialist Team"} ({allNodes.filter(c => c.parentId === team.id).length} specialists)
+                          </option>
+                        ))}
+                    </select>
+                  )}
                 </div>
               )}
+
+              {/* Enterprise Governance Lock Option */}
+              <div className="p-3.5 rounded-xl border border-border bg-muted/20 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {isNodeLocked ? <Lock className="w-4 h-4 text-amber-500" /> : <Unlock className="w-4 h-4 text-muted-foreground" />}
+                    <div>
+                      <span className="text-xs font-bold text-foreground block">Enterprise Governance Lock</span>
+                      <span className="text-[10px] text-muted-foreground">Enforce centralized configuration; prevent flow canvas overrides</span>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={isNodeLocked}
+                    onChange={(e) => setIsNodeLocked(e.target.checked)}
+                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
+                  />
+                </div>
+              </div>
 
               {/* Node Color Theme Swatches */}
               <div>
@@ -1328,16 +1400,27 @@ export function AgentDrawer({ node, allNodes = [], onClose, onSave, workflowId, 
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-border hover:border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all bg-muted/20"
+            disabled={saving}
+            className="flex-1 py-2.5 rounded-xl border border-border hover:border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all bg-muted/20 cursor-pointer disabled:opacity-50"
           >
             Discard
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15"
+            disabled={saving}
+            className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/15 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
-            Apply Configuration
+            {saving ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : mode === "standalone_builder" ? (
+              "Save to Catalog"
+            ) : (
+              "Apply Configuration"
+            )}
           </button>
         </div>
       </div>

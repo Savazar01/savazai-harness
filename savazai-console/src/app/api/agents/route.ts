@@ -3,6 +3,7 @@ import { pool, ensureAdminProvisioned } from "@/lib/auth";
 import { requirePermission } from "@/lib/auth/rbac";
 import { logAuditEvent } from "@/lib/audit/audit-logger";
 import { recordPromptRevision } from "@/lib/versioning/asset-versioner";
+import { syncFlowAgentsToCatalog } from "@/lib/agents/agent-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export interface AgentCatalogItem {
   isLocked: boolean;
   allowModificationInFlow: boolean;
   usedInFlows?: number;
+  usedFlowNames?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -32,6 +34,16 @@ export interface AgentCatalogItem {
 export async function GET(req: NextRequest) {
   try {
     await ensureAdminProvisioned();
+
+    // Auto-ingest flow agents on first query if catalog is empty
+    try {
+      const countCheck = await pool.query("SELECT count(*)::int as count FROM agents_catalog");
+      if ((countCheck.rows[0]?.count || 0) === 0) {
+        await syncFlowAgentsToCatalog();
+      }
+    } catch (e) {
+      console.warn("[api/agents GET] Auto-sync check warning:", e);
+    }
 
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.trim() || "";
@@ -101,6 +113,7 @@ export async function GET(req: NextRequest) {
     }
 
     const usageMap: Record<string, number> = {};
+    const usedFlowsMap: Record<string, string[]> = {};
     for (const flow of flowsResult.rows) {
       let cd = flow.canvas_definition;
       if (typeof cd === "string") {
@@ -111,8 +124,12 @@ export async function GET(req: NextRequest) {
           const catId = n.catalogAgentId || n.id;
           const label = n.label || n.name;
           for (const a of agents) {
-            if (a.id === catId || a.agentKey === catId || (label && label === a.name)) {
+            if (a.id === catId || a.agentKey === catId || (label && label.toLowerCase() === a.name.toLowerCase())) {
               usageMap[a.id] = (usageMap[a.id] || 0) + 1;
+              if (!usedFlowsMap[a.id]) usedFlowsMap[a.id] = [];
+              if (flow.name && !usedFlowsMap[a.id].includes(flow.name)) {
+                usedFlowsMap[a.id].push(flow.name);
+              }
               break;
             }
           }
@@ -123,6 +140,7 @@ export async function GET(req: NextRequest) {
     const items = agents.map((a) => ({
       ...a,
       usedInFlows: usageMap[a.id] || 0,
+      usedFlowNames: usedFlowsMap[a.id] || (a.originFlowTitle ? [a.originFlowTitle] : []),
     }));
 
     return new Response(JSON.stringify({ items, total: items.length }), {
@@ -155,64 +173,9 @@ export async function POST(req: NextRequest) {
 
     // Check for flow sync request
     if (body.action === "sync_from_flows") {
-      const flowsRes = await pool.query('SELECT id, name, canvas_definition FROM agentflows');
-      let createdCount = 0;
-
-      for (const flow of flowsRes.rows) {
-        let cd = flow.canvas_definition;
-        if (typeof cd === "string") {
-          try { cd = JSON.parse(cd); } catch { cd = null; }
-        }
-        if (cd && Array.isArray(cd.nodes)) {
-          for (const node of cd.nodes) {
-            if (node.roleTemplate === "team") continue; // Skip team container nodes
-            const name = node.label || node.name || "Agent Node";
-            const role = node.roleTemplate || "worker";
-            const prompt = node.systemPrompt || node.data?.systemPrompt || node.instructions || "";
-            if (!prompt || prompt.trim().length === 0) continue;
-
-            const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-            const agentKey = `${slug}-${node.id ? node.id.slice(-6) : Math.random().toString(36).slice(2, 8)}`;
-
-            // Check if already in catalog
-            const exists = await pool.query('SELECT id FROM agents_catalog WHERE agent_key = $1 OR name = $2', [agentKey, name]);
-            if (exists.rows.length === 0) {
-              const id = crypto.randomUUID();
-              await pool.query(
-                `INSERT INTO agents_catalog (
-                  id, agent_key, name, role, description, llm_provider, model_name, temperature,
-                  system_prompt, bound_tools, bound_skills, bound_concepts, origin_type,
-                  origin_flow_id, origin_flow_title, is_locked, allow_modification_in_flow,
-                  created_at, updated_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12::jsonb, $13, $14, $15, $16, $17, now(), now())`,
-                [
-                  id,
-                  agentKey,
-                  name,
-                  role,
-                  `Imported from flow "${flow.name}"`,
-                  node.modelConfig?.provider || "openai",
-                  node.modelConfig?.model || "gpt-4o-mini",
-                  node.modelConfig?.temperature ?? 0.7,
-                  prompt.trim(),
-                  JSON.stringify(node.tools || []),
-                  JSON.stringify([]),
-                  JSON.stringify([]),
-                  "agentflow",
-                  flow.id,
-                  flow.name,
-                  false,
-                  true,
-                ]
-              );
-              createdCount++;
-            }
-          }
-        }
-      }
-
+      const syncResult = await syncFlowAgentsToCatalog();
       return new Response(
-        JSON.stringify({ success: true, message: `Synced ${createdCount} new agent(s) from existing agentflows into catalog.` }),
+        JSON.stringify({ success: true, ...syncResult }),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     }

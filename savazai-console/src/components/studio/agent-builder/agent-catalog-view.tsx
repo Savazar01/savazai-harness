@@ -25,7 +25,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AgentCatalogItem } from "@/app/api/agents/route";
-import { AgentEditorModal } from "./agent-editor-modal";
+import { AgentDrawer } from "@/components/studio/agent-drawer";
+import { CanvasNode, AgentRole } from "@/components/studio/canvas-editor";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export function AgentCatalogView() {
@@ -36,7 +37,8 @@ export function AgentCatalogView() {
   const [originFilter, setOriginFilter] = useState("all");
   const [lockedFilter, setLockedFilter] = useState("all");
 
-  const [editorModalOpen, setEditorModalOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeCanvasNode, setActiveCanvasNode] = useState<CanvasNode | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<AgentCatalogItem | null>(null);
 
   const [deleteTarget, setDeleteTarget] = useState<AgentCatalogItem | null>(null);
@@ -72,12 +74,103 @@ export function AgentCatalogView() {
 
   const handleCreateNew = () => {
     setSelectedAgent(null);
-    setEditorModalOpen(true);
+    const defaultNode: CanvasNode = {
+      id: crypto.randomUUID(),
+      label: "New Specialist Agent",
+      roleTemplate: "worker",
+      systemPrompt: "You are a dedicated specialist agent. Execute assigned domain tasks using bound tools. Return structured, verified outputs.",
+      modelConfig: {
+        provider: "openai",
+        model: "gpt-4o-mini",
+        temperature: 0.7,
+      },
+      tools: [],
+      x: 0,
+      y: 0,
+      isLocked: false,
+      data: {
+        description: "",
+        agentKey: "",
+        allowModificationInFlow: true,
+      },
+    };
+    setActiveCanvasNode(defaultNode);
+    setDrawerOpen(true);
   };
 
   const handleEdit = (agent: AgentCatalogItem) => {
     setSelectedAgent(agent);
-    setEditorModalOpen(true);
+    const node: CanvasNode = {
+      id: agent.id,
+      label: agent.name,
+      roleTemplate: (agent.role as AgentRole) || "worker",
+      systemPrompt: agent.systemPrompt || "",
+      modelConfig: {
+        provider: agent.llmProvider || "openai",
+        model: agent.modelName || "gpt-4o-mini",
+        temperature: typeof agent.temperature === "number" ? agent.temperature : 0.7,
+      },
+      tools: Array.isArray(agent.boundTools) ? agent.boundTools : [],
+      isLocked: agent.isLocked,
+      x: 0,
+      y: 0,
+      data: {
+        description: agent.description || "",
+        agentKey: agent.agentKey,
+        allowModificationInFlow: agent.allowModificationInFlow,
+        originType: agent.originType,
+        originFlowId: agent.originFlowId,
+        originFlowTitle: agent.originFlowTitle,
+      },
+    };
+    setActiveCanvasNode(node);
+    setDrawerOpen(true);
+  };
+
+  const handleSaveNode = async (updated: CanvasNode) => {
+    const payload = {
+      name: updated.label,
+      role: updated.roleTemplate,
+      description: (updated.data?.description as string) || "",
+      agentKey: (updated.data?.agentKey as string) || undefined,
+      llmProvider: updated.modelConfig?.provider || "openai",
+      modelName: updated.modelConfig?.model || "gpt-4o-mini",
+      temperature: updated.modelConfig?.temperature ?? 0.7,
+      systemPrompt: updated.systemPrompt,
+      boundTools: updated.tools || [],
+      isLocked: Boolean(updated.isLocked),
+      allowModificationInFlow: updated.data?.allowModificationInFlow !== false,
+    };
+
+    if (selectedAgent && selectedAgent.id) {
+      // Update existing
+      const res = await fetch(`/api/agents/${selectedAgent.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to update agent.");
+      }
+      setToastMessage({ text: `Agent "${updated.label}" updated successfully.`, type: "success" });
+    } else {
+      // Create new
+      const res = await fetch("/api/agents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to create agent.");
+      }
+      setToastMessage({ text: `Agent "${updated.label}" created in catalog.`, type: "success" });
+    }
+
+    setDrawerOpen(false);
+    setActiveCanvasNode(null);
+    fetchAgents();
   };
 
   const handleClone = async (agent: AgentCatalogItem) => {
@@ -360,9 +453,19 @@ export function AgentCatalogView() {
                       )}
                     </div>
 
-                    <span className="text-[10px] text-muted-foreground font-mono">
-                      {agent.usedInFlows ? `${agent.usedInFlows} flow(s)` : "Unused"}
-                    </span>
+                    {agent.usedInFlows && agent.usedInFlows > 0 ? (
+                      <span
+                        className="text-[10px] text-teal-400 font-mono bg-teal-500/10 px-2 py-0.5 rounded-md border border-teal-500/20 cursor-help flex items-center gap-1"
+                        title={agent.usedFlowNames && agent.usedFlowNames.length > 0 ? `Used in: ${agent.usedFlowNames.join(", ")}` : `Used in ${agent.usedInFlows} flow(s)`}
+                      >
+                        <Workflow className="w-2.5 h-2.5" />
+                        Used in {agent.usedInFlows} flow{agent.usedInFlows > 1 ? "s" : ""}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        Unassigned
+                      </span>
+                    )}
                   </div>
 
                   {/* Title & Key */}
@@ -440,13 +543,19 @@ export function AgentCatalogView() {
         </div>
       )}
 
-      {/* Standalone Agent Editor Modal */}
-      <AgentEditorModal
-        isOpen={editorModalOpen}
-        agent={selectedAgent}
-        onClose={() => setEditorModalOpen(false)}
-        onSaved={fetchAgents}
-      />
+      {/* Canonical 8-Tab Agent Drawer */}
+      {drawerOpen && activeCanvasNode && (
+        <AgentDrawer
+          mode="standalone_builder"
+          node={activeCanvasNode}
+          allNodes={[]}
+          onClose={() => {
+            setDrawerOpen(false);
+            setActiveCanvasNode(null);
+          }}
+          onSave={handleSaveNode}
+        />
+      )}
 
       {/* Styled Delete Confirmation Dialog */}
       <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>

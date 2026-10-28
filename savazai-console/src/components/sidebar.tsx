@@ -238,45 +238,83 @@ export function Sidebar() {
 
   const sidebarContent = (
     <div className="flex flex-col h-full overflow-y-auto select-none bg-card text-card-foreground">
-      <div className="flex items-center justify-between px-4 py-6 border-b border-border">
-        <div className="flex items-center gap-3">
-          {brandLogoUrl ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={brandLogoUrl}
-              alt={platformTitle}
-              className="h-7 w-auto max-w-[140px] max-h-[30px] object-contain shrink-0"
-              onError={() => setBrandLogoUrl(null)}
-            />
-          ) : (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src="/savazar-logo.png"
-              alt={platformTitle}
-              className="h-7 w-7 rounded-lg object-contain shrink-0 shadow-xs border border-border"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
+      <div className={`flex items-center border-b border-border ${isCollapsed && !mobileOpen ? "justify-center p-3" : "justify-between px-4 py-6"}`}>
+        {!isCollapsed || mobileOpen ? (
+          <>
+            <div className="flex items-center gap-3 min-w-0">
+              {brandLogoUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={brandLogoUrl}
+                  alt={platformTitle}
+                  className="h-7 w-auto max-w-[140px] max-h-[30px] object-contain shrink-0"
+                  onError={() => setBrandLogoUrl(null)}
+                />
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src="/savazar-logo.png"
+                  alt={platformTitle}
+                  className="h-7 w-7 rounded-lg object-contain shrink-0 shadow-xs border border-border"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              )}
+              {showFullContent && (
+                <span className="text-lg font-bold text-foreground tracking-tight animate-in fade-in duration-200 truncate max-w-[140px]">
+                  {platformTitle}
+                </span>
+              )}
+            </div>
+            {!mobileOpen && (
+              <button
+                onClick={() => {
+                  const nextVal = !isCollapsed;
+                  setIsCollapsed(nextVal);
+                  localStorage.setItem("savazai_sidebar_collapsed", String(nextVal));
+                }}
+                className="hidden md:flex p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                title="Collapse Sidebar"
+                aria-label="Collapse Sidebar"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+            )}
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-2.5">
+            {brandLogoUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={brandLogoUrl}
+                alt={platformTitle}
+                className="h-6 w-6 object-contain shrink-0"
+                onError={() => setBrandLogoUrl(null)}
+              />
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src="/savazar-logo.png"
+                alt={platformTitle}
+                className="h-6 w-6 rounded-lg object-contain shrink-0 shadow-xs border border-border"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            )}
+            <button
+              onClick={() => {
+                setIsCollapsed(false);
+                localStorage.setItem("savazai_sidebar_collapsed", "false");
               }}
-            />
-          )}
-          {showFullContent && (
-            <span className="text-lg font-bold text-foreground tracking-tight animate-in fade-in duration-200 truncate max-w-[140px]">
-              {platformTitle}
-            </span>
-          )}
-        </div>
-        {!mobileOpen && (
-          <button
-            onClick={() => {
-              const nextVal = !isCollapsed;
-              setIsCollapsed(nextVal);
-              localStorage.setItem("savazai_sidebar_collapsed", String(nextVal));
-            }}
-            className="hidden md:flex p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          >
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </button>
+              className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer shadow-xs"
+              title="Expand Sidebar"
+              aria-label="Expand Sidebar"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         )}
       </div>
 
@@ -440,6 +478,21 @@ export function Sidebar() {
 
   return (
     <>
+      {/* Collapsed Expand Floating Trigger (Desktop) */}
+      {isCollapsed && (
+        <button
+          onClick={() => {
+            setIsCollapsed(false);
+            localStorage.setItem("savazai_sidebar_collapsed", "false");
+          }}
+          className="hidden md:flex fixed top-3 left-3.5 z-50 h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-foreground shadow-md transition-all hover:bg-muted focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+          title="Expand navigation sidebar"
+          aria-label="Expand Sidebar"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      )}
+
       {/* Mobile Menu trigger */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
