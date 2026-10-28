@@ -37,6 +37,7 @@ import {
   Sparkles,
   Building2,
   Bot,
+  User,
 } from "lucide-react";
 import { usePermissions } from "@/lib/auth/use-permissions";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
@@ -70,11 +71,11 @@ export interface MergeTagItem {
   tag: string;
   label: string;
   sample: string;
-  group: "agentflow" | "organization";
+  group: "agentflow" | "user" | "organization";
 }
 
 const MERGE_TAGS: MergeTagItem[] = [
-  // Agentflow State Variables
+  // ⚡ Agentflow Execution
   { tag: "{{agent_name}}", label: "Agent Name", sample: "Supervisor Orchestrator", group: "agentflow" },
   { tag: "{{agentflow_title}}", label: "Agentflow Title", sample: "Customer Onboarding Agentflow", group: "agentflow" },
   { tag: "{{step_name}}", label: "Step Name", sample: "Compliance Verification", group: "agentflow" },
@@ -84,13 +85,20 @@ const MERGE_TAGS: MergeTagItem[] = [
   { tag: "{{status}}", label: "Status", sample: "PENDING_APPROVAL", group: "agentflow" },
   { tag: "{{timestamp}}", label: "Timestamp", sample: new Date().toUTCString(), group: "agentflow" },
 
-  // Organization Identity Variables
+  // 👤 User Master Data
+  { tag: "{{user_full_name}}", label: "User Full Name", sample: "Jane Doe", group: "user" },
+  { tag: "{{user_email}}", label: "User Email", sample: "jane.doe@enterprise.com", group: "user" },
+  { tag: "{{user_role}}", label: "User Role", sample: "Studio Flow Architect", group: "user" },
+  { tag: "{{user_region}}", label: "User Region", sample: "North America", group: "user" },
+  { tag: "{{user_id}}", label: "User Account ID", sample: "usr_99812", group: "user" },
+
+  // 🏢 Organization & Brand
   { tag: "{{company_name}}", label: "Company Name", sample: "SavazAI Enterprise", group: "organization" },
-  { tag: "{{company_email}}", label: "Company Email", sample: "security@savazar.com", group: "organization" },
+  { tag: "{{company_email}}", label: "Company Email", sample: "notifications@enterprise.com", group: "organization" },
   { tag: "{{company_phone}}", label: "Company Phone", sample: "+1 (800) 555-0199", group: "organization" },
   { tag: "{{company_address}}", label: "Company Address", sample: "100 Enterprise Way, Suite 400, Austin, TX 78701", group: "organization" },
   { tag: "{{company_website}}", label: "Company Website", sample: "https://savazar.com", group: "organization" },
-  { tag: "{{support_email}}", label: "Support Email", sample: "support@savazar.com", group: "organization" },
+  { tag: "{{support_email}}", label: "Support Email", sample: "support@enterprise.com", group: "organization" },
 ];
 
 const PRESET_CATEGORIES: { id: string; label: string; badge: string }[] = [
@@ -130,6 +138,10 @@ export function EmailTemplatesRegistry() {
   const [previewMode, setPreviewMode] = useState<"editor" | "split" | "preview">("split");
   const [editorViewType, setEditorViewType] = useState<"visual" | "html">("visual");
   const [lastFocusedField, setLastFocusedField] = useState<"subject" | "body">("body");
+  const [tagSearchQuery, setTagSearchQuery] = useState("");
+  const [activeTagCategory, setActiveTagCategory] = useState<"all" | "agentflow" | "user" | "organization">("all");
+  const [senderName, setSenderName] = useState("SavazAI Platform");
+  const [senderEmail, setSenderEmail] = useState("notifications@savazai.local");
 
   // Test dispatch state
   const [testRecipient, setTestRecipient] = useState("");
@@ -139,6 +151,24 @@ export function EmailTemplatesRegistry() {
   const subjectInputRef = useRef<HTMLInputElement>(null);
   const wysiwygEditorRef = useRef<HTMLDivElement>(null);
   const htmlTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.designTokens?.smtpSettings) {
+          const s = data.designTokens.smtpSettings;
+          if (s.fromName) setSenderName(s.fromName);
+          if (s.fromEmail) setSenderEmail(s.fromEmail);
+          else if (s.user) setSenderEmail(s.user);
+        } else if (data?.designTokens?.organizationalData) {
+          const org = data.designTokens.organizationalData;
+          if (org.companyName) setSenderName(org.companyName);
+          if (org.corporateEmail) setSenderEmail(org.corporateEmail);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -741,57 +771,110 @@ export function EmailTemplatesRegistry() {
                 />
               </div>
 
-              {/* Merge Variables Pill Bar */}
-              <div className="rounded-2xl border border-border bg-muted/20 p-3.5 space-y-2.5">
-                <div className="flex items-center justify-between">
+              {/* Categorized Merge Variables Selector */}
+              <div className="rounded-2xl border border-border bg-muted/20 p-3.5 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                     <Tag className="h-3.5 w-3.5 text-primary" />
-                    Available System Merge Tags (Click to insert at active position)
+                    System Merge Tags (Click to insert at cursor)
                   </span>
+
+                  {/* Search Filter Input */}
+                  <div className="relative w-full sm:w-64">
+                    <Search className="h-3 w-3 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={tagSearchQuery}
+                      onChange={(e) => setTagSearchQuery(e.target.value)}
+                      placeholder="Search merge tags..."
+                      className="w-full rounded-lg border border-border bg-background pl-7 pr-2.5 py-1 text-[11px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
+                    />
+                    {tagSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setTagSearchQuery("")}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  {/* Agentflow State Group */}
-                  <div>
-                    <span className="text-[9.5px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1.5">
-                      <Bot className="h-3 w-3 text-primary" /> Agentflow State:
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {MERGE_TAGS.filter((m) => m.group === "agentflow").map((item) => (
-                        <button
-                          key={item.tag}
-                          type="button"
-                          onClick={() => handleInsertTag(item.tag)}
-                          className="px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-primary/10 hover:border-primary/40 text-[11px] font-mono text-foreground cursor-pointer transition-all shadow-xs flex items-center gap-1"
-                          title={`Insert ${item.tag} (Sample: ${item.sample})`}
-                        >
-                          <span className="text-primary font-bold">+</span>
-                          <span>{item.tag}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                {/* Category Navigation Pills */}
+                <div className="flex flex-wrap items-center gap-1.5 border-b border-border/60 pb-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTagCategory("all")}
+                    className={`px-2.5 py-1 rounded-md text-[10.5px] font-medium transition-colors ${
+                      activeTagCategory === "all"
+                        ? "bg-primary text-primary-foreground font-semibold"
+                        : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    All Tags ({MERGE_TAGS.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTagCategory("agentflow")}
+                    className={`px-2.5 py-1 rounded-md text-[10.5px] font-medium transition-colors flex items-center gap-1 ${
+                      activeTagCategory === "agentflow"
+                        ? "bg-primary text-primary-foreground font-semibold"
+                        : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Bot className="h-3 w-3" />
+                    ⚡ Agentflow Execution ({MERGE_TAGS.filter((m) => m.group === "agentflow").length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTagCategory("user")}
+                    className={`px-2.5 py-1 rounded-md text-[10.5px] font-medium transition-colors flex items-center gap-1 ${
+                      activeTagCategory === "user"
+                        ? "bg-primary text-primary-foreground font-semibold"
+                        : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <User className="h-3 w-3" />
+                    👤 User Master ({MERGE_TAGS.filter((m) => m.group === "user").length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTagCategory("organization")}
+                    className={`px-2.5 py-1 rounded-md text-[10.5px] font-medium transition-colors flex items-center gap-1 ${
+                      activeTagCategory === "organization"
+                        ? "bg-primary text-primary-foreground font-semibold"
+                        : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Building2 className="h-3 w-3" />
+                    🏢 Organization ({MERGE_TAGS.filter((m) => m.group === "organization").length})
+                  </button>
+                </div>
 
-                  {/* Organization Identity Group */}
-                  <div>
-                    <span className="text-[9.5px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1.5">
-                      <Building2 className="h-3 w-3 text-primary" /> Organization Metadata:
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {MERGE_TAGS.filter((m) => m.group === "organization").map((item) => (
-                        <button
-                          key={item.tag}
-                          type="button"
-                          onClick={() => handleInsertTag(item.tag)}
-                          className="px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-primary/10 hover:border-primary/40 text-[11px] font-mono text-foreground cursor-pointer transition-all shadow-xs flex items-center gap-1"
-                          title={`Insert ${item.tag} (Sample: ${item.sample})`}
-                        >
-                          <span className="text-primary font-bold">+</span>
-                          <span>{item.tag}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                {/* Filtered Tag Pills */}
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                  {MERGE_TAGS.filter((item) => {
+                    const matchesCategory =
+                      activeTagCategory === "all" || item.group === activeTagCategory;
+                    const matchesSearch =
+                      !tagSearchQuery ||
+                      item.tag.toLowerCase().includes(tagSearchQuery.toLowerCase()) ||
+                      item.label.toLowerCase().includes(tagSearchQuery.toLowerCase());
+                    return matchesCategory && matchesSearch;
+                  }).map((item) => (
+                    <button
+                      key={item.tag}
+                      type="button"
+                      onClick={() => handleInsertTag(item.tag)}
+                      className="px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-primary/10 hover:border-primary/40 text-[11px] font-mono text-foreground cursor-pointer transition-all shadow-xs flex items-center gap-1.5 group"
+                      title={`${item.label} (Sample: ${item.sample})`}
+                    >
+                      <span className="text-primary font-bold group-hover:scale-110 transition-transform">+</span>
+                      <span>{item.tag}</span>
+                      <span className="text-[9px] text-muted-foreground font-sans">({item.label})</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -1008,7 +1091,7 @@ export function EmailTemplatesRegistry() {
                       <div className="border border-border/80 rounded-xl bg-muted/40 p-3 space-y-1.5 text-xs">
                         <div className="flex items-center gap-2">
                           <span className="text-muted-foreground text-[10px] font-bold uppercase w-12">From:</span>
-                          <span className="text-foreground font-medium">SavazAI Platform &lt;security@savazar.com&gt;</span>
+                          <span className="text-foreground font-medium">{senderName} &lt;{senderEmail}&gt;</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-muted-foreground text-[10px] font-bold uppercase w-12">Subject:</span>

@@ -11,6 +11,8 @@ export interface UserAccessProfile {
   role: string;
   roleId: string | null;
   roleName: string | null;
+  roleIds?: string[];
+  roleNames?: string[];
   status: "PENDING_APPROVAL" | "ACTIVE" | "SUSPENDED" | "REJECTED";
   mustResetPassword: boolean;
 }

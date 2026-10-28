@@ -428,7 +428,7 @@ export function SystemAdminHub({
                   disabled={!canManage}
                   value={smtpSettings.fromEmail}
                   onChange={(e) => setSmtpSettings((prev) => ({ ...prev, fromEmail: e.target.value }))}
-                  placeholder="security@savazar.com"
+                  placeholder="e.g. notifications@company.com"
                   className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground outline-none focus:border-primary/50 font-mono"
                 />
               </div>

@@ -58,6 +58,24 @@ export async function ensureAdminProvisioned() {
       ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "roleId" TEXT REFERENCES "role"("id") ON DELETE SET NULL;
       ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "image" TEXT;
       ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "location" TEXT;
+      ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "roles" TEXT[] DEFAULT ARRAY[]::TEXT[];
+
+      CREATE TABLE IF NOT EXISTS "user_assigned_role" (
+        "id" TEXT PRIMARY KEY,
+        "userId" TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+        "roleId" TEXT NOT NULL REFERENCES "role"("id") ON DELETE CASCADE,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+        UNIQUE("userId", "roleId")
+      );
+      CREATE INDEX IF NOT EXISTS "user_assigned_role_user_idx" ON "user_assigned_role"("userId");
+      CREATE INDEX IF NOT EXISTS "user_assigned_role_role_idx" ON "user_assigned_role"("roleId");
+
+      -- Auto-migrate existing single roleId mappings to user_assigned_role
+      INSERT INTO "user_assigned_role" ("id", "userId", "roleId")
+      SELECT gen_random_uuid()::text, "id", "roleId"
+      FROM "user"
+      WHERE "roleId" IS NOT NULL
+      ON CONFLICT ("userId", "roleId") DO NOTHING;
 
       CREATE TABLE IF NOT EXISTS "role_permission" (
         "id" TEXT PRIMARY KEY,
@@ -120,15 +138,52 @@ export async function ensureAdminProvisioned() {
         "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         "user_id" TEXT,
         "user_email" TEXT,
+        "category" VARCHAR(64) DEFAULT 'SYSTEM',
         "action" VARCHAR(128) NOT NULL,
         "resource" VARCHAR(128) NOT NULL,
+        "target_id" TEXT,
+        "target_name" TEXT,
         "details" JSONB DEFAULT '{}',
         "ip_address" TEXT,
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+      ALTER TABLE "system_audit_logs" ADD COLUMN IF NOT EXISTS "category" VARCHAR(64) DEFAULT 'SYSTEM';
+      ALTER TABLE "system_audit_logs" ADD COLUMN IF NOT EXISTS "target_id" TEXT;
+      ALTER TABLE "system_audit_logs" ADD COLUMN IF NOT EXISTS "target_name" TEXT;
       CREATE INDEX IF NOT EXISTS "system_audit_action_idx" ON "system_audit_logs"("action");
       CREATE INDEX IF NOT EXISTS "system_audit_resource_idx" ON "system_audit_logs"("resource");
+      CREATE INDEX IF NOT EXISTS "system_audit_category_idx" ON "system_audit_logs"("category");
       CREATE INDEX IF NOT EXISTS "system_audit_created_at_idx" ON "system_audit_logs"("created_at");
+
+      CREATE TABLE IF NOT EXISTS "asset_revisions" (
+        "id" TEXT PRIMARY KEY,
+        "asset_type" VARCHAR(32) NOT NULL,
+        "asset_key" VARCHAR(128) NOT NULL,
+        "version" VARCHAR(32) NOT NULL,
+        "content" TEXT NOT NULL,
+        "metadata_snapshot" JSONB NOT NULL DEFAULT '{}',
+        "author_id" TEXT NOT NULL,
+        "author_email" TEXT NOT NULL,
+        "change_summary" TEXT,
+        "created_at" TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS "asset_revisions_key_idx" ON "asset_revisions"("asset_key");
+      CREATE INDEX IF NOT EXISTS "asset_revisions_type_idx" ON "asset_revisions"("asset_type");
+      CREATE INDEX IF NOT EXISTS "asset_revisions_created_at_idx" ON "asset_revisions"("created_at");
+
+      CREATE TABLE IF NOT EXISTS "prompt_revisions" (
+        "id" TEXT PRIMARY KEY,
+        "agent_id" TEXT NOT NULL,
+        "agentflow_id" TEXT NOT NULL,
+        "version_number" INTEGER NOT NULL,
+        "system_prompt" TEXT NOT NULL,
+        "author_id" TEXT NOT NULL,
+        "author_email" TEXT NOT NULL,
+        "created_at" TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS "prompt_revisions_agent_idx" ON "prompt_revisions"("agent_id");
+      CREATE INDEX IF NOT EXISTS "prompt_revisions_flow_idx" ON "prompt_revisions"("agentflow_id");
+      CREATE INDEX IF NOT EXISTS "prompt_revisions_created_at_idx" ON "prompt_revisions"("created_at");
 
       CREATE TABLE IF NOT EXISTS "session" (
         "id" TEXT PRIMARY KEY,

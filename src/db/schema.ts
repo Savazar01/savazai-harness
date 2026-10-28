@@ -167,6 +167,21 @@ export const rolePermissions = pgTable(
   (t) => [unique("role_permission_unique").on(t.roleId, t.resource, t.action)]
 );
 
+export const userAssignedRoles = pgTable(
+  "user_assigned_role",
+  {
+    id: text("id").primaryKey(),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    roleId: text("roleId")
+      .notNull()
+      .references(() => roles.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [unique("user_assigned_role_unique").on(t.userId, t.roleId)]
+);
+
 export const userPermissions = pgTable(
   "user_permission",
   {
@@ -250,8 +265,11 @@ export const systemAuditLogs = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     userId: text("user_id"),
     userEmail: text("user_email"),
+    category: varchar("category", { length: 64 }).default("SYSTEM"),
     action: varchar("action", { length: 128 }).notNull(),
     resource: varchar("resource", { length: 128 }).notNull(),
+    targetId: text("target_id"),
+    targetName: text("target_name"),
     details: jsonb("details").$type<Record<string, any>>().default({}),
     ipAddress: text("ip_address"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -259,8 +277,42 @@ export const systemAuditLogs = pgTable(
   (t) => [
     index("system_audit_action_idx").on(t.action),
     index("system_audit_resource_idx").on(t.resource),
+    index("system_audit_category_idx").on(t.category),
     index("system_audit_created_at_idx").on(t.createdAt),
   ]
 );
+
+export const assetRevisions = pgTable("asset_revisions", {
+  id: text("id").primaryKey(),
+  assetType: varchar("asset_type", { length: 32 }).notNull(), // 'skill' | 'okf_concept'
+  assetKey: varchar("asset_key", { length: 128 }).notNull(),
+  version: varchar("version", { length: 32 }).notNull(), // 'v1.0.0', 'v1.1.0'
+  content: text("content").notNull(),
+  metadataSnapshot: jsonb("metadata_snapshot").$type<Record<string, any>>().default({}),
+  authorId: text("author_id").notNull(),
+  authorEmail: text("author_email").notNull(),
+  changeSummary: text("change_summary"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  index("asset_revisions_key_idx").on(t.assetKey),
+  index("asset_revisions_type_idx").on(t.assetType),
+  index("asset_revisions_created_at_idx").on(t.createdAt),
+]);
+
+export const promptRevisions = pgTable("prompt_revisions", {
+  id: text("id").primaryKey(),
+  agentId: text("agent_id").notNull(),
+  agentflowId: text("agentflow_id").notNull(),
+  versionNumber: integer("version_number").notNull(),
+  systemPrompt: text("system_prompt").notNull(),
+  authorId: text("author_id").notNull(),
+  authorEmail: text("author_email").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  index("prompt_revisions_agent_idx").on(t.agentId),
+  index("prompt_revisions_flow_idx").on(t.agentflowId),
+  index("prompt_revisions_created_at_idx").on(t.createdAt),
+]);
+
 
 

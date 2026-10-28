@@ -33,7 +33,7 @@ export async function getSmtpConfig(): Promise<SmtpConfig> {
         ? decrypt(String(raw.pass)).trim().replace(/\s+/g, "")
         : (process.env.SMTP_PASS || "").trim().replace(/\s+/g, ""),
       fromName: raw.fromName || dt.brandTitle || process.env.SMTP_FROM_NAME || "SavazAI Platform",
-      fromEmail: raw.fromEmail || process.env.SMTP_FROM_EMAIL || "security@savazar.com",
+      fromEmail: raw.fromEmail || raw.user || process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || "notifications@savazai.local",
       sendgridApiKey: raw.sendgridApiKey
         ? decrypt(String(raw.sendgridApiKey)).trim()
         : (process.env.SENDGRID_API_KEY || "").trim(),
@@ -48,7 +48,7 @@ export async function getSmtpConfig(): Promise<SmtpConfig> {
       user: process.env.SMTP_USER || "",
       pass: (process.env.SMTP_PASS || "").trim().replace(/\s+/g, ""),
       fromName: "SavazAI Platform",
-      fromEmail: "security@savazar.com",
+      fromEmail: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || "notifications@savazai.local",
     };
   }
 }

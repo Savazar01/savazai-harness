@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { Pool } from "pg";
 import { requirePermission } from "@/lib/auth/rbac";
+import { recordAssetRevision } from "@/lib/versioning/asset-versioner";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -70,6 +71,16 @@ export async function POST(req: NextRequest) {
       [id, category, conceptKey, yamlFrontmatter, markdownBody]
     );
 
+    await recordAssetRevision({
+      assetType: "okf_concept",
+      assetKey: conceptKey,
+      content: `${yamlFrontmatter}\n---\n${markdownBody}`,
+      metadataSnapshot: { id, category, conceptKey },
+      authorId: check.context?.userId || "system",
+      authorEmail: check.context?.email || "system@local",
+      changeSummary: `Created/Updated OKF concept '${conceptKey}' (${category})`,
+    }).catch((e) => console.warn("[recordAssetRevision] Warning:", e));
+
     return new Response(JSON.stringify({ success: true, id }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -103,6 +114,16 @@ export async function PUT(req: NextRequest) {
       'UPDATE okf_concepts SET category = $1, concept_key = $2, yaml_frontmatter = $3, markdown_body = $4, updated_at = NOW() WHERE id = $5',
       [category, conceptKey, yamlFrontmatter, markdownBody, id]
     );
+
+    await recordAssetRevision({
+      assetType: "okf_concept",
+      assetKey: conceptKey,
+      content: `${yamlFrontmatter}\n---\n${markdownBody}`,
+      metadataSnapshot: { id, category, conceptKey },
+      authorId: check.context?.userId || "system",
+      authorEmail: check.context?.email || "system@local",
+      changeSummary: `Modified OKF concept '${conceptKey}' (${category})`,
+    }).catch((e) => console.warn("[recordAssetRevision] Warning:", e));
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

@@ -21,6 +21,7 @@ import {
   CalendarCheck,
   User,
   ShieldCheck,
+  Scale,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { usePermissions } from "@/lib/auth/use-permissions";
@@ -150,6 +151,11 @@ export function Sidebar() {
     hasPermission("appearance", "update") ||
     hasPermission("branding", "update");
   const canViewUserAdmin = hasPermission("user_admin", "view");
+  const canViewGovernance =
+    hasPermission("governance", "view") ||
+    isSuperAdmin ||
+    user?.roleNames?.includes("Auditor") ||
+    user?.roleNames?.includes("User Administrator");
 
   const isSuperAdmin = user?.role === "admin" || user?.roleName === "Super Administrator" || session?.user?.role === "admin";
   const canViewDocs = hasPermission("documentation", "view");
@@ -163,6 +169,7 @@ export function Sidebar() {
     ...(canViewCommandCenter ? [{ href: "/admin/settings", label: "Command Center", icon: Settings }] : []),
     ...(canViewSystemAdmin ? [{ href: "/admin/system", label: "System Admin", icon: ShieldCheck }] : []),
     ...(canViewUserAdmin ? [{ href: "/admin/users", label: "User Admin", icon: Users }] : []),
+    ...(canViewGovernance ? [{ href: "/admin/governance", label: "Governance", icon: Scale }] : []),
   ];
 
   // 2. Secondary Utility Items (Bottom, directly above Dark/Light Mode switch)

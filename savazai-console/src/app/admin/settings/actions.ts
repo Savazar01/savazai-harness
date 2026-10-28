@@ -6,6 +6,7 @@ import path from "path";
 import type { LLMProviderConfig } from "@/components/theme-provider";
 import { encrypt } from "@/lib/crypto";
 import { requirePermission } from "@/lib/auth/rbac";
+import { logAuditEvent } from "@/lib/audit/audit-logger";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -269,19 +270,31 @@ export async function updateSystemConfig(input: UpdateSettingsInput) {
       ]
     );
 
+    await logAuditEvent({
+      category: "COMMAND_CENTER",
+      action: "SETTINGS_UPDATED",
+      resource: "system_configurations",
+      actorId: check.context?.userId,
+      actorEmail: check.context?.email,
+      targetId: configId,
+      targetName: input.appTitle || "System Configuration",
+      details: {
+        updatedFields: Object.keys(input).filter((k) => (input as any)[k] !== undefined),
+      },
+    }).catch((err) => console.warn("[system_audit_logs] Insert warning:", err));
+
     if (input.organizationalData) {
       const org = typeof input.organizationalData === "string" ? JSON.parse(input.organizationalData) : input.organizationalData;
-      pool.query(
-        `INSERT INTO system_audit_logs (user_id, user_email, action, resource, details)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [
-          check.context?.userId || null,
-          check.context?.email || null,
-          "update_organizational_data",
-          "system_configurations",
-          JSON.stringify({ companyName: org.companyName, country: org.country }),
-        ]
-      ).catch((err) => console.warn("[system_audit_logs] Insert warning:", err));
+      await logAuditEvent({
+        category: "COMMAND_CENTER",
+        action: "ORGANIZATIONAL_DATA_UPDATED",
+        resource: "system_configurations",
+        actorId: check.context?.userId,
+        actorEmail: check.context?.email,
+        targetId: configId,
+        targetName: org.companyName || "Organization",
+        details: { companyName: org.companyName, country: org.country },
+      }).catch((err) => console.warn("[system_audit_logs] Insert warning:", err));
     }
 
     revalidatePath("/");
@@ -722,17 +735,16 @@ export async function saveOrganizationalData(data: OrganizationalData) {
     );
 
     // Write audit log entry
-    await pool.query(
-      `INSERT INTO system_audit_logs (user_id, user_email, action, resource, details)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [
-        check.context?.userId || null,
-        check.context?.email || null,
-        "update_organizational_data",
-        "system_configurations",
-        JSON.stringify({ companyName: data.companyName, country: data.country, timezone: data.timezone }),
-      ]
-    ).catch((err) => console.warn("[system_audit_logs] Insert warning:", err));
+    await logAuditEvent({
+      category: "COMMAND_CENTER",
+      action: "ORGANIZATIONAL_DATA_UPDATED",
+      resource: "system_configurations",
+      actorId: check.context?.userId,
+      actorEmail: check.context?.email,
+      targetId: configId,
+      targetName: data.companyName || "Organization",
+      details: { companyName: data.companyName, country: data.country, timezone: data.timezone },
+    }).catch((err) => console.warn("[system_audit_logs] Insert warning:", err));
 
     revalidatePath("/");
     revalidatePath("/admin/system");

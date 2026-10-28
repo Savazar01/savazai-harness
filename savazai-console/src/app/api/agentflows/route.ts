@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { requirePermission } from "@/lib/auth/rbac";
 import { getInternalBackendHeaders } from "@/lib/backend-client";
+import { logAuditEvent } from "@/lib/audit/audit-logger";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_HARNESS_API_URL || "http://savazai-backend:3055";
@@ -58,6 +59,22 @@ export async function POST(req: NextRequest) {
       );
     }
     const data = await response.json();
+
+    await logAuditEvent({
+      category: "AGENTFLOWS",
+      action: "AGENTFLOW_CREATED",
+      resource: "agentflows",
+      actorId: check.context.userId,
+      actorEmail: check.context.email,
+      targetId: data?.id || body?.id || "unknown",
+      targetName: body?.name || "New Flow",
+      details: {
+        flowId: data?.id || body?.id,
+        name: body?.name,
+        status: body?.status || "draft",
+      },
+    }).catch((e) => console.warn("[logAuditEvent] Non-fatal error:", e));
+
     return new Response(JSON.stringify(data), {
       status: 201,
       headers: { "Content-Type": "application/json" },

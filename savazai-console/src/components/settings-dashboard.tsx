@@ -369,7 +369,7 @@ export function SettingsDashboard({ initialConfig, mode = "command_center" }: Se
       user: raw.user || "",
       pass: raw.pass ? "••••••••" : "",
       fromName: raw.fromName || "SavazAI Platform",
-      fromEmail: raw.fromEmail || "security@savazar.com",
+      fromEmail: raw.fromEmail || raw.user || "",
       sendgridApiKey: raw.sendgridApiKey ? "••••••••" : "",
     };
   });
@@ -388,7 +388,7 @@ export function SettingsDashboard({ initialConfig, mode = "command_center" }: Se
     return {
       sessionHours: String(raw.sessionHours || "24"),
       maxLoginAttempts: String(raw.maxLoginAttempts || "5"),
-      quarantineNotificationEmail: raw.quarantineNotificationEmail || "security@savazar.com",
+      quarantineNotificationEmail: raw.quarantineNotificationEmail || raw.fromEmail || raw.user || "",
     };
   });
   const storedProviders = React.useMemo(() => tokens.llmProviders || {}, [tokens.llmProviders]);

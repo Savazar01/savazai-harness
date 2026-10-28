@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { Pool } from "pg";
 import { requirePermission } from "@/lib/auth/rbac";
+import { recordAssetRevision } from "@/lib/versioning/asset-versioner";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -73,6 +74,17 @@ export async function POST(req: NextRequest) {
       [id, name, description, instructions, category || "custom", mcpServerId || null, version || "1.0.0"]
     );
 
+    await recordAssetRevision({
+      assetType: "skill",
+      assetKey: name,
+      version: version || undefined,
+      content: instructions,
+      metadataSnapshot: { id, name, description, category, mcpServerId },
+      authorId: check.context?.userId || "system",
+      authorEmail: check.context?.email || "system@local",
+      changeSummary: `Created/Updated skill '${name}'`,
+    }).catch((e) => console.warn("[recordAssetRevision] Warning:", e));
+
     return new Response(JSON.stringify({ success: true, id }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -106,6 +118,17 @@ export async function PUT(req: NextRequest) {
       'UPDATE skills SET name = $1, description = $2, instructions = $3, category = $4, mcp_server_id = $5, version = $6, updated_at = NOW() WHERE id = $7',
       [name, description, instructions, category || "custom", mcpServerId || null, version || "1.0.0", id]
     );
+
+    await recordAssetRevision({
+      assetType: "skill",
+      assetKey: name,
+      version: version || undefined,
+      content: instructions,
+      metadataSnapshot: { id, name, description, category, mcpServerId },
+      authorId: check.context?.userId || "system",
+      authorEmail: check.context?.email || "system@local",
+      changeSummary: `Modified skill '${name}'`,
+    }).catch((e) => console.warn("[recordAssetRevision] Warning:", e));
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

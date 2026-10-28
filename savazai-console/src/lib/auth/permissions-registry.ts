@@ -10,7 +10,8 @@ export interface PermissionDefinition {
     | "Agent Workspace"
     | "Documentation"
     | "Demo Requests"
-    | "User Admin";
+    | "User Admin"
+    | "Governance";
   subCategory?: string;
   description: string;
 }
@@ -24,6 +25,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   Documentation: "Documentation",
   "Demo Requests": "Demo Requests",
   "User Admin": "User Admin",
+  Governance: "Governance Hub",
 };
 
 export const PERMISSION_REGISTRY: PermissionDefinition[] = [
@@ -101,7 +103,12 @@ export const PERMISSION_REGISTRY: PermissionDefinition[] = [
   { resource: "user_admin", action: "view", label: "View User Admin", category: "User Admin", description: "View user directory and roles" },
   { resource: "user_admin", action: "approve_users", label: "Approve / Reject Users", category: "User Admin", description: "Approve pending users and assign roles" },
   { resource: "user_admin", action: "manage_roles", label: "Manage Roles & Matrix", category: "User Admin", description: "Create roles and assign granular permissions" },
-  { resource: "user_admin", action: "force_password_reset", label: "Force Password Reset", category: "User Admin", description: "Force user password changes" }
+  { resource: "user_admin", action: "force_password_reset", label: "Force Password Reset", category: "User Admin", description: "Force user password changes" },
+
+  // Governance Hub (Dedicated Top-Level Category)
+  { resource: "governance", action: "view", label: "View Governance & Audit Reports", category: "Governance", description: "Access Governance command center and audit tracking reports" },
+  { resource: "governance", action: "export_logs", label: "Export Governance Logs", category: "Governance", description: "Export audit trails and trace logs to CSV or JSON" },
+  { resource: "governance", action: "manage_retention", label: "Manage Retention Policies", category: "Governance", description: "Configure audit log retention windows and archive policies" }
 ];
 
 export interface PredefinedRoleSeed {
@@ -175,7 +182,7 @@ export const SYSTEM_ROLES: PredefinedRoleSeed[] = [
   {
     id: "role_auditor",
     name: "Auditor",
-    description: "Read-only (view) access to Documentation, Spend/Usage, Compliance Audit Stream, and system logs.",
+    description: "Read-only (view) access to Documentation, Spend/Usage, Compliance Audit Stream, Governance Hub reports, and system logs.",
     isSystem: true,
     permissions: [
       { resource: "documentation", action: "view" },
@@ -186,6 +193,8 @@ export const SYSTEM_ROLES: PredefinedRoleSeed[] = [
       { resource: "business_center", action: "skills_view" },
       { resource: "business_center", action: "okf_view" },
       { resource: "capability_studio", action: "view" },
+      { resource: "governance", action: "view" },
+      { resource: "governance", action: "export_logs" },
     ],
   },
   {
@@ -199,6 +208,7 @@ export const SYSTEM_ROLES: PredefinedRoleSeed[] = [
       { resource: "user_admin", action: "manage_roles" },
       { resource: "user_admin", action: "force_password_reset" },
       { resource: "documentation", action: "view" },
+      { resource: "governance", action: "view" },
     ],
   },
 ];

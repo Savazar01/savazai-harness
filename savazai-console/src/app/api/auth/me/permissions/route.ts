@@ -27,6 +27,8 @@ export async function GET() {
         role: ctx.role,
         roleId: ctx.roleId,
         roleName: ctx.roleName,
+        roleIds: ctx.roleIds,
+        roleNames: ctx.roleNames,
         status: ctx.status,
         mustResetPassword: ctx.mustResetPassword,
       },

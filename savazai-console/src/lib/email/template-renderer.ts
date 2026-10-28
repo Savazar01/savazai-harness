@@ -51,6 +51,12 @@ export async function renderEmailTemplate(
     company_website: "https://savazar.com",
     support_email: "support@savazar.com",
     platform_title: "SavazAI",
+    user_full_name: context.user_full_name || "Enterprise Operator",
+    user_email: context.user_email || "operator@enterprise.com",
+    user_role: context.user_role || "Studio Flow Architect",
+    user_region: context.user_region || "US / North America",
+    user_id: context.user_id || "usr_enterprise_01",
+    user_created_date: context.user_created_date || new Date().toISOString().split("T")[0],
     ...Object.fromEntries(
       Object.entries(context).map(([k, v]) => [k, v !== undefined && v !== null ? String(v) : ""])
     ),

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Pool } from "pg";
 import { requirePermission } from "@/lib/auth/rbac";
 import crypto from "crypto";
+import { logAuditEvent } from "@/lib/audit/audit-logger";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -237,6 +238,18 @@ export async function POST(req: NextRequest) {
           id,
         ]
       );
+
+      await logAuditEvent({
+        category: "BUSINESS_CENTER",
+        action: "EMAIL_TEMPLATE_UPDATED",
+        resource: "email_templates",
+        actorId: authCheck.context?.userId,
+        actorEmail: authCheck.context?.email,
+        targetId: id,
+        targetName: name,
+        details: { templateKey: cleanKey, category },
+      }).catch((e) => console.warn("[logAuditEvent] Warning:", e));
+
       return NextResponse.json({ success: true, template: updateRes.rows[0] });
     } else {
       const newId = crypto.randomUUID();
@@ -257,6 +270,18 @@ export async function POST(req: NextRequest) {
           isActive !== false,
         ]
       );
+
+      await logAuditEvent({
+        category: "BUSINESS_CENTER",
+        action: "EMAIL_TEMPLATE_CREATED",
+        resource: "email_templates",
+        actorId: authCheck.context?.userId,
+        actorEmail: authCheck.context?.email,
+        targetId: newId,
+        targetName: name,
+        details: { templateKey: cleanKey, category },
+      }).catch((e) => console.warn("[logAuditEvent] Warning:", e));
+
       return NextResponse.json({ success: true, template: insertRes.rows[0] });
     }
   } catch (err: unknown) {
@@ -267,6 +292,7 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    let authContext: any = null;
     const authCheck = await requirePermission("business_center", [
       "skills_delete",
       "okf_delete",
@@ -274,6 +300,9 @@ export async function DELETE(req: NextRequest) {
     if (!authCheck.authorized) {
       const ccCheck = await requirePermission("command_center", "system_admin_manage");
       if (!ccCheck.authorized) return authCheck.response;
+      authContext = ccCheck.context;
+    } else {
+      authContext = authCheck.context;
     }
 
     const { searchParams } = new URL(req.url);
@@ -283,6 +312,18 @@ export async function DELETE(req: NextRequest) {
     }
 
     await pool.query(`DELETE FROM "email_templates" WHERE id = $1`, [id]);
+
+    await logAuditEvent({
+      category: "BUSINESS_CENTER",
+      action: "EMAIL_TEMPLATE_DELETED",
+      resource: "email_templates",
+      actorId: authContext?.userId,
+      actorEmail: authContext?.email,
+      targetId: id,
+      targetName: `Template ${id}`,
+      details: { templateId: id },
+    }).catch((e) => console.warn("[logAuditEvent] Warning:", e));
+
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

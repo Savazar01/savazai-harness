@@ -13,6 +13,8 @@ export interface AuthenticatedAccessContext {
   role: string;
   roleId: string | null;
   roleName: string | null;
+  roleIds: string[];
+  roleNames: string[];
   status: AccountStatus;
   mustResetPassword: boolean;
   permissions: Set<string>;
@@ -20,7 +22,7 @@ export interface AuthenticatedAccessContext {
 
 /**
  * Resolves the database ground-truth status, role, and effective permission set for a userId.
- * Evaluates role permissions + granular user_permission overrides (grant / revoke).
+ * Evaluates multi-role permissions + granular user_permission overrides (grant / revoke).
  */
 export async function resolveUserAccessById(userId: string): Promise<AuthenticatedAccessContext | null> {
   await ensureAdminProvisioned();
@@ -39,9 +41,30 @@ export async function resolveUserAccessById(userId: string): Promise<Authenticat
   const status = (u.status || "PENDING_APPROVAL") as AccountStatus;
   const mustResetPassword = Boolean(u.mustResetPassword);
 
+  // Fetch all assigned roles from user_assigned_role join table
+  const assignedRolesRes = await pool.query(
+    `SELECT uar."roleId", r."name" as "roleName"
+     FROM "user_assigned_role" uar
+     JOIN "role" r ON uar."roleId" = r."id"
+     WHERE uar."userId" = $1`,
+    [userId]
+  );
+
+  const roleIds: string[] = assignedRolesRes.rows.map((r) => r.roleId);
+  const roleNames: string[] = assignedRolesRes.rows.map((r) => r.roleName);
+
+  // Fallback to legacy single roleId if user_assigned_role is empty
+  if (roleIds.length === 0 && u.roleId) {
+    roleIds.push(u.roleId);
+    if (u.roleName) roleNames.push(u.roleName);
+  }
+
+  const primaryRoleId = roleIds[0] || u.roleId || null;
+  const primaryRoleName = roleNames.join(", ") || u.roleName || (u.role === "admin" ? "Super Administrator" : null);
+
   const permissions = new Set<string>();
 
-  //Quarantined / non-active users hold ZERO permissions
+  // Quarantined / non-active users hold ZERO permissions
   if (status !== "ACTIVE") {
     return {
       userId: u.id,
@@ -50,26 +73,33 @@ export async function resolveUserAccessById(userId: string): Promise<Authenticat
       image: u.image || null,
       location: u.location || null,
       role: u.role,
-      roleId: u.roleId || null,
-      roleName: u.roleName || null,
+      roleId: primaryRoleId,
+      roleName: primaryRoleName,
+      roleIds,
+      roleNames,
       status,
       mustResetPassword,
       permissions,
     };
   }
 
-  // Super Administrator fallback for primary admin account
-  if (u.role === "admin" && (!u.roleId || u.roleId === "role_super_admin")) {
+  // Super Administrator fallback for primary admin account or role assignment
+  const isSuperAdmin =
+    (u.role === "admin" && (!u.roleId || u.roleId === "role_super_admin")) ||
+    roleIds.includes("role_super_admin") ||
+    roleNames.includes("Super Administrator");
+
+  if (isSuperAdmin) {
     for (const p of PERMISSION_REGISTRY) {
       permissions.add(formatPermissionKey(p.resource, p.action));
     }
   }
 
-  // Load permissions from assigned Role
-  if (u.roleId) {
+  // Load aggregated permissions from ALL assigned Roles
+  if (roleIds.length > 0) {
     const rolePermRes = await pool.query(
-      'SELECT "resource", "action" FROM "role_permission" WHERE "roleId" = $1',
-      [u.roleId]
+      'SELECT "resource", "action" FROM "role_permission" WHERE "roleId" = ANY($1::text[])',
+      [roleIds]
     );
     for (const row of rolePermRes.rows) {
       permissions.add(formatPermissionKey(row.resource, row.action));
@@ -97,8 +127,10 @@ export async function resolveUserAccessById(userId: string): Promise<Authenticat
     image: u.image || null,
     location: u.location || null,
     role: u.role,
-    roleId: u.roleId || null,
-    roleName: u.roleName || (u.role === "admin" ? "Super Administrator" : null),
+    roleId: primaryRoleId,
+    roleName: primaryRoleName,
+    roleIds,
+    roleNames,
     status,
     mustResetPassword,
     permissions,

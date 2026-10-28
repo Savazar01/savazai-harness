@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { requirePermission } from "@/lib/auth/rbac";
 import { getInternalBackendHeaders } from "@/lib/backend-client";
+import { recordPromptRevision } from "@/lib/versioning/asset-versioner";
+import { logAuditEvent } from "@/lib/audit/audit-logger";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_HARNESS_API_URL || "http://savazai-backend:3055";
@@ -60,14 +62,19 @@ export async function PUT(
     }
     const body = await req.json();
 
+    let authContext: any = null;
     if (body.status === "published") {
       const pubCheck = await requirePermission("capability_studio", "publish");
       if (!pubCheck.authorized) return pubCheck.response;
+      authContext = pubCheck.context;
     } else {
       const editCheck = await requirePermission("capability_studio", ["save_draft", "edit_flow"]);
       if (!editCheck.authorized) {
         const bizCheck = await requirePermission("business_center", "skills_edit");
         if (!bizCheck.authorized) return editCheck.response;
+        authContext = bizCheck.context;
+      } else {
+        authContext = editCheck.context;
       }
     }
 
@@ -95,6 +102,53 @@ export async function PUT(
       );
     }
     const data = await response.json();
+
+    // Audit and prompt revision tracking
+    if (authContext) {
+      try {
+        let canvasObj: any = body.canvasDefinition;
+        if (typeof canvasObj === "string") {
+          try {
+            canvasObj = JSON.parse(canvasObj);
+          } catch {
+            canvasObj = null;
+          }
+        }
+        if (canvasObj && Array.isArray(canvasObj.nodes)) {
+          for (const node of canvasObj.nodes) {
+            const prompt = node.data?.systemPrompt || node.data?.prompt || node.data?.instructions;
+            if (prompt && typeof prompt === "string" && prompt.trim().length > 0) {
+              const agentId = node.id || node.data?.id || node.data?.name || "agent_node";
+              await recordPromptRevision({
+                agentId: String(agentId),
+                agentflowId: id,
+                systemPrompt: prompt,
+                authorId: authContext.userId,
+                authorEmail: authContext.email,
+              }).catch((e) => console.warn("[recordPromptRevision] Non-fatal error:", e));
+            }
+          }
+        }
+
+        await logAuditEvent({
+          category: "AGENTFLOWS",
+          action: body.status === "published" ? "AGENTFLOW_PUBLISHED" : "AGENTFLOW_UPDATED",
+          resource: "agentflows",
+          actorId: authContext.userId,
+          actorEmail: authContext.email,
+          targetId: id,
+          targetName: body.name || `Flow ${id}`,
+          details: {
+            status: body.status,
+            name: body.name,
+            nodeCount: Array.isArray(canvasObj?.nodes) ? canvasObj.nodes.length : undefined,
+          },
+        }).catch((e) => console.warn("[logAuditEvent] Non-fatal error:", e));
+      } catch (e) {
+        console.warn("[agentflow PUT audit error]:", e);
+      }
+    }
+
     return new Response(JSON.stringify(data), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -134,6 +188,20 @@ export async function DELETE(
         { status: response.status, headers: { "Content-Type": "application/json" } }
       );
     }
+
+    await logAuditEvent({
+      category: "AGENTFLOWS",
+      action: "AGENTFLOW_DELETED",
+      resource: "agentflows",
+      actorId: check.context.userId,
+      actorEmail: check.context.email,
+      targetId: id,
+      targetName: `Agentflow ${id}`,
+      details: {
+        agentflowId: id,
+      },
+    }).catch((e) => console.warn("[logAuditEvent] Non-fatal error:", e));
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { "Content-Type": "application/json" },

@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { hashPassword } from "better-auth/crypto";
 import { pool, ensureAdminProvisioned } from "@/lib/auth";
 import { requirePermission } from "@/lib/auth/rbac";
+import { logAuditEvent } from "@/lib/audit/audit-logger";
 
 interface RouteParams {
   params: Promise<{
@@ -25,6 +26,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       email,
       role,
       roleId,
+      roleIds,
       status,
       mustResetPassword,
       password,
@@ -35,7 +37,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     if (password !== undefined || mustResetPassword !== undefined) {
       const check = await requirePermission("user_admin", ["force_password_reset", "approve_users"]);
       if (!check.authorized) return check.response;
-    } else if (roleId !== undefined || customPermissions !== undefined) {
+    } else if (roleId !== undefined || roleIds !== undefined || customPermissions !== undefined) {
       const check = await requirePermission("user_admin", ["manage_roles", "approve_users"]);
       if (!check.authorized) return check.response;
     } else {
@@ -60,7 +62,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     const currentUser = existing.rows[0];
 
-    // Self-demotion / self-lockout safeguard
+    // Self-demotion / self-lockout safeguard for Super Admin
     if (targetUserId === check.context.userId) {
       if (status && status !== "ACTIVE") {
         return Response.json(
@@ -68,21 +70,88 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
           { status: 400 }
         );
       }
-      if (roleId !== undefined && roleId !== "role_super_admin" && currentUser.role === "admin") {
+      if (
+        (roleId !== undefined && roleId !== "role_super_admin") ||
+        (Array.isArray(roleIds) && !roleIds.includes("role_super_admin"))
+      ) {
+        if (currentUser.role === "admin" || check.context.roleIds.includes("role_super_admin")) {
+          return Response.json(
+            { error: "Self-demotion safeguard: You cannot remove Super Administrator privileges from your own account." },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    // Critical Security Constraint: User Administrators cannot modify their own roles
+    const actorIsSelf = targetUserId === check.context.userId;
+    const actorIsUserAdmin =
+      check.context.roleNames.includes("User Administrator") ||
+      check.context.roleIds.includes("role_user_admin");
+    const actorIsSuperAdmin =
+      check.context.roleNames.includes("Super Administrator") ||
+      check.context.roleIds.includes("role_super_admin") ||
+      check.context.role === "admin";
+
+    if (actorIsSelf && actorIsUserAdmin && !actorIsSuperAdmin) {
+      if (roleIds !== undefined || roleId !== undefined) {
         return Response.json(
-          { error: "Self-demotion safeguard: You cannot remove Super Administrator privileges from your own account." },
-          { status: 400 }
+          { error: "User Administrators cannot modify their own assigned roles. Contact a Super Administrator for role adjustments." },
+          { status: 403 }
         );
       }
+    }
+
+    // Handle Multi-Role Updates
+    let updatedRoleIds: string[] | null = null;
+    if (Array.isArray(roleIds)) {
+      updatedRoleIds = roleIds.filter(Boolean);
+    } else if (roleId !== undefined) {
+      updatedRoleIds = roleId ? [roleId] : [];
+    }
+
+    if (updatedRoleIds !== null) {
+      const prevRolesRes = await pool.query(
+        'SELECT "roleId" FROM "user_assigned_role" WHERE "userId" = $1',
+        [targetUserId]
+      );
+      const prevRoleIds = prevRolesRes.rows.map((r) => r.roleId);
+
+      await pool.query('DELETE FROM "user_assigned_role" WHERE "userId" = $1', [targetUserId]);
+      for (const rId of updatedRoleIds) {
+        await pool.query(
+          `INSERT INTO "user_assigned_role" ("id", "userId", "roleId")
+           VALUES ($1, $2, $3)
+           ON CONFLICT ("userId", "roleId") DO NOTHING`,
+          [randomUUID(), targetUserId, rId]
+        );
+      }
+
+      await logAuditEvent({
+        category: "USER_ADMIN",
+        action: "USER_ROLES_UPDATED",
+        resource: "user_directory",
+        actorId: check.context.userId,
+        actorEmail: check.context.email,
+        targetId: targetUserId,
+        targetName: currentUser.name || currentUser.email,
+        details: {
+          previousRoleIds: prevRoleIds,
+          newRoleIds: updatedRoleIds,
+        },
+      });
     }
 
     const newName = name ? name.trim() : currentUser.name;
     const newEmail = email ? email.trim().toLowerCase() : currentUser.email;
     const newStatus = status || currentUser.status || "ACTIVE";
-    const newRoleId =
-      roleId !== undefined ? roleId : role === "admin" ? "role_super_admin" : currentUser.roleId;
+    const primaryRoleId = updatedRoleIds !== null ? (updatedRoleIds[0] || null) : currentUser.roleId;
     const newLegacyRole =
-      newRoleId === "role_super_admin" || role === "admin" ? "admin" : "user";
+      (updatedRoleIds && updatedRoleIds.includes("role_super_admin")) ||
+      primaryRoleId === "role_super_admin" ||
+      role === "admin"
+        ? "admin"
+        : "user";
     const newMustReset =
       mustResetPassword !== undefined
         ? Boolean(mustResetPassword)
@@ -114,8 +183,30 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
            "updatedAt" = now()
        WHERE id = $7
        RETURNING id, name, email, role, "status", "mustResetPassword", "roleId", "emailVerified", "createdAt", "updatedAt"`,
-      [newName, newEmail, newLegacyRole, newStatus, newMustReset, newRoleId, targetUserId]
+      [newName, newEmail, newLegacyRole, newStatus, newMustReset, primaryRoleId, targetUserId]
     );
+
+    // Audit status change
+    if (status && status !== currentUser.status) {
+      await logAuditEvent({
+        category: "USER_ADMIN",
+        action:
+          status === "ACTIVE" && currentUser.status === "PENDING_APPROVAL"
+            ? "USER_ONBOARDING_APPROVED"
+            : status === "REJECTED" && currentUser.status === "PENDING_APPROVAL"
+            ? "USER_ONBOARDING_REJECTED"
+            : "USER_STATUS_CHANGED",
+        resource: "user_directory",
+        actorId: check.context.userId,
+        actorEmail: check.context.email,
+        targetId: targetUserId,
+        targetName: currentUser.name || currentUser.email,
+        details: {
+          previousStatus: currentUser.status,
+          newStatus: status,
+        },
+      });
+    }
 
     // If user is suspended, rejected, or forced to reset password, revoke active sessions if needed
     if (newStatus !== "ACTIVE") {
@@ -163,6 +254,20 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
           [accountId, targetUserId, hashedPassword]
         );
       }
+
+      await logAuditEvent({
+        category: "USER_ADMIN",
+        action: "USER_PASSWORD_RESET_TRIGGERED",
+        resource: "user_directory",
+        actorId: check.context.userId,
+        actorEmail: check.context.email,
+        targetId: targetUserId,
+        targetName: currentUser.name || currentUser.email,
+        details: {
+          forcedPasswordResetOnLogin: Boolean(newMustReset),
+        },
+      });
+
       // Force password reset on next sign-in whenever an admin resets a user's password
       if (mustResetPassword === undefined && targetUserId !== check.context.userId) {
         await pool.query('UPDATE "user" SET "mustResetPassword" = true WHERE id = $1', [
@@ -173,7 +278,12 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       await pool.query('DELETE FROM "session" WHERE "userId" = $1', [targetUserId]);
     }
 
-    return Response.json({ user: updateRes.rows[0] }, { status: 200 });
+    return Response.json({
+      user: {
+        ...updateRes.rows[0],
+        roleIds: updatedRoleIds || (primaryRoleId ? [primaryRoleId] : []),
+      }
+    }, { status: 200 });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Failed to update user.";
     console.error("[PATCH /api/admin/users/[id]] Error:", err);
@@ -208,10 +318,22 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
       return Response.json({ error: "User not found." }, { status: 404 });
     }
 
+    await pool.query('DELETE FROM "user_assigned_role" WHERE "userId" = $1', [targetUserId]);
     await pool.query('DELETE FROM "user_permission" WHERE "userId" = $1', [targetUserId]);
     await pool.query('DELETE FROM "session" WHERE "userId" = $1', [targetUserId]);
     await pool.query('DELETE FROM "account" WHERE "userId" = $1', [targetUserId]);
     await pool.query('DELETE FROM "user" WHERE id = $1', [targetUserId]);
+
+    await logAuditEvent({
+      category: "USER_ADMIN",
+      action: "USER_PURGED",
+      resource: "user_directory",
+      actorId: check.context.userId,
+      actorEmail: check.context.email,
+      targetId: targetUserId,
+      targetName: existing.rows[0].email,
+      details: { email: existing.rows[0].email },
+    });
 
     return Response.json(
       { success: true, message: `User ${existing.rows[0].email} purged successfully.` },

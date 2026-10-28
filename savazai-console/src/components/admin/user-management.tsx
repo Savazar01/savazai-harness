@@ -42,6 +42,8 @@ export interface ManagedUser {
   role: "admin" | "user" | string;
   roleId: string | null;
   roleName: string | null;
+  roleIds?: string[];
+  roleNames?: string[];
   status: "PENDING_APPROVAL" | "ACTIVE" | "SUSPENDED" | "REJECTED" | string;
   mustResetPassword: boolean;
   emailVerified: boolean;
@@ -101,6 +103,7 @@ export function UserManagement() {
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editRoleId, setEditRoleId] = useState<string>("");
+  const [editRoleIds, setEditRoleIds] = useState<string[]>([]);
   const [editStatus, setEditStatus] = useState<string>("ACTIVE");
 
   // Approve User Form fields
@@ -288,7 +291,8 @@ export function UserManagement() {
         body: JSON.stringify({
           name: editName.trim(),
           email: editEmail.trim().toLowerCase(),
-          roleId: editRoleId || null,
+          roleIds: editRoleIds,
+          roleId: editRoleIds[0] || null,
           status: editStatus,
         }),
       });
@@ -732,16 +736,34 @@ export function UserManagement() {
                           </td>
 
                           <td className="py-3.5 px-4">
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold tracking-wide ${
-                                isSuperAdmin
-                                  ? "bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/30"
-                                  : "bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 border border-indigo-500/30"
-                              }`}
-                            >
-                              <ShieldCheck className="h-3.5 w-3.5" />
-                              {user.roleName || (isSuperAdmin ? "Super Administrator" : "Workspace Operator")}
-                            </span>
+                            <div className="flex flex-wrap gap-1 max-w-[260px]">
+                              {user.roleNames && user.roleNames.length > 0 ? (
+                                user.roleNames.map((rName, idx) => (
+                                  <span
+                                    key={idx}
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold tracking-wide ${
+                                      rName === "Super Administrator"
+                                        ? "bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/30"
+                                        : "bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 border border-indigo-500/30"
+                                    }`}
+                                  >
+                                    <ShieldCheck className="h-3 w-3 shrink-0" />
+                                    <span>{rName}</span>
+                                  </span>
+                                ))
+                              ) : (
+                                <span
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold tracking-wide ${
+                                    isSuperAdmin
+                                      ? "bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/30"
+                                      : "bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 border border-indigo-500/30"
+                                  }`}
+                                >
+                                  <ShieldCheck className="h-3.5 w-3.5" />
+                                  {user.roleName || (isSuperAdmin ? "Super Administrator" : "Workspace Operator")}
+                                </span>
+                              )}
+                            </div>
                           </td>
 
                           <td className="py-3.5 px-4">
@@ -773,6 +795,13 @@ export function UserManagement() {
                                   setEditName(user.name);
                                   setEditEmail(user.email);
                                   setEditRoleId(user.roleId || "");
+                                  setEditRoleIds(
+                                    user.roleIds && user.roleIds.length > 0
+                                      ? user.roleIds
+                                      : user.roleId
+                                      ? [user.roleId]
+                                      : []
+                                  );
                                   setEditStatus(user.status);
                                   setFormError(null);
                                   setIsEditOpen(true);
@@ -1422,21 +1451,126 @@ export function UserManagement() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">Assigned Role Profile</label>
-                <select
-                  value={editRoleId}
-                  onChange={(e) => setEditRoleId(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50"
-                >
-                  <option value="">-- No Profile Assigned (User Level) --</option>
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {(() => {
+                const currentUserObj = users.find((u) => u.id === currentUserId);
+                const currentUserRoleNames =
+                  currentUserObj?.roleNames ||
+                  (currentUserObj?.roleName ? [currentUserObj.roleName] : []);
+                const isCurrentUserAdmin =
+                  currentUserRoleNames.includes("User Administrator") ||
+                  currentUserObj?.roleId === "role_user_admin";
+                const isCurrentSuperAdmin =
+                  currentUserRoleNames.includes("Super Administrator") ||
+                  currentUserObj?.role === "admin" ||
+                  currentUserObj?.roleId === "role_super_admin";
+                const isEditingSelf = selectedUser?.id === currentUserId;
+                const isSelfRoleEditBlocked =
+                  isEditingSelf && isCurrentUserAdmin && !isCurrentSuperAdmin;
+
+                return (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-medium text-muted-foreground">
+                        Assigned Role Profiles ({editRoleIds.length})
+                      </label>
+                      {editRoleIds.length > 0 && !isSelfRoleEditBlocked && (
+                        <button
+                          type="button"
+                          onClick={() => setEditRoleIds([])}
+                          className="text-[10px] text-muted-foreground hover:text-red-400 transition-colors"
+                        >
+                          Clear All
+                        </button>
+                      )}
+                    </div>
+
+                    {isSelfRoleEditBlocked && (
+                      <div className="mb-2 p-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2">
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
+                        <div>
+                          <p className="font-semibold">Self-Assignment Safeguard Active</p>
+                          <p className="text-[11px] opacity-90 mt-0.5 leading-relaxed">
+                            User Administrators cannot modify their own assigned roles. Contact a Super Administrator for role adjustments.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {editRoleIds.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {editRoleIds.map((rId) => {
+                          const roleObj = roles.find((r) => r.id === rId);
+                          return (
+                            <span
+                              key={rId}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 border border-primary/20 text-primary text-[11px] font-semibold"
+                            >
+                              <span>{roleObj?.name || rId}</span>
+                              {!isSelfRoleEditBlocked && (
+                                <button
+                                  type="button"
+                                  onClick={() => setEditRoleIds((prev) => prev.filter((id) => id !== rId))}
+                                  className="hover:text-red-400 p-0.5"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              )}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    <div className="space-y-1.5 max-h-48 overflow-y-auto rounded-xl border border-border bg-muted/20 p-2.5">
+                      {roles.map((r) => {
+                        const isChecked = editRoleIds.includes(r.id);
+                        return (
+                          <label
+                            key={r.id}
+                            className={`flex items-start gap-2.5 p-2 rounded-lg text-xs transition-colors ${
+                              isSelfRoleEditBlocked
+                                ? "opacity-60 cursor-not-allowed"
+                                : "cursor-pointer hover:bg-muted/50"
+                            } ${
+                              isChecked
+                                ? "bg-primary/5 border border-primary/20"
+                                : "border border-transparent"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              disabled={isSelfRoleEditBlocked}
+                              onChange={(e) => {
+                                if (isSelfRoleEditBlocked) return;
+                                if (e.target.checked) {
+                                  setEditRoleIds((prev) => [...prev, r.id]);
+                                } else {
+                                  setEditRoleIds((prev) => prev.filter((id) => id !== r.id));
+                                }
+                              }}
+                              className="mt-0.5 h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-foreground flex items-center justify-between">
+                                <span>{r.name}</span>
+                                {r.isSystem && (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-muted text-muted-foreground font-mono">
+                                    System
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
+                                {r.description}
+                              </p>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">Account Status</label>
