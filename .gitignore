@@ -48,5 +48,6 @@ implementation_plan*.md
 # Knowledge graph & System files
 graphify-out/
 /savazai-console/graphify-out/
+~$*
 .DS_Store
 Thumbs.db

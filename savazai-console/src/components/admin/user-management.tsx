@@ -68,7 +68,7 @@ export function UserManagement() {
 
   // Active top sub-tab
   const [activeTab, setActiveTab] = useState<"active" | "pending" | "roles" | "matrix">("active");
-  const [roleViewMode, setRoleViewMode] = useState<"grid" | "list">("grid");
+  const [roleViewMode, setRoleViewMode] = useState<"grid" | "list">("list");
 
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [roles, setRoles] = useState<RoleWithPermissions[]>([]);
@@ -170,6 +170,15 @@ export function UserManagement() {
   useEffect(() => {
     fetchUsers();
     fetchRoles();
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const roleParam = params.get("role") || params.get("profile");
+      if (roleParam) {
+        setRoleFilter(roleParam);
+        setActiveTab("active");
+      }
+    }
   }, [fetchUsers, fetchRoles]);
 
   // Flash message timeout
@@ -184,16 +193,90 @@ export function UserManagement() {
   const pendingUsers = users.filter((u) => u.status === "PENDING_APPROVAL");
   const activeUsers = users.filter((u) => u.status !== "PENDING_APPROVAL");
 
-  // Filtered active users
+  // Filtered active users (Multi-Role Aware)
   const filteredActiveUsers = activeUsers.filter((u) => {
     const matchesSearch =
       u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole =
-      roleFilter === "all" ||
-      u.roleId === roleFilter ||
-      (roleFilter === "admin" && (u.role === "admin" || u.roleId === "role_super_admin"));
-    return matchesSearch && matchesRole;
+
+    if (!matchesSearch) return false;
+    if (roleFilter === "all" || !roleFilter) return true;
+
+    // Normalize filter target
+    const filterLower = roleFilter.toLowerCase().trim();
+    const filterClean = filterLower.replace(/_/g, " ");
+
+    // Check if filter is Super Admin
+    const isSuperAdminFilter =
+      filterLower === "admin" ||
+      filterLower === "role_super_admin" ||
+      filterLower === "super administrator" ||
+      filterClean === "role super admin";
+
+    if (isSuperAdminFilter) {
+      if (u.role === "admin" || u.roleId === "role_super_admin") return true;
+      if (Array.isArray(u.roleIds) && u.roleIds.includes("role_super_admin")) return true;
+      if (Array.isArray(u.roleNames) && u.roleNames.some((rn) => rn.toLowerCase().includes("super admin"))) return true;
+      return false;
+    }
+
+    // Resolve matching role metadata from registry
+    const matchedRole = roles.find(
+      (r) =>
+        r.id.toLowerCase() === filterLower ||
+        r.name.toLowerCase() === filterLower ||
+        r.id.toLowerCase().replace(/_/g, " ") === filterClean ||
+        r.name.toLowerCase().replace(/_/g, " ") === filterClean
+    );
+
+    const targetRoleId = matchedRole ? matchedRole.id.toLowerCase() : filterLower;
+    const targetRoleName = matchedRole ? matchedRole.name.toLowerCase() : filterLower;
+
+    // 1. Direct scalar match on roleId or roleName or role
+    if (u.roleId && (u.roleId.toLowerCase() === targetRoleId || u.roleId.toLowerCase() === filterLower)) return true;
+    if (u.roleName && (u.roleName.toLowerCase() === targetRoleName || u.roleName.toLowerCase().includes(targetRoleName))) return true;
+    if (typeof u.role === "string" && (u.role.toLowerCase() === targetRoleId || u.role.toLowerCase() === targetRoleName)) return true;
+
+    // 2. Multi-role array matches (roleIds)
+    if (
+      Array.isArray(u.roleIds) &&
+      u.roleIds.some((id) => {
+        const idLower = String(id).toLowerCase();
+        return idLower === targetRoleId || idLower === filterLower || idLower.replace(/_/g, " ") === filterClean;
+      })
+    ) {
+      return true;
+    }
+
+    // 3. Multi-role array matches (roleNames)
+    if (
+      Array.isArray(u.roleNames) &&
+      u.roleNames.some((name) => {
+        const nameLower = String(name).toLowerCase();
+        return nameLower === targetRoleName || nameLower === filterLower || nameLower.replace(/_/g, " ") === filterClean;
+      })
+    ) {
+      return true;
+    }
+
+    // 4. Fallback user.roles array
+    if (
+      Array.isArray((u as any).roles) &&
+      (u as any).roles.some((r: any) => {
+        const val = typeof r === "string" ? r : r?.name || r?.id || "";
+        const valLower = String(val).toLowerCase();
+        return (
+          valLower === targetRoleId ||
+          valLower === targetRoleName ||
+          valLower === filterLower ||
+          valLower.replace(/_/g, " ") === filterClean
+        );
+      })
+    ) {
+      return true;
+    }
+
+    return false;
   });
 
   // Handle Generate Invite Link with real delivery status feedback

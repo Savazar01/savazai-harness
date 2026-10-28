@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -122,6 +121,33 @@ interface AlertRule {
   recipientEmails: string[];
   createdAt: string;
 }
+
+export const REPORT_CATEGORIES = [
+  {
+    title: "Analytics & Controls",
+    items: [
+      { id: "overview" as TabKey, label: "Overview Dashboard", icon: BarChart3, desc: "Operational KPIs, mutation timelines & model telemetry" },
+      { id: "alerting" as TabKey, label: "Alerting Rules", icon: Bell, desc: "Automated thresholds & security notification rules" },
+    ],
+  },
+  {
+    title: "Operational Audit Ledgers",
+    items: [
+      { id: "user_admin" as TabKey, label: "User Admin", icon: Users, desc: "RBAC modifications, user status changes & invites" },
+      { id: "command_center" as TabKey, label: "Command Center", icon: Sliders, desc: "LLM providers, MCP registrations & system keys" },
+      { id: "business_center" as TabKey, label: "Business Center", icon: Briefcase, desc: "Skills catalog, OKF rulesets & compliance specs" },
+      { id: "agentflows" as TabKey, label: "Agentflows", icon: Workflow, desc: "Studio canvas deployments & execution graphs" },
+      { id: "agents_activity" as TabKey, label: "Agents Telemetry", icon: Activity, desc: "Token consumption, latency & tool invocation traces" },
+    ],
+  },
+  {
+    title: "Asset Version Control",
+    items: [
+      { id: "asset_revisions" as TabKey, label: "Skills & OKF Versions", icon: FileCode, desc: "Historical diffs for business skills and SOP bundles" },
+      { id: "prompt_revisions" as TabKey, label: "System Prompt Versions", icon: Terminal, desc: "Version tracking and line-by-line prompt diffs" },
+    ],
+  },
+];
 
 export function GovernanceDashboard() {
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
@@ -565,53 +591,99 @@ export function GovernanceDashboard() {
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full flex-1 flex flex-col">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-2">
-          <TabsList className="bg-muted p-1 border border-border h-auto flex flex-wrap gap-1">
-            <TabsTrigger value="overview" className="text-xs gap-1.5 py-1.5 px-3 font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <BarChart3 className="w-3.5 h-3.5" /> Overview Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="alerting" className="text-xs gap-1.5 py-1.5 px-3 font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Bell className="w-3.5 h-3.5" /> Alerting Rules
-            </TabsTrigger>
-            <TabsTrigger value="user_admin" className="text-xs gap-1.5 py-1.5 px-3">
-              <Users className="w-3.5 h-3.5" /> User Admin
-            </TabsTrigger>
-            <TabsTrigger value="command_center" className="text-xs gap-1.5 py-1.5 px-3">
-              <Sliders className="w-3.5 h-3.5" /> Command Center
-            </TabsTrigger>
-            <TabsTrigger value="business_center" className="text-xs gap-1.5 py-1.5 px-3">
-              <Briefcase className="w-3.5 h-3.5" /> Business Center
-            </TabsTrigger>
-            <TabsTrigger value="agentflows" className="text-xs gap-1.5 py-1.5 px-3">
-              <Workflow className="w-3.5 h-3.5" /> Agentflows
-            </TabsTrigger>
-            <TabsTrigger value="agents_activity" className="text-xs gap-1.5 py-1.5 px-3">
-              <Activity className="w-3.5 h-3.5" /> Agents Telemetry
-            </TabsTrigger>
-            <TabsTrigger value="asset_revisions" className="text-xs gap-1.5 py-1.5 px-3">
-              <FileCode className="w-3.5 h-3.5" /> Skills &amp; OKF Versions
-            </TabsTrigger>
-            <TabsTrigger value="prompt_revisions" className="text-xs gap-1.5 py-1.5 px-3">
-              <Terminal className="w-3.5 h-3.5" /> System Prompt Versions
-            </TabsTrigger>
-          </TabsList>
+      {/* Categorized Two-Tier Sub-Navigation & Main Workspace */}
+      <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
+        {/* Left Sub-Navigation Rail (Desktop) / Categorized Selector (Mobile) */}
+        <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-4 bg-card/60 border border-border rounded-2xl p-4 shadow-xs h-fit">
+          <div className="flex items-center justify-between pb-2 border-b border-border/60">
+            <span className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">Report Directory</span>
+            <span className="text-[10px] text-muted-foreground font-mono bg-muted/60 px-2 py-0.5 rounded-md border border-border">9 Reports</span>
+          </div>
 
-          {/* Search box for audit ledgers */}
-          {activeTab !== "overview" && activeTab !== "alerting" && (
-            <div className="relative w-full sm:w-72">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search audit trail..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-8 text-xs bg-background border-border"
-              />
+          {/* Mobile Category Dropdown */}
+          <div className="lg:hidden">
+            <select
+              value={activeTab}
+              onChange={(e) => handleTabChange(e.target.value as TabKey)}
+              className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground font-medium outline-none focus:border-primary"
+            >
+              {REPORT_CATEGORIES.map((cat) => (
+                <optgroup key={cat.title} label={cat.title}>
+                  {cat.items.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+
+          {/* Desktop Categorized Navigation Rail */}
+          <nav className="hidden lg:flex flex-col gap-4" aria-label="Governance Reports">
+            {REPORT_CATEGORIES.map((cat) => (
+              <div key={cat.title} className="space-y-1.5">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 block">
+                  {cat.title}
+                </span>
+                <div className="space-y-1">
+                  {cat.items.map((item) => {
+                    const isActive = activeTab === item.id;
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleTabChange(item.id)}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all text-left cursor-pointer ${
+                          isActive
+                            ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/70"
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Right Content Panel */}
+        <div className="flex-1 min-w-0 flex flex-col gap-4">
+          {/* Active Report Header & Search Strip */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-2xl bg-card border border-border shadow-xs">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="text-xs font-bold text-foreground shrink-0">
+                {REPORT_CATEGORIES.flatMap((c) => c.items).find((i) => i.id === activeTab)?.label || "Report"}
+              </span>
+              <span className="text-xs text-muted-foreground">•</span>
+              <span className="text-xs text-muted-foreground truncate">
+                {activeTab === "overview"
+                  ? "Operational metrics, incident breakdown & activity streams"
+                  : activeTab === "alerting"
+                  ? "Configured threshold notification rules & alert history"
+                  : `${total} logged audit events`}
+              </span>
             </div>
-          )}
-        </div>
+
+            {/* Search box for audit ledgers */}
+            {activeTab !== "overview" && activeTab !== "alerting" && (
+              <div className="relative w-full sm:w-72 shrink-0">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search audit trail..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 h-8 text-xs bg-background border-border"
+                />
+              </div>
+            )}
+          </div>
 
         {/* ── TAB 1: OVERVIEW DASHBOARD ── */}
         {activeTab === "overview" && (
@@ -1260,7 +1332,8 @@ export function GovernanceDashboard() {
             </div>
           </div>
         )}
-      </Tabs>
+        </div>
+      </div>
 
       {/* Structured JSON & Visual Delta Diff Modal */}
       {jsonModalRecord && (

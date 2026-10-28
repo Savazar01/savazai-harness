@@ -32,6 +32,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.0",
+    "docx": "^9.15.0",
     "drizzle-kit": "^0.30.0",
     "eslint": "^10.6.0",
     "tsx": "^4.19.0",

@@ -39,6 +39,8 @@ interface OkfConcept {
   id: string;
   conceptKey: string;
   category: string;
+  markdownBody?: string;
+  yamlFrontmatter?: string;
 }
 
 interface RegisteredTool {
@@ -123,7 +125,7 @@ export function AgentDrawer({
   const [piiMaskingOverride, setPiiMaskingOverride] = useState(node.piiMaskingOverride || "");
   const [executionMode, setExecutionMode] = useState<"plan_first" | "direct">(node.data?.executionMode || "plan_first");
 
-  const [isDrawerExpanded, setIsDrawerExpanded] = useState(false);
+  const [isDrawerExpanded, setIsDrawerExpanded] = useState(true);
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
 
   const [skillsCatalog, setSkillsCatalog] = useState<Skill[]>([]);
@@ -466,6 +468,77 @@ export function AgentDrawer({
     }
   };
 
+  const [knowledgeSearch, setKnowledgeSearch] = useState("");
+
+  const filteredKnowledgeSkills = useMemo(() => {
+    const q = knowledgeSearch.toLowerCase().trim();
+    return skillsCatalog.filter((s) => {
+      if (!q) return true;
+      return (
+        s.name.toLowerCase().includes(q) ||
+        (s.description || "").toLowerCase().includes(q) ||
+        (s.instructions || "").toLowerCase().includes(q) ||
+        (s.category || "").toLowerCase().includes(q)
+      );
+    });
+  }, [skillsCatalog, knowledgeSearch]);
+
+  const filteredKnowledgeConcepts = useMemo(() => {
+    const q = knowledgeSearch.toLowerCase().trim();
+    return okfConcepts.filter((c) => {
+      if (!q) return true;
+      return (
+        c.conceptKey.toLowerCase().includes(q) ||
+        (c.category || "").toLowerCase().includes(q) ||
+        (c.markdownBody || "").toLowerCase().includes(q) ||
+        (c.yamlFrontmatter || "").toLowerCase().includes(q)
+      );
+    });
+  }, [okfConcepts, knowledgeSearch]);
+
+  const activeKnowledgeSkillsCount = useMemo(() => {
+    return filteredKnowledgeSkills.filter((s) => selectedTools.some((t) => t.name === s.name)).length;
+  }, [filteredKnowledgeSkills, selectedTools]);
+
+  const activeKnowledgeConceptsCount = useMemo(() => {
+    return filteredKnowledgeConcepts.filter((c) => selectedTools.some((t) => t.name === `okf-${c.conceptKey}`)).length;
+  }, [filteredKnowledgeConcepts, selectedTools]);
+
+  const totalFilteredKnowledge = filteredKnowledgeSkills.length + filteredKnowledgeConcepts.length;
+  const totalActiveKnowledge = activeKnowledgeSkillsCount + activeKnowledgeConceptsCount;
+
+  const handleBulkToggleKnowledge = (enable: boolean) => {
+    if (enable) {
+      const newItems: ToolReference[] = [];
+      for (const s of filteredKnowledgeSkills) {
+        if (!selectedTools.some((t) => t.name === s.name)) {
+          newItems.push({
+            id: `tool-ref-${crypto.randomUUID()}`,
+            name: s.name,
+            category: (s.category as any) || "custom",
+          });
+        }
+      }
+      for (const c of filteredKnowledgeConcepts) {
+        const conceptToolName = `okf-${c.conceptKey}`;
+        if (!selectedTools.some((t) => t.name === conceptToolName)) {
+          newItems.push({
+            id: `tool-ref-${crypto.randomUUID()}`,
+            name: conceptToolName,
+            category: "native",
+          });
+        }
+      }
+      setSelectedTools((prev) => [...prev, ...newItems]);
+    } else {
+      const skillNames = new Set(filteredKnowledgeSkills.map((s) => s.name));
+      const conceptNames = new Set(filteredKnowledgeConcepts.map((c) => `okf-${c.conceptKey}`));
+      setSelectedTools((prev) =>
+        prev.filter((t) => !skillNames.has(t.name) && !conceptNames.has(t.name))
+      );
+    }
+  };
+
   const filteredSkills = skillsCatalog.filter((s) => {
     const matchesSearch =
       s.name.toLowerCase().includes(skillSearch.toLowerCase()) ||
@@ -481,7 +554,7 @@ export function AgentDrawer({
     <div className="fixed inset-0 z-50 flex items-center justify-end">
       <div onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-      <div className={`relative w-full ${isDrawerExpanded ? "max-w-5xl" : "max-w-xl"} h-full bg-card border-l border-border text-card-foreground shadow-2xl flex flex-col z-10 transition-all duration-300`}>
+      <div className={`relative w-full ${isDrawerExpanded ? "max-w-5xl sm:max-w-6xl" : "max-w-2xl"} h-full bg-card border-l border-border text-card-foreground shadow-2xl flex flex-col z-10 transition-all duration-300`}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-border bg-card/60 shrink-0">
           <div className="flex items-center gap-3">
@@ -1076,216 +1149,417 @@ export function AgentDrawer({
 
           {/* TAB: KNOWLEDGE & RAG */}
           {activeTab === "knowledge" && (
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Database className="h-4 w-4 text-cyan-400" />
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">pgvector RAG Namespace</label>
-                  <HelpTooltip content="The vector namespace this agent queries for RAG retrieval. Documents are chunked, embedded, and stored by namespace. Leave as 'default' for shared access." side="right" />
-                </div>
-                <p className="text-[10px] text-muted-foreground">Assign a vector namespace the agent can query via RAG retrieval.</p>
-                <input
-                  type="text"
-                  value={ragNamespace}
-                  onChange={(e) => setRagNamespace(e.target.value)}
-                  placeholder="e.g. corporate-rules-anonymized"
-                  className="w-full rounded-xl border border-border bg-muted/30 py-2.5 px-4 text-xs text-foreground outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              {/* Embedding Model Selector */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Database className="h-4 w-4 text-emerald-400" />
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Embedding Model</label>
-                </div>
-                <p className="text-[10px] text-muted-foreground">Select a text-embedding model from the active provider&apos;s allowed models for RAG vector search.</p>
-                <select
-                  value={embedModel}
-                  onChange={(e) => setEmbedModel(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-background py-2.5 px-4 text-xs text-foreground outline-none focus:border-indigo-500"
-                >
-                  <option value="">No embedding — fallback to text search</option>
-                  {(() => {
-                    const providerCfg = llmProviders.find((p) => p.id === provider);
-                    const providerModels = providerCfg?.models && providerCfg.models.length > 0
-                      ? providerCfg.models
-                      : providerCfg?.discoveredModels || PROVIDER_MODELS[provider] || [];
-                    const embedModels = providerModels.filter((m: string) =>
-                      m.toLowerCase().includes("embedding") || m.toLowerCase().includes("ada") || m.toLowerCase().includes("text-embed")
-                    );
-                    return embedModels.map((m: string) => <option key={m} value={m}>{m}</option>);
-                  })()}
-                  {(() => {
-                    const providerCfg = llmProviders.find((p) => p.id === provider);
-                    const providerModels = providerCfg?.models && providerCfg.models.length > 0
-                      ? providerCfg.models
-                      : providerCfg?.discoveredModels || PROVIDER_MODELS[provider] || [];
-                    return embedModel && !providerModels.some((m: string) => m === embedModel) ? (
-                      <option value={embedModel}>{embedModel} (current)</option>
-                    ) : null;
-                  })()}
-                </select>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-indigo-400" />
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">OKF v0.1 Concept Bundles</label>
-                </div>
-                <p className="text-[10px] text-muted-foreground">Bind shared business guidelines appended to agent execution state context.</p>
-
-                <div className="space-y-2 max-h-56 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
-                  {loadingResources && okfConcepts.length === 0 ? (
-                    <div className="flex justify-center items-center py-6 text-muted-foreground text-[10px] gap-2">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading OKF database...
-                    </div>
-                  ) : okfConcepts.length === 0 ? (
-                    <p className="text-center text-slate-600 text-[10px] py-6">No OKF concepts found in registry database.</p>
-                  ) : (
-                    okfConcepts.map((c) => {
-                      const toolPresetName = `okf-${c.conceptKey}`;
-                      const isChecked = selectedTools.some((t) => t.name === toolPresetName);
-                      return (
-                        <div
-                          key={c.id}
-                          onClick={() => handleToggleTool(toolPresetName, "native")}
-                          className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                            isChecked
-                              ? "bg-primary/10 border-primary/40 text-foreground font-semibold"
-                              : "border-border bg-muted/20 hover:border-border text-foreground hover:bg-muted/30"
-                          }`}
-                        >
-                          <Check className={`h-4 w-4 shrink-0 ${isChecked ? "text-primary" : "text-muted-foreground/40"}`} />
-                          <div className="min-w-0">
-                            <span className="font-mono text-xs font-bold block truncate text-foreground">{c.conceptKey}</span>
-                            <span className="text-[8px] font-medium text-muted-foreground uppercase">{c.category}</span>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-              {/* Skills Catalog rendering moved from tools tab */}
-              <div className="space-y-3 border-t border-border pt-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-muted-foreground tracking-wider uppercase">Skills Catalog</span>
-                  <button
-                    type="button"
-                    onClick={() => setAuthoringSkill(!authoringSkill)}
-                    className="flex items-center gap-1 text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase"
-                  >
-                    <Plus className="h-3 w-3" /> Author New Skill
-                  </button>
-                </div>
-
-                {authoringSkill && (
-                  <div className="border border-border bg-muted/30 rounded-2xl p-4 space-y-3 animate-in fade-in duration-200">
-                    <span className="text-[9px] font-bold text-muted-foreground uppercase block tracking-wider">Create Local Custom Skill</span>
-                    <input
-                      type="text"
-                      value={newSkillName}
-                      onChange={(e) => setNewSkillName(e.target.value)}
-                      placeholder="Skill name (e.g. format_report)"
-                      className="w-full rounded-xl border border-border bg-muted/40 py-2 px-3 text-xs text-foreground outline-none focus:border-indigo-500"
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* RAG & Embedding Model Configuration */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-muted/30 border border-border">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Database className="h-4 w-4 text-cyan-400" />
+                    <label className="block text-xs font-semibold text-foreground uppercase tracking-wider">
+                      pgvector RAG Namespace
+                    </label>
+                    <HelpTooltip
+                      content="The vector namespace this agent queries for RAG retrieval. Documents are chunked, embedded, and stored by namespace. Leave as 'default' for shared access."
+                      side="right"
                     />
-                    <input
-                      type="text"
-                      value={newSkillDesc}
-                      onChange={(e) => setNewSkillDesc(e.target.value)}
-                      placeholder="One-sentence description..."
-                      className="w-full rounded-xl border border-border bg-muted/40 py-2 px-3 text-xs text-foreground outline-none focus:border-indigo-500"
-                    />
-                    <textarea
-                      rows={4}
-                      value={newSkillInstructions}
-                      onChange={(e) => setNewSkillInstructions(e.target.value)}
-                      placeholder="Instructions / logic..."
-                      className="w-full rounded-xl border border-border bg-muted/40 py-2 px-3 text-xs text-foreground font-mono outline-none focus:border-indigo-500"
-                    />
-                    <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setAuthoringSkill(false)}
-                        className="px-2.5 py-1 rounded bg-muted text-muted-foreground hover:text-foreground text-[10px] font-semibold"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleCreateSkillInline}
-                        disabled={savingSkill}
-                        className="flex items-center gap-1 px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold"
-                      >
-                        {savingSkill ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save & Bind"}
-                      </button>
-                    </div>
                   </div>
-                )}
+                  <p className="text-[10px] text-muted-foreground">
+                    Assign a vector namespace the agent can query via RAG retrieval.
+                  </p>
+                  <input
+                    type="text"
+                    value={ragNamespace}
+                    onChange={(e) => setRagNamespace(e.target.value)}
+                    placeholder="e.g. default or corporate-rules"
+                    className="w-full rounded-xl border border-border bg-background py-2 px-3.5 text-xs text-foreground outline-none focus:border-primary transition-colors"
+                  />
+                </div>
 
-                <div className="flex gap-2 shrink-0">
-                  <div className="flex-1 relative">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Database className="h-4 w-4 text-emerald-400" />
+                    <label className="block text-xs font-semibold text-foreground uppercase tracking-wider">
+                      Embedding Model
+                    </label>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Select a text-embedding model from the active provider&apos;s models for RAG search.
+                  </p>
+                  <select
+                    value={embedModel}
+                    onChange={(e) => setEmbedModel(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-background py-2 px-3.5 text-xs text-foreground outline-none focus:border-primary transition-colors"
+                  >
+                    <option value="">No embedding — fallback to text search</option>
+                    {(() => {
+                      const providerCfg = llmProviders.find((p) => p.id === provider);
+                      const providerModels =
+                        providerCfg?.models && providerCfg.models.length > 0
+                          ? providerCfg.models
+                          : providerCfg?.discoveredModels || PROVIDER_MODELS[provider] || [];
+                      const embedModels = providerModels.filter((m: string) =>
+                        m.toLowerCase().includes("embedding") ||
+                        m.toLowerCase().includes("ada") ||
+                        m.toLowerCase().includes("text-embed")
+                      );
+                      return embedModels.map((m: string) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ));
+                    })()}
+                    {(() => {
+                      const providerCfg = llmProviders.find((p) => p.id === provider);
+                      const providerModels =
+                        providerCfg?.models && providerCfg.models.length > 0
+                          ? providerCfg.models
+                          : providerCfg?.discoveredModels || PROVIDER_MODELS[provider] || [];
+                      return embedModel && !providerModels.some((m: string) => m === embedModel) ? (
+                        <option value={embedModel}>{embedModel} (current)</option>
+                      ) : null;
+                    })()}
+                  </select>
+                </div>
+              </div>
+
+              {/* Header Filter & Bulk Actions Bar */}
+              <div className="space-y-2.5">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  <div className="relative flex-1">
                     <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                     <input
                       type="text"
-                      value={skillSearch}
-                      onChange={(e) => setSkillSearch(e.target.value)}
-                      placeholder="Search skill catalog..."
-                      className="w-full rounded-xl border border-border bg-background py-2 pl-9 pr-4 text-xs text-foreground placeholder-slate-600 outline-none focus:border-indigo-500"
+                      value={knowledgeSearch}
+                      onChange={(e) => setKnowledgeSearch(e.target.value)}
+                      placeholder="Search knowledge skills & OKF concepts by name, key, description..."
+                      className="w-full rounded-xl border border-border bg-muted/30 pl-9 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
                     />
                   </div>
-                  <select
-                    value={skillFilter}
-                    onChange={(e) => setSkillFilter(e.target.value)}
-                    className="rounded-xl border border-border bg-background py-2 px-3 text-xs text-muted-foreground outline-none"
-                  >
-                    <option value="all">All Types</option>
-                    <option value="custom">Custom</option>
-                    <option value="open">Open</option>
-                    <option value="native">Native</option>
-                    <option value="mcp">MCP</option>
-                  </select>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setAuthoringSkill(!authoringSkill)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-xs font-semibold transition-colors cursor-pointer shrink-0"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Author New Skill
+                    </button>
+                  </div>
                 </div>
 
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800">
-                  {loadingResources && skillsCatalog.length === 0 ? (
-                    <div className="flex justify-center items-center py-6 text-muted-foreground text-[10px] gap-2">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading Skills...
-                    </div>
-                  ) : filteredSkills.length === 0 ? (
-                    <p className="text-center text-slate-600 text-[10px] py-6">No matching catalog skills found.</p>
-                  ) : (
-                    filteredSkills.map((s) => {
-                      const isChecked = selectedTools.some((t) => t.name === s.name);
-                      return (
-                        <div
-                          key={s.id}
-                          onClick={() => handleToggleTool(s.name, s.category)}
-                          className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                            isChecked
-                              ? "bg-emerald-500/10 border-emerald-500/40 text-foreground"
-                              : "border-border bg-muted/20 hover:border-border text-foreground hover:bg-muted/30"
-                          }`}
-                        >
-                          <div className="min-w-0 flex-1">
-                            <span className="font-mono text-xs font-bold text-foreground block truncate">{s.name}</span>
-                            <p className="text-[9px] text-muted-foreground mt-0.5 leading-tight">{s.description}</p>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {isChecked && (
-                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 border border-emerald-300 dark:border-emerald-500/40 text-emerald-800 dark:text-emerald-300 text-[8px] font-bold">
-                                <Check className="h-2.5 w-2.5" /> Active
-                              </span>
-                            )}
-                            <span className="px-1.5 py-0.5 rounded border border-border text-[8px] font-semibold capitalize shrink-0 text-muted-foreground bg-muted">
-                              {s.category}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
+                <div className="flex items-center justify-between px-1 text-[11px] text-muted-foreground">
+                  <div>
+                    Showing <span className="text-foreground font-semibold">{totalFilteredKnowledge}</span> assets &middot;{" "}
+                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{totalActiveKnowledge}</span> currently active
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleBulkToggleKnowledge(true)}
+                      className="text-[10px] text-primary hover:underline font-bold transition-colors cursor-pointer"
+                    >
+                      Enable All Filtered
+                    </button>
+                    <span className="text-border">|</span>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkToggleKnowledge(false)}
+                      className="text-[10px] text-muted-foreground hover:text-foreground font-medium transition-colors cursor-pointer"
+                    >
+                      Disable All Filtered
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Inline Custom Skill Authoring Modal/Drawer */}
+              {authoringSkill && (
+                <div className="border border-border bg-card rounded-2xl p-4 space-y-3 shadow-md animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground">Create Local Custom Skill</span>
+                    <button
+                      type="button"
+                      onClick={() => setAuthoringSkill(false)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={newSkillName}
+                    onChange={(e) => setNewSkillName(e.target.value)}
+                    placeholder="Skill name (e.g. format_report)"
+                    className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary"
+                  />
+                  <input
+                    type="text"
+                    value={newSkillDesc}
+                    onChange={(e) => setNewSkillDesc(e.target.value)}
+                    placeholder="One-sentence description..."
+                    className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary"
+                  />
+                  <textarea
+                    rows={4}
+                    value={newSkillInstructions}
+                    onChange={(e) => setNewSkillInstructions(e.target.value)}
+                    placeholder="Instructions / procedural guidelines..."
+                    className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground font-mono outline-none focus:border-primary"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setAuthoringSkill(false)}
+                      className="px-3 py-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground text-xs font-semibold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCreateSkillInline}
+                      disabled={savingSkill}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold"
+                    >
+                      {savingSkill ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save & Bind"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Section 1: Universal Business Skills Table */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Wrench className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-bold text-foreground uppercase tracking-wider">Universal Business Skills</span>
+                    <span className="text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-md border border-border">
+                      {skillsCatalog.length} Registered
+                    </span>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border bg-muted/40 overflow-hidden shadow-inner">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs divide-y divide-border/60">
+                      <thead className="bg-muted/50 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <tr>
+                          <th className="py-2.5 px-3 w-12 text-center">Toggle</th>
+                          <th className="py-2.5 px-3 w-48">Skill &amp; Key</th>
+                          <th className="py-2.5 px-3 w-28">Category</th>
+                          <th className="py-2.5 px-3">Description &amp; Inputs</th>
+                          <th className="py-2.5 px-3 w-24 text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/40">
+                        {loadingResources && skillsCatalog.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="py-8 text-center text-muted-foreground text-xs">
+                              <Loader2 className="h-4 w-4 animate-spin inline-block mr-2" />
+                              Loading skills catalog...
+                            </td>
+                          </tr>
+                        ) : filteredKnowledgeSkills.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="py-8 text-center text-muted-foreground text-xs italic">
+                              No matching business skills found.
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredKnowledgeSkills.map((s) => {
+                            const isSkillActive = selectedTools.some((t) => t.name === s.name);
+                            return (
+                              <tr
+                                key={s.id}
+                                onClick={() => handleToggleTool(s.name, s.category as any)}
+                                className={`hover:bg-muted/40 transition-colors cursor-pointer select-none ${
+                                  isSkillActive ? "bg-emerald-500/[0.04]" : ""
+                                }`}
+                              >
+                                <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleTool(s.name, s.category as any)}
+                                    className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                      isSkillActive ? "bg-emerald-500" : "bg-muted-foreground/30 border border-border"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                        isSkillActive ? "translate-x-4" : "translate-x-0"
+                                      }`}
+                                    />
+                                  </button>
+                                </td>
+
+                                <td className="py-3 px-3">
+                                  <div className="font-mono text-xs font-bold text-foreground flex items-center gap-1.5">
+                                    <Wrench className="h-3 w-3 text-indigo-500 dark:text-indigo-400 shrink-0" />
+                                    <span>{s.name}</span>
+                                  </div>
+                                  <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                                    key: {s.name.toLowerCase().replace(/\s+/g, "_")}
+                                  </div>
+                                </td>
+
+                                <td className="py-3 px-3">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/20">
+                                    {s.category || "Custom"}
+                                  </span>
+                                </td>
+
+                                <td className="py-3 px-3">
+                                  <div className="text-muted-foreground text-[11px] leading-relaxed line-clamp-2">
+                                    {s.description || "No description provided."}
+                                  </div>
+                                  {s.instructions && (
+                                    <div className="text-[9px] font-mono text-muted-foreground/80 mt-1 truncate">
+                                      instructions: {s.instructions.slice(0, 90)}...
+                                    </div>
+                                  )}
+                                </td>
+
+                                <td className="py-3 px-3 text-right">
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                      isSkillActive
+                                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                        : "bg-muted text-muted-foreground border-border"
+                                    }`}
+                                  >
+                                    {isSkillActive ? (
+                                      <>
+                                        <Check className="h-2.5 w-2.5" /> Active
+                                      </>
+                                    ) : (
+                                      "Disabled"
+                                    )}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: OKF Concepts Table */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-bold text-foreground uppercase tracking-wider">OKF v0.1 Concept Bundles</span>
+                    <span className="text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-md border border-border">
+                      {okfConcepts.length} Available
+                    </span>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border bg-muted/40 overflow-hidden shadow-inner">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs divide-y divide-border/60">
+                      <thead className="bg-muted/50 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <tr>
+                          <th className="py-2.5 px-3 w-12 text-center">Toggle</th>
+                          <th className="py-2.5 px-3 w-56">Concept &amp; Key</th>
+                          <th className="py-2.5 px-3 w-36">Concept Type</th>
+                          <th className="py-2.5 px-3">Description &amp; Directives</th>
+                          <th className="py-2.5 px-3 w-24 text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/40">
+                        {loadingResources && okfConcepts.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="py-8 text-center text-muted-foreground text-xs">
+                              <Loader2 className="h-4 w-4 animate-spin inline-block mr-2" />
+                              Loading OKF concepts registry...
+                            </td>
+                          </tr>
+                        ) : filteredKnowledgeConcepts.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="py-8 text-center text-muted-foreground text-xs italic">
+                              No matching OKF concepts found.
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredKnowledgeConcepts.map((c) => {
+                            const toolPresetName = `okf-${c.conceptKey}`;
+                            const isConceptActive = selectedTools.some((t) => t.name === toolPresetName);
+                            const excerpt = c.markdownBody
+                              ? c.markdownBody.replace(/^#+\s+/gm, "").trim().slice(0, 140)
+                              : c.yamlFrontmatter || "Operational knowledge guideline.";
+                            return (
+                              <tr
+                                key={c.id}
+                                onClick={() => handleToggleTool(toolPresetName, "native")}
+                                className={`hover:bg-muted/40 transition-colors cursor-pointer select-none ${
+                                  isConceptActive ? "bg-emerald-500/[0.04]" : ""
+                                }`}
+                              >
+                                <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleTool(toolPresetName, "native")}
+                                    className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                      isConceptActive ? "bg-emerald-500" : "bg-muted-foreground/30 border border-border"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                        isConceptActive ? "translate-x-4" : "translate-x-0"
+                                      }`}
+                                    />
+                                  </button>
+                                </td>
+
+                                <td className="py-3 px-3">
+                                  <div className="font-mono text-xs font-bold text-foreground flex items-center gap-1.5">
+                                    <BookOpen className="h-3 w-3 text-cyan-500 dark:text-cyan-400 shrink-0" />
+                                    <span>{c.conceptKey}</span>
+                                  </div>
+                                  <div className="text-[10px] text-muted-foreground font-mono mt-0.5 truncate max-w-[200px]">
+                                    id: {c.id}
+                                  </div>
+                                </td>
+
+                                <td className="py-3 px-3">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/20">
+                                    {c.category}
+                                  </span>
+                                </td>
+
+                                <td className="py-3 px-3">
+                                  <div className="text-muted-foreground text-[11px] leading-relaxed line-clamp-2">
+                                    {excerpt}
+                                  </div>
+                                </td>
+
+                                <td className="py-3 px-3 text-right">
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                      isConceptActive
+                                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                        : "bg-muted text-muted-foreground border-border"
+                                    }`}
+                                  >
+                                    {isConceptActive ? (
+                                      <>
+                                        <Check className="h-2.5 w-2.5" /> Active
+                                      </>
+                                    ) : (
+                                      "Disabled"
+                                    )}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>

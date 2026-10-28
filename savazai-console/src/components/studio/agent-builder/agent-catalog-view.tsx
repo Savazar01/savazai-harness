@@ -39,9 +39,26 @@ export function AgentCatalogView() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [originFilter, setOriginFilter] = useState("all");
   const [lockedFilter, setLockedFilter] = useState("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [sortField, setSortField] = useState<"name" | "role" | "model" | "tools" | "updated">("updated");
   const [sortAsc, setSortAsc] = useState<boolean>(false);
+
+  // Restore operator view preference, defaulting to list view
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("savazai_agent_builder_view") as "grid" | "list" | null;
+      if (saved === "grid" || saved === "list") {
+        setViewMode(saved);
+      }
+    }
+  }, []);
+
+  const handleSetViewMode = (mode: "grid" | "list") => {
+    setViewMode(mode);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("savazai_agent_builder_view", mode);
+    }
+  };
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeCanvasNode, setActiveCanvasNode] = useState<CanvasNode | null>(null);
@@ -447,7 +464,7 @@ export function AgentCatalogView() {
           <div className="flex items-center bg-muted/60 p-1 rounded-xl border border-border ml-1">
             <button
               type="button"
-              onClick={() => setViewMode("grid")}
+              onClick={() => handleSetViewMode("grid")}
               className={`p-1.5 rounded-lg text-xs font-semibold transition-all ${
                 viewMode === "grid"
                   ? "bg-card text-foreground shadow-xs border border-border"
@@ -459,7 +476,7 @@ export function AgentCatalogView() {
             </button>
             <button
               type="button"
-              onClick={() => setViewMode("list")}
+              onClick={() => handleSetViewMode("list")}
               className={`p-1.5 rounded-lg text-xs font-semibold transition-all ${
                 viewMode === "list"
                   ? "bg-card text-foreground shadow-xs border border-border"
