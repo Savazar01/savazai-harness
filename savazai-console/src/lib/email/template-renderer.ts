@@ -36,7 +36,8 @@ export async function renderEmailTemplate(
   // Merged context with safe system fallbacks
   const mergedContext: Record<string, string> = {
     agent_name: "Agent Orchestrator",
-    workflow_title: "Autonomous Agentflow",
+    agentflow_title: context.agentflow_title || context.workflow_title || "Autonomous Agentflow",
+    workflow_title: context.workflow_title || context.agentflow_title || "Autonomous Agentflow",
     step_name: "Verification Step",
     approver_email: "operator@enterprise.com",
     review_link: process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}/dashboard` : "http://localhost:3056/dashboard",
@@ -44,6 +45,11 @@ export async function renderEmailTemplate(
     status: "PENDING_APPROVAL",
     timestamp: new Date().toUTCString(),
     company_name: "SavazAI Enterprise",
+    company_email: "contact@savazar.com",
+    company_phone: "+1 (800) 555-0199",
+    company_address: "100 Enterprise Way, Suite 400, Austin, TX 78701",
+    company_website: "https://savazar.com",
+    support_email: "support@savazar.com",
     platform_title: "SavazAI",
     ...Object.fromEntries(
       Object.entries(context).map(([k, v]) => [k, v !== undefined && v !== null ? String(v) : ""])

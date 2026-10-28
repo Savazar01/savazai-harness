@@ -98,10 +98,10 @@ export default function BusinessPage() {
                   ? "bg-primary/10 border border-primary/30 text-primary font-bold shadow-xs"
                   : "border border-transparent text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
-              title={isNavCollapsed ? "Google OKF Concepts" : undefined}
+              title={isNavCollapsed ? "OKF Concepts" : undefined}
             >
               <BookOpen className={`h-4 w-4 shrink-0 ${subTab === "okf" ? "text-primary" : "text-muted-foreground"}`} />
-              {!isNavCollapsed && <span>Google OKF Concepts</span>}
+              {!isNavCollapsed && <span>OKF Concepts</span>}
             </button>
           )}
 

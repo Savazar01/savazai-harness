@@ -35,11 +35,11 @@ async function ensureTableAndSeed() {
         name: "Human-in-the-Loop Plan Approval Request",
         category: "approval",
         description: "Dispatched to designated reviewers when an agentflow pauses awaiting human approval before worker execution.",
-        subject: "[Action Required] Approval Needed for Workflow {{workflow_title}} - {{execution_id}}",
+        subject: "[Action Required] Approval Needed for Agentflow {{agentflow_title}} - {{execution_id}}",
         body_html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
   <div style="margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
     <h2 style="color: #0f172a; margin: 0 0 4px 0; font-size: 20px;">Execution Plan Approval Request</h2>
-    <p style="color: #64748b; margin: 0; font-size: 13px;">Agentflow: <strong>{{workflow_title}}</strong></p>
+    <p style="color: #64748b; margin: 0; font-size: 13px;">Agentflow: <strong>{{agentflow_title}}</strong></p>
   </div>
   <p style="color: #334155; font-size: 14px; line-height: 1.6;">Hello,</p>
   <p style="color: #334155; font-size: 14px; line-height: 1.6;">Supervisor agent <strong>{{agent_name}}</strong> has formulated an autonomous execution plan for step <code>{{step_name}}</code> and paused at the Human-in-the-Loop boundary awaiting your authorization.</p>
@@ -53,9 +53,10 @@ async function ensureTableAndSeed() {
   </div>
   <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px;">Sent securely by {{company_name}} &bull; {{platform_title}} Orchestration Engine</p>
 </div>`,
-        body_markdown: `## Execution Plan Approval Request\n\nSupervisor agent **{{agent_name}}** has formulated an execution plan for step **{{step_name}}** in workflow **{{workflow_title}}**.\n\n- **Execution ID**: \`{{execution_id}}\`\n- **Status**: {{status}}\n- **Timestamp**: {{timestamp}}\n\nPlease review and approve: [Open Approval Portal]({{review_link}})`,
+        body_markdown: `## Execution Plan Approval Request\n\nSupervisor agent **{{agent_name}}** has formulated an execution plan for step **{{step_name}}** in Agentflow **{{agentflow_title}}**.\n\n- **Execution ID**: \`{{execution_id}}\`\n- **Status**: {{status}}\n- **Timestamp**: {{timestamp}}\n\nPlease review and approve: [Open Approval Portal]({{review_link}})`,
         supported_variables: JSON.stringify([
           "agent_name",
+          "agentflow_title",
           "workflow_title",
           "step_name",
           "approver_email",
@@ -64,20 +65,23 @@ async function ensureTableAndSeed() {
           "status",
           "timestamp",
           "company_name",
+          "company_email",
+          "company_phone",
+          "company_address",
           "platform_title"
         ]),
       },
       {
         id: crypto.randomUUID(),
-        template_key: "workflow_execution_success",
-        name: "Workflow Execution Success Report",
-        category: "workflow_result",
+        template_key: "agentflow_execution_success",
+        name: "Agentflow Execution Success Report",
+        category: "agentflow_result",
         description: "Sent to stakeholders when an enterprise agentflow completes execution with verified ground-truth receipts.",
-        subject: "[Execution Complete] Agentflow {{workflow_title}} Finished Successfully",
+        subject: "[Execution Complete] Agentflow {{agentflow_title}} Finished Successfully",
         body_html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
   <div style="margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
     <span style="background: #dcfce7; color: #15803d; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase;">Completed</span>
-    <h2 style="color: #0f172a; margin: 10px 0 4px 0; font-size: 20px;">{{workflow_title}} Completed</h2>
+    <h2 style="color: #0f172a; margin: 10px 0 4px 0; font-size: 20px;">{{agentflow_title}} Completed</h2>
     <p style="color: #64748b; margin: 0; font-size: 13px;">Execution ID: <code>{{execution_id}}</code></p>
   </div>
   <p style="color: #334155; font-size: 14px; line-height: 1.6;">All worker agent tasks and tool integrations have successfully finished without execution errors.</p>
@@ -86,8 +90,9 @@ async function ensureTableAndSeed() {
   </div>
   <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px;">Automated dispatch by {{company_name}}</p>
 </div>`,
-        body_markdown: `### Workflow Completed: {{workflow_title}}\n\nExecution \`{{execution_id}}\` has completed successfully at {{timestamp}}.\n\n[View Full Receipts]({{review_link}})`,
+        body_markdown: `### Agentflow Completed: {{agentflow_title}}\n\nExecution \`{{execution_id}}\` has completed successfully at {{timestamp}}.\n\n[View Full Receipts]({{review_link}})`,
         supported_variables: JSON.stringify([
+          "agentflow_title",
           "workflow_title",
           "execution_id",
           "review_link",

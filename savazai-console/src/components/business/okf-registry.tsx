@@ -21,7 +21,11 @@ import {
   Eye,
   Code,
   FileSpreadsheet,
-  AlertTriangle
+  AlertTriangle,
+  Users,
+  Bot,
+  CheckSquare,
+  Square
 } from "lucide-react";
 import {
   AlertDialog,
@@ -237,10 +241,17 @@ export function OkfRegistry() {
 
   const [concepts, setConcepts] = useState<OkfConcept[]>([]);
   const [agentUsageMap, setAgentUsageMap] = useState<Record<string, string[]>>({});
+  const [rawFlows, setRawFlows] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [deletingConcept, setDeletingConcept] = useState<OkfConcept | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+
+  // Agent Assignment Modal State
+  const [assigningConcept, setAssigningConcept] = useState<OkfConcept | null>(null);
+  const [selectedAgentKeys, setSelectedAgentKeys] = useState<Set<string>>(new Set());
+  const [savingAssignments, setSavingAssignments] = useState(false);
+  const [assignSearchQuery, setAssignSearchQuery] = useState("");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>("All");
@@ -297,6 +308,7 @@ export function OkfRegistry() {
         const flows = await res.json();
         const usage: Record<string, Set<string>> = {};
         const flowList = Array.isArray(flows) ? flows : (flows.agentflows || []);
+        setRawFlows(flowList);
         for (const flow of flowList) {
           const nodes = flow.canvasDefinition?.nodes || [];
           for (const n of nodes) {
@@ -329,6 +341,134 @@ export function OkfRegistry() {
       console.error("Failed to fetch agentflows for usage mapping:", err);
     }
   }, []);
+
+  // Open Assign OKF Concept to Agents Modal
+  const handleOpenAssignModal = (concept: OkfConcept) => {
+    setAssigningConcept(concept);
+    setAssignSearchQuery("");
+    const keyLower = concept.conceptKey.toLowerCase().trim();
+    const keyWithPrefix = `okf-${keyLower}`;
+    const initialSelected = new Set<string>();
+
+    for (const flow of rawFlows) {
+      let parsedNodes: any[] = [];
+      if (typeof flow.canvasDefinition === "string") {
+        try {
+          parsedNodes = JSON.parse(flow.canvasDefinition).nodes || [];
+        } catch {}
+      } else if (flow.canvasDefinition?.nodes) {
+        parsedNodes = flow.canvasDefinition.nodes;
+      }
+
+      for (const node of parsedNodes) {
+        const tools = (node.tools || node.data?.tools || []).map((t: any) =>
+          (typeof t === "string" ? t : t?.name || "").toLowerCase().trim()
+        );
+        const okfs = (node.okfConcepts || node.data?.okfConcepts || node.knowledge || node.data?.knowledge || []).map((k: any) =>
+          String(k).toLowerCase().trim()
+        );
+        if (
+          tools.includes(keyLower) ||
+          tools.includes(keyWithPrefix) ||
+          okfs.includes(keyLower) ||
+          okfs.includes(keyWithPrefix)
+        ) {
+          initialSelected.add(`${flow.id}::${node.id}`);
+        }
+      }
+    }
+
+    setSelectedAgentKeys(initialSelected);
+  };
+
+  const handleToggleAgentAssignment = (flowId: string, nodeId: string) => {
+    const key = `${flowId}::${nodeId}`;
+    setSelectedAgentKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const handleSaveAssignments = async () => {
+    if (!assigningConcept) return;
+    setSavingAssignments(true);
+    try {
+      const keyLower = assigningConcept.conceptKey.toLowerCase().trim();
+      const toolName = `okf-${keyLower}`;
+      let updatedFlowCount = 0;
+
+      for (const flow of rawFlows) {
+        let canvasObj: any = {};
+        if (typeof flow.canvasDefinition === "string") {
+          try {
+            canvasObj = JSON.parse(flow.canvasDefinition);
+          } catch {
+            canvasObj = { nodes: [], edges: [] };
+          }
+        } else if (flow.canvasDefinition) {
+          canvasObj = JSON.parse(JSON.stringify(flow.canvasDefinition));
+        }
+
+        const nodes = canvasObj.nodes || [];
+        let flowModified = false;
+
+        for (const node of nodes) {
+          const key = `${flow.id}::${node.id}`;
+          const shouldHaveConcept = selectedAgentKeys.has(key);
+
+          const currentTools: any[] = node.tools || node.data?.tools || [];
+          const hasInTools = currentTools.some((t: any) => {
+            const tName = (typeof t === "string" ? t : t?.name || "").toLowerCase().trim();
+            return tName === keyLower || tName === toolName;
+          });
+
+          if (shouldHaveConcept && !hasInTools) {
+            const newToolRef = {
+              id: `okf-ref-${crypto.randomUUID()}`,
+              name: toolName,
+              category: "okf_concept",
+              description: assigningConcept.parsed?.title || assigningConcept.conceptKey,
+            };
+            node.tools = [...currentTools, newToolRef];
+            if (node.data) node.data.tools = node.tools;
+            flowModified = true;
+          } else if (!shouldHaveConcept && hasInTools) {
+            node.tools = currentTools.filter((t: any) => {
+              const tName = (typeof t === "string" ? t : t?.name || "").toLowerCase().trim();
+              return tName !== keyLower && tName !== toolName;
+            });
+            if (node.data) node.data.tools = node.tools;
+            flowModified = true;
+          }
+        }
+
+        if (flowModified) {
+          const res = await fetch(`/api/agentflows/${flow.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ canvasDefinition: canvasObj }),
+          });
+          if (res.ok) {
+            updatedFlowCount++;
+          }
+        }
+      }
+
+      setAlertMessage(`OKF Concept assigned successfully across ${updatedFlowCount} agentflow(s).`);
+      setAssigningConcept(null);
+      await fetchAgentflows();
+    } catch (err) {
+      console.error("Failed to save OKF concept assignments:", err);
+      setAlertMessage("Failed to update agent OKF concept assignments. Please try again.");
+    } finally {
+      setSavingAssignments(false);
+    }
+  };
 
   useEffect(() => {
     fetchConcepts();
@@ -789,7 +929,7 @@ export function OkfRegistry() {
           <Layers className="h-5 w-5 text-primary" />
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider font-mono">Google OKF Concepts</h2>
+              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider font-mono">OKF Concepts</h2>
               <HelpTooltip content="Open Knowledge Framework (OKF) concepts provide structured SOPs, parameters, and compliance rules that workers ingest at runtime." side="right" />
             </div>
             <span className="text-[11px] text-muted-foreground">
@@ -975,9 +1115,14 @@ export function OkfRegistry() {
                     </td>
                     <td className="py-3.5 px-4 max-w-[200px]">
                       {boundAgents.length > 0 ? (
-                        <div className="flex flex-wrap items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAssignModal(item)}
+                          className="flex flex-wrap items-center gap-1 text-left group/badge cursor-pointer"
+                          title="Click to manage agent assignments"
+                        >
                           {boundAgents.slice(0, 2).map((agent, idx) => (
-                            <span key={idx} className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-md border border-primary/20 font-medium">
+                            <span key={idx} className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-md border border-primary/20 font-medium group-hover/badge:border-primary">
                               {agent}
                             </span>
                           ))}
@@ -986,9 +1131,16 @@ export function OkfRegistry() {
                               +{boundAgents.length - 2}
                             </span>
                           )}
-                        </div>
+                        </button>
                       ) : (
-                        <span className="text-muted-foreground text-[10px]">Unbound</span>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAssignModal(item)}
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-[10px] text-muted-foreground border border-border hover:border-primary hover:text-foreground cursor-pointer transition-all"
+                          title="Assign this OKF concept to agents"
+                        >
+                          <Plus className="h-2.5 w-2.5" /> Assign Agents
+                        </button>
                       )}
                     </td>
                     <td className="py-3.5 px-4 text-right">
@@ -1373,7 +1525,7 @@ export function OkfRegistry() {
                   <div className="flex flex-wrap items-center gap-2">
                     <label className="flex items-center gap-1.5 px-3 py-1 rounded-lg border border-border bg-card hover:bg-muted text-xs font-semibold text-foreground cursor-pointer shadow-xs transition-colors">
                       <Upload className="h-3.5 w-3.5 text-primary" />
-                      <span>Upload Google OKF Template</span>
+                      <span>Upload OKF Template</span>
                       <input
                         type="file"
                         accept=".md,.json,.txt"
@@ -1495,10 +1647,166 @@ export function OkfRegistry() {
               <button
                 type="button"
                 onClick={() => handleDeleteConcept(deletingConcept.id)}
-                className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-foreground text-xs font-bold transition-all cursor-pointer"
+                className="flex-1 py-2 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-bold transition-all cursor-pointer"
               >
                 Confirm Delete
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Assign OKF Concept to Agents Modal ── */}
+      {assigningConcept && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div onClick={() => setAssigningConcept(null)} className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+          <div className="relative bg-card border border-border rounded-3xl shadow-2xl p-6 w-full max-w-2xl max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-border shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10 border border-primary/20 text-primary">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    Assign OKF Concept to Agents
+                    <span className="font-mono text-primary font-normal">
+                      ({assigningConcept.parsed?.title || assigningConcept.conceptKey})
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    Bind or unbind this OKF governance concept across agents in published and draft flows.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAssigningConcept(null)}
+                className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-lg cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Filter Search */}
+            <div className="py-3 border-b border-border/60 shrink-0">
+              <div className="relative">
+                <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={assignSearchQuery}
+                  onChange={(e) => setAssignSearchQuery(e.target.value)}
+                  placeholder="Filter flows or agent names..."
+                  className="w-full rounded-xl border border-border bg-muted/50 py-1.5 pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+
+            {/* Flows & Agents List */}
+            <div className="flex-1 overflow-y-auto py-3 space-y-4 pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-muted">
+              {rawFlows.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground text-xs">
+                  No agentflows found. Create an agentflow in Capability Studio to assign OKF concepts.
+                </div>
+              ) : (
+                rawFlows.map((flow) => {
+                  let nodes: any[] = [];
+                  if (typeof flow.canvasDefinition === "string") {
+                    try {
+                      nodes = JSON.parse(flow.canvasDefinition).nodes || [];
+                    } catch {}
+                  } else if (flow.canvasDefinition?.nodes) {
+                    nodes = flow.canvasDefinition.nodes;
+                  }
+
+                  const workerNodes = nodes.filter((n: any) => n.roleTemplate !== "team");
+                  if (workerNodes.length === 0) return null;
+
+                  const filteredNodes = workerNodes.filter((n: any) => {
+                    if (!assignSearchQuery.trim()) return true;
+                    const q = assignSearchQuery.toLowerCase();
+                    const flowMatch = (flow.name || "").toLowerCase().includes(q);
+                    const nodeMatch = (n.label || "").toLowerCase().includes(q);
+                    return flowMatch || nodeMatch;
+                  });
+
+                  if (filteredNodes.length === 0) return null;
+
+                  return (
+                    <div key={flow.id} className="rounded-2xl border border-border bg-muted/30 p-3.5 space-y-2.5">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
+                        <span className="text-xs font-bold text-foreground font-mono flex items-center gap-2">
+                          <Bot className="h-3.5 w-3.5 text-primary" />
+                          {flow.name || "Untitled Agentflow"}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                          flow.status === "published"
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                        }`}>
+                          {flow.status || "draft"}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                        {filteredNodes.map((n: any) => {
+                          const key = `${flow.id}::${n.id}`;
+                          const isAssigned = selectedAgentKeys.has(key);
+
+                          return (
+                            <div
+                              key={n.id}
+                              onClick={() => handleToggleAgentAssignment(flow.id, n.id)}
+                              className={`flex items-center gap-2.5 p-2 rounded-xl border cursor-pointer transition-all ${
+                                isAssigned
+                                  ? "bg-primary/10 border-primary/50 text-foreground"
+                                  : "bg-card border-border text-muted-foreground hover:border-border hover:text-foreground"
+                              }`}
+                            >
+                              <div className={`p-1 rounded-md shrink-0 ${isAssigned ? "text-primary" : "text-muted-foreground"}`}>
+                                {isAssigned ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <span className="text-xs font-semibold block truncate">
+                                  {n.label || "Specialist Worker"}
+                                </span>
+                                <span className="text-[9px] text-muted-foreground uppercase tracking-wider block font-mono">
+                                  {n.roleTemplate || "worker"}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between pt-4 border-t border-border shrink-0">
+              <span className="text-xs text-muted-foreground">
+                Selected: <strong className="text-primary font-mono">{selectedAgentKeys.size}</strong> agent(s)
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAssigningConcept(null)}
+                  className="px-4 py-2 rounded-xl border border-border hover:border-border text-muted-foreground hover:text-foreground text-xs font-semibold bg-muted/40 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveAssignments}
+                  disabled={savingAssignments}
+                  className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all shadow-md shadow-primary/20 disabled:opacity-50 cursor-pointer"
+                >
+                  {savingAssignments ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                  Save Assignments
+                </button>
+              </div>
             </div>
           </div>
         </div>

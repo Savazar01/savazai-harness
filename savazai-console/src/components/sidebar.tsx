@@ -61,7 +61,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = authClient.useSession();
-  const { hasPermission, hasAnyCategoryView } = usePermissions();
+  const { hasPermission, hasAnyCategoryView, user } = usePermissions();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [threads, setThreads] = useState<ChatThread[]>(() => loadThreads());
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
@@ -143,25 +143,32 @@ export function Sidebar() {
   const canViewWorkspace = hasPermission("agent_workspace", "view") && showAgentWorkspace;
   const canViewStudio = hasPermission("capability_studio", "view");
   const canViewBusiness = hasAnyCategoryView("business_center");
-  const canViewDocs = hasPermission("documentation", "view");
   const canViewCommandCenter = hasAnyCategoryView("command_center");
   const canViewSystemAdmin =
     hasPermission("system_admin", "view") ||
     hasPermission("command_center", "system_admin_view") ||
     hasPermission("appearance", "update") ||
     hasPermission("branding", "update");
-  const canViewDemoRequests = hasPermission("demo_requests", "view");
   const canViewUserAdmin = hasPermission("user_admin", "view");
 
-  const activeNavItems = [
+  const isSuperAdmin = user?.role === "admin" || user?.roleName === "Super Administrator" || session?.user?.role === "admin";
+  const canViewDocs = hasPermission("documentation", "view");
+  const canViewDemoRequests = hasPermission("demo_requests", "view") && isSuperAdmin;
+
+  // 1. Core Operational Modules (Top)
+  const coreNavItems = [
     ...(canViewWorkspace ? [{ href: "/dashboard", label: "Agent Workspace", icon: LayoutDashboard }] : []),
     ...(canViewStudio ? [{ href: "/studio", label: "Capability Studio", icon: BrainCircuit }] : []),
     ...(canViewBusiness ? [{ href: "/business", label: "Business Center", icon: Library }] : []),
-    ...(canViewDocs ? [{ href: "/docs", label: "Documentation", icon: BookOpen }] : []),
     ...(canViewCommandCenter ? [{ href: "/admin/settings", label: "Command Center", icon: Settings }] : []),
     ...(canViewSystemAdmin ? [{ href: "/admin/system", label: "System Admin", icon: ShieldCheck }] : []),
-    ...(canViewDemoRequests ? [{ href: "/admin/demo-requests", label: "Demo Requests", icon: CalendarCheck }] : []),
     ...(canViewUserAdmin ? [{ href: "/admin/users", label: "User Admin", icon: Users }] : []),
+  ];
+
+  // 2. Secondary Utility Items (Bottom, directly above Dark/Light Mode switch)
+  const utilityNavItems = [
+    ...(canViewDocs ? [{ href: "/docs", label: "Documentation", icon: BookOpen }] : []),
+    ...(canViewDemoRequests ? [{ href: "/admin/demo-requests", label: "Demo Requests", icon: CalendarCheck }] : []),
   ];
 
   useEffect(() => {
@@ -262,7 +269,7 @@ export function Sidebar() {
       </div>
 
       <nav className="px-2 pt-4 pb-2 space-y-1">
-        {activeNavItems.map((item) => {
+        {coreNavItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
@@ -339,6 +346,34 @@ export function Sidebar() {
       {!isDashboard && <div className="flex-1" />}
 
       <div className="px-2 py-3 border-t border-border shrink-0 space-y-1">
+        {utilityNavItems.length > 0 && (
+          <div className="pb-1 mb-1 border-b border-border/50 space-y-1">
+            {utilityNavItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-3 rounded-xl text-xs font-semibold transition-all ${
+                    !showFullContent ? "justify-center p-2.5 mx-2" : "w-full px-3 py-2"
+                  } ${
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                  title={!showFullContent ? item.label : undefined}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  {showFullContent && (
+                    <span className="animate-in fade-in duration-200">{item.label}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
         <ThemeToggle compact={!showFullContent} className={`flex items-center gap-3 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-all ${!showFullContent ? "justify-center p-2.5 mx-2" : "w-full px-3 py-2"}`} />
 
         <Link

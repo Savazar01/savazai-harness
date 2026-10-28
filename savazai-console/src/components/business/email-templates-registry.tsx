@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   Mail,
   Send,
@@ -19,6 +19,24 @@ import {
   Check,
   Tag,
   AlertTriangle,
+  Bold,
+  Italic,
+  Strikethrough,
+  Heading1,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Minus,
+  ExternalLink,
+  AlertCircle,
+  Layers,
+  Sparkles,
+  Building2,
+  Bot,
 } from "lucide-react";
 import { usePermissions } from "@/lib/auth/use-permissions";
 import { HelpTooltip } from "@/components/shared/help-tooltip";
@@ -37,7 +55,7 @@ export interface EmailTemplate {
   id: string;
   templateKey: string;
   name: string;
-  category: "approval" | "workflow_result" | "system_alert" | "notification";
+  category: string;
   description: string | null;
   subject: string;
   bodyHtml: string;
@@ -48,24 +66,39 @@ export interface EmailTemplate {
   updatedAt: string;
 }
 
-const MERGE_TAGS = [
-  { tag: "{{agent_name}}", label: "Agent Name", sample: "Supervisor Orchestrator" },
-  { tag: "{{workflow_title}}", label: "Workflow Title", sample: "Customer Onboarding Agentflow" },
-  { tag: "{{step_name}}", label: "Step Name", sample: "Compliance Verification" },
-  { tag: "{{approver_email}}", label: "Approver Email", sample: "operator@enterprise.com" },
-  { tag: "{{review_link}}", label: "Review Link", sample: "http://localhost:3056/dashboard" },
-  { tag: "{{execution_id}}", label: "Execution ID", sample: "exec_9872a1" },
-  { tag: "{{status}}", label: "Status", sample: "PENDING_APPROVAL" },
-  { tag: "{{timestamp}}", label: "Timestamp", sample: new Date().toUTCString() },
-  { tag: "{{company_name}}", label: "Company Name", sample: "SavazAI Enterprise" },
+export interface MergeTagItem {
+  tag: string;
+  label: string;
+  sample: string;
+  group: "agentflow" | "organization";
+}
+
+const MERGE_TAGS: MergeTagItem[] = [
+  // Agentflow State Variables
+  { tag: "{{agent_name}}", label: "Agent Name", sample: "Supervisor Orchestrator", group: "agentflow" },
+  { tag: "{{agentflow_title}}", label: "Agentflow Title", sample: "Customer Onboarding Agentflow", group: "agentflow" },
+  { tag: "{{step_name}}", label: "Step Name", sample: "Compliance Verification", group: "agentflow" },
+  { tag: "{{approver_email}}", label: "Approver Email", sample: "operator@enterprise.com", group: "agentflow" },
+  { tag: "{{review_link}}", label: "Review Link", sample: "http://localhost:3056/dashboard", group: "agentflow" },
+  { tag: "{{execution_id}}", label: "Execution ID", sample: "exec_9872a1", group: "agentflow" },
+  { tag: "{{status}}", label: "Status", sample: "PENDING_APPROVAL", group: "agentflow" },
+  { tag: "{{timestamp}}", label: "Timestamp", sample: new Date().toUTCString(), group: "agentflow" },
+
+  // Organization Identity Variables
+  { tag: "{{company_name}}", label: "Company Name", sample: "SavazAI Enterprise", group: "organization" },
+  { tag: "{{company_email}}", label: "Company Email", sample: "security@savazar.com", group: "organization" },
+  { tag: "{{company_phone}}", label: "Company Phone", sample: "+1 (800) 555-0199", group: "organization" },
+  { tag: "{{company_address}}", label: "Company Address", sample: "100 Enterprise Way, Suite 400, Austin, TX 78701", group: "organization" },
+  { tag: "{{company_website}}", label: "Company Website", sample: "https://savazar.com", group: "organization" },
+  { tag: "{{support_email}}", label: "Support Email", sample: "support@savazar.com", group: "organization" },
 ];
 
-const CATEGORY_STYLES: Record<string, { label: string; badge: string }> = {
-  approval: { label: "Approval Request", badge: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
-  workflow_result: { label: "Workflow Result", badge: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
-  system_alert: { label: "System Alert", badge: "bg-rose-500/10 text-rose-500 border-rose-500/20" },
-  notification: { label: "Notification", badge: "bg-sky-500/10 text-sky-500 border-sky-500/20" },
-};
+const PRESET_CATEGORIES: { id: string; label: string; badge: string }[] = [
+  { id: "approval", label: "Approval Request", badge: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" },
+  { id: "agentflow_result", label: "Agentflow Dispatch Result", badge: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" },
+  { id: "system_alert", label: "Human-in-the-Loop Escalation", badge: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20" },
+  { id: "notification", label: "System Notification", badge: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20" },
+];
 
 export function EmailTemplatesRegistry() {
   const { hasPermission } = usePermissions();
@@ -85,15 +118,18 @@ export function EmailTemplatesRegistry() {
   // Form states
   const [formKey, setFormKey] = useState("");
   const [formName, setFormName] = useState("");
-  const [formCategory, setFormCategory] = useState<EmailTemplate["category"]>("approval");
+  const [formCategory, setFormCategory] = useState<string>("approval");
+  const [isCustomCategoryActive, setIsCustomCategoryActive] = useState(false);
+  const [customCategoryInput, setCustomCategoryInput] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formSubject, setFormSubject] = useState("");
   const [formBodyHtml, setFormBodyHtml] = useState("");
   const [formBodyMarkdown, setFormBodyMarkdown] = useState("");
   const [formActive, setFormActive] = useState(true);
   const [formSaving, setFormSaving] = useState(false);
-  const [previewMode, setPreviewMode] = useState<"editor" | "preview" | "split">("split");
-  const [lastFocusedField, setLastFocusedField] = useState<"subject" | "bodyHtml" | "bodyMarkdown">("bodyHtml");
+  const [previewMode, setPreviewMode] = useState<"editor" | "split" | "preview">("split");
+  const [editorViewType, setEditorViewType] = useState<"visual" | "html">("visual");
+  const [lastFocusedField, setLastFocusedField] = useState<"subject" | "body">("body");
 
   // Test dispatch state
   const [testRecipient, setTestRecipient] = useState("");
@@ -101,9 +137,10 @@ export function EmailTemplatesRegistry() {
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const subjectInputRef = useRef<HTMLInputElement>(null);
+  const wysiwygEditorRef = useRef<HTMLDivElement>(null);
   const htmlTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch("/api/email-templates");
@@ -116,10 +153,41 @@ export function EmailTemplatesRegistry() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchTemplates();
+  }, [fetchTemplates]);
+
+  // Sync visual contentEditable with formBodyHtml when opening modal or switching view
+  useEffect(() => {
+    if (isAuthorModalOpen && wysiwygEditorRef.current && editorViewType === "visual") {
+      if (wysiwygEditorRef.current.innerHTML !== formBodyHtml) {
+        wysiwygEditorRef.current.innerHTML = formBodyHtml;
+      }
+    }
+  }, [isAuthorModalOpen, editorViewType, formBodyHtml]);
+
+  // Discover all distinct categories
+  const allCategories = useMemo(() => {
+    const set = new Set<string>();
+    PRESET_CATEGORIES.forEach((c) => set.add(c.id));
+    templates.forEach((t) => {
+      if (t.category) set.add(t.category);
+    });
+    return Array.from(set);
+  }, [templates]);
+
+  const getCategoryConfig = useCallback((cat: string) => {
+    const found = PRESET_CATEGORIES.find((p) => p.id === cat);
+    if (found) return found;
+    // Format custom category
+    const clean = cat.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    return {
+      id: cat,
+      label: clean,
+      badge: "bg-primary/10 text-primary border-primary/20",
+    };
   }, []);
 
   const openCreateModal = () => {
@@ -127,18 +195,29 @@ export function EmailTemplatesRegistry() {
     setFormKey("");
     setFormName("");
     setFormCategory("approval");
+    setIsCustomCategoryActive(false);
+    setCustomCategoryInput("");
     setFormDescription("");
-    setFormSubject("[Action Required] Approval Needed for Workflow {{workflow_title}} - {{execution_id}}");
-    setFormBodyHtml(`<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px;">
-  <h2 style="color: #0f172a; margin: 0 0 8px 0;">Execution Plan Approval Request</h2>
-  <p style="color: #475569; font-size: 14px;">Supervisor agent <strong>{{agent_name}}</strong> has paused at step <code>{{step_name}}</code> for workflow <strong>{{workflow_title}}</strong>.</p>
-  <div style="text-align: center; margin: 24px 0;">
-    <a href="{{review_link}}" style="background: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Review &amp; Authorize</a>
+    setFormSubject("[Action Required] Approval Needed for Agentflow {{agentflow_title}} - {{execution_id}}");
+    const initialHtml = `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
+  <div style="margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+    <h2 style="color: #0f172a; margin: 0 0 4px 0; font-size: 20px;">Execution Plan Approval Request</h2>
+    <p style="color: #64748b; margin: 0; font-size: 13px;">Agentflow: <strong>{{agentflow_title}}</strong></p>
   </div>
-  <p style="color: #94a3b8; font-size: 12px; text-align: center;">{{company_name}} Automation System</p>
-</div>`);
+  <p style="color: #334155; font-size: 14px; line-height: 1.6;">Supervisor agent <strong>{{agent_name}}</strong> has paused at step <code>{{step_name}}</code> for Agentflow <strong>{{agentflow_title}}</strong> awaiting your operational authorization.</p>
+  <div style="background: #f8fafc; border-left: 4px solid #4f46e5; padding: 12px 16px; margin: 16px 0; border-radius: 4px; color: #334155; font-size: 13px;">
+    <strong>Notice:</strong> Please verify the execution plan parameters and connected tool integrations before approving.
+  </div>
+  <div style="text-align: center; margin: 24px 0;">
+    <a href="{{review_link}}" style="background: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Review &amp; Authorize Plan</a>
+  </div>
+  <p style="color: #94a3b8; font-size: 12px; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 16px;">{{company_name}} &bull; {{platform_title}} Orchestration Engine</p>
+</div>`;
+    setFormBodyHtml(initialHtml);
     setFormBodyMarkdown("## Execution Plan Approval Request\n\nSupervisor agent **{{agent_name}}** paused on step **{{step_name}}**.");
     setFormActive(true);
+    setPreviewMode("split");
+    setEditorViewType("visual");
     setIsAuthorModalOpen(true);
   };
 
@@ -147,24 +226,73 @@ export function EmailTemplatesRegistry() {
     setFormKey(t.templateKey);
     setFormName(t.name);
     setFormCategory(t.category);
+    setIsCustomCategoryActive(false);
+    setCustomCategoryInput("");
     setFormDescription(t.description || "");
     setFormSubject(t.subject);
     setFormBodyHtml(t.bodyHtml);
     setFormBodyMarkdown(t.bodyMarkdown || "");
     setFormActive(t.isActive);
+    setPreviewMode("split");
+    setEditorViewType("visual");
     setIsAuthorModalOpen(true);
+  };
+
+  // Visual Editor Command Executer
+  const execFormat = (cmd: string, val: string | undefined = undefined) => {
+    if (editorViewType !== "visual") return;
+    document.execCommand(cmd, false, val);
+    if (wysiwygEditorRef.current) {
+      setFormBodyHtml(wysiwygEditorRef.current.innerHTML);
+    }
+  };
+
+  // Visual Block Inserters
+  const insertHtmlSnippet = (snippet: string) => {
+    if (editorViewType === "visual" && wysiwygEditorRef.current) {
+      wysiwygEditorRef.current.focus();
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        const el = document.createElement("div");
+        el.innerHTML = snippet;
+        const frag = document.createDocumentFragment();
+        let node;
+        let lastNode;
+        while ((node = el.firstChild)) {
+          lastNode = frag.appendChild(node);
+        }
+        range.insertNode(frag);
+        if (lastNode) {
+          range.setStartAfter(lastNode);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      } else {
+        wysiwygEditorRef.current.innerHTML += snippet;
+      }
+      setFormBodyHtml(wysiwygEditorRef.current.innerHTML);
+    } else {
+      setFormBodyHtml((prev) => prev + "\n" + snippet);
+    }
   };
 
   const handleInsertTag = (tag: string) => {
     if (lastFocusedField === "subject") {
       setFormSubject((prev) => prev + " " + tag);
     } else {
-      setFormBodyHtml((prev) => prev + "\n" + tag);
+      insertHtmlSnippet(`<span style="background: #eef2ff; color: #4f46e5; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; border: 1px solid #c7d2fe;">${tag}</span> `);
     }
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    const effectiveCategory = isCustomCategoryActive && customCategoryInput.trim()
+      ? customCategoryInput.trim().toLowerCase().replace(/\s+/g, "_")
+      : formCategory;
+
     if (!formKey.trim() || !formName.trim() || !formSubject.trim() || !formBodyHtml.trim()) return;
 
     setFormSaving(true);
@@ -173,7 +301,7 @@ export function EmailTemplatesRegistry() {
         id: editingTemplate ? editingTemplate.id : undefined,
         templateKey: formKey.trim(),
         name: formName.trim(),
-        category: formCategory,
+        category: effectiveCategory,
         description: formDescription.trim(),
         subject: formSubject.trim(),
         bodyHtml: formBodyHtml,
@@ -267,6 +395,10 @@ export function EmailTemplatesRegistry() {
   const livePreviewData = useMemo(() => {
     let sub = formSubject;
     let html = formBodyHtml;
+    // Replace backward-compatible tags
+    sub = sub.replaceAll("{{workflow_title}}", "Customer Onboarding Agentflow");
+    html = html.replaceAll("{{workflow_title}}", "Customer Onboarding Agentflow");
+
     for (const item of MERGE_TAGS) {
       sub = sub.replaceAll(item.tag, item.sample);
       html = html.replaceAll(item.tag, item.sample);
@@ -287,7 +419,7 @@ export function EmailTemplatesRegistry() {
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Rich message blueprints with system merge variables for Human-in-the-Loop approval requests, incident alerts, and agentflow reports
+            Rich message blueprints with system merge variables for Human-in-the-Loop approval requests, incident alerts, and Agentflow reports
           </p>
         </div>
 
@@ -328,10 +460,14 @@ export function EmailTemplatesRegistry() {
             className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs text-foreground outline-none focus:border-primary cursor-pointer shadow-xs"
           >
             <option value="all">All Categories</option>
-            <option value="approval">Approval Requests</option>
-            <option value="workflow_result">Workflow Results</option>
-            <option value="system_alert">System Alerts</option>
-            <option value="notification">Notifications</option>
+            {allCategories.map((catKey) => {
+              const cfg = getCategoryConfig(catKey);
+              return (
+                <option key={catKey} value={catKey}>
+                  {cfg.label}
+                </option>
+              );
+            })}
           </select>
         </div>
       </div>
@@ -352,7 +488,7 @@ export function EmailTemplatesRegistry() {
         ) : (
           <div className="grid grid-cols-1 gap-3.5">
             {filteredTemplates.map((template) => {
-              const catConfig = CATEGORY_STYLES[template.category] || CATEGORY_STYLES.notification;
+              const catConfig = getCategoryConfig(template.category);
               return (
                 <div
                   key={template.id}
@@ -425,7 +561,7 @@ export function EmailTemplatesRegistry() {
                   {/* Variables pills */}
                   <div className="flex items-center gap-1.5 pt-2 border-t border-border/60 flex-wrap">
                     <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Merge Tags:</span>
-                    {(template.supportedVariables || []).slice(0, 6).map((varKey) => (
+                    {(template.supportedVariables || []).slice(0, 8).map((varKey) => (
                       <span
                         key={varKey}
                         className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-muted/60 text-muted-foreground border border-border/50"
@@ -433,9 +569,9 @@ export function EmailTemplatesRegistry() {
                         &#123;&#123;{varKey}&#125;&#125;
                       </span>
                     ))}
-                    {(template.supportedVariables || []).length > 6 && (
+                    {(template.supportedVariables || []).length > 8 && (
                       <span className="text-[10px] text-muted-foreground">
-                        +{(template.supportedVariables || []).length - 6} more
+                        +{(template.supportedVariables || []).length - 8} more
                       </span>
                     )}
                   </div>
@@ -449,7 +585,7 @@ export function EmailTemplatesRegistry() {
       {/* ── AUTHOR / EDIT WYSIWYG MODAL ── */}
       {isAuthorModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-5xl rounded-3xl border border-border bg-card text-card-foreground shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
+          <div className="w-full max-w-5xl rounded-3xl border border-border bg-card text-card-foreground shadow-2xl flex flex-col max-h-[94vh] overflow-hidden">
             {/* Header */}
             <div className="px-6 py-4 border-b border-border flex items-center justify-between shrink-0 bg-card">
               <div className="flex items-center gap-2.5">
@@ -461,7 +597,7 @@ export function EmailTemplatesRegistry() {
                     {editingTemplate ? "Edit Email Message Template" : "Create Email Message Template"}
                   </h3>
                   <p className="text-[11px] text-muted-foreground">
-                    Define subject patterns, HTML responsive container, and system merge tags
+                    WYSIWYG visual message authoring, dynamic categories, and system merge variables
                   </p>
                 </div>
               </div>
@@ -539,19 +675,52 @@ export function EmailTemplatesRegistry() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Category *
-                  </label>
-                  <select
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value as EmailTemplate["category"])}
-                    className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary cursor-pointer"
-                  >
-                    <option value="approval">Approval Request</option>
-                    <option value="workflow_result">Workflow Dispatch Result</option>
-                    <option value="system_alert">System Alert &amp; Escalation</option>
-                    <option value="notification">General Notification</option>
-                  </select>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Category *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomCategoryActive(!isCustomCategoryActive)}
+                      className="text-[10px] text-primary hover:underline font-semibold"
+                    >
+                      {isCustomCategoryActive ? "Select Existing" : "+ New Category"}
+                    </button>
+                  </div>
+                  {isCustomCategoryActive ? (
+                    <input
+                      type="text"
+                      required
+                      value={customCategoryInput}
+                      onChange={(e) => setCustomCategoryInput(e.target.value)}
+                      placeholder="e.g. Invoicing Alert"
+                      className="w-full rounded-xl border border-primary/50 bg-background py-2 px-3 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary/20"
+                      autoFocus
+                    />
+                  ) : (
+                    <select
+                      value={formCategory}
+                      onChange={(e) => {
+                        if (e.target.value === "__NEW__") {
+                          setIsCustomCategoryActive(true);
+                          setCustomCategoryInput("");
+                        } else {
+                          setFormCategory(e.target.value);
+                        }
+                      }}
+                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs text-foreground outline-none focus:border-primary cursor-pointer"
+                    >
+                      {allCategories.map((cKey) => {
+                        const cfg = getCategoryConfig(cKey);
+                        return (
+                          <option key={cKey} value={cKey}>
+                            {cfg.label}
+                          </option>
+                        );
+                      })}
+                      <option value="__NEW__">+ Add Custom Category...</option>
+                    </select>
+                  )}
                 </div>
               </div>
 
@@ -567,32 +736,62 @@ export function EmailTemplatesRegistry() {
                   value={formSubject}
                   onFocus={() => setLastFocusedField("subject")}
                   onChange={(e) => setFormSubject(e.target.value)}
-                  placeholder="e.g. [Action Required] Approval Needed for {{workflow_title}} - {{execution_id}}"
+                  placeholder="e.g. [Action Required] Approval Needed for Agentflow {{agentflow_title}} - {{execution_id}}"
                   className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs text-foreground font-mono placeholder:text-muted-foreground outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
                 />
               </div>
 
               {/* Merge Variables Pill Bar */}
-              <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-2">
+              <div className="rounded-2xl border border-border bg-muted/20 p-3.5 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    <Tag className="h-3 w-3 text-primary" />
-                    System Merge Tags (Click to insert into active editor field)
+                    <Tag className="h-3.5 w-3.5 text-primary" />
+                    Available System Merge Tags (Click to insert at active position)
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {MERGE_TAGS.map((item) => (
-                    <button
-                      key={item.tag}
-                      type="button"
-                      onClick={() => handleInsertTag(item.tag)}
-                      className="px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-primary/10 hover:border-primary/40 text-[11px] font-mono text-foreground cursor-pointer transition-all shadow-xs flex items-center gap-1"
-                      title={`Insert ${item.tag} (Sample: ${item.sample})`}
-                    >
-                      <span className="text-primary font-bold">+</span>
-                      <span>{item.tag}</span>
-                    </button>
-                  ))}
+
+                <div className="space-y-2">
+                  {/* Agentflow State Group */}
+                  <div>
+                    <span className="text-[9.5px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1.5">
+                      <Bot className="h-3 w-3 text-primary" /> Agentflow State:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {MERGE_TAGS.filter((m) => m.group === "agentflow").map((item) => (
+                        <button
+                          key={item.tag}
+                          type="button"
+                          onClick={() => handleInsertTag(item.tag)}
+                          className="px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-primary/10 hover:border-primary/40 text-[11px] font-mono text-foreground cursor-pointer transition-all shadow-xs flex items-center gap-1"
+                          title={`Insert ${item.tag} (Sample: ${item.sample})`}
+                        >
+                          <span className="text-primary font-bold">+</span>
+                          <span>{item.tag}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Organization Identity Group */}
+                  <div>
+                    <span className="text-[9.5px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1.5">
+                      <Building2 className="h-3 w-3 text-primary" /> Organization Metadata:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {MERGE_TAGS.filter((m) => m.group === "organization").map((item) => (
+                        <button
+                          key={item.tag}
+                          type="button"
+                          onClick={() => handleInsertTag(item.tag)}
+                          className="px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-primary/10 hover:border-primary/40 text-[11px] font-mono text-foreground cursor-pointer transition-all shadow-xs flex items-center gap-1"
+                          title={`Insert ${item.tag} (Sample: ${item.sample})`}
+                        >
+                          <span className="text-primary font-bold">+</span>
+                          <span>{item.tag}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -602,21 +801,192 @@ export function EmailTemplatesRegistry() {
                 {previewMode !== "preview" && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        HTML Message Body (Inline Styles Recommended) *
-                      </label>
+                      <div className="flex items-center gap-2">
+                        <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                          Email Message Body *
+                        </label>
+                        <div className="flex items-center rounded-lg border border-border bg-muted/40 p-0.5 text-[10px]">
+                          <button
+                            type="button"
+                            onClick={() => setEditorViewType("visual")}
+                            className={`px-2 py-0.5 rounded font-semibold transition-all ${
+                              editorViewType === "visual" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            Visual WYSIWYG
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditorViewType("html")}
+                            className={`px-2 py-0.5 rounded font-semibold transition-all ${
+                              editorViewType === "html" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            HTML Code
+                          </button>
+                        </div>
+                      </div>
                       <span className="text-[10px] text-muted-foreground font-mono">{formBodyHtml.length} characters</span>
                     </div>
-                    <textarea
-                      ref={htmlTextareaRef}
-                      required
-                      rows={14}
-                      value={formBodyHtml}
-                      onFocus={() => setLastFocusedField("bodyHtml")}
-                      onChange={(e) => setFormBodyHtml(e.target.value)}
-                      placeholder="<div style='...'>Your HTML email body with {{merge_tags}}</div>"
-                      className="w-full rounded-2xl border border-border bg-background p-3.5 text-xs font-mono text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 resize-y leading-relaxed"
-                    />
+
+                    {/* WYSIWYG Formatting Toolbar */}
+                    {editorViewType === "visual" && (
+                      <div className="flex flex-wrap items-center gap-1 p-2 rounded-xl border border-border bg-muted/40 text-xs">
+                        {/* Heading formats */}
+                        <button
+                          type="button"
+                          onClick={() => execFormat("formatBlock", "<h2>")}
+                          className="px-2 py-1 rounded hover:bg-muted text-foreground font-bold text-[11px] border border-border/40 bg-card"
+                          title="Heading 2"
+                        >
+                          H2
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => execFormat("formatBlock", "<h3>")}
+                          className="px-2 py-1 rounded hover:bg-muted text-foreground font-bold text-[11px] border border-border/40 bg-card"
+                          title="Heading 3"
+                        >
+                          H3
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => execFormat("formatBlock", "<p>")}
+                          className="px-2 py-1 rounded hover:bg-muted text-foreground font-semibold text-[11px] border border-border/40 bg-card"
+                          title="Paragraph"
+                        >
+                          P
+                        </button>
+
+                        <div className="h-4 w-px bg-border mx-1" />
+
+                        {/* Inline styles */}
+                        <button
+                          type="button"
+                          onClick={() => execFormat("bold")}
+                          className="p-1.5 rounded hover:bg-muted text-foreground border border-border/40 bg-card"
+                          title="Bold"
+                        >
+                          <Bold className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => execFormat("italic")}
+                          className="p-1.5 rounded hover:bg-muted text-foreground border border-border/40 bg-card"
+                          title="Italic"
+                        >
+                          <Italic className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => execFormat("strikeThrough")}
+                          className="p-1.5 rounded hover:bg-muted text-foreground border border-border/40 bg-card"
+                          title="Strikethrough"
+                        >
+                          <Strikethrough className="h-3.5 w-3.5" />
+                        </button>
+
+                        <div className="h-4 w-px bg-border mx-1" />
+
+                        {/* Lists */}
+                        <button
+                          type="button"
+                          onClick={() => execFormat("insertUnorderedList")}
+                          className="p-1.5 rounded hover:bg-muted text-foreground border border-border/40 bg-card"
+                          title="Bullet List"
+                        >
+                          <List className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => execFormat("insertOrderedList")}
+                          className="p-1.5 rounded hover:bg-muted text-foreground border border-border/40 bg-card"
+                          title="Numbered List"
+                        >
+                          <ListOrdered className="h-3.5 w-3.5" />
+                        </button>
+
+                        <div className="h-4 w-px bg-border mx-1" />
+
+                        {/* Alignment */}
+                        <button
+                          type="button"
+                          onClick={() => execFormat("justifyLeft")}
+                          className="p-1.5 rounded hover:bg-muted text-foreground border border-border/40 bg-card"
+                          title="Align Left"
+                        >
+                          <AlignLeft className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => execFormat("justifyCenter")}
+                          className="p-1.5 rounded hover:bg-muted text-foreground border border-border/40 bg-card"
+                          title="Align Center"
+                        >
+                          <AlignCenter className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => execFormat("justifyRight")}
+                          className="p-1.5 rounded hover:bg-muted text-foreground border border-border/40 bg-card"
+                          title="Align Right"
+                        >
+                          <AlignRight className="h-3.5 w-3.5" />
+                        </button>
+
+                        <div className="h-4 w-px bg-border mx-1" />
+
+                        {/* Smart Elements */}
+                        <button
+                          type="button"
+                          onClick={() => insertHtmlSnippet(`<div style="background: #f8fafc; border-left: 4px solid #4f46e5; padding: 12px 16px; margin: 16px 0; border-radius: 4px; color: #334155; font-size: 13px;"><strong>Notice:</strong> Operational directive message goes here.</div>`)}
+                          className="px-2 py-1 rounded hover:bg-muted text-foreground text-[10px] font-semibold flex items-center gap-1 border border-border/40 bg-card"
+                          title="Insert Callout Card"
+                        >
+                          <AlertCircle className="h-3 w-3 text-primary" />
+                          <span>Callout</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => insertHtmlSnippet(`<div style="text-align: center; margin: 20px 0;"><a href="{{review_link}}" style="background: #4f46e5; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 13px; display: inline-block;">Action Button</a></div>`)}
+                          className="px-2 py-1 rounded hover:bg-muted text-foreground text-[10px] font-semibold flex items-center gap-1 border border-border/40 bg-card"
+                          title="Insert CTA Action Button"
+                        >
+                          <ExternalLink className="h-3 w-3 text-primary" />
+                          <span>CTA Button</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => insertHtmlSnippet(`<hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />`)}
+                          className="p-1.5 rounded hover:bg-muted text-foreground border border-border/40 bg-card"
+                          title="Insert Horizontal Divider"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Visual Rich Contenteditable Canvas */}
+                    {editorViewType === "visual" ? (
+                      <div
+                        ref={wysiwygEditorRef}
+                        contentEditable
+                        onFocus={() => setLastFocusedField("body")}
+                        onInput={(e) => setFormBodyHtml(e.currentTarget.innerHTML)}
+                        className="w-full min-h-[320px] max-h-[440px] overflow-y-auto rounded-2xl border border-border bg-white text-slate-900 p-5 text-sm outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 leading-relaxed shadow-inner"
+                      />
+                    ) : (
+                      <textarea
+                        ref={htmlTextareaRef}
+                        required
+                        rows={14}
+                        value={formBodyHtml}
+                        onFocus={() => setLastFocusedField("body")}
+                        onChange={(e) => setFormBodyHtml(e.target.value)}
+                        placeholder="<div style='...'>Your HTML email body with {{merge_tags}}</div>"
+                        className="w-full rounded-2xl border border-border bg-background p-3.5 text-xs font-mono text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 resize-y leading-relaxed"
+                      />
+                    )}
                   </div>
                 )}
 
@@ -628,12 +998,12 @@ export function EmailTemplatesRegistry() {
                         <Eye className="h-3.5 w-3.5 text-primary" />
                         Live Split Preview (Mock Data Substituted)
                       </label>
-                      <span className="text-[10px] text-emerald-500 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                         Interactive Render
                       </span>
                     </div>
 
-                    <div className="rounded-2xl border border-border bg-card p-4 space-y-3 min-h-[300px] overflow-y-auto">
+                    <div className="rounded-2xl border border-border bg-card p-4 space-y-3 min-h-[300px] max-h-[500px] overflow-y-auto">
                       {/* Email Client Mock Frame */}
                       <div className="border border-border/80 rounded-xl bg-muted/40 p-3 space-y-1.5 text-xs">
                         <div className="flex items-center gap-2">
@@ -647,7 +1017,7 @@ export function EmailTemplatesRegistry() {
                       </div>
 
                       {/* Rendered HTML Box */}
-                      <div className="border border-border rounded-xl p-4 bg-white text-slate-900 overflow-x-auto">
+                      <div className="border border-border rounded-xl p-4 bg-white text-slate-900 overflow-x-auto shadow-sm">
                         <div
                           dangerouslySetInnerHTML={{ __html: livePreviewData.html }}
                           className="prose prose-sm max-w-none"
@@ -667,7 +1037,7 @@ export function EmailTemplatesRegistry() {
                     onChange={(e) => setFormActive(e.target.checked)}
                     className="rounded border-border text-primary focus:ring-primary h-4 w-4"
                   />
-                  <span>Active template available for agentflow triggers</span>
+                  <span>Active template available for Agentflow triggers</span>
                 </label>
 
                 <div className="flex items-center gap-2">
@@ -705,7 +1075,7 @@ export function EmailTemplatesRegistry() {
               <button
                 type="button"
                 onClick={() => setTestModalTemplate(null)}
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -733,7 +1103,7 @@ export function EmailTemplatesRegistry() {
               <div
                 className={`p-3 rounded-xl border text-xs leading-relaxed flex items-start gap-2 ${
                   testResult.success
-                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                     : "bg-destructive/10 border-destructive/20 text-destructive"
                 }`}
               >
@@ -746,7 +1116,7 @@ export function EmailTemplatesRegistry() {
               <button
                 type="button"
                 onClick={() => setTestModalTemplate(null)}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
+                className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
               >
                 Close
               </button>
@@ -774,14 +1144,14 @@ export function EmailTemplatesRegistry() {
             </div>
 
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Are you sure you want to permanently delete template <strong className="text-foreground">{deletingTemplate.name}</strong> (<code>{deletingTemplate.templateKey}</code>)? Any agentflow referencing this key will revert to system default notifications.
+              Are you sure you want to permanently delete template <strong className="text-foreground">{deletingTemplate.name}</strong> (<code>{deletingTemplate.templateKey}</code>)? Any Agentflow referencing this key will revert to system default notifications.
             </p>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-border">
               <button
                 type="button"
                 onClick={() => setDeletingTemplate(null)}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
+                className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
               >
                 Cancel
               </button>

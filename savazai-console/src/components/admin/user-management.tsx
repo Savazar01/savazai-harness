@@ -81,6 +81,10 @@ export function UserManagement() {
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isCreateRoleOpen, setIsCreateRoleOpen] = useState(false);
+  const [isEditRoleOpen, setIsEditRoleOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<RoleWithPermissions | null>(null);
+  const [isDeleteRoleOpen, setIsDeleteRoleOpen] = useState(false);
+  const [deletingRole, setDeletingRole] = useState<RoleWithPermissions | null>(null);
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
 
   // Form states
@@ -413,6 +417,85 @@ export function UserManagement() {
       fetchRoles();
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : "Error creating role");
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleOpenEditRole = (r: RoleWithPermissions) => {
+    setEditingRole(r);
+    setNewRoleName(r.name);
+    setNewRoleDesc(r.description || "");
+    const permKeys = new Set((r.permissions || []).map((p) => `${p.resource}:${p.action}`));
+    setNewRolePerms(permKeys);
+    setFormError(null);
+    setIsEditRoleOpen(true);
+  };
+
+  const handleEditRoleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRole) return;
+    if (!newRoleName.trim()) {
+      setFormError("Role name is required.");
+      return;
+    }
+
+    setFormError(null);
+    setFormLoading(true);
+
+    try {
+      const permsArray = Array.from(newRolePerms).map((key) => {
+        const [resource, action] = key.split(":");
+        return { resource, action };
+      });
+
+      const res = await fetch("/api/admin/roles", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roleId: editingRole.id,
+          name: newRoleName.trim(),
+          description: newRoleDesc.trim(),
+          permissions: permsArray,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update role");
+
+      setSuccessMessage(`Role '${newRoleName}' updated successfully.`);
+      setIsEditRoleOpen(false);
+      setEditingRole(null);
+      setNewRoleName("");
+      setNewRoleDesc("");
+      setNewRolePerms(new Set());
+      fetchRoles();
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : "Error updating role");
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleDeleteRoleSubmit = async () => {
+    if (!deletingRole) return;
+    setFormLoading(true);
+    setFormError(null);
+
+    try {
+      const res = await fetch(`/api/admin/roles?roleId=${encodeURIComponent(deletingRole.id)}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete role");
+
+      setSuccessMessage(`Role '${deletingRole.name}' deleted successfully.`);
+      setIsDeleteRoleOpen(false);
+      setDeletingRole(null);
+      fetchRoles();
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : "Error deleting role");
     } finally {
       setFormLoading(false);
     }
@@ -877,44 +960,74 @@ export function UserManagement() {
 
           {/* Role Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {roles.map((r) => (
-              <div
-                key={r.id}
-                className="rounded-2xl border border-border bg-card p-5 hover:border-border transition-all flex flex-col justify-between shadow-xs"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <h3 className="text-sm font-bold text-foreground tracking-wide">{r.name}</h3>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
-                        r.isSystem
-                          ? "bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 border-indigo-500/30"
-                          : "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/30"
-                      }`}
-                    >
-                      {r.isSystem ? "System Profile" : "Custom"}
+            {roles.map((r) => {
+              const isSuperAdminRole = r.id === "role_super_admin" || r.name === "Super Administrator";
+              return (
+                <div
+                  key={r.id}
+                  className="rounded-2xl border border-border bg-card p-5 hover:border-primary/40 transition-all flex flex-col justify-between shadow-xs"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <h3 className="text-sm font-bold text-foreground tracking-wide truncate" title={r.name}>{r.name}</h3>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
+                            r.isSystem
+                              ? "bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 border-indigo-500/30"
+                              : "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/30"
+                          }`}
+                        >
+                          {r.isSystem ? "System Profile" : "Custom"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditRole(r)}
+                          className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-xs"
+                          title={`Edit ${r.name}`}
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                        </button>
+                        {!isSuperAdminRole ? (
+                          <button
+                            type="button"
+                            onClick={() => { setDeletingRole(r); setIsDeleteRoleOpen(true); }}
+                            className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer shadow-xs"
+                            title={`Delete ${r.name}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        ) : (
+                          <div
+                            className="p-1.5 rounded-lg border border-border/50 bg-muted/20 text-muted-foreground/40 cursor-not-allowed"
+                            title="Super Administrator role is protected against deletion to prevent platform lockout"
+                          >
+                            <Lock className="h-3.5 w-3.5" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      {r.description || "No description provided."}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs font-mono text-muted-foreground">
+                    <span>Authorized Capabilities:</span>
+                    <span className="font-bold text-foreground bg-muted border border-border px-2 py-0.5 rounded-md">
+                      {r.permissions?.length || 0} / {PERMISSION_REGISTRY.length}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                    {r.description || "No description provided."}
-                  </p>
                 </div>
-
-                <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs font-mono text-muted-foreground">
-                  <span>Authorized Capabilities:</span>
-                  <span className="font-bold text-foreground bg-muted border border-border px-2 py-0.5 rounded-md">
-                    {r.permissions?.length || 0} / {PERMISSION_REGISTRY.length}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Interactive 53-Permission Matrix Table */}
           <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
             <div className="p-4 border-b border-border bg-muted/40 flex items-center justify-between">
               <span className="text-xs font-bold text-foreground uppercase tracking-wider">
-                Full Platform Authorization Matrix (53 Permissions)
+                Full Platform Authorization Matrix ({PERMISSION_REGISTRY.length} Permissions)
               </span>
               <span className="text-xs text-muted-foreground font-mono">
                 {roles.length} Roles Registered
@@ -925,10 +1038,12 @@ export function UserManagement() {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-border bg-muted/50 text-muted-foreground font-semibold tracking-wider text-[11px]">
-                    <th className="py-3 px-4 min-w-[280px]">Module &amp; Action</th>
+                    <th className="py-3 px-4 min-w-[280px] w-[320px] max-w-[340px] sticky left-0 z-20 bg-muted/95 backdrop-blur-xs border-r border-border/40">
+                      Module &amp; Action
+                    </th>
                     {roles.map((r) => (
-                      <th key={r.id} className="py-3 px-3 text-center min-w-[120px]">
-                        <div className="font-semibold text-foreground truncate">{r.name}</div>
+                      <th key={r.id} className="py-3 px-3 text-center min-w-[120px] max-w-[150px]">
+                        <div className="font-semibold text-foreground truncate max-w-[140px] mx-auto" title={r.name}>{r.name}</div>
                       </th>
                     ))}
                   </tr>
@@ -943,7 +1058,7 @@ export function UserManagement() {
                         <tr className="bg-muted/70">
                           <td
                             colSpan={roles.length + 1}
-                            className="py-2 px-4 font-bold text-xs text-primary uppercase tracking-wider"
+                            className="py-2 px-4 font-bold text-xs text-primary uppercase tracking-wider sticky left-0 z-10 bg-muted/90"
                           >
                             {catLabel} ({catPerms.length} actions)
                           </td>
@@ -951,11 +1066,11 @@ export function UserManagement() {
 
                         {catPerms.map((perm) => (
                           <tr key={`${perm.resource}:${perm.action}`} className="hover:bg-muted/30">
-                            <td className="py-2.5 px-4">
+                            <td className="py-2.5 px-4 sticky left-0 z-10 bg-card border-r border-border/50">
                               <div className="font-medium text-foreground font-mono text-[11px]">
                                 {perm.action.replace(/_/g, " ").toUpperCase()}
                               </div>
-                              <div className="text-[10px] text-muted-foreground truncate max-w-sm">
+                              <div className="text-[10px] text-muted-foreground line-clamp-2 max-w-xs">
                                 {perm.description}
                               </div>
                             </td>
@@ -966,13 +1081,13 @@ export function UserManagement() {
                               );
 
                               return (
-                                <td key={r.id} className="py-2.5 px-3 text-center">
+                                <td key={r.id} className="py-2.5 px-3 text-center min-w-[120px] max-w-[150px]">
                                   {isGranted ? (
                                     <div className="inline-flex p-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                       <Check className="h-3 w-3 stroke-[3]" />
                                     </div>
                                   ) : (
-                                    <div className="inline-flex p-1 rounded-md bg-card text-slate-600">
+                                    <div className="inline-flex p-1 rounded-md bg-card text-muted-foreground/40">
                                       <Lock className="h-3 w-3" />
                                     </div>
                                   )}
@@ -1463,20 +1578,185 @@ export function UserManagement() {
                 <button
                   type="button"
                   onClick={() => setIsCreateRoleOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-lg shadow-primary/20"
                 >
                   {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Save Custom Profile
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: EDIT ROLE PROFILE ── */}
+      {isEditRoleOpen && editingRole && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2.5">
+                <Edit3 className="h-5 w-5 text-primary" />
+                <h3 className="text-base font-bold text-foreground">
+                  Edit Role Profile: <span className="font-mono text-primary">{editingRole.name}</span>
+                </h3>
+              </div>
+              <button
+                onClick={() => { setIsEditRoleOpen(false); setEditingRole(null); }}
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {formError && (
+              <div className="flex items-center gap-2 p-3 rounded-xl border border-destructive/20 bg-destructive/10 text-xs text-destructive">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleEditRoleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
+                    Profile Name <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newRoleName}
+                    onChange={(e) => setNewRoleName(e.target.value)}
+                    disabled={editingRole.id === "role_super_admin" || editingRole.name === "Super Administrator"}
+                    required
+                    className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50 disabled:opacity-60 disabled:cursor-not-allowed"
+                  />
+                  {(editingRole.id === "role_super_admin" || editingRole.name === "Super Administrator") && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Super Administrator name is system-protected.</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
+                    Description
+                  </label>
+                  <input
+                    type="text"
+                    value={newRoleDesc}
+                    onChange={(e) => setNewRoleDesc(e.target.value)}
+                    placeholder="Purpose and duty boundary of this role"
+                    className="w-full rounded-xl border border-border bg-muted/30 px-3.5 py-2 text-xs text-foreground outline-none focus:border-primary/50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-foreground mb-2">
+                  Configure Permissions ({newRolePerms.size} selected)
+                </label>
+                <div className="space-y-3 max-h-72 overflow-y-auto border border-border rounded-xl p-3 bg-muted/30">
+                  {categories.map((catKey) => {
+                    const catLabel = CATEGORY_LABELS[catKey as keyof typeof CATEGORY_LABELS] || catKey;
+                    const catPerms = PERMISSION_REGISTRY.filter((p) => p.category === catKey);
+
+                    return (
+                      <div key={catKey} className="space-y-1.5">
+                        <div className="text-[11px] font-bold text-primary uppercase tracking-wide border-b border-border pb-1">
+                          {catLabel}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                          {catPerms.map((p) => {
+                            const key = `${p.resource}:${p.action}`;
+                            const isChecked = newRolePerms.has(key);
+
+                            return (
+                              <label
+                                key={key}
+                                className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted cursor-pointer text-xs text-muted-foreground"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    const next = new Set(newRolePerms);
+                                    if (e.target.checked) next.add(key);
+                                    else next.delete(key);
+                                    setNewRolePerms(next);
+                                  }}
+                                  className="h-3.5 w-3.5 rounded border-border bg-background text-primary focus:ring-primary"
+                                />
+                                <span className="truncate text-[11px] font-mono">
+                                  {p.action.replace(/_/g, " ")}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => { setIsEditRoleOpen(false); setEditingRole(null); }}
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={formLoading}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-lg shadow-primary/20"
+                >
+                  {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  Save Role Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: DELETE ROLE PROFILE ── */}
+      {isDeleteRoleOpen && deletingRole && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-destructive">
+              <AlertTriangle className="h-6 w-6" />
+              <h3 className="text-base font-bold text-foreground">Delete Role Profile</h3>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Are you sure you want to permanently delete the role{" "}
+              <strong className="text-foreground">{deletingRole.name}</strong>? Any users assigned to this role must be reassigned first.
+            </p>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => { setIsDeleteRoleOpen(false); setDeletingRole(null); }}
+                className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteRoleSubmit}
+                disabled={formLoading}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-semibold"
+              >
+                {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Confirm Role Deletion
+              </button>
+            </div>
           </div>
         </div>
       )}

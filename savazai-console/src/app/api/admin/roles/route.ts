@@ -102,7 +102,7 @@ export async function PUT(req: NextRequest) {
     if (!check.authorized) return check.response;
 
     const body = await req.json();
-    const { roleId, description, permissions } = body;
+    const { roleId, name, description, permissions } = body;
 
     if (!roleId || typeof roleId !== "string") {
       return Response.json({ error: "roleId is required." }, { status: 400 });
@@ -114,10 +114,39 @@ export async function PUT(req: NextRequest) {
     if (roleRes.rows.length === 0) {
       return Response.json({ error: "Role not found." }, { status: 404 });
     }
-    if (roleRes.rows[0].isSystem) {
+
+    const currentRole = roleRes.rows[0];
+    const isSuperAdmin = currentRole.id === "role_super_admin" || currentRole.name === "Super Administrator";
+
+    // Safety guardrail: Super Administrator must keep minimum essential administrative permissions
+    if (isSuperAdmin && Array.isArray(permissions) && permissions.length === 0) {
       return Response.json(
-        { error: "System predefined roles have immutable permissions and cannot be modified." },
+        { error: "Super Administrator must retain platform management permissions to prevent administrative lockout." },
         { status: 400 }
+      );
+    }
+
+    // Update name if provided and not duplicating another role
+    if (name && typeof name === "string" && name.trim() && name.trim() !== currentRole.name) {
+      if (isSuperAdmin) {
+        return Response.json(
+          { error: "The Super Administrator role name is immutable for platform security." },
+          { status: 400 }
+        );
+      }
+      const existing = await pool.query(
+        'SELECT "id" FROM "role" WHERE LOWER("name") = $1 AND "id" != $2 LIMIT 1',
+        [name.trim().toLowerCase(), roleId]
+      );
+      if (existing.rows.length > 0) {
+        return Response.json(
+          { error: `Another role named '${name.trim()}' already exists.` },
+          { status: 409 }
+        );
+      }
+      await pool.query(
+        'UPDATE "role" SET "name" = $1, "updatedAt" = now() WHERE "id" = $2',
+        [name.trim(), roleId]
       );
     }
 
@@ -162,19 +191,34 @@ export async function DELETE(req: NextRequest) {
       return Response.json({ error: "Missing roleId parameter." }, { status: 400 });
     }
 
-    const roleRes = await pool.query('SELECT "id", "isSystem" FROM "role" WHERE "id" = $1 LIMIT 1', [
+    const roleRes = await pool.query('SELECT "id", "name", "isSystem" FROM "role" WHERE "id" = $1 LIMIT 1', [
       roleId,
     ]);
     if (roleRes.rows.length === 0) {
       return Response.json({ error: "Role not found." }, { status: 404 });
     }
-    if (roleRes.rows[0].isSystem) {
+
+    const targetRole = roleRes.rows[0];
+    if (targetRole.id === "role_super_admin" || targetRole.name === "Super Administrator") {
       return Response.json(
-        { error: "System predefined roles cannot be deleted." },
+        { error: "The Super Administrator role cannot be deleted to prevent platform lockout." },
         { status: 400 }
       );
     }
 
+    // Check if any users currently have this role
+    const usersWithRole = await pool.query(
+      'SELECT "id", "name", "email" FROM "user" WHERE "roleId" = $1 LIMIT 5',
+      [roleId]
+    );
+    if (usersWithRole.rows.length > 0) {
+      return Response.json(
+        { error: `Cannot delete role '${targetRole.name}' because it is assigned to active user(s). Reassign them first.` },
+        { status: 400 }
+      );
+    }
+
+    await pool.query('DELETE FROM "role_permission" WHERE "roleId" = $1', [roleId]);
     await pool.query('DELETE FROM "role" WHERE "id" = $1', [roleId]);
     return Response.json({ success: true }, { status: 200 });
   } catch (err: unknown) {

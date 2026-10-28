@@ -317,7 +317,7 @@ export default async function Home() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500 mb-5">
                   <Compass className="h-5 w-5" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">Google OKF Concepts Matrix</h3>
+                <h3 className="text-lg font-bold text-foreground mb-2">OKF Concepts Matrix</h3>
                 <p className="text-muted-foreground text-xs leading-relaxed">
                   Namespace-isolated Operational Knowledge Framework records inject verified business terms and ontological rules into agent execution trees with zero token drift.
                 </p>

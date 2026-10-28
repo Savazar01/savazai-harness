@@ -46,7 +46,7 @@ export const PERMISSION_REGISTRY: PermissionDefinition[] = [
   { resource: "business_center", action: "skills_export", label: "Export Skills CSV", category: "Business Center", subCategory: "Skills Registry", description: "Export skills list to CSV" },
   { resource: "business_center", action: "skills_import", label: "Import Skills", category: "Business Center", subCategory: "Skills Registry", description: "Ingest skills definitions" },
 
-  // Business Center - Google OKF Concepts
+  // Business Center - OKF Concepts
   { resource: "business_center", action: "okf_view", label: "View OKF Guidelines", category: "Business Center", subCategory: "OKF Concepts", description: "View OKF knowledge concepts" },
   { resource: "business_center", action: "okf_create", label: "Create OKF Concepts", category: "Business Center", subCategory: "OKF Concepts", description: "Author new OKF guidelines" },
   { resource: "business_center", action: "okf_edit", label: "Edit OKF Concepts", category: "Business Center", subCategory: "OKF Concepts", description: "Edit existing OKF rules" },
@@ -186,6 +186,19 @@ export const SYSTEM_ROLES: PredefinedRoleSeed[] = [
       { resource: "business_center", action: "skills_view" },
       { resource: "business_center", action: "okf_view" },
       { resource: "capability_studio", action: "view" },
+    ],
+  },
+  {
+    id: "role_user_admin",
+    name: "User Administrator",
+    description: "Dedicated administration of console accounts, quarantined onboarding review, and role access profile assignments.",
+    isSystem: true,
+    permissions: [
+      { resource: "user_admin", action: "view" },
+      { resource: "user_admin", action: "approve_users" },
+      { resource: "user_admin", action: "manage_roles" },
+      { resource: "user_admin", action: "force_password_reset" },
+      { resource: "documentation", action: "view" },
     ],
   },
 ];

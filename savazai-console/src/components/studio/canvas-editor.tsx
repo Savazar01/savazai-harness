@@ -30,6 +30,8 @@ import {
   Maximize2,
   Minimize2,
   MoveDiagonal2,
+  BookOpen,
+  Waypoints,
 } from "lucide-react";
 import { AgentDrawer } from "./agent-drawer";
 import { TestSandbox } from "./test-sandbox";
@@ -436,6 +438,7 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
   const [edgePopover, setEdgePopover] = useState<{ edgeId: string; x: number; y: number } | null>(null);
   const [conditionInput, setConditionInput] = useState("");
   const [showConditionEditor, setShowConditionEditor] = useState(false);
+  const [showConditionGuide, setShowConditionGuide] = useState(false);
   const [retargetEdgeId, setRetargetEdgeId] = useState<string | null>(null);
   const [showTestSandbox, setShowTestSandbox] = useState(false);
   const [canvasNodeStatus, setCanvasNodeStatus] = useState<Record<string, NodeExecStatus>>({});
@@ -1821,10 +1824,8 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
                             width={112}
                             height={28}
                             rx={10}
-                            fill="#0f0f1a"
-                            stroke="#6366f1"
+                            className="fill-card stroke-primary/80 shadow-md"
                             strokeWidth={1}
-                            strokeOpacity={0.7}
                             onClick={(e) => {
                               e.stopPropagation();
                               setEdgePopover({ edgeId: edge.id, x: mx, y: my });
@@ -2316,87 +2317,260 @@ export const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(fu
             <div
               className="absolute z-40 animate-in fade-in zoom-in-95 duration-100"
               style={{
-                left: `${Math.min(edgePopover.x, 300)}px`,
-                top: `${Math.max(edgePopover.y - 80, 10)}px`,
+                left: `${Math.max(16, Math.min(edgePopover.x - 140, (canvasRef.current?.clientWidth || 900) - (showConditionEditor ? 380 : 260)))}px`,
+                top: `${Math.max(16, edgePopover.y - 100)}px`,
               }}
             >
-              <div className="bg-background border border-border rounded-2xl shadow-2xl p-3 w-56">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">Edge Connection</span>
+              <div className={`bg-card border border-border rounded-2xl shadow-2xl p-4 text-card-foreground ${showConditionEditor ? "w-80 sm:w-96" : "w-64"}`}>
+                <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-border/60">
+                  <span className="text-[11px] font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Waypoints className="h-3.5 w-3.5 text-primary" />
+                    Edge Connection
+                  </span>
                   <button
                     type="button"
-                    onClick={() => { setEdgePopover(null); setSelectedEdgeId(null); }}
-                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() => { setEdgePopover(null); setSelectedEdgeId(null); setShowConditionEditor(false); }}
+                    className="text-muted-foreground hover:text-foreground p-0.5 rounded-md hover:bg-muted cursor-pointer"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
 
                 {showConditionEditor ? (
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-semibold text-muted-foreground uppercase">Condition Expression</label>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                        Condition Expression
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowConditionGuide(true)}
+                        className="text-[10px] text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                        title="Open syntax and variable reference"
+                      >
+                        <BookOpen className="h-3 w-3" />
+                        <span>Syntax Guide</span>
+                      </button>
+                    </div>
+
                     <input
                       type="text"
                       value={conditionInput}
                       onChange={(e) => setConditionInput(e.target.value)}
-                      placeholder={clickedEdge.conditionExpression || "e.g. result.status === 'ok'"}
-                      className="w-full rounded-lg border border-border bg-muted/30 py-1.5 px-2.5 text-[10px] font-mono text-white outline-none focus:border-indigo-500"
+                      placeholder={clickedEdge.conditionExpression || "e.g. context.last_output.requires_manager_approval === true"}
+                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs font-mono text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
                       autoFocus
                     />
-                    <div className="flex gap-2 pt-1">
+
+                    {/* Quick Template Chips */}
+                    <div className="space-y-1">
+                      <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                        Quick Templates:
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {[
+                          { label: "Approval Required", expr: "context.last_output.requires_manager_approval === true" },
+                          { label: "Low Confidence", expr: "context.confidence < 0.75" },
+                          { label: "Dispute Intent", expr: "context.intent === 'dispute'" },
+                          { label: "Approved Flag", expr: "context.is_approved === true" },
+                        ].map((chip) => (
+                          <button
+                            key={chip.label}
+                            type="button"
+                            onClick={() => setConditionInput(chip.expr)}
+                            className="px-2 py-0.5 rounded-md text-[9px] font-mono bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 border border-border transition-all cursor-pointer truncate max-w-full"
+                            title={`Insert: ${chip.expr}`}
+                          >
+                            + {chip.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2 border-t border-border/60">
                       <button
                         type="button"
                         onClick={() => { setShowConditionEditor(false); setConditionInput(""); }}
-                        className="flex-1 py-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground text-[10px] font-semibold transition-all"
+                        className="flex-1 py-1.5 rounded-xl bg-card border border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all cursor-pointer"
                       >
                         Cancel
                       </button>
                       <button
                         type="button"
                         onClick={handleSetCondition}
-                        className="flex-1 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold transition-all"
+                        className="flex-1 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all shadow-xs cursor-pointer"
                       >
-                        Apply
+                        Apply Condition
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-2">
-                      <span className="font-mono truncate max-w-[80px]">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-1 p-2 rounded-xl bg-muted/40 border border-border/50">
+                      <span className="font-mono truncate max-w-[90px] text-foreground font-semibold">
                         {nodes.find((n) => n.id === clickedEdge.source)?.label || clickedEdge.source}
                       </span>
-                      <ArrowRight className="h-3 w-3 shrink-0" />
-                      <span className="font-mono truncate max-w-[80px]">
+                      <ArrowRight className="h-3 w-3 shrink-0 text-primary" />
+                      <span className="font-mono truncate max-w-[90px] text-foreground font-semibold">
                         {nodes.find((n) => n.id === clickedEdge.target)?.label || clickedEdge.target}
                       </span>
                     </div>
+
+                    {clickedEdge.conditionExpression && (
+                      <div className="p-2 rounded-xl bg-primary/10 border border-primary/20 text-[10px] font-mono text-primary truncate">
+                        <span className="font-semibold block text-[9px] uppercase tracking-wider text-muted-foreground">Condition:</span>
+                        {clickedEdge.conditionExpression}
+                      </div>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => { setRetargetEdgeId(clickedEdge.id); setEdgePopover(null); }}
-                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs text-muted-foreground bg-card border border-border hover:border-border transition-all text-left"
+                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs text-foreground bg-muted/40 hover:bg-muted border border-border transition-all text-left cursor-pointer"
                     >
-                      <ArrowLeft className="h-3 w-3 text-indigo-400 shrink-0" />
+                      <ArrowLeft className="h-3.5 w-3.5 text-primary shrink-0" />
                       Re-target Edge
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowConditionEditor(true)}
-                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs text-muted-foreground bg-card border border-border hover:border-border transition-all text-left"
+                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs text-foreground bg-muted/40 hover:bg-muted border border-border transition-all text-left cursor-pointer"
                     >
-                      <CornerDownRight className="h-3 w-3 text-indigo-400 shrink-0" />
-                      {clickedEdge.conditionExpression ? `Edit Condition (${clickedEdge.conditionExpression})` : "Set Condition"}
+                      <CornerDownRight className="h-3.5 w-3.5 text-primary shrink-0" />
+                      {clickedEdge.conditionExpression ? "Edit Condition Expression" : "Set Condition Expression"}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteEdge(edgePopover.edgeId)}
-                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs text-red-400 bg-red-500/5 border border-red-500/20 hover:bg-red-500/10 transition-all text-left"
+                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs text-destructive bg-destructive/10 border border-destructive/20 hover:bg-destructive/20 transition-all text-left cursor-pointer"
                     >
-                      <Trash2 className="h-3 w-3 shrink-0" />
+                      <Trash2 className="h-3.5 w-3.5 shrink-0" />
                       Delete Connection
                     </button>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* ── EDGE CONDITION SYNTAX & VARIABLES GUIDE MODAL ── */}
+          {showConditionGuide && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+              <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-border bg-card text-card-foreground p-6 shadow-2xl space-y-4">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-primary/10 border border-primary/20 text-primary">
+                      <BookOpen className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-foreground">
+                        Edge Condition Syntax &amp; Variables Guide
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Conditional routing logic evaluated by the LangGraph supervisor router
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowConditionGuide(false)}
+                    className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* Execution Context */}
+                <div className="rounded-2xl border border-border bg-muted/30 p-4 space-y-1.5">
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    Execution Context &amp; Routing Engine
+                  </h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Prior to routing execution to a downstream specialist agent or team container, the LangGraph supervisor evaluates the conditional JavaScript expression against the runtime state dictionary (<code>context</code>). If the expression evaluates to truthy, execution proceeds along this edge.
+                  </p>
+                </div>
+
+                {/* Available State Variables */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                    Available State Variables (<code>context</code>)
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {[
+                      { varName: "context.last_output", type: "string | object", desc: "Output payload or JSON returned by the source agent in the previous turn." },
+                      { varName: "context.intent", type: "string", desc: "Classified user intent (e.g. 'booking', 'inquiry', 'escalation', 'dispute')." },
+                      { varName: "context.confidence", type: "number (0.0 - 1.0)", desc: "Confidence score generated by intent detection or validator nodes." },
+                      { varName: "context.tool_calls_count", type: "number", desc: "Total number of tools invoked during the active turn." },
+                      { varName: "context.is_approved", type: "boolean", desc: "Status flag set by Human-in-the-Loop review nodes or operators." },
+                    ].map((item) => (
+                      <div key={item.varName} className="rounded-xl border border-border bg-card p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <code className="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
+                              {item.varName}
+                            </code>
+                            <span className="text-[10px] font-mono text-muted-foreground">{item.type}</span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">{item.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Operators */}
+                <div className="rounded-2xl border border-border bg-muted/30 p-4 space-y-1.5">
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                    Expression Syntax &amp; Comparison Operators
+                  </h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Expressions use standard JavaScript comparison operators: equality (<code>===</code>, <code>!==</code>), numeric boundaries (<code>&gt;</code>, <code>&gt;=</code>, <code>&lt;</code>, <code>&lt;=</code>), boolean combinations (<code>&amp;&amp;</code>, <code>||</code>, <code>!</code>), and string helpers like <code>.includes(&quot;keyword&quot;)</code>.
+                  </p>
+                </div>
+
+                {/* Enterprise Expression Examples with Insert Buttons */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                    Sample Enterprise Expressions
+                  </h4>
+                  <div className="space-y-2">
+                    {[
+                      { title: "Escalate Manager Approval", expr: "context.last_output.requires_manager_approval === true" },
+                      { title: "Low Confidence or Dispute", expr: "context.confidence < 0.75 || context.intent === 'dispute'" },
+                      { title: "Order Exceeds Threshold", expr: "context.last_output.order_total >= 10000" },
+                      { title: "Human Review Approved", expr: "context.is_approved === true" },
+                      { title: "Excessive Tool Invocations", expr: "context.tool_calls_count > 4" },
+                    ].map((eg) => (
+                      <div key={eg.expr} className="rounded-xl border border-border bg-card p-3 flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <span className="text-xs font-bold text-foreground block">{eg.title}</span>
+                          <code className="text-[11px] font-mono text-muted-foreground truncate block">{eg.expr}</code>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setConditionInput(eg.expr);
+                            setShowConditionGuide(false);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shrink-0 cursor-pointer transition-all shadow-xs"
+                        >
+                          Insert Template
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-3 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => setShowConditionGuide(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-muted hover:bg-muted/80 text-foreground transition-all cursor-pointer"
+                  >
+                    Close Guide
+                  </button>
+                </div>
               </div>
             </div>
           )}
